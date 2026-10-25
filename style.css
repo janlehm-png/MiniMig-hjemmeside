@@ -1,0 +1,58 @@
+/* MiniMig – the website. Same colours and rounded letters as the app; no fonts or scripts from other sites,
+   so visiting the site sends nothing to anyone else either. */
+:root {
+  --bg: #FFF7E8; --card: #FFFFFF; --ink: #2A1F4F; --muted: #6B6390; --line: #EFE6D8;
+  --pink: #FF4F8B; --orange: #FF7A2F; --sun: #FFB800; --teal: #13BFA6; --sky: #3D8BFF; --grape: #8E5CFF;
+  --glow: #FFE38A; --shadow: rgba(42, 31, 79, .12);
+  --font: ui-rounded, "SF Pro Rounded", "Arial Rounded MT Bold", "Nunito", system-ui, sans-serif;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #1E1638; --card: #2A2050; --ink: #F6F1FF; --muted: #B9B0DA; --line: #3A2F66; --glow: #463682; --shadow: rgba(0, 0, 0, .35); }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.6 var(--font); -webkit-text-size-adjust: 100%; }
+a { color: var(--grape); font-weight: 700; }
+.wrap { max-width: 860px; margin: 0 auto; padding: 0 20px; }
+
+header.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 0; }
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+.brand img { width: 44px; height: 44px; border-radius: 11px; box-shadow: 0 3px 10px var(--shadow); }
+.logo { font-size: 1.7rem; font-weight: 800; letter-spacing: .01em; line-height: 1; }
+.logo span:nth-child(6n+1) { color: var(--pink); } .logo span:nth-child(6n+2) { color: var(--orange); }
+.logo span:nth-child(6n+3) { color: var(--sun); }  .logo span:nth-child(6n+4) { color: var(--teal); }
+.logo span:nth-child(6n+5) { color: var(--sky); }  .logo span:nth-child(6n+6) { color: var(--grape); }
+nav a { color: var(--muted); text-decoration: none; margin-left: 16px; font-size: .95rem; }
+nav a:hover, nav a[aria-current] { color: var(--ink); }
+
+.hero { display: grid; grid-template-columns: 1.1fr .9fr; align-items: center; gap: 24px; padding: 24px 0 8px; }
+.hero h1 { font-size: clamp(2rem, 5vw, 3rem); line-height: 1.1; margin: 0 0 14px; }
+.hero p.lead { font-size: 1.15rem; color: var(--muted); margin: 0 0 22px; }
+.hero .pic { position: relative; text-align: center; }
+.hero .pic::before { content: ""; position: absolute; inset: 8% 4% 0; border-radius: 50%; background: radial-gradient(var(--glow), transparent 68%); z-index: -1; }
+.hero .pic img { width: 100%; max-width: 300px; height: auto; }
+.badge { display: inline-flex; align-items: center; gap: 10px; background: var(--ink); color: var(--bg); border-radius: 14px; padding: 12px 20px; font-weight: 800; text-decoration: none; }
+.badge small { display: block; font-weight: 600; font-size: .75rem; opacity: .8; }
+
+.cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 34px 0; }
+.card { background: var(--card); border-radius: 20px; padding: 18px; box-shadow: 0 4px 14px var(--shadow); }
+.card .ico { font-size: 1.8rem; }
+.card h3 { margin: 6px 0 4px; font-size: 1.05rem; }
+.card p { margin: 0; color: var(--muted); font-size: .95rem; }
+
+article { background: var(--card); border-radius: 24px; padding: 28px clamp(18px, 4vw, 40px); box-shadow: 0 4px 14px var(--shadow); margin: 12px 0 30px; }
+article h1 { margin-top: 0; line-height: 1.15; }
+article h2 { font-size: 1.2rem; margin: 28px 0 6px; }
+article .updated { color: var(--muted); margin-top: -6px; }
+article .short { background: var(--bg); border-radius: 16px; padding: 14px 18px; border: 2px dashed var(--line); }
+hr { border: 0; border-top: 2px solid var(--line); margin: 34px 0; }
+
+footer { color: var(--muted); font-size: .9rem; padding: 10px 0 40px; text-align: center; }
+footer a { color: var(--muted); }
+
+@media (max-width: 700px) {
+  .hero { grid-template-columns: 1fr; text-align: center; }
+  .hero .pic { order: -1; } .hero .pic img { max-width: 220px; }
+  .cards { grid-template-columns: 1fr; }
+  nav a { margin-left: 10px; }
+}
