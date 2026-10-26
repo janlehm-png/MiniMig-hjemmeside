@@ -23,10 +23,10 @@ const server=http.createServer((req,res)=>{
  page.on('pageerror',e=>errors.push(e.message));
  const base='http://127.0.0.1:'+server.address().port+(process.env.TEST_ROOT ? '/' : '/MiniMig-hjemmeside/');
  await page.goto(base+'proev/');
- await page.waitForFunction(()=>document.querySelector('.pwa-status')?.textContent==='Klar til offline',{},{timeout:60000});
+ await page.waitForFunction(()=>document.querySelector('.pwa-status')?.textContent==='Spillet kan nu bruges uden internet.',{},{timeout:60000});
  await page.locator('#tab-haar').waitFor();
  await page.getByRole('button',{name:'Til voksne',exact:true}).click();
- await page.getByRole('heading',{name:'MiniMig på hjemmeskærmen'}).waitFor();
+ await page.getByRole('heading',{name:'Til voksne',exact:true}).waitFor();
  await page.getByRole('button',{name:'Luk',exact:true}).click();
  for(const size of [[320,568],[390,844],[768,1024],[844,390],[1440,900]]){
   await page.setViewportSize({width:size[0],height:size[1]});
@@ -64,7 +64,7 @@ const server=http.createServer((req,res)=>{
  await page.evaluate(async()=>{await (await navigator.serviceWorker.getRegistration()).update()});
  await page.locator('.pwa-update:not([hidden])').waitFor({timeout:60000});
  await page.locator('.pwa-update').click();
- await page.waitForFunction(()=>navigator.serviceWorker.controller && document.querySelector('.pwa-status')?.textContent==='Klar til offline');
+ await page.waitForFunction(()=>navigator.serviceWorker.controller && document.querySelector('.pwa-status')?.textContent==='Spillet kan nu bruges uden internet.');
  await page.waitForFunction(async()=> (await caches.keys()).some(k=>k.endsWith('test-update')));
  assert(await page.evaluate(()=>JSON.parse(localStorage.minimig2).bg)==='rummet');
  assert(!errors.length,errors.join('\n'));

@@ -5,17 +5,22 @@ const panel = document.createElement('aside');
 panel.className = 'pwa-tools';
 panel.setAttribute('aria-label', 'Installation og offline');
 panel.innerHTML = `<button type="button" class="pwa-help">Til voksne</button>
-<span class="pwa-status" role="status">Forbereder offlinebrug…</span>
 <button type="button" class="pwa-update" hidden>Hent ny version</button>
 <dialog class="pwa-dialog" aria-labelledby="pwa-title">
-<h2 id="pwa-title">MiniMig på hjemmeskærmen</h2>
+<h2 id="pwa-title">Til voksne</h2>
 <p>Gratis, uden konto og uden reklamer.</p>
+<h3>En god skærm til legen</h3>
+<p>MiniMig er lige nu bedst egnet til en tablet eller iPad, hvor der er god plads til både figuren og valgene. På iPhone kan I prøve at vende telefonen vandret, hvis skærmen føles trang. Det afhænger af skærmstørrelsen – vælg den retning, der fungerer bedst for jer.</p>
+<h3>Føj MiniMig til hjemmeskærmen</h3>
 <button type="button" class="pwa-install" hidden>Installér MiniMig</button>
 <div class="pwa-instructions">
 <h3>iPhone og iPad</h3><ol><li>Åbn denne side i Safari.</li><li>Tryk på Del (eventuelt via sidemenuen).</li><li>Vælg Føj til hjemmeskærm. Behold Åbn som webapp slået til, hvis valget vises, og tryk Tilføj.</li></ol>
 <h3>Android</h3><p>Brug knappen Installér MiniMig, når den vises. Ellers åbn browserens menu i Chrome og vælg Installér app eller Føj til startskærm. Bekræft tilføjelsen.</p>
 </div>
-<p>Vent på “Klar til offline”, før du slår nettet fra. Browseren kan senere rydde gemte filer ved pladsmangel; åbn da spillet med internet igen.</p>
+<h3>Spil uden internet</h3>
+<p>Spillet henter billeder og andre nødvendige filer til denne enhed. Vent på beskeden nedenfor om, at spillet kan bruges uden internet, før du slår nettet fra.</p>
+<p class="pwa-status" role="status">Henter spillet til brug uden internet…</p>
+<p>Browseren kan senere rydde gemte filer ved pladsmangel; åbn da spillet med internet igen.</p>
 <p>Figuren og et eventuelt navn på trøjen gemmes kun i denne browser. Installation kan bruge separat lagring. Ingen analyseværktøjer eller sporing.</p>
 <p><a class="pwa-privacy">Læs om privatliv</a></p>
 <form method="dialog"><button>Luk</button></form></dialog>`;
@@ -38,7 +43,7 @@ standalone.addEventListener('change', installUI); installUI();
 function checkReady() { navigator.serviceWorker.controller?.postMessage({type:'CHECK_OFFLINE'}); }
 if (!('serviceWorker' in navigator) || !isSecureContext) { status.textContent = 'Offlinebrug kræver en understøttet browser og HTTPS.'; return; }
 navigator.serviceWorker.addEventListener('message', event => {
- if(event.data?.type === 'OFFLINE_STATUS') status.textContent = event.data.ready ? 'Klar til offline' : 'Offlinefiler mangler. Åbn med internet igen.';
+ if(event.data?.type === 'OFFLINE_STATUS') status.textContent = event.data.ready ? 'Spillet kan nu bruges uden internet.' : 'Offlinefiler mangler. Åbn med internet igen.';
 });
 navigator.serviceWorker.addEventListener('controllerchange', () => { if(reloading) location.reload(); else checkReady(); });
 update.onclick = () => { if(registration?.waiting) { reloading = true; registration.waiting.postMessage({type:'SKIP_WAITING'}); } };
