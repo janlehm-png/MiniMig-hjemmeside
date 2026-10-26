@@ -3,7 +3,6 @@
 <head>
 <meta charset="utf-8">
 <title>Spil MiniMig gratis - byg din egen figur</title>
-
 <link rel="icon" href="../billeder/ikon-180.png">
 <link rel="apple-touch-icon" href="../billeder/ikon-180.png">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -13,9 +12,9 @@ body { margin: 0; font: 14px system-ui, sans-serif; }
 img { max-width: 100%; }
 [hidden] { display: none !important; }
 </style>
-<link rel="manifest" href="../manifest.webmanifest"><meta name="theme-color" content="#FFD54A"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="MiniMig"><link rel="stylesheet" href="../pwa.css"><script src="../pwa.js" defer></script>
 <meta name="description" content="Byg din egen figur i MiniMig. Gratis kreativt spil med tøj, hår og baggrunde til telefon, tablet og computer. Ingen konto eller reklamer.">
 <link rel="canonical" href="https://minimig.dk/proev/">
+<link rel="manifest" href="../manifest.webmanifest"><meta name="theme-color" content="#FFD54A"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="MiniMig"><link rel="stylesheet" href="../pwa.css"><script src="../pwa.js" defer></script>
 </head>
 <body class="pwa-game">
 
@@ -24,16 +23,16 @@ img { max-width: 100%; }
 /* Layout: the figure on a sunny stage (the app icon's light), the wardrobe beside it; stacked on a phone. */
 :root {
   --sun: #FFD54A; --sun-soft: #FFF3C2; --ground: #FFFDF6; --ink: #2B2153; --muted: #6E6496;
-  --grape: #7A4DFF; --tile: #FFFFFF; --line: #EDE6D2; --shadow: rgba(43, 33, 83, .12);
+  --grape: #7A4DFF; --tile: #FFFFFF; --line: #EDE6D2; --shadow: rgba(43, 33, 83, .12); --group: #F1ECFF;
   --font-display: "Fredoka", ui-rounded, "Arial Rounded MT Bold", system-ui, sans-serif;
   --font-body: "Nunito", ui-rounded, system-ui, sans-serif;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --sun: #E0B43A; --sun-soft: #3A2F5E; --ground: #1D1738; --ink: #F5F1FF; --muted: #B7AEDB;
-  --grape: #A98BFF; --tile: #2A2350; --line: #3B3266; --shadow: rgba(0, 0, 0, .35); color-scheme: dark } }
+  --grape: #A98BFF; --tile: #2A2350; --line: #3B3266; --shadow: rgba(0, 0, 0, .35); --group: #251E47; color-scheme: dark } }
 :root[data-theme="dark"] {
   --sun: #E0B43A; --sun-soft: #3A2F5E; --ground: #1D1738; --ink: #F5F1FF; --muted: #B7AEDB;
-  --grape: #A98BFF; --tile: #2A2350; --line: #3B3266; --shadow: rgba(0, 0, 0, .35); color-scheme: dark }
+  --grape: #A98BFF; --tile: #2A2350; --line: #3B3266; --shadow: rgba(0, 0, 0, .35); --group: #251E47; color-scheme: dark }
 
 * { box-sizing: border-box; }
 html, body { height: 100%; }
@@ -63,9 +62,9 @@ header { display: flex; align-items: baseline; justify-content: space-between; g
 .stage canvas.over { transform: none; pointer-events: none; }
 .stage.scene .shadow { background: rgba(20, 30, 20, .28); }
 .panel { display: grid; gap: 14px; min-width: 0; }
-/* the tabs in groups (the body, clothes, fun, background) with a little air between the groups */
-.tabs { display: flex; flex-wrap: wrap; gap: 10px 22px; }
-.tabgroup { display: flex; flex-wrap: wrap; gap: 8px; }
+/* the tabs in three groups (the body, the clothes, the rest), each on its own soft panel so they read as belonging together */
+.tabs { display: flex; flex-wrap: wrap; gap: 10px; }
+.tabgroup { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; padding: 8px; border-radius: 24px; background: var(--group); }
 .tabgroup .tab { width: 80px; }
 .tab { font: 600 .9rem/1 var(--font-display); border: 0; border-radius: 20px; padding: 8px 6px 10px; cursor: pointer;
   background: var(--tile); color: var(--ink); box-shadow: 0 2px 8px var(--shadow); display: grid; justify-items: center; gap: 4px; }
@@ -89,7 +88,7 @@ header { display: flex; align-items: baseline; justify-content: space-between; g
 .sw { width: 40px; height: 40px; border-radius: 50%; border: 3px solid var(--tile); box-shadow: 0 0 0 2px var(--line); cursor: pointer; }
 .sw[aria-pressed="true"] { box-shadow: 0 0 0 3px var(--grape); }
 #nameBox { display: grid; gap: 8px; }
-#nameBox[hidden] { display: none; }
+#nameBox[hidden], .opts[hidden] { display: none; }
 .name-input { font: 700 1.4rem/1.2 var(--font-display); padding: 10px 14px; border-radius: 16px; border: 2px solid var(--line);
   background: var(--ground); color: var(--ink); width: 100%; max-width: 320px; }
 .name-input:focus { outline: 3px solid var(--grape); outline-offset: 1px; }
@@ -97,6 +96,27 @@ header { display: flex; align-items: baseline; justify-content: space-between; g
 .badge { width: 52px; height: 52px; border-radius: 16px; border: 2px solid var(--line); background: var(--ground); font-size: 1.6rem; cursor: pointer; color: var(--muted); }
 .badge[aria-pressed="true"] { border-color: var(--grape); box-shadow: 0 0 0 2px var(--grape) inset; }
 .note { color: var(--muted); font-size: .85rem; max-width: 62ch; }
+/* the camera button on the stage, and the sheets for saving a picture */
+.stage-btn { position: absolute; top: 10px; right: 10px; z-index: 3; width: 48px; height: 48px; border-radius: 50%; border: 0; cursor: pointer;
+  background: var(--tile); box-shadow: 0 2px 8px var(--shadow); font-size: 1.45rem; line-height: 1; }
+.sheet { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; background: rgba(20, 14, 40, .55);
+  padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.sheet[hidden] { display: none; }
+.sheet-card { background: var(--tile); color: var(--ink); border-radius: 24px; padding: 16px; width: min(440px, 100%); max-height: 100%; overflow: auto;
+  display: grid; gap: 12px; box-shadow: 0 10px 30px var(--shadow); }
+.sheet-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.sheet-head h2 { margin: 0; font: 700 1.3rem/1.1 var(--font-display); }
+.sheet-x { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--line); background: var(--ground); color: var(--ink); font-size: 1.1rem; cursor: pointer; }
+.pic-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: end; }
+.pic-opt { border: 2px solid var(--line); background: var(--ground); color: var(--ink); border-radius: 18px; padding: 8px 8px 10px; cursor: pointer;
+  display: grid; gap: 6px; justify-items: center; font: 600 1rem/1.1 var(--font-display); min-width: 0; }
+.pic-opt canvas { width: 100%; height: auto; border-radius: 12px; }
+.gate-q { margin: 0; font: 700 1.5rem/1.2 var(--font-display); text-align: center; }
+.gate-a { min-height: 2.2rem; font: 700 1.8rem/1.2 var(--font-display); text-align: center; color: var(--grape); }
+.gate-a.wrong { color: #E8384F; }
+.keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.keypad button { height: 52px; border-radius: 16px; border: 2px solid var(--line); background: var(--ground); color: var(--ink); font: 700 1.3rem/1 var(--font-display); cursor: pointer; }
+#picImg { width: 100%; border-radius: 16px; }
 /* larger screens: the figure stays in view while the choices beside it are scrolled */
 .stage { position: sticky; top: 16px; }
 /* phones: like an app - the figure always at the top, the tabs in one sideways row under it, and only the choices
@@ -111,7 +131,7 @@ header { display: flex; align-items: baseline; justify-content: space-between; g
   .panel { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
   .tabs { flex: none; flex-wrap: nowrap; overflow-x: auto; gap: 6px 14px; padding: 2px 2px 6px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
   .tabs::-webkit-scrollbar { display: none; }
-  .tabgroup { flex-wrap: nowrap; gap: 6px; }
+  .tabgroup { flex-wrap: nowrap; gap: 6px; width: auto; flex: none; padding: 5px; border-radius: 20px; }
   .tabgroup .tab { width: 62px; flex: none; }
   .tab { font-size: .72rem; padding: 6px 3px 7px; border-radius: 16px; }
   .tab img { width: 40px; height: 40px; }
@@ -126,7 +146,8 @@ header { display: flex; align-items: baseline; justify-content: space-between; g
     <div class="logo" aria-label="MiniMig"><span>M</span><span>i</span><span>n</span><span>i</span><span>M</span><span>i</span><span>g</span></div>
   </header>
   <div class="main">
-    <div class="stage" id="stage" aria-label="Figuren – tryk for at zoome"><div class="zoom" id="zoom"><div class="shadow"></div><canvas id="fig" width="512" height="768"></canvas><canvas id="over" class="over" width="512" height="768"></canvas></div></div>
+    <div class="stage" id="stage" aria-label="Figuren – tryk for at zoome"><div class="zoom" id="zoom"><div class="shadow"></div><canvas id="fig" width="512" height="768"></canvas><canvas id="over" class="over" width="512" height="768"></canvas></div>
+      <button class="stage-btn" id="saveBtn" aria-label="Gem billede">📷</button></div>
     <div class="panel">
       <div class="tabs" role="tablist" id="tabs"></div>
       <div class="box">
@@ -138,6 +159,8 @@ header { display: flex; align-items: baseline; justify-content: space-between; g
         </div>
         <div id="optsWrap"><div class="label" id="optsLabel">Vælg</div></div>
         <div class="opts" id="opts"></div>
+        <div id="optsWrap2" hidden><div class="label" id="optsLabel2"></div></div>
+        <div class="opts" id="opts2" hidden></div>
         <div id="swWrap"><div class="label" id="swLabel">Farve</div></div>
         <div class="swatches" id="swatches"></div>
       </div>
@@ -146,11 +169,42 @@ header { display: flex; align-items: baseline; justify-content: space-between; g
   </div>
 </div>
 
+<!-- saving a picture: the child picks the whole figure or a profile picture, then a grown-up answers a sum -->
+<div class="sheet" id="picChoice" hidden>
+  <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="picChoiceTitle">
+    <div class="sheet-head"><h2 id="picChoiceTitle">Gem billede</h2><button class="sheet-x" data-close aria-label="Luk">✕</button></div>
+    <div class="pic-opts">
+      <button class="pic-opt" data-pic="hel"><canvas width="200" height="300"></canvas><span>Hele figuren</span></button>
+      <button class="pic-opt" data-pic="profil"><canvas width="300" height="300"></canvas><span>Profilbillede</span></button>
+    </div>
+  </div>
+</div>
+<div class="sheet" id="gate" hidden>
+  <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="gateTitle">
+    <div class="sheet-head"><h2 id="gateTitle">Spørg en voksen</h2><button class="sheet-x" data-close aria-label="Luk">✕</button></div>
+    <p class="gate-q" id="gateQ"></p>
+    <div class="gate-a" id="gateA" aria-live="polite"></div>
+    <div class="keypad" id="keypad">
+      <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button>
+      <button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button>
+      <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
+      <button data-k="del" aria-label="Slet">⌫</button><button data-k="0">0</button><button data-k="ok">OK</button>
+    </div>
+  </div>
+</div>
+<div class="sheet" id="picSheet" hidden>
+  <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="picSheetTitle">
+    <div class="sheet-head"><h2 id="picSheetTitle">Dit billede</h2><button class="sheet-x" data-close aria-label="Luk">✕</button></div>
+    <img id="picImg" alt="Billedet af figuren">
+    <p class="note">Tryk og hold på billedet for at gemme det.</p>
+  </div>
+</div>
+
 <script>
 // ---- the parts: pictures lined up on the same 512x768 base figure ----
 const SKIN = ['#F6D0AE', '#EDB98A', '#D9965F', '#B5713F', '#8D5530', '#5A3520'];
 const HAIR = ['#2A1C17', '#4A2C1D', '#7A4428', '#A8582E', '#D9A55C', '#F0D9A0', '#FF7EBB', '#5AA9FF'];
-const EYES = ['#7A4A2A', '#3B7BD4', '#3E9A5C', '#A0763A', '#7D8A99', '#8A5CE6'];
+const EYES = ['#9C5A1E', '#3B7BD4', '#3E9A5C', '#A0763A', '#7D8A99', '#8A5CE6'];
 const CLOTH = ['#E8384F', '#FF7A2F', '#FFC233', '#2FB872', '#13BFA6', '#3D8BFF', '#7A4DFF', '#FF6FB1', '#F4F1EA', '#3A3550'];
 const TABS = [
   { id: 'hud', name: 'Hud', colors: SKIN, key: 'skin' },
@@ -165,6 +219,11 @@ const TABS = [
   { id: 'mund', name: 'Mund', key: 'mouth',
     opts: [['naturlig', 'Smil'], ['mund-neutral', 'Neutral'], ['mund-grin', 'Grin'], ['mund-tunge', 'Tunge'],
       ['mund-o', 'Åh'], ['mund-kys', 'Kys'], ['mund-trist', 'Trist']] },
+  { id: 'oerer', name: 'Ører', key: 'ears',
+    opts: [['naturlig', 'Naturlige'], ['oerer-smaa', 'Små'], ['oerer-store', 'Store'], ['oerer-udstaaende', 'Udstående'], ['oerer-alfe', 'Alfeører']],
+    // a second row in the same tab: earrings, drawn by the app at the ear lobes
+    more: { key: 'earrings', label: 'Øreringe',
+      opts: [['ingen', 'Ingen'], ['perler', 'Perler'], ['ringe', 'Guldringe'], ['stjerner', 'Stjerner'], ['hjerter', 'Hjerter']] } },
   { id: 'naese', name: 'Næse', key: 'nose',
     opts: [['naturlig', 'Naturlig'], ['naese-lille', 'Lille'], ['naese-bred', 'Bred'], ['naese-lang', 'Spids'], ['naese-dyr', 'Dyrenæse'], ['naese-klovn', 'Klovn']] },
   // face paint and things on the face; several can be chosen together (multi), each tap turns one on or off
@@ -186,10 +245,12 @@ const TABS = [
   { id: 'bukser', name: 'Bukser', key: 'pants', colorKey: 'pantsColor', colors: CLOTH,
     opts: [['ingen', 'Shorts'], ['bukser-lange', 'Lange bukser'], ['bukser-fodbold', 'Fodbold­shorts']] },
   { id: 'sko', name: 'Sko', key: 'shoes', colorKey: 'shoeColor', colors: CLOTH,
-    opts: [['ingen', 'Bare tæer'], ['sko-sneakers', 'Sneakers'], ['sko-fodbold', 'Fodbold­støvler'], ['sko-ballet', 'Balletsko']] },
+    opts: [['ingen', 'Bare tæer'], ['sko-sneakers', 'Sneakers'], ['sko-fodbold', 'Fodbold­støvler'], ['sko-ballet', 'Balletsko'], ['sko-glas', 'Glassko']] },
   { id: 'stilling', name: 'Stilling', key: 'pose',
     opts: [['ned', 'Står'], ['vink', 'Vinker'], ['vink2', 'Vinker med den anden'], ['hurra', 'Hurra'], ['hofter', 'Hænder i siden'], ['dans', 'Danser'], ['dans2', 'Danser modsat']] },
   { id: 'navn', name: 'Navn' },
+  { id: 'haender', name: 'Hænder', key: 'hands', colorKey: 'handColor', colors: CLOTH,
+    opts: [['ingen', 'Ingen'], ['neglelak', 'Neglelak'], ['armbaand', 'Armbånd'], ['ur', 'Ur'], ['handsker', 'Handsker'], ['vanter', 'Vanter'], ['klistermaerke', 'Klister­mærke']] },
   { id: 'ting', name: 'Ting', key: 'item', colorKey: 'itemColor', colors: CLOTH,
     opts: [['ingen', 'Ingen'], ['ballon', 'Ballon'], ['bamse', 'Bamse'], ['tryllestav', 'Tryllestav'], ['is', 'Is'], ['blomst', 'Blomst'], ['bold', 'Bold']] },
   { id: 'sport', name: 'Sport', key: 'sport', opts: [['ingen', 'Ingen'], ['fodbold', 'Fodbold'], ['gymnastik', 'Gymnastik'], ['dans', 'Dans']] },
@@ -198,8 +259,9 @@ const TABS = [
       ['havbund', 'Havbund'], ['slikland', 'Slikland'], ['vinter', 'Vinter'], ['rummet', 'Rummet'],
       ['fodboldbane', 'Fodbold­bane'], ['gymnastiksal', 'Gymnastik­sal'], ['dansesal', 'Dansesal']] }
 ];
-// tab order in groups: the body, the clothes, the fun, the background
-const TAB_GROUPS = [['hud', 'haar', 'oejne', 'bryn', 'naese', 'mund', 'kinder'], ['troeje', 'kjoler', 'bukser', 'sko', 'hat', 'briller'], ['sport', 'stilling', 'ting', 'navn'], ['baggrund']];
+// tab order in three groups: the body (and what is drawn on it), the clothes, the rest
+const TAB_GROUPS = [['hud', 'haar', 'oejne', 'bryn', 'naese', 'mund', 'oerer', 'kinder', 'haender'], ['troeje', 'kjoler', 'bukser', 'sko', 'hat', 'briller'],
+  ['sport', 'stilling', 'ting', 'navn', 'baggrund']];
 // choosing a sport puts on its whole kit in one tap (each piece can still be changed in its own tab) and adds its gear
 const DRESSES = ['troeje-ballet', 'kjole-prinsesse', 'kjole-sommer', 'kjole-tyl', 'kjole-fest', 'kjole-havfrue', 'kjole-galla'];   // bare legs under them (dele/laar-bare: the thighs without the base's shorts)
 const LEG_TOPS = ['troeje-gymnastik', ...DRESSES]; // tops that paint bare thighs, which must not cover trousers
@@ -223,7 +285,7 @@ const topOf = s => {
 const BADGES = [['ingen', ''], ['stjerne', '⭐'], ['hjerte', '❤️'], ['regnbue', '🌈'], ['enhjoerning', '🦄'],
   ['fodbold', '⚽'], ['raket', '🚀'], ['hund', '🐶'], ['blomst', '🌸']];
 const state = { skin: '#EDB98A', hair: 'haar-bob', hairColor: '#4A2C1D', top: 'troeje-tshirt', topColor: '#FF7A2F',
-  pants: 'bukser-lange', pantsColor: '#3D8BFF', shoes: 'sko-sneakers', shoeColor: '#E8384F', name: 'Ida', badge: 'stjerne', pose: 'vink', bg: 'sol', eyes: 'naturlig', eyeColor: '#7A4A2A', brows: 'naturlig', browColor: '#4A2C1D', mouth: 'naturlig' };
+  pants: 'bukser-lange', pantsColor: '#3D8BFF', shoes: 'sko-sneakers', shoeColor: '#E8384F', name: 'Ida', badge: 'stjerne', pose: 'vink', bg: 'sol', eyes: 'naturlig', eyeColor: '#9C5A1E', brows: 'naturlig', browColor: '#4A2C1D', mouth: 'naturlig', hands: 'ingen', handColor: '#FF6FB1' };
 let tab = 'haar';
 const W = 512, H = 768, WAIST = 372; // above the waist the underwear is the vest, below it the shorts
 
@@ -245,7 +307,7 @@ function load(name, tries = 4) {
     im.onload = () => ok([name, im]);
     im.onerror = () => tries > 1 ? setTimeout(() => load(name, tries - 1).then(ok), 700) : ok([name, null]);
     im.src = 'dele/' + name + '.png?v=' + PICS_V + (tries < 4 ? '-' + tries : ''); }); }
-const PICS_V = 56; // raised when pictures change, so phones and browsers fetch the new ones instead of old copies
+const PICS_V = 65; // raised when pictures change, so phones and browsers fetch the new ones instead of old copies
 
 // per part: which pixels take the chosen colour (coloured ones; on shoes not the white soles) and their middle brightness
 function prepare(name, im) {
@@ -334,8 +396,8 @@ function compose(s, ctx) {
   // the thighs the AI drew with the dress are left out
   const bareThighs = LEG_TOPS.includes(s.top) && s.pants === 'ingen' && data['laar-bare2'];
   const legs = bareThighs ? [['laar-bare2', '#000000']] : [];
-  const layers = [[s.eyes, s.eyeColor], ['lukkede-oejne'], [s.brows, s.browColor || '#4A2C1D'], [s.mouth, '#000000'], ['kinder'], [s.nose, '#000000'], [s.shoes, s.shoeColor],
-    ...legs, ...body, ['navn'], [s.hair, s.hairColor], [s.glasses, s.glassesColor || CLOTH[0]], ['hat'], ['ting']]; // glasses sit over the hair
+  const layers = [[s.eyes, s.eyeColor], ['lukkede-oejne'], [s.brows, s.browColor || '#4A2C1D'], [s.mouth, '#000000'], ['kinder'], [s.nose, '#000000'], [s.ears, '#000000'], ['oreringe'], [s.shoes, s.shoeColor],
+    ...legs, ...body, ['navn'], [s.hair, s.hairColor], [s.glasses, s.glassesColor || CLOTH[0]], ['hat'], ['haender'], ['ting']]; // glasses sit over the hair; gloves before the thing held, so the fingers round it are gloved
   for (const [name, col, flag] of layers) {
     // things the app draws itself go on a clean sheet that is then laid over the figure, so the figure's own pixels are
     // never sent through the canvas and back (Safari on iPad loses colour in see-through pixels on every such round trip)
@@ -356,6 +418,10 @@ function compose(s, ctx) {
     if (name === 'hat') { // the hat sits over the hair
       if (!HATS[s.hat] || !img['hat-' + s.hat]) continue;
       overlay(o, g2 => drawHat(g2, s)); continue; }
+    if (name === 'haender') { if (s.hands && s.hands !== 'ingen') drawHands(o, s, skin); continue; }
+    if (name === 'oreringe') { // earrings at the ear lobes (under the hair: long hair over the ears hides them)
+      if (!s.earrings || s.earrings === 'ingen') continue;
+      overlay(o, g2 => drawEarrings(g2, s.earrings, EAR_LOBES[s.ears] || EAR_LOBES.naturlig)); continue; }
     if (name === 'kinder') { // cheeks, freckles, hearts: drawn by the app on the face
       const list = cheeksOf(s); if (!list.length) continue;
       overlay(o, g2 => drawCheeks(g2, list, skin)); continue; }
@@ -379,7 +445,8 @@ function compose(s, ctx) {
       let r = d.px[i], g = d.px[i + 1], b = d.px[i + 2];
       if (d.paint[p] === 5) { const v = Math.min(255, 150 + 140 * d.L[p]); r = g = b = v; }
       // skin drawn with clothes; capped, as light mixed edge pixels would otherwise turn white on dark skin
-      else if (d.paint[p] === 4) { const k = Math.min(1.12, d.L[p] / base.mid); r = tint(skin[0], k); g = tint(skin[1], k); b = tint(skin[2], k); }
+      // (the eye parts' skin is the face's own skin round the eyes, lit like the base's, so it is not capped)
+      else if (d.paint[p] === 4) { const k = name.startsWith('oejne') ? d.L[p] / base.mid : Math.min(1.12, d.L[p] / base.mid); r = tint(skin[0], k); g = tint(skin[1], k); b = tint(skin[2], k); }
       // a see-through edge (tulle, a soft outline) is never lit up: on dark skin it would show as a white rim
       else if (d.paint[p]) { const k = Math.min(kmax, a < 200 ? 1 : 99, d.L[p] / d.mid); r = tint(c[0], k, soft); g = tint(c[1], k, soft); b = tint(c[2], k, soft); }
       // fabric's soft edge over a spot another part has hidden (a seam, e.g. shirt into shorts) is drawn solid,
@@ -453,21 +520,115 @@ const ITEMS = { ballon: { h: 185, grip: [.52, .975], tilt: -10 }, bamse: { h: 96
 const HAND = { ned: [179, 421], vink: [179, 421], hurra: [116, 80], hofter: [196, 350], dans: [108, 413] };
 // The hand is found on the figure as drawn (a hoodie's sleeve can put it a little elsewhere than the bare arm): the bare
 // skin in a search box, its far end in the arm's direction, and the middle of the last part of it is the grip.
-const HAND_FIND = { ned: { box: [140, 360, 202, 470], dir: [0, 1] }, vink: { box: [140, 360, 202, 470], dir: [0, 1] },
-  hurra: { box: [60, 15, 175, 140], dir: [-.25, -1] }, hofter: { box: [165, 315, 232, 390], dir: [1, .2] },
-  dans: { box: [40, 360, 175, 475], dir: [-.7, .7], back: 9 } };
+const HAND_FIND = { ned: { box: [140, 360, 210, 470], fx: [140, 194], dir: [0, 1] }, vink: { box: [140, 360, 210, 470], fx: [140, 194], dir: [0, 1] },
+  hurra: { box: [60, 15, 175, 140], dir: [-.25, -1] }, hofter: { box: [165, 260, 232, 390], dir: [1, .2] }, // (hands sit higher in some dresses)
+  dans: { box: [40, 300, 175, 475], dir: [-.7, .7], back: 9 } };
 // things that cannot be held in a pose (a teddy with hands on the hips, a balloon with both arms raised high)
 const ITEM_BLOCK = { hofter: ['bamse'] };
 const itemBlocked = (s, it) => (ITEM_BLOCK[poseOf(s)] || []).includes(it);
 function findHand(s) {
-  const f = HAND_FIND[poseOf(s) || 'ned'] || HAND_FIND.ned, [x0, y0, x1, y1] = f.box, [dx, dy] = f.dir; let best = -1e9;
-  for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) if (skinNow[y * W + x]) best = Math.max(best, x * dx + y * dy);
-  if (best < -1e8) return HAND[poseOf(s) || 'ned'] || HAND.ned;
+  const f = HAND_FIND[poseOf(s) || 'ned'] || HAND_FIND.ned, z = handZone(s, 0);
+  if (!z) return HAND[poseOf(s) || 'ned'] || HAND.ned;
   let sx = 0, sy = 0, n = 0; // the hand: the last 26 px of skin towards the arm's end
-  for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) if (skinNow[y * W + x] && x * dx + y * dy > best - 26) { sx += x; sy += y; n++; }
+  for (const [x, y, d] of z.pix) if (d < 26) { sx += x; sy += y; n++; }
   // an open hand holds a thing in the palm, a little back from the finger tips
-  const back = f.back || 0, len = Math.hypot(dx, dy);
-  return [Math.round(sx / n - dx / len * back), Math.round(sy / n - dy / len * back)];
+  const back = f.back || 0;
+  return [Math.round(sx / n - z.ux * back), Math.round(sy / n - z.uy * back)];
+}
+// the other hand (on the right of the picture), found the same way
+const HAND_FIND_R = { ned: { box: [302, 360, 372, 470], fx: [318, 372], dir: [0, 1] }, vink: { box: [350, 100, 420, 230], dir: [0, -1] },
+  hurra: { box: [337, 15, 452, 140], dir: [.25, -1] }, hofter: { box: [280, 260, 347, 390], dir: [-1, .2] },
+  dans: { box: [320, 0, 440, 120], dir: [.15, -1] } }; // (the football shirt holds this arm closer to the head)
+// from the finger tips back to the wrist, per pose [left, right] (measured on the hands' widths: the dance pose's
+// pointing hand is long, open raised hands are big)
+const HAND_LEN = { ned: [30, 30], vink: [30, 32], hurra: [36, 36], hofter: [28, 28], dans: [44, 30] };
+// one hand (side 0: left of the picture, 1: right) on the figure as drawn so far: its finger tips' reach along the
+// arm's direction, and the middle of the hand
+// The finger tips are searched for only between `fx` (where given), so a leg showing through a dress's slit is not taken
+// for the hand; the hand is then the skin joined to the tips.
+function handZone(s, side) {
+  const f = (side ? HAND_FIND_R : HAND_FIND)[poseOf(s) || 'ned'] || HAND_FIND.ned, [x0, y0, x1, y1] = f.box, [fx0, fx1] = f.fx || [x0, x1];
+  const len = Math.hypot(f.dir[0], f.dir[1]), ux = f.dir[0] / len, uy = f.dir[1] / len;
+  const hl = (HAND_LEN[poseOf(s) || 'ned'] || HAND_LEN.ned)[side], skip = new Set(); let best, pix;
+  // a hanging hand never reaches the bottom of its box, a leg does (in a dress's slit, or bare under a short skirt):
+  // skin running up from the box's bottom is leg, and left out (followed up row by row while it stays a narrow strip;
+  // where it widens, it has met the hand)
+  if (uy > .5) for (let y = y1 - 1; y >= y0; y--) { let any = false;
+    for (let x = x0; x < x1; x++) { if (!skinNow[y * W + x]) continue; let e = x; while (e + 1 < x1 && skinNow[y * W + e + 1]) e++;
+      let joined = y === y1 - 1; for (let k = x - 1; k <= e + 1 && !joined; k++) joined = skip.has((y + 1) * W + k);
+      if (joined && e - x < 10) { for (let k = x; k <= e; k++) skip.add(y * W + k); any = true; } x = e; }
+    if (!any) break; }
+  for (let tries = 0; tries < 12; tries++) { // a few stray skin pixels in a dress are skipped: a hand is bigger
+    let bp = -1; best = -1e9;
+    for (let y = y0; y < y1; y++) for (let x = fx0; x < fx1; x++) { const p = y * W + x; if (skinNow[p] && !skip.has(p) && x * ux + y * uy > best) { best = x * ux + y * uy; bp = p; } }
+    if (bp < 0) return null;
+    const seen = new Set([bp]), todo = [bp]; pix = [];
+    while (todo.length) { const p = todo.pop(), x = p % W, y = p / W | 0, d = best - (x * ux + y * uy); pix.push([x, y, d]);
+      for (const q of [p - 1, p + 1, p - W, p + W]) { const qx = q % W, qy = q / W | 0;
+        if (qx >= x0 && qx < x1 && qy >= y0 && qy < y1 && !seen.has(q) && !skip.has(q) && skinNow[q] && best - (qx * ux + qy * uy) < hl + 7) { seen.add(q); todo.push(q); } } }
+    if (pix.length >= 60) break; for (const q of seen) skip.add(q); if (tries === 11) return null; }
+  let sx = 0, sy = 0, n = 0; for (const [x, y, d] of pix) if (d < hl) { sx += x; sy += y; n++; }
+  return { box: f.box, ux, uy, best, len: hl, pix, cx: sx / n, cy: sy / n };
+}
+// things on the hands: gloves and mittens colour the hand, a bracelet or watch band goes round the wrist, nail
+// polish on the finger tips, a star sticker on the back of the hand. The watch is worn on one hand only.
+function drawHands(o, s, skin) {
+  const kind = s.hands, c = hex(s.handColor || CLOTH[7]), sl = lum(skin[0], skin[1], skin[2]) || .5, marks = [];
+  const shade = i => lum(o[i], o[i + 1], o[i + 2]) / sl;
+  const paint = (i, col, k) => { o[i] = tint(col[0], k); o[i + 1] = tint(col[1], k); o[i + 2] = tint(col[2], k); };
+  const isSkin = (x, y) => { x = Math.round(x); y = Math.round(y); return x >= 0 && y >= 0 && x < W && y < H && skinNow[y * W + x] === 1; };
+  for (const side of [0, 1]) {
+    if (kind === 'ur' && !side) continue;
+    const z = handZone(s, side); if (!z) continue; const [x0, y0, x1, y1] = z.box, hl = z.len, px = [];
+    const { ux, uy } = z, depth = (x, y) => z.best - (x * ux + y * uy);
+    for (const [x, y, d] of z.pix) { const i = (y * W + x) * 4; if (o[i + 3]) px.push([x, y, i, d]); }
+    if (kind === 'vanter') { // mittens hold the fingers together: the hand's outline is closed (grown, then shrunk
+      // back by 4 px), which fills the gaps between the fingers into one rounded mitten
+      const R = 4, hand = new Set(px.filter(q => q[3] < hl).map(([x, y]) => y * W + x));
+      let bx0 = W, by0 = H, bx1 = 0, by1 = 0; for (const p of hand) { const x = p % W, y = p / W | 0; bx0 = Math.min(bx0, x); bx1 = Math.max(bx1, x); by0 = Math.min(by0, y); by1 = Math.max(by1, y); }
+      bx0 -= R; by0 -= R; bx1 += R; by1 += R; const bw = bx1 - bx0 + 1, bh = by1 - by0 + 1, grown = new Uint8Array(bw * bh);
+      for (let y = by0; y <= by1; y++) for (let x = bx0; x <= bx1; x++) { let on = 0;
+        for (let dy = -R; dy <= R && !on; dy++) for (let dx = -R; dx <= R && !on; dx++) if (dx * dx + dy * dy <= R * R && hand.has((y + dy) * W + x + dx)) on = 1;
+        grown[(y - by0) * bw + x - bx0] = on; }
+      for (let y = by0 + R; y <= by1 - R; y++) for (let x = bx0 + R; x <= bx1 - R; x++) { const p = y * W + x, d = depth(x, y);
+        if (d < 0 || d > hl * .8 || x < 0 || y < 0) continue; let all = 1;
+        for (let dy = -R; dy <= R && all; dy++) for (let dx = -R; dx <= R && all; dx++) if (dx * dx + dy * dy <= R * R && !grown[(y + dy - by0) * bw + x + dx - bx0]) all = 0;
+        // inside the mitten everything is solid (also the fingers' see-through soft edges, which would show as light dots)
+        if (all) { o[p * 4 + 3] = 255; if (!hand.has(p)) paint(p * 4, c, .97); } } }
+    if (kind === 'handsker' || kind === 'vanter') for (const [x, y, i, d] of px) {
+      // (a mitten's fingers smoothed into one; light spots capped, as they would turn near white in light colours)
+      if (d < hl) paint(i, c, kind === 'vanter' && d < hl * .8 ? .92 + .1 * Math.min(1, shade(i)) : Math.min(1.05, shade(i)));
+      else if (kind === 'vanter' && d < hl + 6) paint(i, [248, 246, 240], .88 + .12 * shade(i)); // a fluffy white cuff
+      else if (kind === 'handsker' && d < hl + 3) paint(i, c, shade(i) * .8); }
+    if (kind === 'armbaand' || kind === 'ur') { let bx = 0, by = 0, n = 0;
+      for (const [x, y, i, d] of px) if (d >= hl && d < hl + 5) {
+        const bead = kind === 'armbaand' && d >= hl + 1.5 && d < hl + 3.5 && ((x * uy - y * ux) % 4 + 4) % 4 < 1.5;
+        paint(i, bead ? [255, 255, 255] : c, bead ? 1 : shade(i)); bx += x; by += y; n++; }
+      if (kind === 'ur' && n) marks.push(['ur', bx / n, by / n]); }
+    if (kind === 'neglelak') { // a nail on each finger tip: the skin furthest out, with no skin just beyond it or beside it
+      const tips = px.filter(([x, y, , d]) => d < Math.max(14, hl * .55) && !isSkin(x + ux * 2, y + uy * 2) && isSkin(x - ux * 2, y - uy * 2) &&
+        !isSkin(x + uy * 2 + ux, y - ux * 2 + uy) && !isSkin(x - uy * 2 + ux, y + ux * 2 + uy)).sort((a, b) => a[3] - b[3]), picked = [];
+      for (const [x, y] of tips) { const q = x * uy - y * ux; if (picked.length < 5 && picked.every(p => Math.abs(p[2] - q) > 4.5)) picked.push([x, y, q]); }
+      for (const [x, y] of picked) marks.push(['negl', x - ux * 1.6, y - uy * 1.6, Math.atan2(uy, ux)]); }
+    if (kind === 'klistermaerke') { let bx = 0, by = 0, n = 0;
+      for (const [x, y, , d] of px) if (d > hl * .45 && d < hl * .9) { bx += x; by += y; n++; }
+      if (n) marks.push(['stjerne', bx / n, by / n]); } }
+  if (marks.length) overlay(o, g => { for (const [m, x, y, ang] of marks) {
+    if (m === 'negl') { g.fillStyle = s.handColor || CLOTH[7]; g.beginPath(); g.ellipse(x, y, 2, 1.5, ang, 0, Math.PI * 2); g.fill();
+      g.fillStyle = 'rgba(255,255,255,.6)'; g.beginPath(); g.arc(x - .5, y - .5, .5, 0, Math.PI * 2); g.fill(); }
+    if (m === 'ur') { g.fillStyle = '#FFFFFF'; g.strokeStyle = s.handColor || CLOTH[7]; g.lineWidth = 1.4;
+      g.beginPath(); g.arc(x, y, 4.2, 0, Math.PI * 2); g.fill(); g.stroke();
+      g.strokeStyle = '#3A3550'; g.lineWidth = .8; g.beginPath(); g.moveTo(x, y); g.lineTo(x, y - 2.6); g.moveTo(x, y); g.lineTo(x + 1.9, y); g.stroke(); }
+    if (m === 'stjerne') { g.fillStyle = s.handColor || CLOTH[7]; g.strokeStyle = '#FFFFFF'; g.lineWidth = 1; g.beginPath();
+      for (let k = 0; k < 10; k++) { const r = k % 2 ? 2.2 : 5, a = -Math.PI / 2 + k * Math.PI / 5; g.lineTo(x + r * Math.cos(a), y + r * Math.sin(a)); }
+      g.closePath(); g.fill(); g.stroke(); } } });
+}
+// where the hands are on the stage figure (for zooming in on them in the Hænder tab)
+let handsAt = [];
+function handView() {
+  if (!handsAt.length) return null; const xs = handsAt.map(h => h[0]), ys = handsAt.map(h => h[1]);
+  const w = Math.max(...xs) - Math.min(...xs) + 110, h = Math.max(...ys) - Math.min(...ys) + 110;
+  return [(Math.max(...xs) + Math.min(...xs)) / 2, (Math.max(...ys) + Math.min(...ys)) / 2, Math.max(1.1, Math.min(2.2, W * .9 / w, H * .9 / h))];
 }
 function drawItem(ctx, s) {
   const it = ITEMS[s.item], [hx, hy] = s._hand || HAND[poseOf(s) || 'ned'] || HAND.ned, c = recoloured('hand-' + s.item, s.itemColor || CLOTH[0]);
@@ -481,6 +642,23 @@ function drawItem(ctx, s) {
   // in a raised open hand a teddy or a ball is held up, resting on the palm
   const g = hy < 200 && it.up ? it.up : it.grip;
   ctx.drawImage(c, -w * g[0], -h * g[1], w, h); ctx.restore();
+}
+
+// where each ear shape's lobe is (left, right), measured on the pictures
+const EAR_LOBES = { naturlig: [[201, 175], [311, 175]], 'oerer-smaa': [[200, 173], [312, 173]], 'oerer-store': [[197, 183], [315, 183]],
+  'oerer-udstaaende': [[200, 176], [312, 176]], 'oerer-alfe': [[201, 175], [311, 175]] };
+function drawEarrings(ctx, kind, lobes) {
+  ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.25)'; ctx.shadowBlur = 1;
+  for (const [x, y] of lobes) {
+    if (kind === 'perler') { const g = ctx.createRadialGradient(x - 1, y + 1, .5, x, y + 2, 3.4); g.addColorStop(0, '#FFFFFF'); g.addColorStop(1, '#D9D2E6');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y + 3, 3.8, 0, Math.PI * 2); ctx.fill(); }
+    if (kind === 'ringe') { ctx.strokeStyle = '#E8B730'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.arc(x, y + 6, 5, 0, Math.PI * 2); ctx.stroke(); }
+    if (kind === 'stjerner') { ctx.fillStyle = '#FFC233'; ctx.beginPath();
+      for (let k = 0; k < 10; k++) { const r = k % 2 ? 2.4 : 5.8, a = -Math.PI / 2 + k * Math.PI / 5; ctx.lineTo(x + r * Math.cos(a), y + 6 + r * Math.sin(a)); } ctx.fill(); }
+    if (kind === 'hjerter') { const r = 4.6, yy = y + 5; ctx.fillStyle = '#FF4F8B'; ctx.beginPath(); ctx.moveTo(x, yy + r * .9);
+      ctx.bezierCurveTo(x - r * 1.6, yy - r * .2, x - r * .7, yy - r * 1.4, x, yy - r * .45);
+      ctx.bezierCurveTo(x + r * .7, yy - r * 1.4, x + r * 1.6, yy - r * .2, x, yy + r * .9); ctx.fill(); } }
+  ctx.restore();
 }
 
 // Cheeks: soft rosy blush, freckles (a darker shade of the skin), little hearts, a star - centres on the 512x768 figure
@@ -573,11 +751,11 @@ function scene() {
   zoom();
 }
 // Tabs about the face zoom the stage in on it (a tap on the figure zooms out and in again): [x, y on the figure, scale]
-const ZOOM_VIEW = { oejne: [256, 150, 2.2], bryn: [256, 150, 2.2], mund: [256, 160, 2.2], kinder: [256, 160, 2.2], naese: [256, 160, 2.2], hat: [256, 120, 1.7], briller: [256, 150, 2.2] };
+const ZOOM_VIEW = { oejne: [256, 150, 2.2], bryn: [256, 150, 2.2], mund: [256, 160, 2.2], kinder: [256, 160, 2.2], naese: [256, 160, 2.2], oerer: [256, 160, 2.0], hat: [256, 120, 1.7], briller: [256, 150, 2.2], haender: [256, 400, 1.5] }; // the hands' view is worked out from where they are
 let zoomOn = true;
 const FIG_SCALE = .86; // as in the CSS (.stage canvas)
 function zoom() {
-  const st = document.getElementById('stage'), v = zoomOn && ZOOM_VIEW[tab];
+  const st = document.getElementById('stage'), v = zoomOn && (tab === 'haender' ? handView() : ZOOM_VIEW[tab]);
   st.classList.toggle('zoomed', !!v);
   if (!v) { document.getElementById('zoom').style.transform = ''; return; }
   let px = v[0] / W, py = v[1] / H; const k = v[2];
@@ -585,7 +763,7 @@ function zoom() {
   const s = k / FIG_SCALE, clamp = t => Math.min(0, Math.max(1 - s, t));
   document.getElementById('zoom').style.transform = `translate(${clamp(.5 - px * s) * 100}%, ${clamp(.45 - py * s) * 100}%) scale(${s})`;
 }
-document.getElementById('stage').addEventListener('click', () => { if (ZOOM_VIEW[tab]) { zoomOn = !zoomOn; zoom(); } });
+document.getElementById('stage').addEventListener('click', e => { if (!e.target.closest('.stage-btn') && ZOOM_VIEW[tab]) { zoomOn = !zoomOn; zoom(); } });
 // a balloon held high is drawn on the stage-sized sheet, so it is cut off by the frame and not by the figure's picture
 function drawOver(st) {
   const g = document.getElementById('over').getContext('2d'); g.clearRect(0, 0, W, H);
@@ -594,13 +772,16 @@ function drawOver(st) {
   if (mirrored(st)) { g.translate(W, 0); g.scale(-1, 1); }
   drawItem(g, { ...st, _over: false, _overBalloon: false }); g.restore();
 }
-function draw() { const st = { ...state, _over: true }; compose(st, fig); drawOver(st); scene(); try { localStorage.setItem('minimig2', JSON.stringify(state)); } catch (e) {} }
+function draw() { const st = { ...state, _over: true }; compose(st, fig);
+  handsAt = [0, 1].map(k => handZone(st, k)).filter(Boolean).map(z => [mirrored(st) ? W - 1 - z.cx : z.cx, z.cy]); drawOver(st); scene(); try { localStorage.setItem('minimig2', JSON.stringify(state)); } catch (e) {} }
 
 // small previews of each choice, cropped round the part
-const CROP = { haar: [100, 30, 310, 310], troeje: [100, 200, 310, 310], kjoler: [56, 160, 400, 470], bukser: [130, 390, 250, 250], sko: [150, 560, 210, 210], stilling: [26, 30, 460, 460], oejne: [181, 96, 150, 150], bryn: [181, 90, 150, 150], mund: [196, 130, 120, 120], kinder: [186, 110, 140, 140], naese: [206, 125, 100, 100], hat: [146, 10, 220, 220], briller: [176, 90, 160, 160], ting: [26, 30, 460, 460], sport: [26, 200, 460, 460] };
+const CROP = { haar: [100, 30, 310, 310], troeje: [100, 200, 310, 310], kjoler: [56, 160, 400, 470], bukser: [130, 390, 250, 250], sko: [150, 560, 210, 210], stilling: [26, 30, 460, 460], oejne: [181, 96, 150, 150], bryn: [181, 90, 150, 150], mund: [196, 130, 120, 120], kinder: [186, 110, 140, 140], naese: [206, 125, 100, 100], oerer: [146, 82, 220, 220], hat: [146, 10, 220, 220], briller: [176, 90, 160, 160], ting: [26, 30, 460, 460], sport: [26, 200, 460, 460] };
 function preview(canvas, s, t) {
   const big = document.createElement('canvas'); big.width = W; big.height = H; const g = big.getContext('2d'); compose(s, g);
-  const [x, y, w, h] = CROP[t]; const c = canvas.getContext('2d'); c.clearRect(0, 0, canvas.width, canvas.height); c.drawImage(big, x, y, w, h, 0, 0, canvas.width, canvas.height);
+  let [x, y, w, h] = CROP[t] || [];
+  if (t === 'haender') { const z = handZone(s, 1) || { cx: 323, cy: 420 }; x = (mirrored(s) ? W - 1 - z.cx : z.cx) - 45; y = z.cy - 45; w = h = 90; } // round the hand
+  const c = canvas.getContext('2d'); c.clearRect(0, 0, canvas.width, canvas.height); c.drawImage(big, x, y, w, h, 0, 0, canvas.width, canvas.height);
 }
 
 function render() {
@@ -628,6 +809,14 @@ function render() {
       if ((t.id === 'ting' && itemBlocked(state, v)) || (t.id === 'stilling' && itemBlocked({ ...state, pose: v }, state.item))) b.disabled = true;
       // a sport's picture shows its whole kit, as one tap on it puts it on
       preview(b.querySelector('canvas'), { ...state, [t.key]: t.multi ? (v === 'ingen' ? [] : [v]) : v, ...(t.id === 'sport' ? SPORT_KIT[v] : {}) }, t.id); } }
+  // a second row of choices in the same tab (earrings under the ears)
+  const m = t.more, opts2 = document.getElementById('opts2'); document.getElementById('optsWrap2').hidden = opts2.hidden = !m; opts2.innerHTML = '';
+  if (m) { document.getElementById('optsLabel2').textContent = m.label;
+    for (const [v, label] of m.opts) {
+      const b = document.createElement('button'); b.className = 'opt'; b.id = `opt-${m.key}-${v}`; b.dataset.val = v; b.dataset.key = m.key;
+      b.setAttribute('aria-pressed', (state[m.key] || m.opts[0][0]) === v);
+      b.innerHTML = `<canvas width="160" height="160"></canvas><span lang="da">${label}</span>`; opts2.appendChild(b);
+      preview(b.querySelector('canvas'), { ...state, [m.key]: v }, t.id); } }
   const ck = t.colorKey || t.key, show = !!t.colors && (t.id === 'hud' || state[t.key] !== 'ingen');
   document.getElementById('swLabel').textContent = t.id === 'hud' ? 'Hudfarve' : 'Farve';
   document.getElementById('swWrap').hidden = !show; const sw = document.getElementById('swatches'); sw.hidden = !show;
@@ -646,12 +835,81 @@ document.addEventListener('click', e => {
     if (v === 'ingen') l = []; else if (l.includes(v)) l = l.filter(x => x !== v);
     else { l = l.filter(x => !(CHEEK_CLASH[v] || []).includes(x)); l.push(v); }
     state[t.key] = l; draw(); render(); return; }
-  if (op) { state[t.key] = op.dataset.val;
+  if (op) { state[op.dataset.key || t.key] = op.dataset.val;
     if (t.id === 'sport') Object.assign(state, SPORT_KIT[op.dataset.val] || {}); draw(); render(); return; }
   const sw = e.target.closest('.sw'); if (sw) { state[t.colorKey || t.key] = sw.dataset.col; draw(); render(); return; }
   const bg = e.target.closest('[data-badge]'); if (bg) { state.badge = bg.dataset.badge; draw(); render(); }
 });
 document.getElementById('nameInput').addEventListener('input', e => { state.name = e.target.value.slice(0, 10); draw(); });
+
+// ---- saving a picture of the figure: the whole stage, or a profile picture of the head and shoulders ----
+// In the app the picture goes to the share sheet (Capacitor's Filesystem and Share); in a browser to the system's share,
+// and if neither is there, it is shown to be pressed and held. Apple's rules for children's apps say anything that
+// leaves the app sits behind a parent gate, so a grown-up answers a times-table sum first.
+const Cap = window.Capacitor, NATIVE = !!(Cap && Cap.isNativePlatform && Cap.isNativePlatform());
+const plugin = name => (NATIVE && Cap.Plugins && Cap.Plugins[name]) || null;
+const sceneImgs = {};
+const sceneImage = bg => new Promise(res => { if (sceneImgs[bg]) return res(sceneImgs[bg]);
+  const im = new Image(); im.onload = () => res(sceneImgs[bg] = im); im.onerror = () => res(null); im.src = `baggrund/${bg}.jpg`; });
+// the stage at twice its size (1024x1536): the sun or the scene, the shadow, and the figure standing as on the stage
+async function stagePicture() {
+  const S = 2, c = document.createElement('canvas'); c.width = W * S; c.height = H * S; const g = c.getContext('2d');
+  const bg = state.bg && state.bg !== 'sol' ? state.bg : '', im = bg && await sceneImage(bg), cw = c.width, ch = c.height;
+  if (im) { const k = Math.max(cw / im.naturalWidth, ch / im.naturalHeight), w = im.naturalWidth * k, h = im.naturalHeight * k; g.drawImage(im, (cw - w) / 2, (ch - h) / 2, w, h); }
+  else { const gr = g.createRadialGradient(cw * .5, ch * .42, 0, cw * .5, ch * .42, Math.hypot(cw * .5, ch * .58)); // as the stage's sun
+    gr.addColorStop(0, '#FFF3C2'); gr.addColorStop(.38, '#FFF3C2'); gr.addColorStop(1, '#FFD54A'); g.fillStyle = gr; g.fillRect(0, 0, cw, ch); }
+  const k = FIG_SCALE, rx = cw * .2 * k, ry = ch * .015 * k; // the soft shadow under the feet
+  g.save(); g.translate(cw * .5, ch * .85); g.scale(1, ry / rx); const sh = g.createRadialGradient(0, 0, 0, 0, 0, rx * 1.15);
+  sh.addColorStop(0, bg ? 'rgba(20,30,20,.28)' : 'rgba(43,33,83,.16)'); sh.addColorStop(.75, bg ? 'rgba(20,30,20,.2)' : 'rgba(43,33,83,.11)'); sh.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = sh; g.beginPath(); g.arc(0, 0, rx * 1.15, 0, Math.PI * 2); g.fill(); g.restore();
+  const f = document.createElement('canvas'); f.width = W; f.height = H; const st = { ...state, _over: true }; compose(st, f.getContext('2d'));
+  g.save(); g.scale(S, S); g.translate(256 * (1 - k), H * .85 * (1 - k)); g.scale(k, k); g.imageSmoothingQuality = 'high'; g.drawImage(f, 0, 0);
+  if (st._overBalloon) { if (mirrored(st)) { g.translate(W, 0); g.scale(-1, 1); } drawItem(g, { ...st, _over: false, _overBalloon: false }); } // a raised balloon
+  g.restore(); return c;
+}
+// the profile picture: the head and shoulders cut square from the stage picture (the figure's x 71..441, y 10..380)
+function profilePicture(full) {
+  const k = FIG_SCALE, S = 2, sx = v => (256 + (v - 256) * k) * S, sy = v => (H * .85 + (v - H * .85) * k) * S, x0 = sx(71), y0 = sy(10), side = sx(441) - x0;
+  const c = document.createElement('canvas'); c.width = c.height = 768; const g = c.getContext('2d'); g.imageSmoothingQuality = 'high';
+  g.drawImage(full, x0, y0, side, side, 0, 0, 768, 768); return c;
+}
+const pictureOf = async kind => { const full = await stagePicture(); return kind === 'profil' ? profilePicture(full) : full; };
+async function sharePicture(kind) {
+  const c = await pictureOf(kind), url = c.toDataURL('image/png'), name = kind === 'profil' ? 'minimig-profil.png' : 'minimig.png';
+  const blob = await new Promise((res, rej) => c.toBlob(b => b ? res(b) : rej(new Error('png')), 'image/png'));
+  const file = new File([blob], name, { type: 'image/png' });
+  try { if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: 'Min MiniMig' }); return; } }
+  catch (e) { if (e.name === 'AbortError') return; }
+  const fs = plugin('Filesystem'), sh = plugin('Share');
+  if (fs && sh) try { const saved = await fs.writeFile({ path: name, data: url.split(',')[1], directory: 'CACHE' }); await sh.share({ title: 'Min MiniMig', url: saved.uri }); return; } catch (e) {}
+  document.getElementById('picImg').src = url; document.getElementById('picSheet').hidden = false; // last resort: press and hold the picture
+}
+let gateAnswer = 0, gateEntry = '', gateThen = null;
+function newGateSum() {
+  const a = 3 + Math.floor(Math.random() * 7), b = 3 + Math.floor(Math.random() * 7); gateAnswer = a * b; gateEntry = '';
+  document.getElementById('gateQ').textContent = `Hvad er ${a} × ${b}?`; document.getElementById('gateA').textContent = '';
+}
+function askGrownUp(then) { gateThen = then; newGateSum(); document.getElementById('gate').hidden = false; }
+document.getElementById('keypad').addEventListener('click', e => {
+  const b = e.target.closest('[data-k]'); if (!b) return; const k = b.dataset.k, a = document.getElementById('gateA');
+  if (k === 'del') gateEntry = gateEntry.slice(0, -1);
+  else if (k === 'ok') {
+    if (gateEntry && +gateEntry === gateAnswer) { document.getElementById('gate').hidden = true; if (gateThen) gateThen(); return; }
+    a.classList.add('wrong'); setTimeout(() => { a.classList.remove('wrong'); newGateSum(); }, 450); return;
+  } else if (gateEntry.length < 3) gateEntry += k;
+  a.textContent = gateEntry;
+});
+document.getElementById('saveBtn').addEventListener('click', async () => {
+  document.getElementById('picChoice').hidden = false;
+  const full = await stagePicture(), prof = profilePicture(full); // small pictures of both choices
+  for (const [kind, p] of [['hel', full], ['profil', prof]]) { const cv = document.querySelector(`[data-pic="${kind}"] canvas`), g = cv.getContext('2d');
+    g.clearRect(0, 0, cv.width, cv.height); g.imageSmoothingQuality = 'high'; g.drawImage(p, 0, 0, cv.width, cv.height); }
+});
+document.getElementById('picChoice').addEventListener('click', e => { const b = e.target.closest('[data-pic]'); if (!b) return;
+  document.getElementById('picChoice').hidden = true; const kind = b.dataset.pic;
+  askGrownUp(() => sharePicture(kind).catch(() => {})); });
+for (const s of document.querySelectorAll('.sheet')) s.addEventListener('click', e => { if (e.target === s || e.target.closest('[data-close]')) s.hidden = true; });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') for (const s of document.querySelectorAll('.sheet')) s.hidden = true; });
 
 try { Object.assign(state, JSON.parse(localStorage.getItem('minimig2') || '{}')); } catch (e) {}
 // a choice saved earlier that the app no longer has (e.g. the vampire mouth) goes back to the tab's first choice
@@ -659,11 +917,12 @@ try { Object.assign(state, JSON.parse(localStorage.getItem('minimig2') || '{}'))
 state.cheeks = cheeksOf(state);
 for (const t of TABS) if (t.opts && t.key && !t.multi && state[t.key] !== undefined &&
   !TABS.some(u => u.key === t.key && u.opts && u.opts.some(o => o[0] === state[t.key]))) state[t.key] = t.opts[0][0];
+for (const t of TABS) if (t.more && state[t.more.key] !== undefined && !t.more.opts.some(o => o[0] === state[t.more.key])) state[t.more.key] = t.more.opts[0][0];
 const POSES = ['vink', 'hurra', 'hofter', 'dans'];
 const TOPS = ['troeje-tshirt', 'troeje-haette', 'troeje-fodbold', 'troeje-fodbold-inde', 'troeje-gymnastik', ...DRESSES];
-const names = ['grund', 'laar-bare2', 'haar-bob', 'haar-kort', 'haar-kroeller', 'haar-fletninger', ...TOPS, 'bukser-lange', 'bukser-fodbold', 'sko-sneakers', 'sko-fodbold', 'sko-ballet',
+const names = ['grund', 'laar-bare2', 'haar-bob', 'haar-kort', 'haar-kroeller', 'haar-fletninger', ...TOPS, 'bukser-lange', 'bukser-fodbold', 'sko-sneakers', 'sko-fodbold', 'sko-ballet', 'sko-glas',
   ...POSES.map(p => 'grund-' + p), ...POSES.flatMap(p => TOPS.map(t => t + '-' + p)),
-  ...['oejne', 'bryn', 'mund', 'naese', 'briller'].flatMap(id => TABS.find(t => t.id === id).opts.map(o => o[0]).filter(n => n !== 'naturlig' && n !== 'ingen'))];
+  ...['oejne', 'bryn', 'mund', 'naese', 'oerer', 'briller'].flatMap(id => TABS.find(t => t.id === id).opts.map(o => o[0]).filter(n => n !== 'naturlig' && n !== 'ingen'))];
 const GEAR_PICS = [...Object.values(GEAR).map(g => g.pic), ...Object.keys(HATS).map(h => 'hat-' + h), ...Object.keys(ITEMS).map(n => 'hand-' + n)]; // not prepared as parts
 Promise.all([...names, ...GEAR_PICS].map(n => load(n))).then(list => {
   for (const [n, im] of list) { if (!im) continue; img[n] = im; if (!GEAR_PICS.includes(n)) prepare(n, im); }
