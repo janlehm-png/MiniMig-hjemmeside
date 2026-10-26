@@ -1,0 +1,24 @@
+[hidden] { display:none !important; }
+.pwa-tools { font:14px/1.4 system-ui,sans-serif; color:var(--ink,#2b2153); display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:8px; padding:6px 12px max(6px,env(safe-area-inset-bottom)); }
+.pwa-tools button { min-height:44px; padding:8px 14px; border:2px solid #7350bd; border-radius:14px; background:#fff8e9; color:#2b2153; font:inherit; cursor:pointer; }
+.pwa-tools button:focus-visible,.pwa-tools a:focus-visible { outline:3px solid #3d8bff; outline-offset:3px; }
+.pwa-status { font-size:12px; }
+.pwa-dialog { box-sizing:border-box; width:min(540px,calc(100% - 24px)); max-height:85dvh; overflow:auto; padding:24px; border:0; border-radius:22px; background:#fff8e9; color:#2b2153; }
+.pwa-dialog::backdrop { background:#20152e99; }
+.pwa-dialog h2 { margin-top:0; }
+.pwa-dialog a { color:#563298; }
+body.pwa-game { min-height:100vh; min-height:100dvh; }
+.pwa-game .sw { width:44px; height:44px; }
+@media(max-width:720px) {
+ body.pwa-game { height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom)); min-height:0; display:flex; flex-direction:column; }
+ .pwa-game > .wrap { height:auto; flex:1; min-height:0; width:100%; }
+ .pwa-game > .pwa-tools { flex:none; padding:4px 0; gap:4px 8px; }
+ .pwa-game .stage { height:min(38dvh,350px); }
+}
+@media(max-height:500px) {
+ html:has(.pwa-game),body.pwa-game { overflow:auto; height:auto; }
+ .pwa-game > .wrap { height:auto; display:grid; }
+ .pwa-game .main { display:grid; grid-template-columns:minmax(100px,.65fr) minmax(0,1fr); }
+ .pwa-game .stage { position:sticky; top:8px; height:auto; width:100%; }
+ .pwa-game .box { overflow:visible; }
+}

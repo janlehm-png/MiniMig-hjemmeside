@@ -31,6 +31,8 @@ try {
   $html = $html.Replace('<meta charset="utf-8">', "<meta charset=`"utf-8`">`n<title>Pr&oslash;v MiniMig</title>`n<meta name=`"robots`" content=`"noindex`">`n<link rel=`"icon`" href=`"../billeder/ikon-180.png`">`n<link rel=`"apple-touch-icon`" href=`"../billeder/ikon-180.png`">")
   [IO.File]::WriteAllText($fil, $html, (New-Object Text.UTF8Encoding $false))
 
+  & (Join-Path $PSScriptRoot 'build-pwa.ps1')
+
   $version = & $git -C $App log -1 --format='%h %s'
   Write-Host "proev/ opdateret fra app-projektet: $version"
 } finally {

@@ -57,3 +57,6 @@ footer a { color: var(--muted); }
   header.top { flex-direction: column; gap: 8px; padding-bottom: 6px; }
   nav a { margin: 0 9px; }
 }
+
+nav { display:flex; flex-wrap:wrap; justify-content:center; gap:8px; }
+nav a { display:inline-flex; align-items:center; min-height:44px; }
