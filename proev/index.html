@@ -304,7 +304,7 @@ function load(name, tries = 4) {
     im.onload = () => ok([name, im]);
     im.onerror = () => tries > 1 ? setTimeout(() => load(name, tries - 1).then(ok), 700) : ok([name, null]);
     im.src = 'dele/' + name + '.png?v=' + PICS_V + (tries < 4 ? '-' + tries : ''); }); }
-const PICS_V = 68; // raised when pictures change, so phones and browsers fetch the new ones instead of old copies
+const PICS_V = 69; // raised when pictures change, so phones and browsers fetch the new ones instead of old copies
 
 // per part: which pixels take the chosen colour (coloured ones; on shoes not the white soles) and their middle brightness
 function prepare(name, im) {
@@ -551,7 +551,7 @@ const HAND_FIND_R = { ned: { box: [302, 360, 372, 470], fx: [318, 372], dir: [0,
   dans: { box: [320, 0, 440, 120], dir: [.15, -1] } }; // (the football shirt holds this arm closer to the head)
 // from the finger tips back to the wrist, per pose [left, right] (measured on the hands' widths: the dance pose's
 // pointing hand is long, open raised hands are big)
-const HAND_LEN = { ned: [30, 30], vink: [30, 32], hurra: [36, 36], hofter: [28, 28], dans: [44, 30] };
+const HAND_LEN = { ned: [30, 30], vink: [30, 36], hurra: [40, 40], hofter: [28, 28], dans: [44, 34] };
 // one hand (side 0: left of the picture, 1: right) on the figure as drawn so far: its finger tips' reach along the
 // arm's direction, and the middle of the hand
 // The finger tips are searched for only between `fx` (where given), so a leg showing through a dress's slit is not taken
@@ -635,10 +635,9 @@ function drawHands(o, s, skin) {
 }
 // where the hands are on the stage figure (for zooming in on them in the Hænder tab)
 let handsAt = [];
+// (close in on one hand - the one on the right of the figure, which also wears the watch and shows in the small pictures)
 function handView() {
-  if (!handsAt.length) return null; const xs = handsAt.map(h => h[0]), ys = handsAt.map(h => h[1]);
-  const w = Math.max(...xs) - Math.min(...xs) + 110, h = Math.max(...ys) - Math.min(...ys) + 110;
-  return [(Math.max(...xs) + Math.min(...xs)) / 2, (Math.max(...ys) + Math.min(...ys)) / 2, Math.max(1.1, Math.min(2.2, W * .9 / w, H * .9 / h))];
+  const h = handsAt[1] || handsAt[0]; return h ? [h[0], h[1], 4.2] : null;
 }
 function drawItem(ctx, s) {
   const it = ITEMS[s.item], [hx, hy] = s._hand || HAND[poseOf(s) || 'ned'] || HAND.ned, c = recoloured('hand-' + s.item, s.itemColor || CLOTH[0]);
@@ -698,16 +697,16 @@ function drawCheeks(ctx, list, skin) {
   ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.18)'; ctx.shadowBlur = 1;
   if (has('hjerter')) { ctx.fillStyle = '#FF4F8B'; for (const [x, y] of CHEEKS) heart(x, y, 5); }
   if (has('stjerne')) star(CHEEKS[1][0], CHEEKS[1][1], 6.5, 2.6, '#FFC233');
-  if (has('regnbue')) { const [x, y] = CHEEKS[0]; // a little painted rainbow on the left cheek
+  if (has('regnbue')) { const x = 229, y = 175; // a little painted rainbow on the left cheek (well inside the face)
     ['#FF5A5A', '#FFA43B', '#FFD93B', '#5BD16E', '#4EA8FF', '#9B6BFF'].forEach((col, k) => {
-      ctx.strokeStyle = col; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x, y + 4, 9 - k * 1.4, Math.PI, 0); ctx.stroke(); }); }
+      ctx.strokeStyle = col; ctx.lineWidth = 1.3; ctx.beginPath(); ctx.arc(x, y + 4, 7.5 - k * 1.15, Math.PI, 0); ctx.stroke(); }); }
   if (has('glimmer')) // small twinkling stars round the face
     [[196, 128, 4.5, '#FFD43B'], [318, 124, 3.8, '#FFFFFF'], [314, 190, 3.2, '#FFD43B'], [198, 192, 3, '#FFFFFF'], [328, 156, 2.6, '#FF9EC4']]
       .forEach(([x, y, R, col]) => star(x, y, R, R * .35, col));
   ctx.restore();
-  if (has('plaster')) { ctx.save(); ctx.translate(299, 186); ctx.rotate(-.45); // a plaster on the right cheek
-    ctx.fillStyle = '#F3C38F'; ctx.beginPath(); ctx.roundRect(-12, -5, 24, 10, 5); ctx.fill();
-    ctx.fillStyle = '#E5AE77'; ctx.fillRect(-5, -5, 10, 10);
+  if (has('plaster')) { ctx.save(); ctx.translate(285, 178); ctx.rotate(-.45); // a plaster on the right cheek (inside the face)
+    ctx.fillStyle = '#F3C38F'; ctx.strokeStyle = '#C98D55'; ctx.lineWidth = .8; ctx.beginPath(); ctx.roundRect(-10, -4, 20, 8, 4); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#E5AE77'; ctx.fillRect(-4, -4, 8, 8);
     ctx.fillStyle = '#C98D55'; for (const [dx, dy] of [[-2, -2], [2, 2], [2, -2], [-2, 2]]) { ctx.beginPath(); ctx.arc(dx, dy, .7, 0, Math.PI * 2); ctx.fill(); }
     ctx.restore(); }
   ctx.restore();
@@ -783,14 +782,14 @@ function drawOver(st) {
   drawItem(g, { ...st, _over: false, _overBalloon: false }); g.restore();
 }
 function draw() { const st = { ...state, _over: true }; compose(st, fig);
-  handsAt = [0, 1].map(k => handZone(st, k)).filter(Boolean).map(z => [mirrored(st) ? W - 1 - z.cx : z.cx, z.cy]); drawOver(st); scene(); try { localStorage.setItem('minimig2', JSON.stringify(state)); } catch (e) {} }
+  handsAt = [0, 1].map(k => handZone(st, k)).map(z => z && [mirrored(st) ? W - 1 - z.cx : z.cx, z.cy]); drawOver(st); scene(); try { localStorage.setItem('minimig2', JSON.stringify(state)); } catch (e) {} }
 
 // small previews of each choice, cropped round the part
 const CROP = { haar: [100, 30, 310, 310], troeje: [100, 200, 310, 310], kjoler: [56, 160, 400, 470], bukser: [130, 390, 250, 250], sko: [150, 560, 210, 210], stilling: [26, 30, 460, 460], oejne: [181, 96, 150, 150], bryn: [181, 90, 150, 150], mund: [196, 130, 120, 120], kinder: [186, 110, 140, 140], naese: [206, 125, 100, 100], oerer: [146, 82, 220, 220], hat: [146, 10, 220, 220], briller: [176, 90, 160, 160], ting: [26, 30, 460, 460], fodbold: [130, 400, 300, 300] }; // (fodbold: the Ting tab's football, down by the feet)
 function preview(canvas, s, t) {
   const big = document.createElement('canvas'); big.width = W; big.height = H; const g = big.getContext('2d'); compose(s, g);
   let [x, y, w, h] = (t === 'ting' && s.item === 'fodbold' ? CROP.fodbold : CROP[t]) || [];
-  if (t === 'haender') { const z = handZone(s, 1) || { cx: 323, cy: 420 }; x = (mirrored(s) ? W - 1 - z.cx : z.cx) - 45; y = z.cy - 45; w = h = 90; } // round the hand
+  if (t === 'haender') { const z = handZone(s, 1) || { cx: 323, cy: 420 }; x = (mirrored(s) ? W - 1 - z.cx : z.cx) - 32; y = z.cy - 32; w = h = 64; } // close round the hand
   const c = canvas.getContext('2d'); c.clearRect(0, 0, canvas.width, canvas.height); c.drawImage(big, x, y, w, h, 0, 0, canvas.width, canvas.height);
 }
 
