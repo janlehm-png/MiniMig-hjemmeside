@@ -25,10 +25,10 @@ try {
   if (Test-Path $maal) { Remove-Item $maal -Recurse -Force }
   Move-Item "$tmp\www" $maal
 
-  # Spillet har ingen titel; giv det en, og bed søgemaskiner lade siden være
+  # Spillet har ingen titel; giv det en. build-pwa.ps1 tilfoejer PWA og soegemetadata.
   $fil = Join-Path $maal 'index.html'
   $html = [IO.File]::ReadAllText($fil)
-  $html = $html.Replace('<meta charset="utf-8">', "<meta charset=`"utf-8`">`n<title>Pr&oslash;v MiniMig</title>`n<meta name=`"robots`" content=`"noindex`">`n<link rel=`"icon`" href=`"../billeder/ikon-180.png`">`n<link rel=`"apple-touch-icon`" href=`"../billeder/ikon-180.png`">")
+  $html = $html.Replace('<meta charset="utf-8">', "<meta charset=`"utf-8`">`n<title>Pr&oslash;v MiniMig</title>`n<link rel=`"icon`" href=`"../billeder/ikon-180.png`">`n<link rel=`"apple-touch-icon`" href=`"../billeder/ikon-180.png`">")
   [IO.File]::WriteAllText($fil, $html, (New-Object Text.UTF8Encoding $false))
 
   & (Join-Path $PSScriptRoot 'build-pwa.ps1')
