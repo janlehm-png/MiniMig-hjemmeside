@@ -206,6 +206,8 @@ const SKIN = ['#F6D0AE', '#EDB98A', '#D9965F', '#B5713F', '#8D5530', '#5A3520'];
 const HAIR = ['#2A1C17', '#4A2C1D', '#7A4428', '#A8582E', '#D9A55C', '#F0D9A0', '#FF7EBB', '#5AA9FF'];
 const EYES = ['#9C5A1E', '#3B7BD4', '#3E9A5C', '#A0763A', '#7D8A99', '#8A5CE6'];
 const CLOTH = ['#E8384F', '#FF7A2F', '#FFC233', '#2FB872', '#13BFA6', '#3D8BFF', '#7A4DFF', '#FF6FB1', '#F4F1EA', '#3A3550'];
+// besides plain colours: a rainbow, and patterns (dots, gingham, stripes) over the last plain colour chosen
+const PATTERNS = ['prikker', 'tern', 'striber'], SPECIAL = ['regnbue', ...PATTERNS];
 const TABS = [
   { id: 'hud', name: 'Hud', colors: SKIN, key: 'skin' },
   // (hair can also be rainbow-coloured: 'regnbue' paints it in bands of the rainbow's colours from top to bottom)
@@ -237,13 +239,13 @@ const TABS = [
   { id: 'hat', name: 'Hat', key: 'hat', colorKey: 'hatColor', colors: CLOTH,
     opts: [['ingen', 'Ingen'], ['krone', 'Krone'], ['tiara', 'Tiara'], ['sloejfe', 'Sløjfe'], ['blomst', 'Blomst'], ['kasket', 'Kasket'],
       ['festhat', 'Festhat'], ['enhjoerning', 'Enhjørning'], ['kaninoerer', 'Kaninører'], ['hovedtelefoner', 'Høre­telefoner']] },
-  { id: 'troeje', name: 'Trøje', key: 'top', colorKey: 'topColor', colors: CLOTH,
+  { id: 'troeje', name: 'Trøje', key: 'top', colorKey: 'topColor', colors: [...CLOTH, ...SPECIAL],
     opts: [['ingen', 'Undertrøje'], ['troeje-tshirt', 'T-shirt'], ['troeje-haette', 'Hætte­trøje'], ['troeje-fodbold', 'Fodbold­trøje'], ['troeje-gymnastik', 'Gymnastik/​badedragt']] },
   // a dress takes the top's place (and its colour), so a dress and a top are never worn together
-  { id: 'kjoler', name: 'Kjoler', key: 'top', colorKey: 'topColor', colors: CLOTH,
+  { id: 'kjoler', name: 'Kjoler', key: 'top', colorKey: 'topColor', colors: [...CLOTH, ...SPECIAL],
     opts: [['ingen', 'Ingen'], ['troeje-ballet', 'Ballet­kjole'], ['kjole-prinsesse', 'Prinsesse'], ['kjole-sommer', 'Sommer­kjole'],
       ['kjole-tyl', 'Tylkjole'], ['kjole-fest', 'Fest­kjole'], ['kjole-havfrue', 'Havfrue'], ['kjole-havfruedragt', 'Havfrue­dragt'], ['kjole-galla', 'Galla']] },
-  { id: 'bukser', name: 'Bukser', key: 'pants', colorKey: 'pantsColor', colors: CLOTH,
+  { id: 'bukser', name: 'Bukser', key: 'pants', colorKey: 'pantsColor', colors: [...CLOTH, ...SPECIAL],
     opts: [['ingen', 'Shorts'], ['bukser-lange', 'Lange bukser'], ['bukser-fodbold', 'Fodbold­shorts']] },
   { id: 'sko', name: 'Sko', key: 'shoes', colorKey: 'shoeColor', colors: CLOTH,
     opts: [['ingen', 'Bare tæer'], ['sko-sneakers', 'Sneakers'], ['sko-fodbold', 'Fodbold­støvler'], ['sko-ballet', 'Balletsko'], ['sko-glas', 'Glassko']] },
@@ -251,7 +253,7 @@ const TABS = [
     opts: [['ned', 'Står'], ['vink', 'Vinker'], ['vink2', 'Vinker med den anden'], ['hurra', 'Hurra'], ['hofter', 'Hænder i siden'], ['dans', 'Danser'], ['dans2', 'Danser modsat']] },
   { id: 'navn', name: 'Navn' },
   { id: 'haender', name: 'Hænder', key: 'hands', colorKey: 'handColor', colors: CLOTH,
-    opts: [['ingen', 'Ingen'], ['neglelak', 'Neglelak'], ['armbaand', 'Armbånd'], ['ur', 'Ur'], ['handsker', 'Handsker'], ['vanter', 'Vanter'], ['klistermaerke', 'Klister­mærke']] },
+    opts: [['ingen', 'Ingen'], ['neglelak', 'Neglelak'], ['armbaand', 'Armbånd'], ['ur', 'Ur'], ['handsker', 'Handsker'], ['vanter', 'Vanter'], ['ring', 'Ring']] },
   { id: 'ting', name: 'Ting', key: 'item', colorKey: 'itemColor', colors: CLOTH,
     opts: [['ingen', 'Ingen'], ['ballon', 'Ballon'], ['bamse', 'Bamse'], ['tryllestav', 'Tryllestav'], ['is', 'Is'], ['blomst', 'Blomst'], ['bold', 'Bold'], ['fodbold', 'Fodbold'], ['hulahop', 'Hula­hopring']] },
   { id: 'baggrund', name: 'Baggrund', key: 'bg',
@@ -304,7 +306,7 @@ function load(name, tries = 4) {
     im.onload = () => ok([name, im]);
     im.onerror = () => tries > 1 ? setTimeout(() => load(name, tries - 1).then(ok), 700) : ok([name, null]);
     im.src = 'dele/' + name + '.png?v=' + PICS_V + (tries < 4 ? '-' + tries : ''); }); }
-const PICS_V = 69; // raised when pictures change, so phones and browsers fetch the new ones instead of old copies
+const PICS_V = 70; // raised when pictures change, so phones and browsers fetch the new ones instead of old copies
 
 // per part: which pixels take the chosen colour (coloured ones; on shoes not the white soles) and their middle brightness
 function prepare(name, im) {
@@ -371,8 +373,8 @@ const skinNow = new Uint8Array(W * H); // where the figure shows bare skin so fa
 function compose(s, ctx) {
   hidden.fill(0); skinNow.fill(0);
   const out = ctx.createImageData(W, H), o = out.data, base = data[baseOf(s)] || data.grund, skin = hex(s.skin);
-  const topC = s.top !== 'ingen' ? hex(s.topColor) : null, eyeC = hex(s.eyeColor || EYES[0]), browC = hex(s.browColor || '#4A2C1D');
-  const pantsC = s.pants !== 'ingen' ? hex(s.pantsColor) : null, bareLegs = DRESSES.includes(s.top) && s.pants === 'ingen';
+  const topC = s.top !== 'ingen' ? hex(colBase(s, 'topColor')) : null, eyeC = hex(s.eyeColor || EYES[0]), browC = hex(s.browColor || '#4A2C1D');
+  const pantsC = s.pants !== 'ingen' ? hex(colBase(s, 'pantsColor')) : null, bareLegs = DRESSES.includes(s.top) && s.pants === 'ingen';
   for (let i = 0, p = 0; p < W * H; i += 4, p++) {
     let r = base.px[i], g = base.px[i + 1], b = base.px[i + 2], a = base.px[i + 3];
     if (base.paint[p] === 1) { skinNow[p] = 1; const k = base.L[p] / base.mid; r = tint(skin[0], k); g = tint(skin[1], k); b = tint(skin[2], k); }
@@ -388,14 +390,14 @@ function compose(s, ctx) {
   const baseCopy = o.slice(); // the body as painted, for spots a part hid but no part then covered
   // face parts first; trousers go over the shoes, so the trouser hem falls over the top of the shoe.
   // A tucked-in top (the football shirt) lies under the shorts; a dress has bare legs under it, no shorts.
-  const body = [[s.pants, s.pantsColor], ['maerke-bukser'], [topOf(s), s.topColor]];
+  const body = [[s.pants, colSpec(s, 'pantsColor')], ['maerke-bukser'], [topOf(s), colSpec(s, 'topColor')]];
   // bare thighs under a leotard or dress: the base's own legs carried up (laar-bare2), so they match the legs below;
   // the thighs the AI drew with the dress are left out
   // (not in the mermaid costume: the legs are inside its tail, which is narrower than they are)
   const bareThighs = LEG_TOPS.includes(s.top) && s.top !== 'kjole-havfruedragt' && s.pants === 'ingen' && data['laar-bare2'];
   const legs = bareThighs ? [['laar-bare2', '#000000']] : [];
   const layers = [[s.eyes, s.eyeColor], ['lukkede-oejne'], [s.brows, s.browColor || '#4A2C1D'], [s.mouth, '#000000'], ['kinder'], [s.nose, '#000000'], [s.ears, '#000000'], ['oreringe'], [s.top === 'kjole-havfruedragt' ? 'ingen' : s.shoes, s.shoeColor],
-    ...legs, ...body, ['navn'], [s.hair, s.hairColor], [s.glasses, s.glassesColor || CLOTH[0]], ['hat'], ['haender'], ['ting']]; // glasses sit over the hair; gloves before the thing held, so the fingers round it are gloved
+    ...legs, ...body, ['navn'], [s.hair, colSpec(s, 'hairColor')], [s.glasses, s.glassesColor || CLOTH[0]], ['hat'], ['haender'], ['ting']]; // glasses sit over the hair; gloves before the thing held, so the fingers round it are gloved
   for (const [name, col, flag] of layers) {
     // things the app draws itself go on a clean sheet that is then laid over the figure, so the figure's own pixels are
     // never sent through the canvas and back (Safari on iPad loses colour in see-through pixels on every such round trip)
@@ -430,7 +432,8 @@ function compose(s, ctx) {
       const crest = CREST.troeje[s.top];
       if (!(s.name || '').trim() && (s.badge || 'ingen') === 'ingen' && !crest) continue;
       overlay(o, g2 => { printName(s, g2, mirrored(s)); if (crest) drawCrest(g2, crest, mirrored(s)); }); continue; }
-    if (!name || name === 'ingen' || name === 'naturlig' || !data[name]) continue; const d = data[name], rainbow = col === 'regnbue' ? rainbowRows(name) : null, c = rainbow ? null : hex(col), soft = SOFT[name.split('-')[0]] || 1, kmax = name.startsWith('troeje-ballet') ? 1.15 : KMAX[name.split('-')[0]] || 99; // tulle highlights stay pink, not white
+    if (!name || name === 'ingen' || name === 'naturlig' || !data[name]) continue; const d = data[name], rainbow = col === 'regnbue' ? rainbowRows(name) : null, pat = typeof col === 'string' && col.includes(':') ? col.split(':')[0] : null,
+      c = rainbow ? null : hex(pat ? col.split(':')[1] : col), soft = SOFT[name.split('-')[0]] || 1, kmax = name.startsWith('troeje-ballet') ? 1.15 : KMAX[name.split('-')[0]] || 99; // tulle highlights stay pink, not white
     // a top's bare thighs and hide marks below the waist (a leotard's) must not cover trousers worn with it
     const over = name === topOf(s) && s.pants !== 'ingen' && LEG_TOPS.includes(s.top) ? WAIST * W : W * H;
     for (let i = 0, p = 0; p < W * H; i += 4, p++) {
@@ -447,7 +450,7 @@ function compose(s, ctx) {
       else if (d.paint[p] === 4) { const k = name.startsWith('oejne') ? d.L[p] / base.mid : Math.min(1.12, d.L[p] / base.mid); r = tint(skin[0], k); g = tint(skin[1], k); b = tint(skin[2], k); }
       // a see-through edge (tulle, a soft outline) is never lit up: on dark skin it would show as a white rim
       // (rainbow hair is lit up less, so its red, orange and blue don't fade toward white)
-      else if (d.paint[p]) { const k = Math.min(rainbow ? 1.2 : kmax, a < 200 ? 1 : 99, d.L[p] / d.mid), cc = rainbow ? rainbow[p / W | 0] : c;
+      else if (d.paint[p]) { const k = Math.min(rainbow ? 1.2 : kmax, a < 200 ? 1 : 99, d.L[p] / d.mid), cc = rainbow ? rainbow[p / W | 0] : pat ? patternAt(pat, c, p) : c;
         r = tint(cc[0], k, soft); g = tint(cc[1], k, soft); b = tint(cc[2], k, soft); }
       // fabric's soft edge over a spot another part has hidden (a seam, e.g. shirt into shorts) is drawn solid,
       // else the background would show through the seam
@@ -490,6 +493,24 @@ const HATS = { krone: [256, 52, 82], tiara: [256, 64, 92], sloejfe: [284, 60, 54
 // rainbow hair: one colour per row, from red at the top of the hairstyle through orange, yellow, green and blue to violet
 // at its lowest ends (spread over each hairstyle's own height, so short hair shows the whole rainbow too)
 const rainbowCache = {};
+// where a single colour is needed (the underwear's edges under clothes, the name's ink), a rainbow counts as violet
+// Patterns: dots, gingham checks or stripes in white over the last plain colour chosen for that thing (kept as e.g.
+// topColorBase), so red then "Prikket" gives red with white dots
+const BASE_DEFAULT = { hairColor: '#4A2C1D', topColor: '#E8384F', pantsColor: '#3D8BFF' };
+const patBase = (s, key) => s[key + 'Base'] || (/^#/.test(s[key] || '') ? s[key] : BASE_DEFAULT[key] || CLOTH[0]);
+// the colour as a layer takes it: a plain colour, 'regnbue', or a pattern with its base ('prikker:#E8384F')
+const colSpec = (s, key) => (PATTERNS.includes(s[key]) ? s[key] + ':' + patBase(s, key) : s[key]);
+// one plain colour, where only one will do (the underwear's edges under clothes, the name's ink): a rainbow counts as violet
+const colBase = (s, key) => (s[key] === 'regnbue' ? '#8A5CE6' : PATTERNS.includes(s[key]) ? patBase(s, key) : s[key]);
+const PAT_WHITE = [250, 248, 244];
+function patternAt(pat, c, p) {
+  const x = p % W, y = p / W | 0;
+  if (pat === 'prikker') { const row = Math.floor(y / 11), ox = row % 2 ? 5.5 : 0, dx = ((x + ox) % 11) - 5.5, dy = (y % 11) - 5.5;
+    return dx * dx + dy * dy < 7.5 ? PAT_WHITE : c; }
+  if (pat === 'striber') return y % 10 < 4 ? PAT_WHITE : c;
+  const a = x % 12 < 6, b = y % 12 < 6, mix = t => [c[0] + (PAT_WHITE[0] - c[0]) * t, c[1] + (PAT_WHITE[1] - c[1]) * t, c[2] + (PAT_WHITE[2] - c[2]) * t];
+  return a && b ? c : a || b ? mix(.5) : mix(.88); // gingham: full where the bands cross, half where one band runs, nearly white between
+}
 function rainbowRows(name) {
   if (rainbowCache[name]) return rainbowCache[name]; const d = data[name]; let y0 = H, y1 = 0;
   for (let p = 0; p < W * H; p++) if (d.paint[p] === 1 && d.px[p * 4 + 3] > 128) { const y = p / W | 0; if (y < y0) y0 = y; if (y > y1) y1 = y; }
@@ -551,7 +572,8 @@ const HAND_FIND_R = { ned: { box: [302, 360, 372, 470], fx: [318, 372], dir: [0,
   dans: { box: [320, 0, 440, 120], dir: [.15, -1] } }; // (the football shirt holds this arm closer to the head)
 // from the finger tips back to the wrist, per pose [left, right] (measured on the hands' widths: the dance pose's
 // pointing hand is long, open raised hands are big)
-const HAND_LEN = { ned: [30, 30], vink: [30, 36], hurra: [40, 40], hofter: [28, 28], dans: [44, 34] };
+// (measured where the hand's width falls back to the arm's after the palm)
+const HAND_LEN = { ned: [34, 34], vink: [34, 41], hurra: [45, 45], hofter: [30, 30], dans: [48, 45] };
 // one hand (side 0: left of the picture, 1: right) on the figure as drawn so far: its finger tips' reach along the
 // arm's direction, and the middle of the hand
 // The finger tips are searched for only between `fx` (where given), so a leg showing through a dress's slit is not taken
@@ -575,20 +597,20 @@ function handZone(s, side) {
     const seen = new Set([bp]), todo = [bp]; pix = [];
     while (todo.length) { const p = todo.pop(), x = p % W, y = p / W | 0, d = best - (x * ux + y * uy); pix.push([x, y, d]);
       for (const q of [p - 1, p + 1, p - W, p + W]) { const qx = q % W, qy = q / W | 0;
-        if (qx >= x0 && qx < x1 && qy >= y0 && qy < y1 && !seen.has(q) && !skip.has(q) && skinNow[q] && best - (qx * ux + qy * uy) < hl + 7) { seen.add(q); todo.push(q); } } }
+        if (qx >= x0 && qx < x1 && qy >= y0 && qy < y1 && !seen.has(q) && !skip.has(q) && skinNow[q] && best - (qx * ux + qy * uy) < hl + 12) { seen.add(q); todo.push(q); } } } // (room for a mitten's long cuff)
     if (pix.length >= 60) break; for (const q of seen) skip.add(q); if (tries === 11) return null; }
   let sx = 0, sy = 0, n = 0; for (const [x, y, d] of pix) if (d < hl) { sx += x; sy += y; n++; }
   return { box: f.box, ux, uy, best, len: hl, pix, cx: sx / n, cy: sy / n };
 }
 // things on the hands: gloves and mittens colour the hand, a bracelet or watch band goes round the wrist, nail
-// polish on the finger tips, a star sticker on the back of the hand. The watch is worn on one hand only.
+// polish on the finger tips, a ring on a finger. The watch and the ring are worn on one hand only.
 function drawHands(o, s, skin) {
   const kind = s.hands, c = hex(s.handColor || CLOTH[7]), sl = lum(skin[0], skin[1], skin[2]) || .5, marks = [];
   const shade = i => lum(o[i], o[i + 1], o[i + 2]) / sl;
   const paint = (i, col, k) => { o[i] = tint(col[0], k); o[i + 1] = tint(col[1], k); o[i + 2] = tint(col[2], k); };
   const isSkin = (x, y) => { x = Math.round(x); y = Math.round(y); return x >= 0 && y >= 0 && x < W && y < H && skinNow[y * W + x] === 1; };
   for (const side of [0, 1]) {
-    if (kind === 'ur' && !side) continue;
+    if ((kind === 'ur' || kind === 'ring') && !side) continue; // (one hand only)
     const z = handZone(s, side); if (!z) continue; const [x0, y0, x1, y1] = z.box, hl = z.len, px = [];
     const { ux, uy } = z, depth = (x, y) => z.best - (x * ux + y * uy);
     for (const [x, y, d] of z.pix) { const i = (y * W + x) * 4; if (o[i + 3]) px.push([x, y, i, d]); }
@@ -608,8 +630,8 @@ function drawHands(o, s, skin) {
     if (kind === 'handsker' || kind === 'vanter') for (const [x, y, i, d] of px) {
       // (a mitten's fingers smoothed into one; light spots capped, as they would turn near white in light colours)
       if (d < hl) paint(i, c, kind === 'vanter' && d < hl * .8 ? .92 + .1 * Math.min(1, shade(i)) : Math.min(1.05, shade(i)));
-      else if (kind === 'vanter' && d < hl + 6) paint(i, [248, 246, 240], .88 + .12 * shade(i)); // a fluffy white cuff
-      else if (kind === 'handsker' && d < hl + 3) paint(i, c, shade(i) * .8); }
+      else if (kind === 'vanter' && d < hl + 11) paint(i, [248, 246, 240], .88 + .12 * shade(i)); // a long fluffy white cuff over the wrist
+      else if (kind === 'handsker' && d < hl + 5) paint(i, c, shade(i) * .8); }
     if (kind === 'armbaand' || kind === 'ur') { let bx = 0, by = 0, n = 0;
       for (const [x, y, i, d] of px) if (d >= hl && d < hl + 5) {
         const bead = kind === 'armbaand' && d >= hl + 1.5 && d < hl + 3.5 && ((x * uy - y * ux) % 4 + 4) % 4 < 1.5;
@@ -620,18 +642,23 @@ function drawHands(o, s, skin) {
         !isSkin(x + uy * 2 + ux, y - ux * 2 + uy) && !isSkin(x - uy * 2 + ux, y + ux * 2 + uy)).sort((a, b) => a[3] - b[3]), picked = [];
       for (const [x, y] of tips) { const q = x * uy - y * ux; if (picked.length < 5 && picked.every(p => Math.abs(p[2] - q) > 4.5)) picked.push([x, y, q]); }
       for (const [x, y] of picked) marks.push(['negl', x - ux * 1.6, y - uy * 1.6, Math.atan2(uy, ux)]); }
-    if (kind === 'klistermaerke') { let bx = 0, by = 0, n = 0;
-      for (const [x, y, , d] of px) if (d > hl * .45 && d < hl * .9) { bx += x; by += y; n++; }
-      if (n) marks.push(['stjerne', bx / n, by / n]); } }
+    if (kind === 'ring') { // a gold ring with a little stone on the ring finger, well down the finger toward the knuckle
+      const tips = px.filter(([x, y, , d]) => d < Math.max(14, hl * .55) && !isSkin(x + ux * 2, y + uy * 2) && isSkin(x - ux * 2, y - uy * 2) &&
+        !isSkin(x + uy * 2 + ux, y - ux * 2 + uy) && !isSkin(x - uy * 2 + ux, y + ux * 2 + uy)).sort((a, b) => a[3] - b[3]), picked = [];
+      for (const [x, y] of tips) { const q = x * uy - y * ux; if (picked.length < 5 && picked.every(p => Math.abs(p[2] - q) > 4.5)) picked.push([x, y, q]); }
+      if (picked.length) { picked.sort((a, b) => mirrored(s) ? b[0] - a[0] : a[0] - b[0]); // left to right as seen (a mirrored pose is turned round after this)
+        // (from the left as seen: the thumb, the little finger, then the ring finger)
+        const [x, y] = picked[Math.min(2, picked.length - 1)], back = hl * .42;
+        marks.push(['ring', x - ux * back, y - uy * back, Math.atan2(uy, ux)]); } } }
   if (marks.length) overlay(o, g => { for (const [m, x, y, ang] of marks) {
     if (m === 'negl') { g.fillStyle = s.handColor || CLOTH[7]; g.beginPath(); g.ellipse(x, y, 2, 1.5, ang, 0, Math.PI * 2); g.fill();
       g.fillStyle = 'rgba(255,255,255,.6)'; g.beginPath(); g.arc(x - .5, y - .5, .5, 0, Math.PI * 2); g.fill(); }
     if (m === 'ur') { g.fillStyle = '#FFFFFF'; g.strokeStyle = s.handColor || CLOTH[7]; g.lineWidth = 1.4;
       g.beginPath(); g.arc(x, y, 4.2, 0, Math.PI * 2); g.fill(); g.stroke();
       g.strokeStyle = '#3A3550'; g.lineWidth = .8; g.beginPath(); g.moveTo(x, y); g.lineTo(x, y - 2.6); g.moveTo(x, y); g.lineTo(x + 1.9, y); g.stroke(); }
-    if (m === 'stjerne') { g.fillStyle = s.handColor || CLOTH[7]; g.strokeStyle = '#FFFFFF'; g.lineWidth = 1; g.beginPath();
-      for (let k = 0; k < 10; k++) { const r = k % 2 ? 2.2 : 5, a = -Math.PI / 2 + k * Math.PI / 5; g.lineTo(x + r * Math.cos(a), y + r * Math.sin(a)); }
-      g.closePath(); g.fill(); g.stroke(); } } });
+    if (m === 'ring') { const px2 = -Math.sin(ang), py2 = Math.cos(ang); // across the finger
+      g.strokeStyle = '#E8B730'; g.lineWidth = 1.8; g.lineCap = 'round'; g.beginPath(); g.moveTo(x - px2 * 2.4, y - py2 * 2.4); g.lineTo(x + px2 * 2.4, y + py2 * 2.4); g.stroke();
+      g.fillStyle = s.handColor || CLOTH[7]; g.strokeStyle = '#FFF4C2'; g.lineWidth = .6; g.beginPath(); g.arc(x, y, 1.7, 0, Math.PI * 2); g.fill(); g.stroke(); } } });
 }
 // where the hands are on the stage figure (for zooming in on them in the Hænder tab)
 let handsAt = [];
@@ -737,7 +764,7 @@ function drawCrest(ctx, [cx, cy, h], flip = false) {
 
 function printName(s, ctx, flip = false) {
   const name = (s.name || '').trim().slice(0, 10), badge = (BADGES.find(b => b[0] === s.badge) || ['', ''])[1];
-  const col = s.top === 'ingen' ? '#2B4BD8' : s.topColor, [r, g, b] = hex(col), light = lum(r, g, b) > .62;
+  const col = s.top === 'ingen' ? '#2B4BD8' : colBase(s, 'topColor'), [r, g, b] = hex(col), light = lum(r, g, b) > .62;
   const ink = light ? '#2B2153' : '#FFFFFF';
   ctx.save(); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   if (flip) { ctx.translate(W, 0); ctx.scale(-1, 1); } // printed backwards, so it reads right once the figure is turned
@@ -829,8 +856,13 @@ function render() {
   const ck = t.colorKey || t.key, show = !!t.colors && (t.id === 'hud' || state[t.key] !== 'ingen') && !(t.id === 'ting' && GEAR[state.item]);
   document.getElementById('swLabel').textContent = t.id === 'hud' ? 'Hudfarve' : 'Farve';
   document.getElementById('swWrap').hidden = !show; const sw = document.getElementById('swatches'); sw.hidden = !show;
-  sw.innerHTML = (t.colors || []).map(c => c === 'regnbue'
-    ? `<button class="sw" id="sw-regnbue" style="background:linear-gradient(#E8384F,#FF9A2F,#FFD43B,#2FB872,#3D8BFF,#8A5CE6)" aria-label="Regnbue" aria-pressed="${state[ck] === c}" data-col="${c}"></button>`
+  // the pattern buttons show the pattern in the last plain colour chosen
+  const pb = patBase(state, ck), PAT_LOOK = { regnbue: ['Regnbue', 'linear-gradient(#E8384F,#FF9A2F,#FFD43B,#2FB872,#3D8BFF,#8A5CE6)'],
+    prikker: ['Prikket', `radial-gradient(circle, #fff 26%, transparent 29%) 0 0 / 12px 12px, ${pb}`],
+    tern: ['Ternet', `linear-gradient(90deg, rgba(255,255,255,.55) 50%, transparent 50%) 0 0 / 12px 12px, linear-gradient(rgba(255,255,255,.55) 50%, transparent 50%) 0 0 / 12px 12px, ${pb}`],
+    striber: ['Stribet', `repeating-linear-gradient(#fff 0 4px, ${pb} 4px 10px)`] };
+  sw.innerHTML = (t.colors || []).map(c => PAT_LOOK[c]
+    ? `<button class="sw" id="sw-${c}" style="background:${PAT_LOOK[c][1]}" aria-label="${PAT_LOOK[c][0]}" aria-pressed="${state[ck] === c}" data-col="${c}"></button>`
     : `<button class="sw" id="sw-${c.slice(1)}" style="background:${c}" aria-label="Farve ${c}" aria-pressed="${state[ck] === c}" data-col="${c}"></button>`).join('');
 }
 
@@ -847,7 +879,9 @@ document.addEventListener('click', e => {
     else { l = l.filter(x => !(CHEEK_CLASH[v] || []).includes(x)); l.push(v); }
     state[t.key] = l; draw(); render(); return; }
   if (op) { state[op.dataset.key || t.key] = op.dataset.val; draw(); render(); return; }
-  const sw = e.target.closest('.sw'); if (sw) { state[t.colorKey || t.key] = sw.dataset.col; draw(); render(); return; }
+  // (a plain colour is also kept as the colour the patterns are drawn in)
+  const sw = e.target.closest('.sw'); if (sw) { const ck = t.colorKey || t.key, v = sw.dataset.col; state[ck] = v;
+    if (!SPECIAL.includes(v)) state[ck + 'Base'] = v; draw(); render(); return; }
   const bg = e.target.closest('[data-badge]'); if (bg) { state.badge = bg.dataset.badge; draw(); render(); }
 });
 document.getElementById('nameInput').addEventListener('input', e => { state.name = e.target.value.slice(0, 10); draw(); });
@@ -925,6 +959,7 @@ try { Object.assign(state, JSON.parse(localStorage.getItem('minimig2') || '{}'))
 // a choice saved earlier that the app no longer has (e.g. the vampire mouth) goes back to the tab's first choice
 // (a key shared by two tabs - tops and dresses - is fine if either tab has the choice)
 state.cheeks = cheeksOf(state);
+if (PATTERNS.includes(state.hairColor)) state.hairColor = patBase(state, 'hairColor'); // (hair has no patterns any more)
 for (const t of TABS) if (t.opts && t.key && !t.multi && state[t.key] !== undefined &&
   !TABS.some(u => u.key === t.key && u.opts && u.opts.some(o => o[0] === state[t.key]))) state[t.key] = t.opts[0][0];
 for (const t of TABS) if (t.more && state[t.more.key] !== undefined && !t.more.opts.some(o => o[0] === state[t.more.key])) state[t.more.key] = t.more.opts[0][0];
