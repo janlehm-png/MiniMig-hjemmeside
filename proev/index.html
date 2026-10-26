@@ -306,7 +306,7 @@ function load(name, tries = 4) {
     im.onload = () => ok([name, im]);
     im.onerror = () => tries > 1 ? setTimeout(() => load(name, tries - 1).then(ok), 700) : ok([name, null]);
     im.src = 'dele/' + name + '.png?v=' + PICS_V + (tries < 4 ? '-' + tries : ''); }); }
-const PICS_V = 71; // raised when pictures change, so phones and browsers fetch the new ones instead of old copies
+const PICS_V = 75; // raised when pictures change, so phones and browsers fetch the new ones instead of old copies
 
 // per part: which pixels take the chosen colour (coloured ones; on shoes not the white soles) and their middle brightness
 function prepare(name, im) {
@@ -325,7 +325,12 @@ function prepare(name, im) {
     } else if (name.startsWith('briller')) { // glasses: the frame takes the colour = 1, dark sunglass lenses stay dark = 0
       if (!(L[p] < .3 && mx - mn < 40)) { paint[p] = 1; if (a > 200) ls.push(L[p]); }
     } else if (name.startsWith('mund') || name.startsWith('naese')) { // mouth, nose: skin = 4, lips, teeth, clown nose as drawn
-      if (grey) paint[p] = 4;
+      // (and the light, see-through pixels at the outer edge - where the teeth meet the skin above them - count as skin,
+      // else they show as grey dots over the lip; teeth inside the mouth are solid and stay white)
+      // (in mouths also: cool, neutral greys - the shadow over the upper lip - and bluish light pixels along the lips; the
+      // teeth are a warm white and stay as drawn)
+      if (grey || (name.startsWith('mund') && a < 200 && L[p] > .55 && (mx - mn < 45 || b > r)) ||
+        (name.startsWith('mund') && L[p] > .3 && ((mx - mn < 20 && r - b <= 6) || (b > r + 4 && L[p] > .4)))) paint[p] = 4;
     } else if (name.startsWith('bryn')) { // brow parts: skin = 4 (over the old brows), the hairs (and their shine) take the brow colour = 1
       if (grey) paint[p] = 4; else { paint[p] = 1; if (brow) ls.push(L[p]); }
     } else if (name.startsWith('grund')) { // grey skin = 1, blue underwear = 2, iris = 6, brows = 7
