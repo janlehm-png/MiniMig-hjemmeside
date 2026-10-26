@@ -306,7 +306,7 @@ function load(name, tries = 4) {
     im.onload = () => ok([name, im]);
     im.onerror = () => tries > 1 ? setTimeout(() => load(name, tries - 1).then(ok), 700) : ok([name, null]);
     im.src = 'dele/' + name + '.png?v=' + PICS_V + (tries < 4 ? '-' + tries : ''); }); }
-const PICS_V = 75; // raised when pictures change, so phones and browsers fetch the new ones instead of old copies
+const PICS_V = 78; // raised when pictures change, so phones and browsers fetch the new ones instead of old copies
 
 // per part: which pixels take the chosen colour (coloured ones; on shoes not the white soles) and their middle brightness
 function prepare(name, im) {
@@ -401,7 +401,7 @@ function compose(s, ctx) {
   // (not in the mermaid costume: the legs are inside its tail, which is narrower than they are)
   const bareThighs = LEG_TOPS.includes(s.top) && s.top !== 'kjole-havfruedragt' && s.pants === 'ingen' && data['laar-bare2'];
   const legs = bareThighs ? [['laar-bare2', '#000000']] : [];
-  const layers = [[s.eyes, s.eyeColor], ['lukkede-oejne'], [s.brows, s.browColor || '#4A2C1D'], [s.mouth, '#000000'], ['kinder'], [s.nose, '#000000'], [s.ears, '#000000'], ['oreringe'], [s.top === 'kjole-havfruedragt' ? 'ingen' : s.shoes, s.shoeColor],
+  const layers = [[s.eyes, s.eyeColor], ['lukkede-oejne'], ...(s.brows && s.brows !== 'naturlig' && s.brows !== 'bryn-ingen' ? [['bryn-ingen', '#000000']] : []), [s.brows, s.browColor || '#4A2C1D'], [s.mouth, '#000000'], ['kinder'], [s.nose, '#000000'], [s.ears, '#000000'], ['oreringe'], [s.top === 'kjole-havfruedragt' ? 'ingen' : s.shoes, s.shoeColor],
     ...legs, ...body, ['navn'], [s.hair, colSpec(s, 'hairColor')], [s.glasses, s.glassesColor || CLOTH[0]], ['hat'], ['haender'], ['ting']]; // glasses sit over the hair; gloves before the thing held, so the fingers round it are gloved
   for (const [name, col, flag] of layers) {
     // things the app draws itself go on a clean sheet that is then laid over the figure, so the figure's own pixels are
@@ -447,12 +447,15 @@ function compose(s, ctx) {
       // (and all of the dress's own skin over the thighs, low enough to miss hands resting on the hips)
       if (bareThighs && name === topOf(s) && p >= WAIST * W && (d.paint[p] === 3 || d.paint[p] === 4) &&
         (data['laar-bare2'].px[i + 3] > 1 || (p >= 418 * W && p % W > 202 && p % W < 311))) continue;
+      // a brow drawn over the clean forehead (bryn-ingen, laid under it): only its hairs, and nothing down at the eyes
+      // (light pixels in a brow picture are the rim of the skin patch it once had, never hairs)
+      if (name.startsWith('bryn') && name !== 'bryn-ingen' && (d.paint[p] === 4 || p >= 140 * W || d.L[p] > .72)) continue;
       if (d.paint[p] === 3) { o[i + 3] = 0; skinNow[p] = 0; hidden[p] = name === s.pants ? 2 : 1; continue; } // 2: only the trousers hid it
       let r = d.px[i], g = d.px[i + 1], b = d.px[i + 2];
       if (d.paint[p] === 5) { const v = Math.min(255, 150 + 140 * d.L[p]); r = g = b = v; }
       // skin drawn with clothes; capped, as light mixed edge pixels would otherwise turn white on dark skin
       // (the eye parts' skin is the face's own skin round the eyes, lit like the base's, so it is not capped)
-      else if (d.paint[p] === 4) { const k = name.startsWith('oejne') ? d.L[p] / base.mid : Math.min(1.12, d.L[p] / base.mid); r = tint(skin[0], k); g = tint(skin[1], k); b = tint(skin[2], k); }
+      else if (d.paint[p] === 4) { const k = name.startsWith('oejne') || name.startsWith('bryn') ? d.L[p] / base.mid : Math.min(1.12, d.L[p] / base.mid); r = tint(skin[0], k); g = tint(skin[1], k); b = tint(skin[2], k); }
       // a see-through edge (tulle, a soft outline) is never lit up: on dark skin it would show as a white rim
       // (rainbow hair is lit up less, so its red, orange and blue don't fade toward white)
       else if (d.paint[p]) { const k = Math.min(rainbow ? 1.2 : kmax, a < 200 ? 1 : 99, d.L[p] / d.mid), cc = rainbow ? rainbow[p / W | 0] : pat ? patternAt(pat, c, p) : c;
