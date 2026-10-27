@@ -143,6 +143,7 @@ header { display: flex; align-items: baseline; justify-content: space-between; g
 /* the star (save the figure) and Mine figurer, down the stage's left side */
 .stage-btn.left { right: auto; left: 10px; }
 .stage-btn.second { top: 66px; }
+.stage-btn.third { top: 122px; }
 @media (prefers-reduced-motion: no-preference) { .stage-btn.pop { animation: pop .5s ease; } }
 @keyframes pop { 40% { transform: scale(1.35) rotate(-12deg); } 100% { transform: none; } }
 .toast { position: fixed; left: 50%; top: max(24px, env(safe-area-inset-top, 0px)); transform: translateX(-50%); z-index: 60; pointer-events: none;
@@ -189,7 +190,7 @@ header { display: flex; align-items: baseline; justify-content: space-between; g
   .main { display: flex; flex-direction: row; gap: 12px; flex: 1; min-height: 0; align-items: stretch; }
   .stage { position: relative; top: 0; flex: none; height: calc(100% - 8px); width: auto; aspect-ratio: 2 / 3; border-radius: 20px; align-self: flex-start; }
   .stage-btn { width: 40px; height: 40px; font-size: 1.2rem; top: 8px; }
-  .stage-btn.left { left: 8px; } .stage-btn:not(.left) { right: 8px; } .stage-btn.second { top: 54px; }
+  .stage-btn.left { left: 8px; } .stage-btn:not(.left) { right: 8px; } .stage-btn.second { top: 54px; } .stage-btn.third { top: 100px; }
   .panel { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 6px; }
   .tabs { flex: none; flex-wrap: nowrap; overflow-x: auto; gap: 6px 12px; padding: 2px 2px 4px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
   .tabs::-webkit-scrollbar { display: none; }
@@ -212,7 +213,8 @@ header { display: flex; align-items: baseline; justify-content: space-between; g
       <div class="loading" id="loading" role="status" aria-label="Spillet hentes"><span>⭐</span><span>⭐</span><span>⭐</span></div>
       <button class="stage-btn" id="saveBtn" aria-label="Gem billede">📷<span class="lock-badge" id="lockBadge" hidden aria-hidden="true">🔓</span></button>
       <button class="stage-btn left" id="keepBtn" aria-label="Gem figuren">⭐</button>
-      <button class="stage-btn left second" id="figsBtn" aria-label="Mine figurer">🖼️</button></div>
+      <button class="stage-btn left second" id="figsBtn" aria-label="Mine figurer">🖼️</button>
+      <button class="stage-btn left third" id="newBtn" aria-label="Ny MiniMig">✨</button></div>
     <div class="panel">
       <div class="tabs" role="tablist" id="tabs"></div>
       <div class="box">
@@ -279,6 +281,17 @@ header { display: flex; align-items: baseline; justify-content: space-between; g
       <button class="pic-opt" data-pic="hel"><canvas width="200" height="300"></canvas><span>Hele figuren</span></button>
       <button class="pic-opt" data-pic="profil"><canvas width="300" height="300"></canvas><span>Profilbillede</span></button>
     </div>
+  </div>
+</div>
+<!-- a new MiniMig from the start: a boy or a girl in underwear (the figure before is kept in Mine figurer) -->
+<div class="sheet" id="newChoice" hidden>
+  <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="newChoiceTitle">
+    <div class="sheet-head"><h2 id="newChoiceTitle">Ny MiniMig</h2><button class="sheet-x" data-close aria-label="Luk">✕</button></div>
+    <div class="pic-opts">
+      <button class="pic-opt" data-new="dreng"><canvas width="200" height="300"></canvas><span>Dreng</span></button>
+      <button class="pic-opt" data-new="pige"><canvas width="200" height="300"></canvas><span>Pige</span></button>
+    </div>
+    <p class="note">Den figur, du har nu, bliver gemt i Mine figurer 🖼️.</p>
   </div>
 </div>
 <!-- Mine figurer: the figures saved with the star; tap one to dress up as it again, ✕ (twice) to delete it -->
@@ -384,6 +397,7 @@ const BADGES = [['ingen', ''], ['stjerne', '⭐'], ['hjerte', '❤️'], ['regnb
   ['fodbold', '⚽'], ['raket', '🚀'], ['hund', '🐶'], ['blomst', '🌸']];
 const state = { skin: '#EDB98A', hair: 'haar-bob', hairColor: '#4A2C1D', top: 'troeje-tshirt', topColor: '#FF7A2F',
   pants: 'bukser-lange', pantsColor: '#3D8BFF', shoes: 'sko-sneakers', shoeColor: '#E8384F', name: 'Ida', badge: 'stjerne', pose: 'vink', bg: 'sol', eyes: 'naturlig', eyeColor: '#9C5A1E', brows: 'naturlig', browColor: '#4A2C1D', mouth: 'naturlig', hands: 'ingen', handColor: '#FF6FB1' };
+const STATE0 = JSON.parse(JSON.stringify(state)); // the colours etc. a new figure starts from
 let tab = 'haar';
 const W = 512, H = 768, WAIST = 372; // above the waist the underwear is the vest, below it the shorts
 
@@ -501,7 +515,11 @@ function compose(s, ctx) {
       const c = (p / W | 0) < WAIST ? topC : pantsC;
       // under a dress there are bare legs: the shorts' last soft edges (round the bare-thigh patch) turn to skin
       if (!c && bareLegs && (p / W | 0) >= WAIST) { const k = base.L[p] / base.blueMid * .9; r = tint(skin[0], k); g = tint(skin[1], k); b = tint(skin[2], k); }
-      else if (c) { const k = base.L[p] / base.blueMid; r = tint(c[0], k); g = tint(c[1], k); b = tint(c[2], k); } }
+      else if (c) { const k = base.L[p] / base.blueMid; r = tint(c[0], k); g = tint(c[1], k); b = tint(c[2], k); }
+      // nothing over it: the underwear of a new figure (vest and shorts) in its own colour or pattern ('tern:#3D8BFF')
+      else { const u = (p / W | 0) < WAIST ? s.underTop : s.underBottom;
+        if (u) { const [pat, col] = u.includes(':') ? u.split(':') : [null, u], cc = pat ? patternAt(pat, hex(col), p) : hex(col), k = base.L[p] / base.blueMid;
+          r = tint(cc[0], k); g = tint(cc[1], k); b = tint(cc[2], k); } } }
     else if (base.paint[p] === 6) { const k = base.L[p] / base.eyeMid; r = tint(eyeC[0], k); g = tint(eyeC[1], k); b = tint(eyeC[2], k); }
     else if (base.paint[p] === 7) { const k = base.L[p] / base.browMid; r = tint(browC[0], k); g = tint(browC[1], k); b = tint(browC[2], k); }
     o[i] = r; o[i + 1] = g; o[i + 2] = b; o[i + 3] = a;
@@ -1147,6 +1165,30 @@ document.getElementById('keepChoice').addEventListener('click', e => { const c =
   const b = document.getElementById('keepBtn'); b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop');
   toast(storeFigs(l) ? '⭐ Gemt!' : 'Kunne ikke gemme');
 });
+// ---- a new MiniMig from the start (✨): every tab back to its first choice, standing in underwear on the sun - a boy
+// with short hair in a white vest and checked blue boxers, a girl with plaits in pink spotted underwear ----
+const NEW_FIG = { dreng: { hair: 'haar-kort', underTop: '#F4F1EA', underBottom: 'tern:#3D8BFF' },
+  pige: { hair: 'haar-fletninger', underTop: 'prikker:#FF6FB1', underBottom: 'prikker:#FF6FB1' } };
+function newFig(kind) {
+  const f = { ...JSON.parse(JSON.stringify(STATE0)), name: '', badge: 'ingen' };
+  for (const t of TABS) { if (t.key && t.opts) f[t.key] = t.multi ? [] : t.opts[0][0]; if (t.more) f[t.more.key] = t.more.opts[0][0]; }
+  return { ...f, top: 'ingen', ...NEW_FIG[kind] };
+}
+document.getElementById('newBtn').addEventListener('click', async () => {
+  const sheet = document.getElementById('newChoice'); sheet.hidden = false;
+  for (const kind of ['dreng', 'pige']) { const p = await stagePicture(newFig(kind), .5), cv = sheet.querySelector(`[data-new="${kind}"] canvas`), g = cv.getContext('2d');
+    g.clearRect(0, 0, cv.width, cv.height); g.imageSmoothingQuality = 'high'; g.drawImage(p, 0, 0, cv.width, cv.height); }
+});
+document.getElementById('newChoice').addEventListener('click', e => { const b = e.target.closest('[data-new]'); if (!b) return;
+  document.getElementById('newChoice').hidden = true;
+  // the figure there was first goes into Mine figurer, so it is never lost (not when it is already the newest one there,
+  // or a new figure nobody has changed yet)
+  const same = (a, b) => !!a && !!b && JSON.stringify(Object.keys(a).filter(k => k !== '_view').sort().map(k => [k, a[k]])) === JSON.stringify(Object.keys(b).filter(k => k !== '_view').sort().map(k => [k, b[k]]));
+  const l = savedFigs(), now = JSON.parse(JSON.stringify(state));
+  if (![l[0], tidy(newFig('dreng')), tidy(newFig('pige'))].some(f => same(f, now))) { l.unshift(now); storeFigs(l); }
+  for (const k of Object.keys(state)) delete state[k];
+  Object.assign(state, newFig(b.dataset.new)); tidy(state); draw(); render(); toast('✨ Ny MiniMig!');
+});
 let galleryRun = 0; // a newer drawing of the gallery stops an older one still drawing its pictures
 async function renderGallery() {
   const l = savedFigs(), el = document.getElementById('gallery'), run = ++galleryRun;
@@ -1162,7 +1204,7 @@ document.getElementById('gallery').addEventListener('click', e => {
   e.stopPropagation(); // (the tiles look like choices, but must not reach the choices' own click handler)
   const load = e.target.closest('[data-load]'), del = e.target.closest('[data-del]'), l = savedFigs();
   if (load) { const fig = l[+load.dataset.load]; if (!fig) return;
-    Object.assign(state, fig); delete state._view; tidy(state); document.getElementById('figSheet').hidden = true; draw(); render(); }
+    Object.assign(state, fig); delete state._view; if (!('underTop' in fig)) { delete state.underTop; delete state.underBottom; } tidy(state); document.getElementById('figSheet').hidden = true; draw(); render(); }
   else if (del) { // a first tap asks "Slet?", only a second one deletes, so a figure is not lost by a stray tap
     if (!del.classList.contains('armed')) { del.classList.add('armed'); del.textContent = 'Slet?'; setTimeout(() => { del.classList.remove('armed'); del.textContent = '✕'; }, 2500); return; }
     l.splice(+del.dataset.del, 1); storeFigs(l); renderGallery(); }
