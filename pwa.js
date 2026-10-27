@@ -32,6 +32,9 @@ panel.innerHTML = `<button type="button" class="pwa-help">Til voksne</button>
 <div class="pwa-message" role="status" aria-live="polite" aria-atomic="true"><strong>Besked</strong>
 <p class="pwa-status">Spillet hentes. Vent lidt, og behold internetforbindelsen.</p></div>
 <p>Browseren kan senere rydde de gemte filer, hvis enheden mangler plads. Åbn i så fald MiniMig med internetforbindelse igen, så filerne kan hentes på ny.</p>
+<h3>Billeder ud af spillet</h3>
+<p>Med kameraet kan barnet gemme et billede af figuren eller et profilbillede og dele det. Før billedet forlader spillet, skal en voksen løse et lille regnestykke.</p>
+<p>Bagefter kan I vælge, at barnet må dele uden at spørge i 1 time, resten af dagen eller indtil I slår det fra igen (det sidste kræver et sværere regnestykke). Så viser kameraet en lille grøn hængelås, og I kan altid slå det fra igen med knappen <strong>Slå fra igen</strong>, når I trykker på kameraet. Valget gælder kun på den enhed, hvor det er slået til. Et navn på trøjen kommer med på billedet.</p>
 <h3>Jeres figur og privatliv</h3>
 <p>Figuren og et eventuelt navn på trøjen gemmes kun i denne browser. Når MiniMig føjes til hjemmeskærmen, kan det få sin egen separate lagring, så figuren ikke nødvendigvis følger med.</p>
 <p>MiniMig bruger ingen analyseværktøjer eller sporing.</p>
