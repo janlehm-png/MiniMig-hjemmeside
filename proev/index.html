@@ -332,7 +332,7 @@ function load(name, tries = 4) {
     im.onload = () => ok([name, im]);
     im.onerror = () => tries > 1 ? setTimeout(() => load(name, tries - 1).then(ok), 700) : ok([name, null]);
     im.src = 'dele/' + name + '.png?v=' + PICS_V + (tries < 4 ? '-' + tries : ''); }); }
-const PICS_V = 79; // raised when pictures change, so phones and browsers fetch the new ones instead of old copies
+const PICS_V = 80; // raised when pictures change, so phones and browsers fetch the new ones instead of old copies
 
 // per part: which pixels take the chosen colour (coloured ones; on shoes not the white soles) and their middle brightness
 function prepare(name, im) {
