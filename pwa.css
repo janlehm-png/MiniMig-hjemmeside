@@ -19,10 +19,12 @@ body.pwa-game { min-height:100vh; min-height:100dvh; }
  .pwa-game > .pwa-tools { flex:none; padding:4px 0; gap:4px 8px; }
  .pwa-game .stage { height:min(38dvh,350px); }
 }
-@media(max-height:500px) {
- html:has(.pwa-game),body.pwa-game { overflow:auto; height:auto; }
- .pwa-game > .wrap { height:auto; display:grid; }
- .pwa-game .main { display:grid; grid-template-columns:minmax(100px,.65fr) minmax(0,1fr); }
- .pwa-game .stage { position:sticky; top:8px; height:auto; width:100%; }
- .pwa-game .box { overflow:visible; }
+/* a phone turned sideways: the game lays itself out side by side (in its own styles); here only room is left for the
+   bar with "Til voksne" under it */
+@media(max-height:520px) and (min-width:560px) {
+ body.pwa-game { height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom)); min-height:0; display:flex; flex-direction:column; }
+ .pwa-game > .wrap { height:auto; flex:1; min-height:0; width:100%; }
+ .pwa-game > .pwa-tools { flex:none; padding:2px 0; gap:4px 8px; }
+ .pwa-game > .pwa-tools button { min-height:34px; padding:4px 12px; }
+ .pwa-game .stage { height:calc(100% - 8px); } /* (not the upright phone's small stage) */
 }

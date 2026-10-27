@@ -120,6 +120,13 @@ header { display: flex; align-items: baseline; justify-content: space-between; g
 .pic-save { justify-self: center; padding: 12px 22px; border-radius: 999px; background: var(--grape); color: #fff; text-decoration: none; font: 700 1.1rem/1.2 var(--font-display); }
 .pic-mouse { display: none; }
 @media (hover: hover) and (pointer: fine) { .pic-mouse { display: block; } .pic-save.pic-mouse { display: inline-block; } .pic-touch { display: none; } }
+/* while the pictures are fetched (a few seconds on a first visit): three hopping stars on the stage */
+.loading { position: absolute; inset: 0; z-index: 2; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 2.2rem; pointer-events: none; }
+.loading[hidden] { display: none; }
+.loading span { display: inline-block; }
+@media (prefers-reduced-motion: no-preference) {
+  .loading span { animation: hop 1s ease-in-out infinite; } .loading span:nth-child(2) { animation-delay: .15s; } .loading span:nth-child(3) { animation-delay: .3s; } }
+@keyframes hop { 0%, 60%, 100% { transform: none; } 30% { transform: translateY(-18px) scale(1.15); } }
 /* sharing without a grown-up (allowed for a while by a parent): a small open lock on the camera, and the choices */
 .lock-badge { position: absolute; right: -4px; bottom: -4px; width: 22px; height: 22px; border-radius: 50%; background: #2FB872;
   display: grid; place-items: center; font-size: .72rem; line-height: 1; box-shadow: 0 1px 4px var(--shadow); }
@@ -172,6 +179,27 @@ header { display: flex; align-items: baseline; justify-content: space-between; g
   .box { flex: 1; min-height: 0; overflow-y: auto; padding: 12px; align-content: start; gap: 10px; border-radius: 18px 18px 0 0; }
   .opts { grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; }
 }
+/* a phone turned sideways (wide but low): the figure on the left at the full height, the tabs in one sideways row and
+   the choices beside it, and only the choices scroll - so the figure stays in view while the child picks */
+@media (max-height: 520px) and (min-width: 560px) {
+  html, body { overflow: hidden; }
+  .wrap { max-width: none; height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); padding-block: 8px 0; display: flex; flex-direction: column; gap: 6px; }
+  header { display: none; }
+  /* (also overriding the upright phone's layout above, for phones under 720 wide) */
+  .main { display: flex; flex-direction: row; gap: 12px; flex: 1; min-height: 0; align-items: stretch; }
+  .stage { position: relative; top: 0; flex: none; height: calc(100% - 8px); width: auto; aspect-ratio: 2 / 3; border-radius: 20px; align-self: flex-start; }
+  .stage-btn { width: 40px; height: 40px; font-size: 1.2rem; top: 8px; }
+  .stage-btn.left { left: 8px; } .stage-btn:not(.left) { right: 8px; } .stage-btn.second { top: 54px; }
+  .panel { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 6px; }
+  .tabs { flex: none; flex-wrap: nowrap; overflow-x: auto; gap: 6px 12px; padding: 2px 2px 4px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tabgroup { flex-wrap: nowrap; gap: 6px; width: auto; flex: none; padding: 5px; border-radius: 18px; }
+  .tabgroup .tab { width: 58px; flex: none; }
+  .tab { font-size: .7rem; padding: 5px 3px 6px; border-radius: 14px; }
+  .tab img { width: 36px; height: 36px; }
+  .box { flex: 1; min-height: 0; overflow-y: auto; padding: 10px; align-content: start; gap: 8px; border-radius: 16px 16px 0 0; }
+  .opts { grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px; }
+}
 @media (prefers-reduced-motion: no-preference) { .opt, .sw, .tab { transition: transform .12s; } .opt:active, .sw:active, .tab:active { transform: scale(.96); } }
 </style>
 
@@ -181,6 +209,7 @@ header { display: flex; align-items: baseline; justify-content: space-between; g
   </header>
   <div class="main">
     <div class="stage" id="stage" aria-label="Figuren – tryk for at zoome"><div class="zoom" id="zoom"><div class="shadow"></div><canvas id="fig" width="512" height="768"></canvas><canvas id="over" class="over" width="512" height="768"></canvas></div>
+      <div class="loading" id="loading" role="status" aria-label="Spillet hentes"><span>⭐</span><span>⭐</span><span>⭐</span></div>
       <button class="stage-btn" id="saveBtn" aria-label="Gem billede">📷<span class="lock-badge" id="lockBadge" hidden aria-hidden="true">🔓</span></button>
       <button class="stage-btn left" id="keepBtn" aria-label="Gem figuren">⭐</button>
       <button class="stage-btn left second" id="figsBtn" aria-label="Mine figurer">🖼️</button></div>
@@ -367,7 +396,6 @@ const SOFT = { haar: .5, troeje: .8, bukser: .8, sko: .8 };
 const KMAX = { bryn: 1.25, haar: 1.8, briller: 1.25, kjole: 1.3 }; // (a satin gown's shine stays the dress colour) // the shine on hairs stays a lighter hair colour, never white
 
 const img = {}, data = {};
-const EYE_BOX = [200, 136, 312, 180]; // round both eyes on the 512x768 figure (below the brows)
 const BROW_BOX = [195, 112, 318, 143]; // round both eyebrows
 const BROW_THROUGH = .55; // how strongly the brows show through a fringe over them
 // a picture is tried up to four times (a weak connection may drop one of the many); if it still fails it is left out
@@ -377,7 +405,7 @@ function load(name, tries = 4) {
     im.onload = () => ok([name, im]);
     im.onerror = () => tries > 1 ? setTimeout(() => load(name, tries - 1).then(ok), 700) : ok([name, null]);
     im.src = 'dele/' + name + '.png?v=' + PICS_V + (tries < 4 ? '-' + tries : ''); }); }
-const PICS_V = 80; // raised when pictures change, so phones and browsers fetch the new ones instead of old copies
+const PICS_V = 83; // raised when pictures change, so phones and browsers fetch the new ones instead of old copies
 
 // per part: which pixels take the chosen colour (coloured ones; on shoes not the white soles) and their middle brightness
 function prepare(name, im) {
@@ -388,7 +416,8 @@ function prepare(name, im) {
     const mx = Math.max(r, gg, b), mn = Math.min(r, gg, b); L[p] = lum(r, gg, b);
     const grey = mx - mn < 28 && b >= r - 4 && L[p] > .3 && L[p] < .9;
     // the coloured iris (not the whites, the black pupil, the lashes or the shine), which takes the chosen eye colour
-    const x = p % W, y = p / W | 0, iris = x > EYE_BOX[0] && x < EYE_BOX[2] && y > EYE_BOX[1] && y < EYE_BOX[3] && a > 200 && !grey && mx - mn >= 22 && L[p] < .66;
+    // (only inside the eyes themselves: the nostrils and the corners of the mouth, warm and dark too, took the eye colour)
+    const x = p % W, y = p / W | 0, iris = inBaseEye(p) && a > 200 && !grey && mx - mn >= 22 && L[p] < .66;
     // the eyebrow hairs (darker or coloured, not skin), which take the chosen brow colour
     const brow = x > BROW_BOX[0] && x < BROW_BOX[2] && y > BROW_BOX[1] && y < BROW_BOX[3] && a > 100 && !grey && (mx - mn >= 18 || L[p] < .6);
     if (name.startsWith('oejne')) { // eye parts: lids are skin = 4, the iris takes the eye colour = 1, the rest as drawn
@@ -444,6 +473,20 @@ function overlay(o, draw) {
   for (let i = 0; i < p.length; i += 4) if (p[i + 3]) blend(o, i, p[i], p[i + 1], p[i + 2], p[i + 3]);
 }
 
+// the base's own open eyes (drawn by oejne-form.ps1): an oval round each, lid line and lashes included
+const BASE_EYES = [[231, 151, 18, 14], [281, 151, 18, 14]]; // centre x, y, half width, half height
+const inBaseEye = p => { const x = p % W, y = p / W | 0; return BASE_EYES.some(([cx, cy, rx, ry]) => ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 < 1); };
+// the base's skin lightness with its own eyes filled in (each eye pixel gets the mix of the skin's lightness just outside
+// the eye along its row and its column, the nearer counting more), for the skin an eye part lays over the base's eyes -
+// so a closed eye's lid is as light as the skin round it, with no edge
+function eyeSkinL(base) {
+  if (base.eyeSkinL) return base.eyeSkinL; const f = Float32Array.from(base.L);
+  for (const [cx, cy, rx, ry] of BASE_EYES) for (let y = cy - ry; y <= cy + ry; y++) for (let x = cx - rx; x <= cx + rx; x++) { const p = y * W + x; if (!inBaseEye(p)) continue;
+    let a = x, b = x, t = y, u = y; while (inBaseEye(y * W + a)) a--; while (inBaseEye(y * W + b)) b++; while (inBaseEye(t * W + x)) t--; while (inBaseEye(u * W + x)) u++;
+    const h = base.L[y * W + a] + (base.L[y * W + b] - base.L[y * W + a]) * (x - a) / (b - a), v = base.L[t * W + x] + (base.L[u * W + x] - base.L[t * W + x]) * (y - t) / (u - t);
+    const wh = 1 / Math.min(x - a, b - x), wv = 1 / Math.min(y - t, u - y); f[p] = (h * wh + v * wv) / (wh + wv); }
+  return base.eyeSkinL = f;
+}
 const hidden = new Uint8Array(W * H); // where a part has hidden the base, during one compose
 const skinNow = new Uint8Array(W * H); // where the figure shows bare skin so far (hands drawn by the base or by a top)
 function compose(s, ctx) {
@@ -463,6 +506,11 @@ function compose(s, ctx) {
     else if (base.paint[p] === 7) { const k = base.L[p] / base.browMid; r = tint(browC[0], k); g = tint(browC[1], k); b = tint(browC[2], k); }
     o[i] = r; o[i + 1] = g; o[i + 2] = b; o[i + 3] = a;
   }
+  // closed eyes: the base's open eye under each is first covered with skin as light as the skin round it, so no trace
+  // of its lid line or lashes shows round the closed eye
+  for (const [ex] of CLOSED_EYES[s.eyes] || []) for (const [cx, cy, rx, ry] of BASE_EYES) if (cx === ex)
+    for (let y = cy - ry; y <= cy + ry; y++) for (let x = cx - rx; x <= cx + rx; x++) { const p = y * W + x, i = p * 4; if (!inBaseEye(p)) continue;
+      const k = eyeSkinL(base)[p] / base.mid; o[i] = tint(skin[0], k); o[i + 1] = tint(skin[1], k); o[i + 2] = tint(skin[2], k); o[i + 3] = 255; }
   const baseCopy = o.slice(); // the body as painted, for spots a part hid but no part then covered
   // face parts first; trousers go over the shoes, so the trouser hem falls over the top of the shoe.
   // A tucked-in top (the football shirt) lies under the shorts; a dress has bare legs under it, no shorts.
@@ -490,7 +538,8 @@ function compose(s, ctx) {
     if (name === 'ting') { // a thing held in the hand: drawn, then the hand's own fingers laid back over it, so it is gripped
       if (!ITEMS[s.item] || !img['hand-' + s.item] || itemBlocked(s, s.item)) continue;
       const hand = findHand(s); s._hand = hand;
-      if (s._over && s.item === 'ballon' && hand[1] < 200) { s._overBalloon = true; continue; } // drawn on the stage sheet
+      // (a balloon or a wand held high reaches above the figure's picture: drawn on the stage sheet, which is bigger)
+      if (s._over && (s.item === 'ballon' || s.item === 'tryllestav') && hand[1] < 200) { s._overBalloon = true; continue; }
       const box = [hand[0] - 24, hand[1] - 26, hand[0] + 24, hand[1] + 24], keep = []; s._hand = hand;
       for (let y = box[1]; y < box[3]; y++) for (let x = box[0]; x < box[2]; x++) { const p = y * W + x, i = p * 4;
         if (skinNow[p] && o[i + 3] > 200) keep.push(i, o[i], o[i + 1], o[i + 2], o[i + 3]); }
@@ -528,15 +577,21 @@ function compose(s, ctx) {
       // a brow drawn over the clean forehead (bryn-ingen, laid under it): only its hairs, and nothing down at the eyes
       // (light pixels in a brow picture are the rim of the skin patch it once had, never hairs)
       if (name.startsWith('bryn') && name !== 'bryn-ingen' && (d.paint[p] === 4 || p >= 140 * W || d.L[p] > .72)) continue;
+      // an eye part's skin is only needed over the base's own eye; elsewhere the base's skin stays (the part's skin, made
+      // from another picture, showed as a light oval round the eyes on dark skin)
+      // (nor its light specks out on the cheek - left over from the picture's white background)
+      if (name.startsWith('oejne') && (d.paint[p] === 4 || (!d.paint[p] && d.L[p] > .85)) && !inBaseEye(p)) continue;
       if (d.paint[p] === 3) { o[i + 3] = 0; skinNow[p] = 0; hidden[p] = name === s.pants ? 2 : 1; continue; } // 2: only the trousers hid it
       let r = d.px[i], g = d.px[i + 1], b = d.px[i + 2];
       if (d.paint[p] === 5) { const v = Math.min(255, 150 + 140 * d.L[p]); r = g = b = v; }
       // skin drawn with clothes; capped, as light mixed edge pixels would otherwise turn white on dark skin
       // (the eye parts' skin is the face's own skin round the eyes, lit like the base's, so it is not capped)
-      else if (d.paint[p] === 4) { const k = name.startsWith('oejne') || name.startsWith('bryn') ? d.L[p] / base.mid : Math.min(1.12, d.L[p] / base.mid); r = tint(skin[0], k); g = tint(skin[1], k); b = tint(skin[2], k); }
+      else if (d.paint[p] === 4) { const k = name.startsWith('oejne') ? eyeSkinL(base)[p] / base.mid : name.startsWith('bryn') ? d.L[p] / base.mid : Math.min(1.12, d.L[p] / base.mid); r = tint(skin[0], k); g = tint(skin[1], k); b = tint(skin[2], k); }
       // a see-through edge (tulle, a soft outline) is never lit up: on dark skin it would show as a white rim
       // (rainbow hair is lit up less, so its red, orange and blue don't fade toward white)
-      else if (d.paint[p]) { const k = Math.min(rainbow ? 1.2 : kmax, a < 200 ? 1 : 99, d.L[p] / d.mid), cc = rainbow ? rainbow[p / W | 0] : pat ? patternAt(pat, c, p) : c;
+      // (an eye part's iris is lit as the base's own iris, so the same shade gives the same colour - the star and heart
+      // parts hold only part of an iris, whose own middle brightness is darker)
+      else if (d.paint[p]) { const k = Math.min(rainbow ? 1.2 : kmax, a < 200 ? 1 : 99, d.L[p] / (name.startsWith('oejne') ? base.eyeMid : d.mid)), cc = rainbow ? rainbow[p / W | 0] : pat ? patternAt(pat, c, p) : c;
         r = tint(cc[0], k, soft); g = tint(cc[1], k, soft); b = tint(cc[2], k, soft); }
       // fabric's soft edge over a spot another part has hidden (a seam, e.g. shirt into shorts) is drawn solid,
       // else the background would show through the seam
@@ -818,8 +873,8 @@ function drawCheeks(ctx, list, skin) {
     ['#FF5A5A', '#FFA43B', '#FFD93B', '#5BD16E', '#4EA8FF', '#9B6BFF'].forEach((col, k) => {
       ctx.strokeStyle = col; ctx.lineWidth = 1.3; ctx.beginPath(); ctx.arc(x, y + 4, 7.5 - k * 1.15, Math.PI, 0); ctx.stroke(); }); }
   if (has('plet')) { ctx.fillStyle = 'rgba(70,40,30,.85)'; ctx.beginPath(); ctx.arc(271, 178, 1.7, 0, Math.PI * 2); ctx.fill(); } // a beauty mark above the corner of the mouth
-  if (has('glimmer')) // small twinkling stars round the face
-    [[196, 128, 4.5, '#FFD43B'], [318, 124, 3.8, '#FFFFFF'], [314, 190, 3.2, '#FFD43B'], [198, 192, 3, '#FFFFFF'], [328, 156, 2.6, '#FF9EC4']]
+  if (has('glimmer')) // small twinkling stars on the face (temples and cheeks - not out beside it)
+    [[213, 131, 4.5, '#FFD43B'], [299, 129, 3.8, '#FFFFFF'], [294, 181, 3.2, '#FFD43B'], [218, 183, 3, '#FFFFFF'], [301, 155, 2.6, '#FF9EC4']]
       .forEach(([x, y, R, col]) => star(x, y, R, R * .35, col));
   ctx.restore();
   if (has('plaster')) { ctx.save(); ctx.translate(285, 178); ctx.rotate(-.45); // a plaster on the right cheek (inside the face)
@@ -1136,6 +1191,7 @@ const names = ['grund', 'laar-bare2', 'haar-bob', 'haar-kort', 'haar-strit', 'ha
 const GEAR_PICS = [...Object.values(GEAR).map(g => g.pic), ...Object.keys(HATS).map(h => 'hat-' + h), ...Object.keys(ITEMS).map(n => 'hand-' + n)]; // not prepared as parts
 Promise.all([...names, ...GEAR_PICS].map(n => load(n))).then(list => {
   for (const [n, im] of list) { if (!im) continue; img[n] = im; if (!GEAR_PICS.includes(n)) prepare(n, im); }
+  document.getElementById('loading').hidden = true;
   if (!data.grund) { // without the figure itself there is nothing to show
     const n = document.querySelector('.note'); n.hidden = false; n.textContent = 'Billederne kunne ikke hentes. Tjek internetforbindelsen, og genindlæs siden.'; return; }
   try { draw(); render(); } catch (e) { console.error(e); }
