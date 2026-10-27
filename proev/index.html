@@ -421,7 +421,7 @@ function load(name, tries = 4) {
     im.onload = () => ok([name, im]);
     im.onerror = () => tries > 1 ? setTimeout(() => load(name, tries - 1).then(ok), 700) : ok([name, null]);
     im.src = 'dele/' + name + '.png?v=' + PICS_V + (tries < 4 ? '-' + tries : ''); }); }
-const PICS_V = 92; // raised when pictures change, so phones and browsers fetch the new ones instead of old copies
+const PICS_V = 97; // raised when pictures change, so phones and browsers fetch the new ones instead of old copies
 
 // per part: which pixels take the chosen colour (coloured ones; on shoes not the white soles) and their middle brightness
 function prepare(name, im) {
@@ -449,6 +449,8 @@ function prepare(name, im) {
         (name.startsWith('mund') && L[p] > .3 && ((mx - mn < 20 && r - b <= 6) || (b > r + 4 && L[p] > .4)))) paint[p] = 4;
     } else if (name.startsWith('bryn')) { // brow parts: skin = 4 (over the old brows), the hairs (and their shine) take the brow colour = 1
       if (grey) paint[p] = 4; else { paint[p] = 1; if (brow) ls.push(L[p]); }
+    } else if (name.startsWith('haand')) { // a hand part: skin = 4 (its light shine too), "hide the base" = 3, the umbrella's wooden handle as drawn
+      if (a === 1) paint[p] = 3; else if (grey || (mx - mn < 30 && b >= r - 6 && L[p] >= .9)) paint[p] = 4;
     } else if (name.startsWith('grund')) { // grey skin = 1, blue underwear = 2, iris = 6, brows = 7
       if (iris) paint[p] = 6;
       else if (brow) paint[p] = 7;
@@ -489,6 +491,39 @@ function overlay(o, draw) {
   for (let i = 0; i < p.length; i += 4) if (p[i + 3]) blend(o, i, p[i], p[i + 1], p[i + 2], p[i + 3]);
 }
 
+// the join between the umbrella hand and the arm (which the base or a top has drawn wider and a little to the side):
+// from the hand's wrist down to the forearm the two edges curve from one to the other (leaving each as it runs there, so
+// no kink at either end), the skin in between is blended row by row from the wrist's colours to the forearm's, and any of
+// the arm sticking out beyond the new edges goes
+const WRIST = 146; // the hand part's wrist row, just below the fist (on the waving pose's figure, before following a lower hand)
+function smoothWrist(o, d, s) {
+  const yA = WRIST + (s._fistDy || 0), yB = yA + 22, x0 = 318, x1 = 446, tp = data[topOf(s)];
+  const isWood = p => d.px[p * 4 + 3] > 60 && d.paint[p] !== 4 && d.paint[p] !== 3; // (the umbrella's handle: left alone)
+  const span = (y, near) => { let best = null; for (let x = x0, a = -1; x <= x1; x++) { const on = o[(y * W + x) * 4 + 3] > 150 && !isWood(y * W + x);
+      if (on && a < 0) a = x; if ((!on || x === x1) && a >= 0) { const b = on ? x : x - 1; if (!best || Math.abs((a + b) / 2 - near) < Math.abs((best[0] + best[1]) / 2 - near)) best = [a, b]; a = -1; } } return best; };
+  const mid = WRIST_MID + (s._fistDx || 0), A = span(yA, mid), B = span(yB, A ? (A[0] + A[1]) / 2 : mid); if (!A || !B) return;
+  // (how each edge slants just above the join, in the hand, and just below it, in the arm)
+  const A2 = span(yA - 4, (A[0] + A[1]) / 2) || A, B2 = span(yB + 6, (B[0] + B[1]) / 2) || B, n = yB - yA, cap = v => Math.max(-n, Math.min(n, v));
+  const mA = [cap((A[0] - A2[0]) / 4 * n), cap((A[1] - A2[1]) / 4 * n)], mB = [cap((B2[0] - B[0]) / 6 * n), cap((B2[1] - B[1]) / 6 * n)];
+  const edge = (k, t) => (2 * t ** 3 - 3 * t * t + 1) * A[k] + (t ** 3 - 2 * t * t + t) * mA[k] + (-2 * t ** 3 + 3 * t * t) * B[k] + (t ** 3 - t * t) * mB[k];
+  const pa = new Uint8ClampedArray(o.subarray(yA * W * 4, (yA + 1) * W * 4)), pb = new Uint8ClampedArray(o.subarray(yB * W * 4, (yB + 1) * W * 4));
+  for (let y = yA + 1; y < yB; y++) { const t = (y - yA) / (yB - yA), L = edge(0, t), R = edge(1, t);
+    for (let x = x0; x <= x1; x++) { const p = y * W + x, i = p * 4; if (isWood(p)) continue;
+      // (only the arm's own edge, never an ear, hair, the face or the chest beside it: with a top that draws its own arm,
+      // only where it drew)
+      if (x < L - .5 || x > R + .5) { if (skinNow[p] && x > L - 16 && x < R + 16 && (tp ? tp.px[i + 3] > 0 : x >= 349 || y > 152)) o[i + 3] = 0; continue; }
+      const u = R > L ? (x - L) / (R - L) : .5, xa = Math.round(A[0] + u * (A[1] - A[0])) * 4, xb = Math.round(B[0] + u * (B[1] - B[0])) * 4;
+      for (let c = 0; c < 3; c++) o[i + c] = pa[xa + c] * (1 - t) + pb[xb + c] * t;
+      o[i + 3] = x < L + .5 ? Math.round(255 * (x - L + .5)) : x > R - .5 ? Math.round(255 * (R + .5 - x)) : 255; skinNow[p] = 1; } }
+}
+// a prepared part moved down by dy rows and across by dx (the fist, following a hand a sleeve has put elsewhere), made
+// once per move
+function lowered(name, dy, dx = 0) {
+  const d = data[name]; if (!dy && !dx) return d; const key = name + '@' + dy + ',' + dx; if (data[key]) return data[key];
+  const px = new Uint8ClampedArray(d.px.length), paint = new Uint8Array(d.paint.length), L = new Float32Array(d.L.length), sh = dy * W + dx;
+  for (let p = Math.max(0, sh); p < W * H && p - sh < W * H; p++) { const q = p - sh; paint[p] = d.paint[q]; L[p] = d.L[q]; for (let c = 0; c < 4; c++) px[p * 4 + c] = d.px[q * 4 + c]; }
+  return data[key] = { ...d, px, paint, L };
+}
 // the base's own open eyes (drawn by oejne-form.ps1): an oval round each, lid line and lashes included
 const BASE_EYES = [[231, 151, 18, 14], [281, 151, 18, 14]]; // centre x, y, half width, half height
 const inBaseEye = p => { const x = p % W, y = p / W | 0; return BASE_EYES.some(([cx, cy, rx, ry]) => ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 < 1); };
@@ -544,7 +579,7 @@ function compose(s, ctx) {
   const bareThighs = LEG_TOPS.includes(s.top) && s.top !== 'kjole-havfruedragt' && s.pants === 'ingen' && data['laar-bare2'];
   const legs = bareThighs ? [['laar-bare2', '#000000']] : [];
   const layers = [[s.eyes, s.eyeColor], ['lukkede-oejne'], ...(s.brows && s.brows !== 'naturlig' && s.brows !== 'bryn-ingen' ? [['bryn-ingen', '#000000']] : []), [s.brows, s.browColor || '#4A2C1D'], [s.mouth, '#000000'], ['kinder'], [s.nose, '#000000'], [s.ears, '#000000'], ['oreringe'], [s.top === 'kjole-havfruedragt' ? 'ingen' : s.shoes, s.shoeColor],
-    ...legs, ...body, ['navn'], [s.hair, colSpec(s, 'hairColor')], [s.glasses, s.glassesColor || CLOTH[0]], ['hat'], ['haender'], ['ting']]; // glasses sit over the hair; gloves before the thing held, so the fingers round it are gloved
+    ...legs, ...body, ['navn'], [s.hair, colSpec(s, 'hairColor')], [s.glasses, s.glassesColor || CLOTH[0]], ['hat'], ['haender'], ['ting'], [s.item === 'paraply' && poseOf(s) === 'vink' ? 'haand-knyttet-vink' : 'ingen', '#000000']]; // glasses sit over the hair; gloves before the thing held, so the fingers round it are gloved
   // the brows' pixels, so that where a fringe falls over them they can show softly through it, as in cartoons
   // (the natural brows are the base's own, class 7)
   const browPx = [];
@@ -566,6 +601,23 @@ function compose(s, ctx) {
       // the umbrella: its canopy (above the figure's picture) on the stage sheet; the shaft's lower end and handle here,
       // under the fingers, so the hand holds it
       if (s.item === 'paraply' && s._over) s._overBalloon = true;
+      // (a top's sleeve can put the raised hand lower than the base's: the fist and the umbrella follow the hand as drawn,
+      // found as the first row of bare skin from the top in a box round it)
+      if (s.item === 'paraply') { let top = FIST_TOP; for (let y = 50; y < 175; y++) { let n = 0; for (let x = 352; x < 410; x++) if (o[(y * W + x) * 4 + 3] > 200) n++; if (n >= 4) { top = y; break; } }
+        s._fistDy = Math.max(0, Math.min(70, top - FIST_TOP)); s._handTop = top;
+        // and sideways: each top draws the arm at its own slant, so the arm is followed down from the hand row by row (the
+        // run of the picture that goes on from the one above; a run grown into the hair beside it keeps only its right part),
+        // and the fist goes over the wrist, where the base's has its wrist
+        const runs = []; let prev = [352, 410];
+        for (let y = top; y <= top + 75; y++) { let best = null, most = 0;
+          for (let x = 300, a = -1; x <= 460; x++) { const on = x < 460 && o[(y * W + x) * 4 + 3] > 150; if (on && a < 0) a = x;
+            if (!on && a >= 0) { const ov = Math.min(x - 1, prev[1]) - Math.max(a, prev[0]) + 1; if (ov > most) { most = ov; best = [a, x - 1]; } a = -1; } }
+          if (!best) break; if (best[1] - best[0] > 45) best = [best[1] - 27, best[1]]; runs.push(prev = best); }
+        const wr = runs[Math.min(WRIST_K, runs.length - 1)] || [WRIST_MID - 13, WRIST_MID + 13];
+        s._fistDx = Math.max(-32, Math.min(32, Math.round((wr[0] + wr[1]) / 2 - WRIST_MID))); s._armRuns = runs;
+        // a sleeve reaching up to the hand: the row where the arm turns from skin to cloth (the fist goes into it)
+        s._cuff = 0; for (let k = 20; k < runs.length; k++) { const [a, b] = runs[k]; let n = 0; for (let x = a; x <= b; x++) if (skinNow[(top + k) * W + x]) n++;
+          if (n < (b - a + 1) / 2) { s._cuff = top + k; break; } } }
       const box = [hand[0] - 24, hand[1] - 26, hand[0] + 24, hand[1] + 24], keep = []; s._hand = hand;
       for (let y = box[1]; y < box[3]; y++) for (let x = box[0]; x < box[2]; x++) { const p = y * W + x, i = p * 4;
         if (skinNow[p] && o[i + 3] > 200) keep.push(i, o[i], o[i + 1], o[i + 2], o[i + 3]); }
@@ -590,13 +642,34 @@ function compose(s, ctx) {
       const crest = CREST.troeje[s.top];
       if (!(s.name || '').trim() && (s.badge || 'ingen') === 'ingen' && !crest) continue;
       overlay(o, g2 => { printName(s, g2, mirrored(s)); if (crest) drawCrest(g2, crest, mirrored(s)); }); continue; }
-    if (!name || name === 'ingen' || name === 'naturlig' || !data[name]) continue; const d = data[name], rainbow = col === 'regnbue' ? rainbowRows(name) : null, pat = typeof col === 'string' && col.includes(':') ? col.split(':')[0] : null,
+    if (!name || name === 'ingen' || name === 'naturlig' || !data[name]) continue; const d = name === 'haand-knyttet-vink' ? lowered(name, s._fistDy || 0, s._fistDx || 0) : data[name], rainbow = col === 'regnbue' ? rainbowRows(name) : null, pat = typeof col === 'string' && col.includes(':') ? col.split(':')[0] : null,
       c = rainbow ? null : hex(pat ? col.split(':')[1] : col), soft = SOFT[name.split('-')[0]] || 1, kmax = name.startsWith('troeje-ballet') ? 1.15 : KMAX[name.split('-')[0]] || 99; // tulle highlights stay pink, not white
     // a top's bare thighs and hide marks below the waist (a leotard's) must not cover trousers worn with it
     const over = name === topOf(s) && s.pants !== 'ingen' && LEG_TOPS.includes(s.top) ? WAIST * W : W * H;
+    // the fist: first the open waving hand under it goes (whichever top drew it, and however it is turned)
+    // (its skin, from the wrist up, flooded inside a box round the hand - so never into an ear or the face - with the soft
+    // edge round it; a sleeve up at the hand is kept aside and laid back over the fist, which then goes into it)
+    let fistEnd = W * H, cuffKeep = null;
+    if (name === 'haand-knyttet-vink') { const top = s._handTop, runs = s._armRuns || [], cx = FIST[0] + (s._fistDx || 0), yA = WRIST + (s._fistDy || 0);
+      const end = Math.min(yA + 2, s._cuff ? s._cuff - 1 : H, top + runs.length - 1), x0 = cx - 42, x1 = cx + 44; fistEnd = ((s._cuff ? s._cuff + 8 : yA + 2)) * W;
+      // (a top that draws its own arm: only where it drew - a hand up by the face never floods into the face)
+      const st = [], wr = runs[end - top], tp = data[topOf(s)]; if (wr) for (let x = wr[0]; x <= wr[1]; x++) st.push(end * W + x);
+      while (st.length) { const p = st.pop(), i = p * 4, x = p % W, y = p / W | 0;
+        if (x < x0 || x > x1 || y < top - 3 || y > end || !o[i + 3] || (!skinNow[p] && o[i + 3] > 200) || (tp && !tp.px[i + 3])) continue;
+        o[i + 3] = 0; skinNow[p] = 0; st.push(p - 1, p + 1, p - W, p + W); }
+      // (and the specks of the hand's soft edge left alone round where it was)
+      // (single pixels the top had drawn in its own colour inside the hand among them)
+      for (let y = top - 3; y <= end; y++) for (let x = x0; x <= x1; x++) { const i = (y * W + x) * 4; if (o[i + 3] < 2) continue;
+        let n = 0; for (let v = -2; v <= 2; v++) for (let u = -2; u <= 2; u++) if ((u || v) && o[((y + v) * W + x + u) * 4 + 3] > 200) n++; if (n < 3) o[i + 3] = 0; }
+      if (s._cuff) { cuffKeep = []; for (let y = s._cuff; y < yA + 4; y++) for (let x = x0; x <= x1; x++) { const p = y * W + x, i = p * 4;
+        if (o[i + 3] && !skinNow[p]) cuffKeep.push(i, o[i], o[i + 1], o[i + 2], o[i + 3]); } } }
     const handsOver = flag === 'tucked' && data[topOf(s)]; // (the top's own hands by the hips stay over tucked-in shorts)
     for (let i = 0, p = 0; p < W * H; i += 4, p++) {
       const a = d.px[i + 3]; if (!a) continue;
+      // (the fist part's own piece of arm below the wrist and its hide marks are left out: the hand under it is gone
+      // already, and the join to whichever arm is there is drawn by smoothWrist)
+      // (only the umbrella's brown handle goes on down past it)
+      if ((p >= fistEnd && (d.paint[p] || d.px[i] - d.px[i + 2] <= 10)) || (fistEnd < W * H && d.paint[p] === 3)) continue;
       if (handsOver && p < (WAIST + 35) * W && handsOver.paint[p] === 4 && handsOver.px[i + 3] > 200) continue;
       // a tucked-in top ends under the waistband: none of its cloth below it shows beside the shorts
       if (tucked && name === topOf(s) && d.paint[p] !== 4 && p >= (PANTS_TOP[s.pants] + 2) * W) continue;
@@ -635,6 +708,8 @@ function compose(s, ctx) {
     // trousers narrower than the base's shorts (the denim shorts, in some poses): the shorts' edge left peeping out beside
     // them goes (before the top, hands and things are drawn over it)
     if (name === s.pants) for (let p = (PANTS_TOP[name] || WAIST) * W, i = p * 4; p < W * H; p++, i += 4) if (base.paint[p] === 2 && !d.px[i + 3]) o[i + 3] = 0;
+    if (cuffKeep) for (let k = 0; k < cuffKeep.length; k += 5) blend(o, cuffKeep[k], cuffKeep[k + 1], cuffKeep[k + 2], cuffKeep[k + 3], cuffKeep[k + 4]);
+    else if (name === 'haand-knyttet-vink') smoothWrist(o, d, s);
     // a fringe over the brows: the brows show softly through it (where the hair covers them, not round them)
     if (name === s.hair) for (let k = 0; k < browPx.length; k += 5) { const i = browPx[k];
       if (o[i] !== browPx[k + 1] || o[i + 1] !== browPx[k + 2] || o[i + 2] !== browPx[k + 3]) blend(o, i, browPx[k + 1], browPx[k + 2], browPx[k + 3], browPx[k + 4] * BROW_THROUGH); }
@@ -729,7 +804,9 @@ const ITEMS = { ballon: { h: 185, grip: [.52, .975], tilt: -10 }, bamse: { h: 96
   bold: { h: 76, grip: [.9, .45], up: [.5, .97] }, is: { h: 100, grip: [.5, .78], tilt: -8 }, tryllestav: { h: 118, grip: [.2, .82], tilt: -8 },
   // the umbrella: its canopy (the top .6 of the picture) held over the head, a drawn shaft down to the hand, the
   // picture's curved handle in the hand
-  paraply: { w: 218, canopy: .6, handle: [.43, .78, .62, 1] } };
+  paraply: { w: 218, canopy: .6, handle: [.43, .78, .62, 1], front: true } }; // (front: no fingers laid back over it - the fist part closes round it)
+// the umbrella is held in the raised, waving hand, closed round it (dele/haand-knyttet-vink, laid over the open hand)
+const FIST = [371, 105], FIST_TOP = 84, WRIST_K = 62, WRIST_MID = 368, SHAFT_TOP = [380, 26]; // the fist's middle, the open hand's fingertips, the wrist (rows below them) and its middle, and the top of the shaft the hand part holds, on the waving pose's figure (the pose drawn the other way round is mirrored)
 // where the free hand grips (measured on each pose's base, 512x768), and a box round the hand whose skin is laid back
 // over the item (the fingers close round the handle)
 const HAND = { ned: [179, 421], vink: [179, 421], hurra: [116, 80], hofter: [196, 350], dans: [108, 413] };
@@ -854,15 +931,12 @@ function handView() {
 function drawItem(ctx, s) {
   const it = ITEMS[s.item], [hx, hy] = s._hand || HAND[poseOf(s) || 'ned'] || HAND.ned, c = recoloured('hand-' + s.item, s.itemColor || CLOTH[0]);
   if (s.item === 'paraply') { // the canopy over the head (or over a raised hand), the shaft from it down into the hand
-    // (_part 'top': the canopy and the shaft down to just above the hand - drawn over the figure; 'low': the rest of
-    // the shaft and the handle - drawn under the fingers)
-    const cw = it.w, ch = cw * c.height * it.canopy / c.width, cx = hx + 12, by = Math.min(28, hy - 46), [h0, v0, h1, v1] = it.handle;
-    const top = s._part !== 'low', low = s._part !== 'top', sy = hy - 30, sx = cx + (hx - cx) * (sy - (by - 6)) / (hy - 6 - (by - 6));
-    ctx.save(); ctx.strokeStyle = '#5A3420'; ctx.lineWidth = 4.5; ctx.lineCap = 'round';
-    ctx.beginPath(); ctx.moveTo(top ? cx : sx, top ? by - 6 : sy); ctx.lineTo(low ? hx : sx, low ? hy + 6 : sy); ctx.stroke();
-    const hw = cw * .2, hh = hw * (v1 - v0) * c.height / ((h1 - h0) * c.width); // the curved handle, hanging from the fist
-    if (low) ctx.drawImage(c, c.width * h0, c.height * v0, c.width * (h1 - h0), c.height * (v1 - v0), hx - hw * .36, hy + 2, hw, hh);
-    if (top) ctx.drawImage(c, 0, 0, c.width, c.height * it.canopy, cx - cw / 2, by - ch, cw, ch); ctx.restore(); return; }
+    // held in the raised hand: the hand part (dele/haand-knyttet-vink) has the curved handle in the fist and a short
+    // piece of the shaft; only the canopy is drawn here, on the top of that shaft (on the stage sheet: it reaches
+    // above the figure's picture)
+    if (s._part === 'low') return;
+    const cw = it.w, ch = cw * c.height * it.canopy / c.width, fx = SHAFT_TOP[0] + (s._fistDx || 0), by = SHAFT_TOP[1] + (s._fistDy || 0) + 10;
+    ctx.drawImage(c, 0, 0, c.width, c.height * it.canopy, fx - cw / 2, by - ch, cw, ch); return; }
   const h = it.h, w = h * c.width / c.height; // full size always (a raised balloon is simply cut off at the top edge)
   ctx.save(); ctx.translate(hx, hy); ctx.rotate((it.tilt || 0) * Math.PI / 180);
   if (s.item === 'ballon') { // the balloon without its drawn string, and a string drawn from its knot into the hand
@@ -1264,7 +1338,7 @@ try { Object.assign(state, JSON.parse(localStorage.getItem('minimig2') || '{}'))
 tidy(state);
 const POSES = ['vink', 'hurra', 'hofter', 'dans'];
 const TOPS = ['troeje-tshirt', 'troeje-haette', 'troeje-fodbold', 'troeje-fodbold-inde', 'troeje-gymnastik', ...DRESSES];
-const names = ['grund', 'laar-bare2', 'haar-bob', 'haar-kort', 'haar-strit', 'haar-kroeller', 'haar-fletninger', ...TOPS, 'bukser-lange', 'bukser-fodbold', 'bukser-cowboy', 'sko-sneakers', 'sko-fodbold', 'sko-ballet', 'sko-glas', 'sko-gummi',
+const names = ['grund', 'laar-bare2', 'haar-bob', 'haar-kort', 'haar-strit', 'haar-kroeller', 'haar-fletninger', ...TOPS, 'bukser-lange', 'bukser-fodbold', 'bukser-cowboy', 'sko-sneakers', 'sko-fodbold', 'sko-ballet', 'sko-glas', 'sko-gummi', 'haand-knyttet-vink',
   ...POSES.map(p => 'grund-' + p), ...POSES.flatMap(p => TOPS.map(t => t + '-' + p)),
   ...['oejne', 'bryn', 'mund', 'naese', 'oerer', 'briller'].flatMap(id => TABS.find(t => t.id === id).opts.map(o => o[0]).filter(n => n !== 'naturlig' && n !== 'ingen'))];
 const GEAR_PICS = [...Object.values(GEAR).map(g => g.pic), ...Object.keys(HATS).map(h => 'hat-' + h), ...Object.keys(ITEMS).map(n => 'hand-' + n)]; // not prepared as parts
