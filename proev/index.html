@@ -317,7 +317,7 @@ header { display: flex; align-items: baseline; justify-content: space-between; g
 const SKIN = ['#F6D0AE', '#EDB98A', '#D9965F', '#B5713F', '#8D5530', '#5A3520'];
 const HAIR = ['#2A1C17', '#4A2C1D', '#7A4428', '#A8582E', '#D9A55C', '#F0D9A0', '#FF7EBB', '#5AA9FF'];
 const EYES = ['#9C5A1E', '#6B3A1A', '#4A2814', '#2E1A10', '#1A110C', '#3B7BD4', '#3E9A5C', '#A0763A', '#7D8A99', '#8A5CE6'];
-const CLOTH = ['#E8384F', '#FF7A2F', '#FFC233', '#2FB872', '#13BFA6', '#3D8BFF', '#7A4DFF', '#FF6FB1', '#F4F1EA', '#3A3550'];
+const CLOTH = ['#E8384F', '#FF7A2F', '#FFC233', '#2FB872', '#13BFA6', '#3D8BFF', '#46699E', '#7A4DFF', '#FF6FB1', '#F4F1EA', '#3A3550'];
 // besides plain colours: a rainbow, and patterns (dots, gingham, stripes) over the last plain colour chosen
 const PATTERNS = ['prikker', 'tern', 'striber'], SPECIAL = ['regnbue', ...PATTERNS];
 const TABS = [
@@ -358,7 +358,7 @@ const TABS = [
     opts: [['ingen', 'Ingen'], ['troeje-ballet', 'Ballet­kjole'], ['kjole-prinsesse', 'Prinsesse'], ['kjole-sommer', 'Sommer­kjole'],
       ['kjole-tyl', 'Tylkjole'], ['kjole-fest', 'Fest­kjole'], ['kjole-havfrue', 'Havfrue'], ['kjole-havfruedragt', 'Havfrue­dragt'], ['kjole-galla', 'Galla']] },
   { id: 'bukser', name: 'Bukser', key: 'pants', colorKey: 'pantsColor', colors: [...CLOTH, ...SPECIAL],
-    opts: [['ingen', 'Shorts'], ['bukser-lange', 'Lange bukser'], ['bukser-fodbold', 'Fodbold­shorts']] },
+    opts: [['ingen', 'Shorts'], ['bukser-lange', 'Lange bukser'], ['bukser-fodbold', 'Fodbold­shorts'], ['bukser-cowboy', 'Cowboy­shorts']] },
   { id: 'sko', name: 'Sko', key: 'shoes', colorKey: 'shoeColor', colors: CLOTH,
     opts: [['ingen', 'Bare tæer'], ['sko-sneakers', 'Sneakers'], ['sko-fodbold', 'Fodbold­støvler'], ['sko-ballet', 'Balletsko'], ['sko-glas', 'Glassko']] },
   { id: 'stilling', name: 'Stilling', key: 'pose',
@@ -380,6 +380,8 @@ const DRESSES = ['troeje-ballet', 'kjole-prinsesse', 'kjole-sommer', 'kjole-tyl'
 const LEG_TOPS = ['troeje-gymnastik', ...DRESSES]; // tops that paint bare thighs, which must not cover trousers
 // a top drawn tucked into particular shorts: [top, shorts] -> its tucked-in pictures (troeje-fodbold-inde[-pose])
 const TUCKED = { 'troeje-fodbold': ['bukser-fodbold', 'troeje-fodbold-inde'] };
+const TUCK_INTO = ['bukser-cowboy']; // trousers every top is tucked into (drawn over the top)
+const PANTS_TOP = { 'bukser-cowboy': 358 }; // trousers whose waistband sits above the waist line: its height
 // things (Ting) that are not held in the hand, placed on the 512x768 figure: a football on the ground by the feet, and a
 // hula hoop round the hips, its back half drawn behind the figure. They keep their own colours.
 const GEAR = { fodbold: { pic: 'ting-fodbold', x: 338, y: 566, w: 88, h: 88 },
@@ -419,7 +421,7 @@ function load(name, tries = 4) {
     im.onload = () => ok([name, im]);
     im.onerror = () => tries > 1 ? setTimeout(() => load(name, tries - 1).then(ok), 700) : ok([name, null]);
     im.src = 'dele/' + name + '.png?v=' + PICS_V + (tries < 4 ? '-' + tries : ''); }); }
-const PICS_V = 83; // raised when pictures change, so phones and browsers fetch the new ones instead of old copies
+const PICS_V = 91; // raised when pictures change, so phones and browsers fetch the new ones instead of old copies
 
 // per part: which pixels take the chosen colour (coloured ones; on shoes not the white soles) and their middle brightness
 function prepare(name, im) {
@@ -532,7 +534,10 @@ function compose(s, ctx) {
   const baseCopy = o.slice(); // the body as painted, for spots a part hid but no part then covered
   // face parts first; trousers go over the shoes, so the trouser hem falls over the top of the shoe.
   // A tucked-in top (the football shirt) lies under the shorts; a dress has bare legs under it, no shorts.
-  const body = [[s.pants, colSpec(s, 'pantsColor')], ['maerke-bukser'], [topOf(s), colSpec(s, 'topColor')]];
+  // (tops are tucked into the denim shorts: the shorts are drawn over the top, the hands on the hips kept over them)
+  const tucked = TUCK_INTO.includes(s.pants) && s.top !== 'ingen' && !LEG_TOPS.includes(s.top);
+  const body = tucked ? [[topOf(s), colSpec(s, 'topColor')], [s.pants, colSpec(s, 'pantsColor'), 'tucked'], ['maerke-bukser']]
+    : [[s.pants, colSpec(s, 'pantsColor')], ['maerke-bukser'], [topOf(s), colSpec(s, 'topColor')]];
   // bare thighs under a leotard or dress: the base's own legs carried up (laar-bare2), so they match the legs below;
   // the thighs the AI drew with the dress are left out
   // (not in the mermaid costume: the legs are inside its tail, which is narrower than they are)
@@ -586,9 +591,16 @@ function compose(s, ctx) {
       c = rainbow ? null : hex(pat ? col.split(':')[1] : col), soft = SOFT[name.split('-')[0]] || 1, kmax = name.startsWith('troeje-ballet') ? 1.15 : KMAX[name.split('-')[0]] || 99; // tulle highlights stay pink, not white
     // a top's bare thighs and hide marks below the waist (a leotard's) must not cover trousers worn with it
     const over = name === topOf(s) && s.pants !== 'ingen' && LEG_TOPS.includes(s.top) ? WAIST * W : W * H;
+    const handsOver = flag === 'tucked' && data[topOf(s)]; // (the top's own hands by the hips stay over tucked-in shorts)
     for (let i = 0, p = 0; p < W * H; i += 4, p++) {
       const a = d.px[i + 3]; if (!a) continue;
+      if (handsOver && p < (WAIST + 35) * W && handsOver.paint[p] === 4 && handsOver.px[i + 3] > 200) continue;
+      // a tucked-in top ends under the waistband: none of its cloth below it shows beside the shorts
+      if (tucked && name === topOf(s) && d.paint[p] !== 4 && p >= (PANTS_TOP[s.pants] + 2) * W) continue;
       if (p >= over && (d.paint[p] === 3 || d.paint[p] === 4)) continue;
+      // (any top's "hide the base" marks below the waist never cut through trousers worn under it - they showed as white
+      // holes and dots along the hem)
+      if (d.paint[p] === 3 && p >= WAIST * W && s.pants !== 'ingen' && name === topOf(s)) continue;
       // (and all of the dress's own skin over the thighs, low enough to miss hands resting on the hips)
       if (bareThighs && name === topOf(s) && p >= WAIST * W && (d.paint[p] === 3 || d.paint[p] === 4) &&
         (data['laar-bare2'].px[i + 3] > 1 || (p >= 418 * W && p % W > 202 && p % W < 311))) continue;
@@ -617,6 +629,9 @@ function compose(s, ctx) {
       if (a > 128) skinNow[p] = d.paint[p] === 4 ? 1 : 0;
       if (name.startsWith('bryn') && name !== 'bryn-ingen' && d.paint[p] !== 4) browPx.push(i, 0, 0, 0, a);
     }
+    // trousers narrower than the base's shorts (the denim shorts, in some poses): the shorts' edge left peeping out beside
+    // them goes (before the top, hands and things are drawn over it)
+    if (name === s.pants) for (let p = (PANTS_TOP[name] || WAIST) * W, i = p * 4; p < W * H; p++, i += 4) if (base.paint[p] === 2 && !d.px[i + 3]) o[i + 3] = 0;
     // a fringe over the brows: the brows show softly through it (where the hair covers them, not round them)
     if (name === s.hair) for (let k = 0; k < browPx.length; k += 5) { const i = browPx[k];
       if (o[i] !== browPx[k + 1] || o[i + 1] !== browPx[k + 2] || o[i + 2] !== browPx[k + 3]) blend(o, i, browPx[k + 1], browPx[k + 2], browPx[k + 3], browPx[k + 4] * BROW_THROUGH); }
@@ -1227,7 +1242,7 @@ try { Object.assign(state, JSON.parse(localStorage.getItem('minimig2') || '{}'))
 tidy(state);
 const POSES = ['vink', 'hurra', 'hofter', 'dans'];
 const TOPS = ['troeje-tshirt', 'troeje-haette', 'troeje-fodbold', 'troeje-fodbold-inde', 'troeje-gymnastik', ...DRESSES];
-const names = ['grund', 'laar-bare2', 'haar-bob', 'haar-kort', 'haar-strit', 'haar-kroeller', 'haar-fletninger', ...TOPS, 'bukser-lange', 'bukser-fodbold', 'sko-sneakers', 'sko-fodbold', 'sko-ballet', 'sko-glas',
+const names = ['grund', 'laar-bare2', 'haar-bob', 'haar-kort', 'haar-strit', 'haar-kroeller', 'haar-fletninger', ...TOPS, 'bukser-lange', 'bukser-fodbold', 'bukser-cowboy', 'sko-sneakers', 'sko-fodbold', 'sko-ballet', 'sko-glas',
   ...POSES.map(p => 'grund-' + p), ...POSES.flatMap(p => TOPS.map(t => t + '-' + p)),
   ...['oejne', 'bryn', 'mund', 'naese', 'oerer', 'briller'].flatMap(id => TABS.find(t => t.id === id).opts.map(o => o[0]).filter(n => n !== 'naturlig' && n !== 'ingen'))];
 const GEAR_PICS = [...Object.values(GEAR).map(g => g.pic), ...Object.keys(HATS).map(h => 'hat-' + h), ...Object.keys(ITEMS).map(n => 'hand-' + n)]; // not prepared as parts
