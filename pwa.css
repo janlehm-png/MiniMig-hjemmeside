@@ -3,10 +3,14 @@
 .pwa-tools button { min-height:44px; padding:8px 14px; border:2px solid #7350bd; border-radius:14px; background:#fff8e9; color:#2b2153; font:inherit; cursor:pointer; }
 .pwa-tools button:focus-visible,.pwa-tools a:focus-visible { outline:3px solid #3d8bff; outline-offset:3px; }
 .pwa-status { font-size:12px; }
+/* the "Besked" box in Til voksne: whether the game is ready to play without internet */
+.pwa-message { margin:12px 0; padding:12px 14px; border:2px solid #7350bd; border-radius:14px; background:#fff; }
+.pwa-message .pwa-status { margin:4px 0 0; font-size:14px; }
 .pwa-dialog { box-sizing:border-box; width:min(540px,calc(100% - 24px)); max-height:85dvh; overflow:auto; padding:24px; border:0; border-radius:22px; background:#fff8e9; color:#2b2153; }
 .pwa-dialog::backdrop { background:#20152e99; }
 .pwa-dialog h2 { margin-top:0; }
-.pwa-dialog a { color:#563298; }
+.pwa-dialog h2:focus { outline:none; } /* (the dialog opens with its title focused, not the first link) */
+.pwa-dialog a { color:#563298; font-weight:700; } /* as links on the rest of the website */
 body.pwa-game { min-height:100vh; min-height:100dvh; }
 .pwa-game .sw { width:44px; height:44px; }
 @media(max-width:720px) {

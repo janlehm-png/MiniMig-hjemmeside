@@ -7,7 +7,7 @@ panel.setAttribute('aria-label', 'Installation og offline');
 panel.innerHTML = `<button type="button" class="pwa-help">Til voksne</button>
 <button type="button" class="pwa-update" hidden>Hent ny version</button>
 <dialog class="pwa-dialog" aria-labelledby="pwa-title">
-<h2 id="pwa-title">Til voksne</h2>
+<h2 id="pwa-title" tabindex="-1" autofocus>Til voksne</h2>
 <p>Uden konto og uden reklamer.</p>
 <h3>En god skærm til legen</h3>
 <p>MiniMig er lige nu bedst egnet til en tablet, en iPad eller en computer, hvor der er god plads til både figuren og valgene. På en computer er skærmen endnu større – åbn blot minimig.dk i browseren.</p>
