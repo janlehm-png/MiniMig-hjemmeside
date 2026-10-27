@@ -56,7 +56,7 @@ const server=http.createServer((req,res)=>{
  assert(allAssets.ok&&allAssets.retry&&allAssets.count===166,JSON.stringify(allAssets));
  await page.screenshot({path:path.join(__dirname,'mobile-offline.png')});
  await page.goto(base);
- await page.getByRole('link',{name:/Spil MiniMig gratis/}).click();
+ await page.getByRole('link',{name:/Spil MiniMig/}).click();
  await page.locator('#tab-haar').waitFor();
  assert(await page.evaluate(()=>JSON.parse(localStorage.minimig2).bg)==='rummet');
  await context.setOffline(false);

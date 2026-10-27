@@ -8,9 +8,9 @@ $html = $html.Replace('<title>Pr&oslash;v MiniMig</title>', '<title>MiniMig</tit
 $html = [regex]::Replace($html, '(<body[^>]*>\s*)<title>MiniMig</title>', '$1')
 # Public game: remove the preview-only indexing block after every import.
 $html = $html.Replace('<meta name="robots" content="noindex">', '')
-$html = $html.Replace('<title>MiniMig</title>', '<title>Spil MiniMig gratis - byg din egen figur</title>')
+$html = $html.Replace('<title>MiniMig</title>', '<title>Spil MiniMig - byg din egen figur</title>')
 if ($html -notmatch 'name="description"') {
-  $html = $html.Replace('</head>', '<meta name="description" content="Byg din egen figur i MiniMig. Gratis kreativt spil med tøj, hår og baggrunde til telefon, tablet og computer. Ingen konto eller reklamer.">' + "`n</head>")
+  $html = $html.Replace('</head>', '<meta name="description" content="Byg din egen figur i MiniMig. Kreativt spil med tøj, hår og baggrunde til telefon, tablet og computer. Ingen konto eller reklamer.">' + "`n</head>")
 }
 if ($html -notmatch 'rel="canonical"') {
   $html = $html.Replace('</head>', '<link rel="canonical" href="https://minimig.dk/proev/">' + "`n</head>")
