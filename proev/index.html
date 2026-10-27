@@ -324,6 +324,7 @@ const KMAX = { bryn: 1.25, haar: 1.8, briller: 1.25, kjole: 1.3 }; // (a satin g
 const img = {}, data = {};
 const EYE_BOX = [200, 136, 312, 180]; // round both eyes on the 512x768 figure (below the brows)
 const BROW_BOX = [195, 112, 318, 143]; // round both eyebrows
+const BROW_THROUGH = .55; // how strongly the brows show through a fringe over them
 // a picture is tried up to four times (a weak connection may drop one of the many); if it still fails it is left out
 // and the figure is drawn without it, instead of the whole app stopping
 function load(name, tries = 4) {
@@ -428,7 +429,14 @@ function compose(s, ctx) {
   const legs = bareThighs ? [['laar-bare2', '#000000']] : [];
   const layers = [[s.eyes, s.eyeColor], ['lukkede-oejne'], ...(s.brows && s.brows !== 'naturlig' && s.brows !== 'bryn-ingen' ? [['bryn-ingen', '#000000']] : []), [s.brows, s.browColor || '#4A2C1D'], [s.mouth, '#000000'], ['kinder'], [s.nose, '#000000'], [s.ears, '#000000'], ['oreringe'], [s.top === 'kjole-havfruedragt' ? 'ingen' : s.shoes, s.shoeColor],
     ...legs, ...body, ['navn'], [s.hair, colSpec(s, 'hairColor')], [s.glasses, s.glassesColor || CLOTH[0]], ['hat'], ['haender'], ['ting']]; // glasses sit over the hair; gloves before the thing held, so the fingers round it are gloved
+  // the brows' pixels, so that where a fringe falls over them they can show softly through it, as in cartoons
+  // (the natural brows are the base's own, class 7)
+  const browPx = [];
+  if (!s.brows || s.brows === 'naturlig') for (let y = BROW_BOX[1]; y < BROW_BOX[3]; y++) for (let x = BROW_BOX[0]; x < BROW_BOX[2]; x++) {
+    const p = y * W + x, i = p * 4; if (base.paint[p] === 7) browPx.push(i, o[i], o[i + 1], o[i + 2], o[i + 3]); }
   for (const [name, col, flag] of layers) {
+    if (name === s.hair && browPx.length) // (just before the hair: what the brows look like now, part brows included)
+      for (let k = 0; k < browPx.length; k += 5) { const i = browPx[k]; browPx[k + 1] = o[i]; browPx[k + 2] = o[i + 1]; browPx[k + 3] = o[i + 2]; }
     // things the app draws itself go on a clean sheet that is then laid over the figure, so the figure's own pixels are
     // never sent through the canvas and back (Safari on iPad loses colour in see-through pixels on every such round trip)
     if (name === 'lukkede-oejne') { // closed, smiling eyes: drawn sharply by the app over the skin the part painted
@@ -489,7 +497,11 @@ function compose(s, ctx) {
       // else the background would show through the seam
       blend(o, i, r, g, b, hidden[p] && d.paint[p] === 1 && a >= 40 ? 255 : a);
       if (a > 128) skinNow[p] = d.paint[p] === 4 ? 1 : 0;
+      if (name.startsWith('bryn') && name !== 'bryn-ingen' && d.paint[p] !== 4) browPx.push(i, 0, 0, 0, a);
     }
+    // a fringe over the brows: the brows show softly through it (where the hair covers them, not round them)
+    if (name === s.hair) for (let k = 0; k < browPx.length; k += 5) { const i = browPx[k];
+      if (o[i] !== browPx[k + 1] || o[i + 1] !== browPx[k + 2] || o[i + 2] !== browPx[k + 3]) blend(o, i, browPx[k + 1], browPx[k + 2], browPx[k + 3], browPx[k + 4] * BROW_THROUGH); }
   }
   // a part may hide the body where another part was meant to cover it (shorts made for one pose, a shirt for another):
   // where nothing covers it in the end, the body shows again instead of a hole
