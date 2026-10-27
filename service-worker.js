@@ -30,6 +30,20 @@ self.addEventListener('fetch', event => {
  url.search = ''; url.hash = '';
  if(url.pathname.endsWith('/')) url.pathname += 'index.html';
  if(!KNOWN.has(url.href)) return;
+ // The website's own pages (front page, Til forældre, Support, Privatliv) are fetched fresh whenever there is a
+ // connection, so new texts show at once; the saved copy is only for when there is none. The game itself keeps
+ // its saved release until "Hent ny version" is pressed.
+ if(event.request.mode === 'navigate' && !url.pathname.includes('/proev/')) {
+  event.respondWith((async () => {
+   const cache = await caches.open(CACHE);
+   try {
+    const response = await fetch(event.request.url, {cache:'no-cache'}); // (a page request can't be re-sent with options, its address can)
+    if(response.ok && response.type === 'basic') await cache.put(url.href,response.clone());
+    return response;
+   } catch(error) { return (await cache.match(url.href)) || Response.error(); }
+  })());
+  return;
+ }
  event.respondWith((async () => {
   const cache = await caches.open(CACHE);
   const cached = await cache.match(url.href);

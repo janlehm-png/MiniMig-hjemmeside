@@ -38,12 +38,15 @@ panel.innerHTML = `<button type="button" class="pwa-help">Til voksne</button>
 <h3>Jeres figur og privatliv</h3>
 <p>Figuren og et eventuelt navn på trøjen gemmes kun i denne browser. Når MiniMig føjes til hjemmeskærmen, kan det få sin egen separate lagring, så figuren ikke nødvendigvis følger med.</p>
 <p>MiniMig bruger ingen analyseværktøjer eller sporing.</p>
-<p><a class="pwa-privacy">Læs om privatliv</a></p>
+<h3>Ros, ris og gode idéer</h3>
+<p>MiniMig er nyt, og vi vil meget gerne høre fra jer – hvad jeres børn kan lide, hvad der driller, og hvad I savner. Skriv til <a href="mailto:minimig@lehmann.dk">minimig@lehmann.dk</a>.</p>
+<p><a class="pwa-support">Hjælp og support</a> · <a class="pwa-privacy">Læs om privatliv</a></p>
 <form method="dialog"><button>Luk</button></form></dialog>`;
 document.body.append(panel);
 const dialog = panel.querySelector('dialog'), status = panel.querySelector('.pwa-status');
 const install = panel.querySelector('.pwa-install'), update = panel.querySelector('.pwa-update');
 panel.querySelector('.pwa-privacy').href = new URL('privatliv/', root);
+panel.querySelector('.pwa-support').href = new URL('support/', root);
 panel.querySelector('.pwa-help').onclick = () => dialog.showModal();
 const standalone = matchMedia('(display-mode: standalone)');
 let prompt, registration, reloading = false;
