@@ -14,6 +14,7 @@ panel.innerHTML = `<button type="button" class="pwa-help">Til voksne</button>
 <p>På iPhone kan I prøve at vende telefonen vandret, hvis skærmen føles trang. Det afhænger af skærmstørrelsen – vælg den retning, der fungerer bedst for jer.</p>
 <h3>Føj MiniMig til hjemmeskærmen</h3>
 <p>Så kan I åbne spillet direkte fra MiniMig-ikonet.</p>
+<p class="pwa-installed" hidden><strong>✓ MiniMig ligger allerede på hjemmeskærmen på denne enhed.</strong> Vejledningen nedenfor kan bruges på jeres andre enheder.</p>
 <button type="button" class="pwa-install" hidden>Installér MiniMig</button>
 <div class="pwa-instructions">
 <h3>iPhone og iPad</h3>
@@ -46,7 +47,8 @@ let prompt, registration, reloading = false;
 function installUI() {
  const installed = standalone.matches || navigator.standalone === true;
  install.hidden = !prompt || installed;
- panel.querySelector('.pwa-instructions').hidden = installed;
+ // (the steps stay visible when MiniMig is already installed - they are needed for the family's other devices)
+ panel.querySelector('.pwa-installed').hidden = !installed;
 }
 window.addEventListener('beforeinstallprompt', event => { event.preventDefault(); prompt = event; installUI(); });
 install.onclick = async () => { const event = prompt; prompt = null; installUI(); if(event) { await event.prompt(); await event.userChoice; } };
