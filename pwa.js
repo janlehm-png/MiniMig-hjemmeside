@@ -10,18 +10,30 @@ panel.innerHTML = `<button type="button" class="pwa-help">Til voksne</button>
 <h2 id="pwa-title">Til voksne</h2>
 <p>Gratis, uden konto og uden reklamer.</p>
 <h3>En god skærm til legen</h3>
-<p>MiniMig er lige nu bedst egnet til en tablet eller iPad, hvor der er god plads til både figuren og valgene. På iPhone kan I prøve at vende telefonen vandret, hvis skærmen føles trang. Det afhænger af skærmstørrelsen – vælg den retning, der fungerer bedst for jer.</p>
+<p>MiniMig er lige nu bedst egnet til en tablet eller iPad, hvor der er god plads til både figuren og valgene.</p>
+<p>På iPhone kan I prøve at vende telefonen vandret, hvis skærmen føles trang. Det afhænger af skærmstørrelsen – vælg den retning, der fungerer bedst for jer.</p>
 <h3>Føj MiniMig til hjemmeskærmen</h3>
+<p>Så kan I åbne spillet direkte fra MiniMig-ikonet.</p>
 <button type="button" class="pwa-install" hidden>Installér MiniMig</button>
 <div class="pwa-instructions">
-<h3>iPhone og iPad</h3><ol><li>Åbn denne side i Safari.</li><li>Tryk på Del (eventuelt via sidemenuen).</li><li>Vælg Føj til hjemmeskærm. Behold Åbn som webapp slået til, hvis valget vises, og tryk Tilføj.</li></ol>
-<h3>Android</h3><p>Brug knappen Installér MiniMig, når den vises. Ellers åbn browserens menu i Chrome og vælg Installér app eller Føj til startskærm. Bekræft tilføjelsen.</p>
+<h3>iPhone og iPad</h3>
+<ol>
+<li>Åbn MiniMig i din browser, for eksempel Safari eller Chrome.</li>
+<li>Tryk på <strong>Del <svg class="pwa-share-icon" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M8 6l4-4 4 4M12 2v13M7 10H4v12h16V10h-3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></strong> — symbolet med en firkant og en pil op — eventuelt via sidemenuen, og vælg <strong>Føj til hjemmeskærmen</strong>.</li>
+<li>Behold <strong>Åbn som webapp</strong> slået til, hvis valget vises, og tryk på <strong>Tilføj</strong>.</li>
+</ol>
+<h3>Android</h3>
+<p>Tryk på <strong>Installér MiniMig</strong>, hvis knappen vises. Ellers åbner du browserens menu i Chrome og vælger <strong>Installér app</strong> eller <strong>Føj til startskærm</strong>. Bekræft tilføjelsen.</p>
 </div>
 <h3>Spil uden internet</h3>
-<p>Spillet henter billeder og andre nødvendige filer til denne enhed. Vent på beskeden nedenfor om, at spillet kan bruges uden internet, før du slår nettet fra.</p>
-<p class="pwa-status" role="status">Henter spillet til brug uden internet…</p>
-<p>Browseren kan senere rydde gemte filer ved pladsmangel; åbn da spillet med internet igen.</p>
-<p>Figuren og et eventuelt navn på trøjen gemmes kun i denne browser. Installation kan bruge separat lagring. Ingen analyseværktøjer eller sporing.</p>
+<p>MiniMig henter billeder og andre nødvendige filer til denne enhed, så I også kan spille uden internet.</p>
+<p>I boksen <strong>Besked</strong> nedenfor kan du se, om spillet er klar. Vent, til der står <strong>“Spillet kan nu bruges uden internet”</strong>, før du slår internetforbindelsen fra.</p>
+<div class="pwa-message" role="status" aria-live="polite" aria-atomic="true"><strong>Besked</strong>
+<p class="pwa-status">Spillet hentes. Vent lidt, og behold internetforbindelsen.</p></div>
+<p>Browseren kan senere rydde de gemte filer, hvis enheden mangler plads. Åbn i så fald MiniMig med internetforbindelse igen, så filerne kan hentes på ny.</p>
+<h3>Jeres figur og privatliv</h3>
+<p>Figuren og et eventuelt navn på trøjen gemmes kun i denne browser. Når MiniMig føjes til hjemmeskærmen, kan det få sin egen separate lagring, så figuren ikke nødvendigvis følger med.</p>
+<p>MiniMig bruger ingen analyseværktøjer eller sporing.</p>
 <p><a class="pwa-privacy">Læs om privatliv</a></p>
 <form method="dialog"><button>Luk</button></form></dialog>`;
 document.body.append(panel);
@@ -41,9 +53,9 @@ install.onclick = async () => { const event = prompt; prompt = null; installUI()
 window.addEventListener('appinstalled', () => { prompt = null; installUI(); });
 standalone.addEventListener('change', installUI); installUI();
 function checkReady() { navigator.serviceWorker.controller?.postMessage({type:'CHECK_OFFLINE'}); }
-if (!('serviceWorker' in navigator) || !isSecureContext) { status.textContent = 'Offlinebrug kræver en understøttet browser og HTTPS.'; return; }
+if (!('serviceWorker' in navigator) || !isSecureContext) { status.textContent = 'Denne browser kan ikke gøre spillet klar til brug uden internet. Prøv at åbne https://minimig.dk/ i en opdateret browser.'; return; }
 navigator.serviceWorker.addEventListener('message', event => {
- if(event.data?.type === 'OFFLINE_STATUS') status.textContent = event.data.ready ? 'Spillet kan nu bruges uden internet.' : 'Offlinefiler mangler. Åbn med internet igen.';
+ if(event.data?.type === 'OFFLINE_STATUS') status.textContent = event.data.ready ? 'Spillet kan nu bruges uden internet.' : 'Spillet er ikke klar til brug uden internet. Kontrollér internetforbindelsen, og åbn MiniMig igen.';
 });
 navigator.serviceWorker.addEventListener('controllerchange', () => { if(reloading) location.reload(); else checkReady(); });
 update.onclick = () => { if(registration?.waiting) { reloading = true; registration.waiting.postMessage({type:'SKIP_WAITING'}); } };
@@ -53,8 +65,8 @@ navigator.serviceWorker.register(new URL('service-worker.js', root), {scope:root
  waiting(); checkReady();
  reg.addEventListener('updatefound', () => {
   const worker = reg.installing;
-  worker?.addEventListener('statechange', () => { waiting(); if(worker.state === 'redundant') status.textContent = 'Offlinehentning mislykkedes. Prøv igen med internet.'; });
+  worker?.addEventListener('statechange', () => { waiting(); if(worker.state === 'redundant') status.textContent = 'Spillet er ikke klar til brug uden internet. Kontrollér internetforbindelsen, og åbn MiniMig igen.'; });
  });
  navigator.serviceWorker.ready.then(checkReady);
-}).catch(() => { status.textContent = 'Offlinebrug kunne ikke startes. Prøv igen med internet.'; });
+}).catch(() => { status.textContent = 'Spillet er ikke klar til brug uden internet. Kontrollér internetforbindelsen, og åbn MiniMig igen.'; });
 })();
