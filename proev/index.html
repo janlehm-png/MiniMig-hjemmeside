@@ -129,6 +129,8 @@ header { display: flex; align-items: baseline; justify-content: space-between; g
 .saved { position: relative; min-width: 0; }
 .saved .opt { width: 100%; padding: 4px; }
 .saved .opt canvas { aspect-ratio: 2 / 3; }
+.saved .opt canvas.sq { aspect-ratio: 1; } /* a saved profile picture */
+.gallery { align-items: start; }
 .del { position: absolute; top: -6px; right: -6px; min-width: 34px; height: 34px; border-radius: 999px; border: 2px solid var(--line); background: var(--tile);
   color: var(--ink); font: 700 .95rem/1 var(--font-display); cursor: pointer; box-shadow: 0 2px 6px var(--shadow); }
 .del.armed { background: #E8384F; border-color: #E8384F; color: #fff; padding: 0 10px; }
@@ -207,6 +209,16 @@ header { display: flex; align-items: baseline; justify-content: space-between; g
       <button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button>
       <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
       <button data-k="del" aria-label="Slet">⌫</button><button data-k="0">0</button><button data-k="ok">OK</button>
+    </div>
+  </div>
+</div>
+<!-- the star: save the whole figure or its profile picture in Mine figurer (stays in the app, so no grown-up needed) -->
+<div class="sheet" id="keepChoice" hidden>
+  <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="keepChoiceTitle">
+    <div class="sheet-head"><h2 id="keepChoiceTitle">Gem i Mine figurer</h2><button class="sheet-x" data-close aria-label="Luk">✕</button></div>
+    <div class="pic-opts">
+      <button class="pic-opt" data-pic="hel"><canvas width="200" height="300"></canvas><span>Hele figuren</span></button>
+      <button class="pic-opt" data-pic="profil"><canvas width="300" height="300"></canvas><span>Profilbillede</span></button>
     </div>
   </div>
 </div>
@@ -960,10 +972,11 @@ async function stagePicture(s = state, S = 2) {
 }
 // the profile picture: close on the head, with only the neck and the very top of the shoulders, cut square from the
 // stage picture (the figure's x 150..362 - ear tip to ear tip - and y 36..248, from above a crown down to the shoulders)
-function profilePicture(full) {
-  const k = FIG_SCALE, S = 2, sx = v => (256 + (v - 256) * k) * S, sy = v => (H * .85 + (v - H * .85) * k) * S, x0 = sx(150), y0 = sy(36), side = sx(362) - x0;
-  const c = document.createElement('canvas'); c.width = c.height = 768; const g = c.getContext('2d'); g.imageSmoothingQuality = 'high';
-  g.drawImage(full, x0, y0, side, side, 0, 0, 768, 768); return c;
+// (S: the scale the stage picture was made at; out: the profile picture's size)
+function profilePicture(full, S = 2, out = 768) {
+  const k = FIG_SCALE, sx = v => (256 + (v - 256) * k) * S, sy = v => (H * .85 + (v - H * .85) * k) * S, x0 = sx(150), y0 = sy(36), side = sx(362) - x0;
+  const c = document.createElement('canvas'); c.width = c.height = out; const g = c.getContext('2d'); g.imageSmoothingQuality = 'high';
+  g.drawImage(full, x0, y0, side, side, 0, 0, out, out); return c;
 }
 const pictureOf = async kind => { const full = await stagePicture(); return kind === 'profil' ? profilePicture(full) : full; };
 async function sharePicture(kind) {
@@ -991,34 +1004,40 @@ document.getElementById('keypad').addEventListener('click', e => {
   } else if (gateEntry.length < 3) gateEntry += k;
   a.textContent = gateEntry;
 });
-document.getElementById('saveBtn').addEventListener('click', async () => {
-  document.getElementById('picChoice').hidden = false;
-  const full = await stagePicture(), prof = profilePicture(full); // small pictures of both choices
-  for (const [kind, p] of [['hel', full], ['profil', prof]]) { const cv = document.querySelector(`[data-pic="${kind}"] canvas`), g = cv.getContext('2d');
+// a sheet of the two choices (the whole figure, the profile picture), each with a small picture of it
+async function showPicChoice(id) {
+  const sheet = document.getElementById(id); sheet.hidden = false;
+  const full = await stagePicture(), prof = profilePicture(full);
+  for (const [kind, p] of [['hel', full], ['profil', prof]]) { const cv = sheet.querySelector(`[data-pic="${kind}"] canvas`), g = cv.getContext('2d');
     g.clearRect(0, 0, cv.width, cv.height); g.imageSmoothingQuality = 'high'; g.drawImage(p, 0, 0, cv.width, cv.height); }
-});
+}
+document.getElementById('saveBtn').addEventListener('click', () => showPicChoice('picChoice'));
 document.getElementById('picChoice').addEventListener('click', e => { const b = e.target.closest('[data-pic]'); if (!b) return;
   document.getElementById('picChoice').hidden = true; const kind = b.dataset.pic;
   askGrownUp(() => sharePicture(kind).catch(() => {})); });
-// ---- Mine figurer: the star saves the figure as it is, the pictures button shows the saved ones to pick again ----
-// (kept on this device only, newest first; a figure is just its choices, so it is drawn fresh with today's pictures)
+// ---- Mine figurer: the star saves the figure as it is - the whole figure or its profile picture - and the pictures
+// button shows the saved ones to pick again ----
+// (kept on this device only, newest first; a figure is just its choices, so it is drawn fresh with today's pictures;
+// a profile is the same choices marked _view: 'profil', shown in the gallery as the profile picture)
 const MAX_SAVED = 30, FIGS_KEY = 'minimig2.figurer';
 const savedFigs = () => { try { const l = JSON.parse(localStorage.getItem(FIGS_KEY) || '[]'); return Array.isArray(l) ? l : []; } catch (e) { return []; } };
 const storeFigs = l => { try { localStorage.setItem(FIGS_KEY, JSON.stringify(l.slice(0, MAX_SAVED))); return true; } catch (e) { return false; } };
 function toast(msg) { const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 1700); }
-document.getElementById('keepBtn').addEventListener('click', e => {
-  const fig = JSON.parse(JSON.stringify(state)), l = savedFigs(); l.unshift(fig);
-  const b = e.currentTarget; b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop');
+document.getElementById('keepBtn').addEventListener('click', () => showPicChoice('keepChoice'));
+document.getElementById('keepChoice').addEventListener('click', e => { const c = e.target.closest('[data-pic]'); if (!c) return;
+  document.getElementById('keepChoice').hidden = true;
+  const fig = JSON.parse(JSON.stringify(state)), l = savedFigs(); if (c.dataset.pic === 'profil') fig._view = 'profil'; l.unshift(fig);
+  const b = document.getElementById('keepBtn'); b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop');
   toast(storeFigs(l) ? '⭐ Gemt!' : 'Kunne ikke gemme');
 });
 let galleryRun = 0; // a newer drawing of the gallery stops an older one still drawing its pictures
 async function renderGallery() {
   const l = savedFigs(), el = document.getElementById('gallery'), run = ++galleryRun;
-  el.innerHTML = l.length ? l.map((s, i) => `<div class="saved"><button class="opt" data-load="${i}" aria-label="Brug figur ${i + 1}"><canvas width="200" height="300"></canvas></button><button class="del" data-del="${i}" aria-label="Slet figur ${i + 1}">✕</button></div>`).join('')
+  el.innerHTML = l.length ? l.map((s, i) => `<div class="saved"><button class="opt" data-load="${i}" aria-label="Brug figur ${i + 1}">${s._view === 'profil' ? '<canvas class="sq" width="200" height="200"></canvas>' : '<canvas width="200" height="300"></canvas>'}</button><button class="del" data-del="${i}" aria-label="Slet figur ${i + 1}">✕</button></div>`).join('')
     : '<p class="empty">Ingen figurer endnu.<br>Tryk på ⭐ for at gemme din figur her.</p>';
   for (let i = 0; i < l.length; i++) { // one picture at a time, so the sheet opens at once and fills in
     await new Promise(r => requestAnimationFrame(r)); if (run !== galleryRun) return;
-    const p = await stagePicture(tidy({ ...state, ...l[i] }), .5); if (run !== galleryRun) return;
+    const fig = tidy({ ...state, ...l[i] }), p = fig._view === 'profil' ? profilePicture(await stagePicture(fig, 1), 1, 200) : await stagePicture(fig, .5); if (run !== galleryRun) return;
     const cv = el.querySelector(`[data-load="${i}"] canvas`), g = cv.getContext('2d'); g.imageSmoothingQuality = 'high'; g.drawImage(p, 0, 0, cv.width, cv.height); }
 }
 document.getElementById('figsBtn').addEventListener('click', () => { document.getElementById('figSheet').hidden = false; renderGallery(); });
@@ -1026,7 +1045,7 @@ document.getElementById('gallery').addEventListener('click', e => {
   e.stopPropagation(); // (the tiles look like choices, but must not reach the choices' own click handler)
   const load = e.target.closest('[data-load]'), del = e.target.closest('[data-del]'), l = savedFigs();
   if (load) { const fig = l[+load.dataset.load]; if (!fig) return;
-    Object.assign(state, fig); tidy(state); document.getElementById('figSheet').hidden = true; draw(); render(); }
+    Object.assign(state, fig); delete state._view; tidy(state); document.getElementById('figSheet').hidden = true; draw(); render(); }
   else if (del) { // a first tap asks "Slet?", only a second one deletes, so a figure is not lost by a stray tap
     if (!del.classList.contains('armed')) { del.classList.add('armed'); del.textContent = 'Slet?'; setTimeout(() => { del.classList.remove('armed'); del.textContent = '✕'; }, 2500); return; }
     l.splice(+del.dataset.del, 1); storeFigs(l); renderGallery(); }
