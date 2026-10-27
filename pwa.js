@@ -10,7 +10,7 @@ panel.innerHTML = `<button type="button" class="pwa-help">Til voksne</button>
 <h2 id="pwa-title">Til voksne</h2>
 <p>Uden konto og uden reklamer.</p>
 <h3>En god skærm til legen</h3>
-<p>MiniMig er lige nu bedst egnet til en tablet eller iPad, hvor der er god plads til både figuren og valgene.</p>
+<p>MiniMig er lige nu bedst egnet til en tablet, en iPad eller en computer, hvor der er god plads til både figuren og valgene. På en computer er skærmen endnu større – åbn blot minimig.dk i browseren.</p>
 <p>På iPhone kan I prøve at vende telefonen vandret, hvis skærmen føles trang. Det afhænger af skærmstørrelsen – vælg den retning, der fungerer bedst for jer.</p>
 <h3>Føj MiniMig til hjemmeskærmen</h3>
 <p>Så kan I åbne spillet direkte fra MiniMig-ikonet.</p>
