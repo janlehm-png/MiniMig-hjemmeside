@@ -40,7 +40,7 @@ panel.innerHTML = `<button type="button" class="pwa-help">Til voksne</button>
 <p>MiniMig bruger ingen analyseværktøjer eller sporing.</p>
 <h3>Ros, ris og gode idéer</h3>
 <p>MiniMig er nyt, og vi vil meget gerne høre fra jer – hvad jeres børn kan lide, hvad der driller, og hvad I savner. Skriv til <a href="mailto:minimig@lehmann.dk">minimig@lehmann.dk</a>.</p>
-<p><a class="pwa-support">Hjælp og support</a> · <a class="pwa-privacy">Læs om privatliv</a></p>
+<p><a class="pwa-support" target="_blank" rel="noopener">Hjælp og support</a> · <a class="pwa-privacy" target="_blank" rel="noopener">Læs om privatliv</a></p>
 <form method="dialog"><button>Luk</button></form></dialog>`;
 document.body.append(panel);
 const dialog = panel.querySelector('dialog'), status = panel.querySelector('.pwa-status');
