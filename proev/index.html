@@ -117,6 +117,22 @@ header { display: flex; align-items: baseline; justify-content: space-between; g
 .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .keypad button { height: 52px; border-radius: 16px; border: 2px solid var(--line); background: var(--ground); color: var(--ink); font: 700 1.3rem/1 var(--font-display); cursor: pointer; }
 #picImg { width: 100%; border-radius: 16px; }
+/* the star (save the figure) and Mine figurer, down the stage's left side */
+.stage-btn.left { right: auto; left: 10px; }
+.stage-btn.second { top: 66px; }
+@media (prefers-reduced-motion: no-preference) { .stage-btn.pop { animation: pop .5s ease; } }
+@keyframes pop { 40% { transform: scale(1.35) rotate(-12deg); } 100% { transform: none; } }
+.toast { position: fixed; left: 50%; top: max(24px, env(safe-area-inset-top, 0px)); transform: translateX(-50%); z-index: 60; pointer-events: none;
+  background: var(--tile); color: var(--ink); border-radius: 999px; padding: 10px 20px; box-shadow: 0 6px 20px var(--shadow); font: 700 1.2rem/1.2 var(--font-display); }
+.fig-card { width: min(640px, 100%); }
+.gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 12px; padding: 8px 8px 0 0; } /* (room for the ✕ corners) */
+.saved { position: relative; min-width: 0; }
+.saved .opt { width: 100%; padding: 4px; }
+.saved .opt canvas { aspect-ratio: 2 / 3; }
+.del { position: absolute; top: -6px; right: -6px; min-width: 34px; height: 34px; border-radius: 999px; border: 2px solid var(--line); background: var(--tile);
+  color: var(--ink); font: 700 .95rem/1 var(--font-display); cursor: pointer; box-shadow: 0 2px 6px var(--shadow); }
+.del.armed { background: #E8384F; border-color: #E8384F; color: #fff; padding: 0 10px; }
+.empty { grid-column: 1 / -1; text-align: center; color: var(--muted); margin: 0; padding: 20px 8px; font: 600 1.05rem/1.4 var(--font-display); }
 /* larger screens: the figure stays in view while the choices beside it are scrolled */
 .stage { position: sticky; top: 16px; }
 /* phones: like an app - the figure always at the top, the tabs in one sideways row under it, and only the choices
@@ -147,7 +163,9 @@ header { display: flex; align-items: baseline; justify-content: space-between; g
   </header>
   <div class="main">
     <div class="stage" id="stage" aria-label="Figuren – tryk for at zoome"><div class="zoom" id="zoom"><div class="shadow"></div><canvas id="fig" width="512" height="768"></canvas><canvas id="over" class="over" width="512" height="768"></canvas></div>
-      <button class="stage-btn" id="saveBtn" aria-label="Gem billede">📷</button></div>
+      <button class="stage-btn" id="saveBtn" aria-label="Gem billede">📷</button>
+      <button class="stage-btn left" id="keepBtn" aria-label="Gem figuren">⭐</button>
+      <button class="stage-btn left second" id="figsBtn" aria-label="Mine figurer">🖼️</button></div>
     <div class="panel">
       <div class="tabs" role="tablist" id="tabs"></div>
       <div class="box">
@@ -190,6 +208,13 @@ header { display: flex; align-items: baseline; justify-content: space-between; g
       <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
       <button data-k="del" aria-label="Slet">⌫</button><button data-k="0">0</button><button data-k="ok">OK</button>
     </div>
+  </div>
+</div>
+<!-- Mine figurer: the figures saved with the star; tap one to dress up as it again, ✕ (twice) to delete it -->
+<div class="sheet" id="figSheet" hidden>
+  <div class="sheet-card fig-card" role="dialog" aria-modal="true" aria-labelledby="figSheetTitle">
+    <div class="sheet-head"><h2 id="figSheetTitle">Mine figurer</h2><button class="sheet-x" data-close aria-label="Luk">✕</button></div>
+    <div class="gallery" id="gallery"></div>
   </div>
 </div>
 <div class="sheet" id="picSheet" hidden>
@@ -905,9 +930,10 @@ const sceneImgs = {};
 const sceneImage = bg => new Promise(res => { if (sceneImgs[bg]) return res(sceneImgs[bg]);
   const im = new Image(); im.onload = () => res(sceneImgs[bg] = im); im.onerror = () => res(null); im.src = `baggrund/${bg}.jpg`; });
 // the stage at twice its size (1024x1536): the sun or the scene, the shadow, and the figure standing as on the stage
-async function stagePicture() {
-  const S = 2, c = document.createElement('canvas'); c.width = W * S; c.height = H * S; const g = c.getContext('2d');
-  const bg = state.bg && state.bg !== 'sol' ? state.bg : '', im = bg && await sceneImage(bg), cw = c.width, ch = c.height;
+// (also smaller, of a saved figure, for Mine figurer)
+async function stagePicture(s = state, S = 2) {
+  const c = document.createElement('canvas'); c.width = W * S; c.height = H * S; const g = c.getContext('2d');
+  const bg = s.bg && s.bg !== 'sol' ? s.bg : '', im = bg && await sceneImage(bg), cw = c.width, ch = c.height;
   if (im) { const k = Math.max(cw / im.naturalWidth, ch / im.naturalHeight), w = im.naturalWidth * k, h = im.naturalHeight * k; g.drawImage(im, (cw - w) / 2, (ch - h) / 2, w, h); }
   else { const gr = g.createRadialGradient(cw * .5, ch * .42, 0, cw * .5, ch * .42, Math.hypot(cw * .5, ch * .58)); // as the stage's sun
     gr.addColorStop(0, '#FFF3C2'); gr.addColorStop(.38, '#FFF3C2'); gr.addColorStop(1, '#FFD54A'); g.fillStyle = gr; g.fillRect(0, 0, cw, ch); }
@@ -915,14 +941,15 @@ async function stagePicture() {
   g.save(); g.translate(cw * .5, ch * .85); g.scale(1, ry / rx); const sh = g.createRadialGradient(0, 0, 0, 0, 0, rx * 1.15);
   sh.addColorStop(0, bg ? 'rgba(20,30,20,.28)' : 'rgba(43,33,83,.16)'); sh.addColorStop(.75, bg ? 'rgba(20,30,20,.2)' : 'rgba(43,33,83,.11)'); sh.addColorStop(1, 'rgba(0,0,0,0)');
   g.fillStyle = sh; g.beginPath(); g.arc(0, 0, rx * 1.15, 0, Math.PI * 2); g.fill(); g.restore();
-  const f = document.createElement('canvas'); f.width = W; f.height = H; const st = { ...state, _over: true }; compose(st, f.getContext('2d'));
+  const f = document.createElement('canvas'); f.width = W; f.height = H; const st = { ...s, _over: true }; compose(st, f.getContext('2d'));
   g.save(); g.scale(S, S); g.translate(256 * (1 - k), H * .85 * (1 - k)); g.scale(k, k); g.imageSmoothingQuality = 'high'; g.drawImage(f, 0, 0);
   if (st._overBalloon) { if (mirrored(st)) { g.translate(W, 0); g.scale(-1, 1); } drawItem(g, { ...st, _over: false, _overBalloon: false }); } // a raised balloon
   g.restore(); return c;
 }
-// the profile picture: the head and shoulders cut square from the stage picture (the figure's x 71..441, y 10..380)
+// the profile picture: close on the head, with only the neck and the very top of the shoulders, cut square from the
+// stage picture (the figure's x 150..362 - ear tip to ear tip - and y 36..248, from above a crown down to the shoulders)
 function profilePicture(full) {
-  const k = FIG_SCALE, S = 2, sx = v => (256 + (v - 256) * k) * S, sy = v => (H * .85 + (v - H * .85) * k) * S, x0 = sx(71), y0 = sy(10), side = sx(441) - x0;
+  const k = FIG_SCALE, S = 2, sx = v => (256 + (v - 256) * k) * S, sy = v => (H * .85 + (v - H * .85) * k) * S, x0 = sx(150), y0 = sy(36), side = sx(362) - x0;
   const c = document.createElement('canvas'); c.width = c.height = 768; const g = c.getContext('2d'); g.imageSmoothingQuality = 'high';
   g.drawImage(full, x0, y0, side, side, 0, 0, 768, 768); return c;
 }
@@ -961,17 +988,53 @@ document.getElementById('saveBtn').addEventListener('click', async () => {
 document.getElementById('picChoice').addEventListener('click', e => { const b = e.target.closest('[data-pic]'); if (!b) return;
   document.getElementById('picChoice').hidden = true; const kind = b.dataset.pic;
   askGrownUp(() => sharePicture(kind).catch(() => {})); });
+// ---- Mine figurer: the star saves the figure as it is, the pictures button shows the saved ones to pick again ----
+// (kept on this device only, newest first; a figure is just its choices, so it is drawn fresh with today's pictures)
+const MAX_SAVED = 30, FIGS_KEY = 'minimig2.figurer';
+const savedFigs = () => { try { const l = JSON.parse(localStorage.getItem(FIGS_KEY) || '[]'); return Array.isArray(l) ? l : []; } catch (e) { return []; } };
+const storeFigs = l => { try { localStorage.setItem(FIGS_KEY, JSON.stringify(l.slice(0, MAX_SAVED))); return true; } catch (e) { return false; } };
+function toast(msg) { const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 1700); }
+document.getElementById('keepBtn').addEventListener('click', e => {
+  const fig = JSON.parse(JSON.stringify(state)), l = savedFigs(); l.unshift(fig);
+  const b = e.currentTarget; b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop');
+  toast(storeFigs(l) ? '⭐ Gemt!' : 'Kunne ikke gemme');
+});
+let galleryRun = 0; // a newer drawing of the gallery stops an older one still drawing its pictures
+async function renderGallery() {
+  const l = savedFigs(), el = document.getElementById('gallery'), run = ++galleryRun;
+  el.innerHTML = l.length ? l.map((s, i) => `<div class="saved"><button class="opt" data-load="${i}" aria-label="Brug figur ${i + 1}"><canvas width="200" height="300"></canvas></button><button class="del" data-del="${i}" aria-label="Slet figur ${i + 1}">✕</button></div>`).join('')
+    : '<p class="empty">Ingen figurer endnu.<br>Tryk på ⭐ for at gemme din figur her.</p>';
+  for (let i = 0; i < l.length; i++) { // one picture at a time, so the sheet opens at once and fills in
+    await new Promise(r => requestAnimationFrame(r)); if (run !== galleryRun) return;
+    const p = await stagePicture(tidy({ ...state, ...l[i] }), .5); if (run !== galleryRun) return;
+    const cv = el.querySelector(`[data-load="${i}"] canvas`), g = cv.getContext('2d'); g.imageSmoothingQuality = 'high'; g.drawImage(p, 0, 0, cv.width, cv.height); }
+}
+document.getElementById('figsBtn').addEventListener('click', () => { document.getElementById('figSheet').hidden = false; renderGallery(); });
+document.getElementById('gallery').addEventListener('click', e => {
+  e.stopPropagation(); // (the tiles look like choices, but must not reach the choices' own click handler)
+  const load = e.target.closest('[data-load]'), del = e.target.closest('[data-del]'), l = savedFigs();
+  if (load) { const fig = l[+load.dataset.load]; if (!fig) return;
+    Object.assign(state, fig); tidy(state); document.getElementById('figSheet').hidden = true; draw(); render(); }
+  else if (del) { // a first tap asks "Slet?", only a second one deletes, so a figure is not lost by a stray tap
+    if (!del.classList.contains('armed')) { del.classList.add('armed'); del.textContent = 'Slet?'; setTimeout(() => { del.classList.remove('armed'); del.textContent = '✕'; }, 2500); return; }
+    l.splice(+del.dataset.del, 1); storeFigs(l); renderGallery(); }
+});
 for (const s of document.querySelectorAll('.sheet')) s.addEventListener('click', e => { if (e.target === s || e.target.closest('[data-close]')) s.hidden = true; });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') for (const s of document.querySelectorAll('.sheet')) s.hidden = true; });
 
-try { Object.assign(state, JSON.parse(localStorage.getItem('minimig2') || '{}')); } catch (e) {}
 // a choice saved earlier that the app no longer has (e.g. the vampire mouth) goes back to the tab's first choice
-// (a key shared by two tabs - tops and dresses - is fine if either tab has the choice)
-state.cheeks = cheeksOf(state);
-if (PATTERNS.includes(state.hairColor)) state.hairColor = patBase(state, 'hairColor'); // (hair has no patterns any more)
-for (const t of TABS) if (t.opts && t.key && !t.multi && state[t.key] !== undefined &&
-  !TABS.some(u => u.key === t.key && u.opts && u.opts.some(o => o[0] === state[t.key]))) state[t.key] = t.opts[0][0];
-for (const t of TABS) if (t.more && state[t.more.key] !== undefined && !t.more.opts.some(o => o[0] === state[t.more.key])) state[t.more.key] = t.more.opts[0][0];
+// (a key shared by two tabs - tops and dresses - is fine if either tab has the choice); used for the last figure and
+// for each one picked from Mine figurer
+function tidy(s) {
+  s.cheeks = cheeksOf(s);
+  if (PATTERNS.includes(s.hairColor)) s.hairColor = patBase(s, 'hairColor'); // (hair has no patterns any more)
+  for (const t of TABS) if (t.opts && t.key && !t.multi && s[t.key] !== undefined &&
+    !TABS.some(u => u.key === t.key && u.opts && u.opts.some(o => o[0] === s[t.key]))) s[t.key] = t.opts[0][0];
+  for (const t of TABS) if (t.more && s[t.more.key] !== undefined && !t.more.opts.some(o => o[0] === s[t.more.key])) s[t.more.key] = t.more.opts[0][0];
+  return s;
+}
+try { Object.assign(state, JSON.parse(localStorage.getItem('minimig2') || '{}')); } catch (e) {}
+tidy(state);
 const POSES = ['vink', 'hurra', 'hofter', 'dans'];
 const TOPS = ['troeje-tshirt', 'troeje-haette', 'troeje-fodbold', 'troeje-fodbold-inde', 'troeje-gymnastik', ...DRESSES];
 const names = ['grund', 'laar-bare2', 'haar-bob', 'haar-kort', 'haar-strit', 'haar-kroeller', 'haar-fletninger', ...TOPS, 'bukser-lange', 'bukser-fodbold', 'sko-sneakers', 'sko-fodbold', 'sko-ballet', 'sko-glas',
