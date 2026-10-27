@@ -360,14 +360,14 @@ const TABS = [
   { id: 'bukser', name: 'Bukser', key: 'pants', colorKey: 'pantsColor', colors: [...CLOTH, ...SPECIAL],
     opts: [['ingen', 'Shorts'], ['bukser-lange', 'Lange bukser'], ['bukser-fodbold', 'Fodbold­shorts'], ['bukser-cowboy', 'Cowboy­shorts']] },
   { id: 'sko', name: 'Sko', key: 'shoes', colorKey: 'shoeColor', colors: CLOTH,
-    opts: [['ingen', 'Bare tæer'], ['sko-sneakers', 'Sneakers'], ['sko-fodbold', 'Fodbold­støvler'], ['sko-ballet', 'Balletsko'], ['sko-glas', 'Glassko']] },
+    opts: [['ingen', 'Bare tæer'], ['sko-sneakers', 'Sneakers'], ['sko-fodbold', 'Fodbold­støvler'], ['sko-ballet', 'Balletsko'], ['sko-glas', 'Glassko'], ['sko-gummi', 'Gummi­støvler']] },
   { id: 'stilling', name: 'Stilling', key: 'pose',
     opts: [['ned', 'Står'], ['vink', 'Vinker'], ['vink2', 'Vinker med den anden'], ['hurra', 'Hurra'], ['hofter', 'Hænder i siden'], ['dans', 'Danser'], ['dans2', 'Danser modsat']] },
   { id: 'navn', name: 'Navn' },
   { id: 'haender', name: 'Hænder', key: 'hands', colorKey: 'handColor', colors: CLOTH,
     opts: [['ingen', 'Ingen'], ['neglelak', 'Neglelak'], ['armbaand', 'Armbånd'], ['ur', 'Ur'], ['handsker', 'Handsker'], ['vanter', 'Vanter'], ['ring', 'Ring']] },
   { id: 'ting', name: 'Ting', key: 'item', colorKey: 'itemColor', colors: CLOTH,
-    opts: [['ingen', 'Ingen'], ['ballon', 'Ballon'], ['bamse', 'Bamse'], ['tryllestav', 'Tryllestav'], ['is', 'Is'], ['blomst', 'Blomst'], ['bold', 'Bold'], ['fodbold', 'Fodbold'], ['hulahop', 'Hula­hopring']] },
+    opts: [['ingen', 'Ingen'], ['ballon', 'Ballon'], ['bamse', 'Bamse'], ['tryllestav', 'Tryllestav'], ['is', 'Is'], ['blomst', 'Blomst'], ['bold', 'Bold'], ['fodbold', 'Fodbold'], ['hulahop', 'Hula­hopring'], ['paraply', 'Paraply']] },
   { id: 'baggrund', name: 'Baggrund', key: 'bg',
     opts: [['sol', 'Sol'], ['have', 'Have'], ['strand', 'Strand'], ['skov', 'Skov'], ['slot', 'Slot'], ['ridderborg', 'Ridderborg'],
       ['havbund', 'Havbund'], ['slikland', 'Slikland'], ['vinter', 'Vinter'], ['rummet', 'Rummet'],
@@ -421,7 +421,7 @@ function load(name, tries = 4) {
     im.onload = () => ok([name, im]);
     im.onerror = () => tries > 1 ? setTimeout(() => load(name, tries - 1).then(ok), 700) : ok([name, null]);
     im.src = 'dele/' + name + '.png?v=' + PICS_V + (tries < 4 ? '-' + tries : ''); }); }
-const PICS_V = 91; // raised when pictures change, so phones and browsers fetch the new ones instead of old copies
+const PICS_V = 92; // raised when pictures change, so phones and browsers fetch the new ones instead of old copies
 
 // per part: which pixels take the chosen colour (coloured ones; on shoes not the white soles) and their middle brightness
 function prepare(name, im) {
@@ -563,10 +563,13 @@ function compose(s, ctx) {
       const hand = findHand(s); s._hand = hand;
       // (a balloon or a wand held high reaches above the figure's picture: drawn on the stage sheet, which is bigger)
       if (s._over && (s.item === 'ballon' || s.item === 'tryllestav') && hand[1] < 200) { s._overBalloon = true; continue; }
+      // the umbrella: its canopy (above the figure's picture) on the stage sheet; the shaft's lower end and handle here,
+      // under the fingers, so the hand holds it
+      if (s.item === 'paraply' && s._over) s._overBalloon = true;
       const box = [hand[0] - 24, hand[1] - 26, hand[0] + 24, hand[1] + 24], keep = []; s._hand = hand;
       for (let y = box[1]; y < box[3]; y++) for (let x = box[0]; x < box[2]; x++) { const p = y * W + x, i = p * 4;
         if (skinNow[p] && o[i + 3] > 200) keep.push(i, o[i], o[i + 1], o[i + 2], o[i + 3]); }
-      overlay(o, g2 => drawItem(g2, s));
+      overlay(o, g2 => drawItem(g2, s.item === 'paraply' && s._over ? { ...s, _part: 'low' } : s));
       if (ITEMS[s.item].front !== true) for (let k = 0; k < keep.length; k += 5) { const i = keep[k];
         o[i] = keep[k + 1]; o[i + 1] = keep[k + 2]; o[i + 2] = keep[k + 3]; o[i + 3] = keep[k + 4]; }
       continue; }
@@ -723,7 +726,10 @@ function drawHat(ctx, s) {
 // and a tilt outwards. The hand is the one on the left of the picture (it stays the free one in the poses).
 // grip = the point of the picture that sits in the hand (string end, handle, stem, cone, the teddy's arm, the ball's side)
 const ITEMS = { ballon: { h: 185, grip: [.52, .975], tilt: -10 }, bamse: { h: 96, grip: [.87, .62], up: [.5, .97], tilt: 8 }, blomst: { h: 108, grip: [.47, .8], tilt: -10 },
-  bold: { h: 76, grip: [.9, .45], up: [.5, .97] }, is: { h: 100, grip: [.5, .78], tilt: -8 }, tryllestav: { h: 118, grip: [.2, .82], tilt: -8 } };
+  bold: { h: 76, grip: [.9, .45], up: [.5, .97] }, is: { h: 100, grip: [.5, .78], tilt: -8 }, tryllestav: { h: 118, grip: [.2, .82], tilt: -8 },
+  // the umbrella: its canopy (the top .6 of the picture) held over the head, a drawn shaft down to the hand, the
+  // picture's curved handle in the hand
+  paraply: { w: 218, canopy: .6, handle: [.43, .78, .62, 1] } };
 // where the free hand grips (measured on each pose's base, 512x768), and a box round the hand whose skin is laid back
 // over the item (the fingers close round the handle)
 const HAND = { ned: [179, 421], vink: [179, 421], hurra: [116, 80], hofter: [196, 350], dans: [108, 413] };
@@ -733,7 +739,8 @@ const HAND_FIND = { ned: { box: [140, 360, 210, 470], fx: [140, 194], dir: [0, 1
   hurra: { box: [60, 15, 175, 140], dir: [-.25, -1] }, hofter: { box: [165, 260, 232, 390], dir: [1, .2] }, // (hands sit higher in some dresses)
   dans: { box: [40, 300, 175, 475], dir: [-.7, .7], back: 9 } };
 // things that cannot be held in a pose (a teddy with hands on the hips, a balloon with both arms raised high)
-const ITEM_BLOCK = { hofter: ['bamse'] };
+// (the umbrella only while waving: then the other hand hangs down and holds it beside the body)
+const ITEM_BLOCK = { ned: ['paraply'], hurra: ['paraply'], hofter: ['bamse', 'paraply'], dans: ['paraply'] };
 const itemBlocked = (s, it) => (ITEM_BLOCK[poseOf(s)] || []).includes(it);
 function findHand(s) {
   const f = HAND_FIND[poseOf(s) || 'ned'] || HAND_FIND.ned, z = handZone(s, 0);
@@ -846,6 +853,16 @@ function handView() {
 }
 function drawItem(ctx, s) {
   const it = ITEMS[s.item], [hx, hy] = s._hand || HAND[poseOf(s) || 'ned'] || HAND.ned, c = recoloured('hand-' + s.item, s.itemColor || CLOTH[0]);
+  if (s.item === 'paraply') { // the canopy over the head (or over a raised hand), the shaft from it down into the hand
+    // (_part 'top': the canopy and the shaft down to just above the hand - drawn over the figure; 'low': the rest of
+    // the shaft and the handle - drawn under the fingers)
+    const cw = it.w, ch = cw * c.height * it.canopy / c.width, cx = hx + 12, by = Math.min(28, hy - 46), [h0, v0, h1, v1] = it.handle;
+    const top = s._part !== 'low', low = s._part !== 'top', sy = hy - 30, sx = cx + (hx - cx) * (sy - (by - 6)) / (hy - 6 - (by - 6));
+    ctx.save(); ctx.strokeStyle = '#5A3420'; ctx.lineWidth = 4.5; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(top ? cx : sx, top ? by - 6 : sy); ctx.lineTo(low ? hx : sx, low ? hy + 6 : sy); ctx.stroke();
+    const hw = cw * .2, hh = hw * (v1 - v0) * c.height / ((h1 - h0) * c.width); // the curved handle, hanging from the fist
+    if (low) ctx.drawImage(c, c.width * h0, c.height * v0, c.width * (h1 - h0), c.height * (v1 - v0), hx - hw * .36, hy + 2, hw, hh);
+    if (top) ctx.drawImage(c, 0, 0, c.width, c.height * it.canopy, cx - cw / 2, by - ch, cw, ch); ctx.restore(); return; }
   const h = it.h, w = h * c.width / c.height; // full size always (a raised balloon is simply cut off at the top edge)
   ctx.save(); ctx.translate(hx, hy); ctx.rotate((it.tilt || 0) * Math.PI / 180);
   if (s.item === 'ballon') { // the balloon without its drawn string, and a string drawn from its knot into the hand
@@ -985,7 +1002,7 @@ function drawOver(st) {
   if (!st._overBalloon) return;
   const k = FIG_SCALE; g.save(); g.translate(256 * (1 - k), H * .85 * (1 - k)); g.scale(k, k);
   if (mirrored(st)) { g.translate(W, 0); g.scale(-1, 1); }
-  drawItem(g, { ...st, _over: false, _overBalloon: false }); g.restore();
+  drawItem(g, { ...st, _over: false, _overBalloon: false, _part: 'top' }); g.restore();
 }
 function draw() { const st = { ...state, _over: true }; compose(st, fig);
   handsAt = [0, 1].map(k => handZone(st, k)).map(z => z && [mirrored(st) ? W - 1 - z.cx : z.cx, z.cy]); drawOver(st); scene(); try { localStorage.setItem('minimig2', JSON.stringify(state)); } catch (e) {} }
@@ -993,8 +1010,13 @@ function draw() { const st = { ...state, _over: true }; compose(st, fig);
 // small previews of each choice, cropped round the part
 const CROP = { haar: [100, 30, 310, 310], troeje: [100, 200, 310, 310], kjoler: [56, 160, 400, 470], bukser: [130, 390, 250, 250], sko: [150, 560, 210, 210], stilling: [26, 30, 460, 460], oejne: [181, 96, 150, 150], bryn: [181, 90, 150, 150], mund: [196, 130, 120, 120], kinder: [186, 110, 140, 140], naese: [206, 125, 100, 100], oerer: [146, 82, 220, 220], hat: [146, 10, 220, 220], briller: [176, 90, 160, 160], ting: [26, 30, 460, 460], fodbold: [130, 400, 300, 300] }; // (fodbold: the Ting tab's football, down by the feet)
 function preview(canvas, s, t) {
-  const big = document.createElement('canvas'); big.width = W; big.height = H; const g = big.getContext('2d'); compose(s, g);
+  let big = document.createElement('canvas'); big.width = W; big.height = H; const g = big.getContext('2d');
   let [x, y, w, h] = (t === 'ting' && s.item === 'fodbold' ? CROP.fodbold : CROP[t]) || [];
+  if (s.item === 'paraply' && t === 'ting') { // the umbrella's canopy is above the figure's picture: a taller picture, the figure lower in it
+    const st = { ...s, _over: true }; compose(st, g); const tall = document.createElement('canvas'); tall.width = W; tall.height = H + 130; const g3 = tall.getContext('2d');
+    g3.drawImage(big, 0, 130); g3.translate(0, 130); if (mirrored(st)) { g3.translate(W, 0); g3.scale(-1, 1); }
+    drawItem(g3, { ...st, _over: false, _overBalloon: false, _part: 'top' }); big = tall; }
+  else compose(s, g);
   if (t === 'haender') { const z = handZone(s, 1) || { cx: 323, cy: 420 }; x = (mirrored(s) ? W - 1 - z.cx : z.cx) - 32; y = z.cy - 32; w = h = 64; } // close round the hand
   const c = canvas.getContext('2d'); c.clearRect(0, 0, canvas.width, canvas.height); c.drawImage(big, x, y, w, h, 0, 0, canvas.width, canvas.height);
 }
@@ -1088,7 +1110,7 @@ async function stagePicture(s = state, S = 2) {
   g.fillStyle = sh; g.beginPath(); g.arc(0, 0, rx * 1.15, 0, Math.PI * 2); g.fill(); g.restore();
   const f = document.createElement('canvas'); f.width = W; f.height = H; const st = { ...s, _over: true }; compose(st, f.getContext('2d'));
   g.save(); g.scale(S, S); g.translate(256 * (1 - k), H * .85 * (1 - k)); g.scale(k, k); g.imageSmoothingQuality = 'high'; g.drawImage(f, 0, 0);
-  if (st._overBalloon) { if (mirrored(st)) { g.translate(W, 0); g.scale(-1, 1); } drawItem(g, { ...st, _over: false, _overBalloon: false }); } // a raised balloon
+  if (st._overBalloon) { if (mirrored(st)) { g.translate(W, 0); g.scale(-1, 1); } drawItem(g, { ...st, _over: false, _overBalloon: false, _part: 'top' }); } // a raised balloon (or the umbrella's canopy)
   g.restore(); return c;
 }
 // the profile picture: close on the head, with only the neck and the very top of the shoulders, cut square from the
@@ -1242,7 +1264,7 @@ try { Object.assign(state, JSON.parse(localStorage.getItem('minimig2') || '{}'))
 tidy(state);
 const POSES = ['vink', 'hurra', 'hofter', 'dans'];
 const TOPS = ['troeje-tshirt', 'troeje-haette', 'troeje-fodbold', 'troeje-fodbold-inde', 'troeje-gymnastik', ...DRESSES];
-const names = ['grund', 'laar-bare2', 'haar-bob', 'haar-kort', 'haar-strit', 'haar-kroeller', 'haar-fletninger', ...TOPS, 'bukser-lange', 'bukser-fodbold', 'bukser-cowboy', 'sko-sneakers', 'sko-fodbold', 'sko-ballet', 'sko-glas',
+const names = ['grund', 'laar-bare2', 'haar-bob', 'haar-kort', 'haar-strit', 'haar-kroeller', 'haar-fletninger', ...TOPS, 'bukser-lange', 'bukser-fodbold', 'bukser-cowboy', 'sko-sneakers', 'sko-fodbold', 'sko-ballet', 'sko-glas', 'sko-gummi',
   ...POSES.map(p => 'grund-' + p), ...POSES.flatMap(p => TOPS.map(t => t + '-' + p)),
   ...['oejne', 'bryn', 'mund', 'naese', 'oerer', 'briller'].flatMap(id => TABS.find(t => t.id === id).opts.map(o => o[0]).filter(n => n !== 'naturlig' && n !== 'ingen'))];
 const GEAR_PICS = [...Object.values(GEAR).map(g => g.pic), ...Object.keys(HATS).map(h => 'hat-' + h), ...Object.keys(ITEMS).map(n => 'hand-' + n)]; // not prepared as parts
