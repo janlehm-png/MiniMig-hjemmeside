@@ -516,6 +516,38 @@ function smoothWrist(o, d, s) {
       for (let c = 0; c < 3; c++) o[i + c] = pa[xa + c] * (1 - t) + pb[xb + c] * t;
       o[i + 3] = x < L + .5 ? Math.round(255 * (x - L + .5)) : x > R - .5 ? Math.round(255 * (R + .5 - x)) : 255; skinNow[p] = 1; } }
 }
+// the shoulder by a raised arm: the pictures leave a square notch of background between the neck and the arm, where a
+// shoulder would slope up from the neck into the arm - filled below that slope (a curve from the neck's foot rising
+// outwards, column by column down to the shoulder or the top's edge, from past the neck until the line meets the arm),
+// in skin smoothed out from the neck and arm round it (the figure is symmetric about x 256; which side holds a raised
+// arm depends on the pose)
+const RAISED = { vink: [1], hurra: [-1, 1], dans: [1] }, NECK_FOOT = [276, 217], shoulderRise = k => k > 0 ? .15 * k + .018 * k * k : 0; // (curving up more steeply toward the arm)
+function shoulderFill(o, s) {
+  for (const side of RAISED[poseOf(s)] || []) {
+    const reg = new Map(); let started = false, off = 0;
+    for (let k = 0; k < 70; k++) { const x = side > 0 ? NECK_FOOT[0] - 4 + k : 512 - (NECK_FOOT[0] - 4 + k), c0 = NECK_FOOT[1] - shoulderRise(k - 4);
+      let c = c0 + off, y0 = Math.round(c), yb = -1; for (let y = y0; y < y0 + 30; y++) if (o[(y * W + x) * 4 + 3] > 200) { yb = y; break; }
+      // (a top whose edge sits higher than the line, by the neck: the line starts from that edge instead)
+      if (!started && yb === y0) { let y = y0; while (y > y0 - 14 && o[((y - 1) * W + x) * 4 + 3] > 200) y--;
+        if (y > y0 - 14 && !skinNow[y * W + x]) off = Math.min(off, y - 1 - c0); continue; }
+      // (still in the neck, or the curve has run into the arm - its skin - and ends; along the top's edge it goes on)
+      if (yb < 0) { if (started) break; continue; }
+      if (yb === y0) { if (skinNow[yb * W + x]) break; continue; }
+      started = true; for (let y = y0; y < yb; y++) reg.set(y * W + x, y === y0 ? Math.max(0, Math.min(1, y0 - c + .5)) : 1); }
+    if (!reg.size) continue;
+    // the colour: smoothed out over the gap from the skin round it (cloth and background round it count for nothing)
+    const col = new Map(), ps = [...reg.keys()], nb = [-1, 1, -W, W]; let sum = [0, 0, 0], n = 0;
+    for (const p of ps) for (const d of nb) { const q = p + d; if (!reg.has(q) && skinNow[q] && o[q * 4 + 3] > 200) { for (let c = 0; c < 3; c++) sum[c] += o[q * 4 + c]; n++; } }
+    if (!n) continue; for (const p of ps) col.set(p, sum.map(v => v / n));
+    for (let it = 0; it < 80; it++) for (const p of ps) { const acc = [0, 0, 0]; let m = 0;
+      for (const d of nb) { const q = p + d, v = col.get(q) || (skinNow[q] && o[q * 4 + 3] > 200 ? [o[q * 4], o[q * 4 + 1], o[q * 4 + 2]] : null); if (v) { for (let c = 0; c < 3; c++) acc[c] += v[c]; m++; } }
+      if (m) col.set(p, acc.map(v => v / m)); }
+    for (const p of ps) { const v = col.get(p); blendUnder(o, p * 4, v[0], v[1], v[2], Math.round(reg.get(p) * 255)); skinNow[p] = 1; }
+  }
+}
+// a colour laid under what is drawn at a pixel already (its see-through part shows it)
+function blendUnder(o, i, r, g, b, a) { const top = o[i + 3] / 255, out = top + a / 255 * (1 - top); if (!out) return;
+  for (const [c, v] of [[0, r], [1, g], [2, b]]) o[i + c] = Math.round((o[i + c] * top + v * a / 255 * (1 - top)) / out); o[i + 3] = Math.round(out * 255); }
 // a prepared part moved down by dy rows and across by dx (the fist, following a hand a sleeve has put elsewhere), made
 // once per move
 function lowered(name, dy, dx = 0) {
@@ -639,6 +671,7 @@ function compose(s, ctx) {
       const at = CREST.bukser[s.pants]; if (!at) continue;
       overlay(o, g2 => drawCrest(g2, at, mirrored(s))); continue; }
     if (name === 'navn') { // the name, badge and crest are printed on the chest, under the hair (plaits may fall over them)
+      shoulderFill(o, s); // (the body is all drawn now: the shoulder by a raised arm closed up first)
       const crest = CREST.troeje[s.top];
       if (!(s.name || '').trim() && (s.badge || 'ingen') === 'ingen' && !crest) continue;
       overlay(o, g2 => { printName(s, g2, mirrored(s)); if (crest) drawCrest(g2, crest, mirrored(s)); }); continue; }
