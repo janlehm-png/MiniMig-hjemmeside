@@ -85,6 +85,9 @@ const key = new THREE.DirectionalLight(0xFFF4E0, 2.2); key.position.set(2.5, 5, 
 key.shadow.mapSize.set(1024, 1024); key.shadow.camera.left = -2; key.shadow.camera.right = 2; key.shadow.camera.top = 3; key.shadow.camera.bottom = -1; key.shadow.radius = 6;
 scene.add(key);
 const rim = new THREE.DirectionalLight(0xD8E6FF, 1.2); rim.position.set(-3, 3, -4); scene.add(rim);
+// a soft light from below and in front, as from a light floor: what faces down - the underside of a raised arm and
+// sleeve - is not left dark
+const fill = new THREE.DirectionalLight(0xFFF1DC, .9); fill.position.set(.5, -2, 3); scene.add(fill);
 // the floor: a sunny disc that only catches the shadow
 const floor = new THREE.Mesh(new THREE.CircleGeometry(2.2, 48), new THREE.ShadowMaterial({ opacity: .18 }));
 floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
@@ -264,7 +267,8 @@ function rig(mesh) {
     armOf[v] = t >= .40 ? (a > .5 ? 1 : 0) : -1;
     // legs: below the crotch, the top of the shorts blended in
     const l = a ? 0 : sm(.62, .7, t);
-    if (a) { const f = sm(J.elbow[1] + .04, J.elbow[1] - .04, y); w['arm' + s] = a * (1 - f); w['fore' + s] = a * f; }
+    // (the elbow blended over a long stretch of the arm, so it bends in a curve, not a kink)
+    if (a) { const f = sm(J.elbow[1] + .085, J.elbow[1] - .085, y); w['arm' + s] = a * (1 - f); w['fore' + s] = a * f; }
     if (l) { const k = sm(J.knee[1] + .045, J.knee[1] - .045, y), ft = sm(.895, .92, t); w['thigh' + s] = l * (1 - k); w['shin' + s] = l * k * (1 - ft); w['foot' + s] = l * k * ft; }
     const r = 1 - a - l; if (r > 0) { const nk = sm(.245, .2, t), ch = sm(.62, .5, t) * (1 - nk); w.neck = r * nk; w.chest = r * ch; w.hips = r * (1 - nk - ch); }
     const list = Object.entries(w).filter(e => e[1] > 1e-4).sort((p, q) => q[1] - p[1]).slice(0, 4), sum = list.reduce((s2, e) => s2 + e[1], 0);
@@ -309,7 +313,7 @@ const WHOLE = {
   // from the elbow and waving to and fro, the palm turned to the front (the arm not straight up: that stretched the
   // armpit into a long strip)
   vink: t => { holder.position.y = 0; holder.rotation.set(0, 0, 0); const up = Math.min(1, t * 3), u = up * up * (3 - 2 * up);
-    pose({ arms: .03, armL: .03 + u * 1.55, foreL: u * (1.2 + Math.sin(t * 9) * .35), twistL: u * Math.PI / 2, sway: -.04 * u }); },
+    pose({ arms: .03, armL: .03 + u * 1.3, foreL: u * (1.45 + Math.sin(t * 9) * .35), twistL: u * Math.PI / 2, sway: -.04 * u }); },
   // a hop: it bends its knees and leans in to take off, pushes off with the arms swinging out to the sides, tucks a
   // little in the air with the arms half raised for balance, and lands bending its knees again before standing up
   hop: t => { const p = (t * 1.05) % 1, sm = x => x * x * (3 - 2 * x), seg = (a, b) => sm(Math.min(1, Math.max(0, (p - a) / (b - a))));
