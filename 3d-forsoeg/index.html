@@ -65,6 +65,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
 
 const canvas = document.getElementById('scene');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
@@ -338,7 +339,30 @@ document.getElementById('spin').onclick = e => { spin = !spin; e.target.classLis
 // ---- an AI-made figure, if there is one (figur.glb next to this page): shown instead of the try-out figure ----
 let glb = null, mixer = null; const glbActions = {};
 // (or figur.json with figur-tex*.jpg: the same figure repacked by glb-til-json.ps1, where .glb files are not served)
-(async () => { let url = null; for (const u of ['figur.glb', 'figur.json']) { try { if ((await fetch(u, { method: 'HEAD' })).ok) { url = u; break; } } catch (e) {} }
+const exists = async u => { try { return (await fetch(u, { method: 'HEAD' })).ok; } catch (e) { return false; } };
+// a figure with a skeleton made in Mixamo, if there is one: figur.fbx (the figure, its skeleton and its first movement,
+// the waving) and figur-staa/hop/dans.fbx (more movements for the same skeleton). Mixamo leaves the figure grey: its
+// colours come from figur-farve.jpg, Meshy's painted texture. Buttons without a movement are hidden.
+async function loadFbx() { if (!(await exists('figur.fbx'))) return false;
+  const loader = new FBXLoader(), load = u => new Promise((ok, bad) => loader.load(u, ok, undefined, bad));
+  const fbx = await load('figur.fbx'), map = await new Promise(ok => new THREE.TextureLoader().load('figur-farve.jpg', ok));
+  map.colorSpace = THREE.SRGBColorSpace; const coloured = setupTexture(map);
+  fbx.traverse(o => { if (!o.isMesh) return; o.castShadow = true; o.material = new THREE.MeshStandardMaterial({ map: coloured, roughness: .75, metalness: 0 }); });
+  const box = new THREE.Box3().setFromObject(fbx), size = box.getSize(new THREE.Vector3()), k = 2.15 / size.y;
+  fbx.scale.setScalar(k); fbx.position.y = -box.min.y * k; holder.add(fbx); glb = fbx; fig.visible = false;
+  mixer = new THREE.AnimationMixer(fbx); if (fbx.animations[0]) glbActions.vink = mixer.clipAction(fbx.animations[0]);
+  for (const name of ['staa', 'hop', 'dans']) if (await exists(`figur-${name}.fbx`)) { const a = await load(`figur-${name}.fbx`); if (a.animations[0]) glbActions[name] = mixer.clipAction(a.animations[0]); }
+  // (no standing movement yet: it stands as in the first frame of the waving, not in the T-pose it was made in)
+  if (!glbActions.staa && glbActions.vink) { const still = glbActions.vink.getClip().clone(); still.tracks.forEach(t => { t.times = t.times.slice(0, 1); t.values = t.values.slice(0, t.getValueSize()); }); still.duration = 0; glbActions.staa = mixer.clipAction(still); }
+  for (const b of document.querySelectorAll('[data-anim]')) b.hidden = !glbActions[b.dataset.anim];
+  const btn = document.getElementById('which'); btn.style.display = 'block'; btn.textContent = 'Vis prøvefigur';
+  btn.onclick = () => { holder.visible = !holder.visible; fig.visible = !holder.visible; btn.textContent = holder.visible ? 'Vis prøvefigur' : 'Vis AI-figur';
+    for (const b of document.querySelectorAll('[data-anim]')) b.hidden = holder.visible && !glbActions[b.dataset.anim]; };
+  (glbActions[anim] || glbActions.staa)?.play();
+  // (set on the floor as it stands in its movement - Mixamo moves the hips in its own units, the T-pose's box says little)
+  mixer.update(0); fbx.updateMatrixWorld(true); const now = new THREE.Box3().setFromObject(fbx, true); fbx.position.y -= now.min.y; return true; }
+(async () => { if (await loadFbx()) return;
+  let url = null; for (const u of ['figur.glb', 'figur.json']) { try { if ((await fetch(u, { method: 'HEAD' })).ok) { url = u; break; } } catch (e) {} }
   if (url) new GLTFLoader().load(url, g => { glb = g.scene;
     const box = new THREE.Box3().setFromObject(glb), size = box.getSize(new THREE.Vector3()), k = 2.15 / size.y;
     glb.scale.setScalar(k); glb.position.y = -box.min.y * k; fig.visible = false; /* (the AI figure is shown first, when there is one) */
