@@ -28,6 +28,7 @@
   .swatches button.on { box-shadow: 0 0 0 3px var(--accent); }
   /* the whole scale: a rainbow button opens three sliders in the bar (colour, strength, light) */
   .swatches button.all { background: conic-gradient(#E8384F, #FFC233, #2FB872, #13BFA6, #3D8BFF, #7A4DFF, #FF6FB1, #E8384F); }
+  .sliders[hidden] { display: none; }
   .sliders { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 14px; font-size: 12px; font-weight: 700; }
   .sliders label { display: flex; align-items: center; gap: 6px; }
   .sliders input { width: min(210px, 60vw); height: 22px; border-radius: 11px; -webkit-appearance: none; appearance: none; }
@@ -304,7 +305,7 @@ const WHOLE = {
     let bend = 0, arms = .03, lean = 0, y = 0;
     if (p < .24) { const d = seg(0, .24); bend = .62 * d; lean = .22 * d; arms = .03 + .25 * d; }                        // crouch
     else if (p < .32) { const d = seg(.24, .32); bend = .62 * (1 - d); lean = .22 * (1 - d); arms = .28 + .85 * d; y = .1 * d; } // push off
-    else if (p < .74) { const d = (p - .32) / .42, h = Math.sin(d * Math.PI); y = .1 + .55 * h; bend = .22 * h; arms = 1.13 - .25 * h; } // in the air
+    else if (p < .74) { const d = (p - .32) / .42, h = Math.sin(d * Math.PI); y = .1 + .45 * h; bend = .22 * h; arms = 1.13 - .25 * h; } // in the air
     else if (p < .84) { const d = seg(.74, .84); bend = .55 * d; lean = .15 * d; arms = .88 - .3 * d; }                  // land
     else { const d = seg(.84, 1); bend = .55 * (1 - d); lean = .15 * (1 - d); arms = .58 - .55 * d; }                     // stand up
     holder.position.y = y; holder.rotation.set(0, 0, 0); pose({ bend, arms, lean }); },
@@ -348,7 +349,7 @@ let glb = null, mixer = null; const glbActions = {};
 const clock = new THREE.Clock();
 // (the picture moved up by half the button bar's height, so the figure stands clear of the bar however tall it is)
 function resize() { const w = innerWidth, h = innerHeight, bar = document.querySelector('.bar').offsetHeight; renderer.setSize(w, h, false); camera.aspect = w / h;
-  camera.position.z = w < h ? 7.4 : 6.2; camera.setViewOffset(w, h, 0, bar * .45, w, h); camera.updateProjectionMatrix(); }
+  camera.position.z = w < h ? 8 : 7; camera.setViewOffset(w, h, 0, bar * .4, w, h); /* (room above for the head in a hop) */ camera.updateProjectionMatrix(); }
 addEventListener('resize', resize); resize(); new ResizeObserver(resize).observe(document.querySelector('.bar'));
 renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElapsedTime();
   ANIMS[anim](t - since); if (spin) { fig.rotation.y += dt * 1.2; spinAngle += dt * 1.2; }
