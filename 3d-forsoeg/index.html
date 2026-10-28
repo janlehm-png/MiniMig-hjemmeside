@@ -26,6 +26,14 @@
   .swatches { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
   .swatches button { width: 32px; height: 32px; padding: 0; border-radius: 50%; border: 3px solid #FFFFFF; box-shadow: 0 0 0 2px var(--line); }
   .swatches button.on { box-shadow: 0 0 0 3px var(--accent); }
+  /* the whole scale: a rainbow button opens three sliders in the bar (colour, strength, light) */
+  .swatches button.all { background: conic-gradient(#E8384F, #FFC233, #2FB872, #13BFA6, #3D8BFF, #7A4DFF, #FF6FB1, #E8384F); }
+  .sliders { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 14px; font-size: 12px; font-weight: 700; }
+  .sliders label { display: flex; align-items: center; gap: 6px; }
+  .sliders input { width: min(210px, 60vw); height: 22px; border-radius: 11px; -webkit-appearance: none; appearance: none; }
+  .sliders input::-webkit-slider-thumb { -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%; background: #FFFFFF; border: 2px solid var(--ink); }
+  .sliders input::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; background: #FFFFFF; border: 2px solid var(--ink); }
+  #s-h { background: linear-gradient(90deg, hsl(0,80%,55%), hsl(60,80%,55%), hsl(120,80%,55%), hsl(180,80%,55%), hsl(240,80%,55%), hsl(300,80%,55%), hsl(360,80%,55%)); }
   .top { position: fixed; top: calc(10px + env(safe-area-inset-top)); left: 12px; right: 12px; display: flex; justify-content: space-between; gap: 8px; pointer-events: none; }
   .top > * { pointer-events: auto; }
   .tag { background: var(--tile); border: 2px solid var(--line); border-radius: 14px; padding: 6px 10px; font-weight: 700; font-size: 13px; }
@@ -41,7 +49,12 @@
   <button data-anim="hop">Hop</button>
   <button data-anim="dans">Dans</button>
   <button id="spin">Drej rundt</button>
-  <div class="colors"><div class="parts" id="parts"></div><div class="swatches" id="swatches"></div></div>
+  <div class="colors"><div class="parts" id="parts"></div><div class="swatches" id="swatches"></div>
+    <div class="sliders" id="sliders" hidden>
+      <label>Farve <input type="range" id="s-h" min="0" max="360" step="1"></label>
+      <label>Styrke <input type="range" id="s-s" min="0" max="100" step="1"></label>
+      <label>Lys <input type="range" id="s-l" min="5" max="95" step="1"></label>
+    </div></div>
 </div>
 <script type="importmap">
 { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
@@ -144,11 +157,24 @@ const CLOTH = ['#E8384F', '#FF7A2F', '#FFC233', '#2FB872', '#13BFA6', '#3D8BFF',
 const CHOICES = [['skin', 'Hud', M.skin, ['#F6D0AE', '#EDB98A', '#D9965F', '#B5713F', '#8D5530', '#5A3520']],
   ['hair', 'Hår', M.hair, ['#2A1C17', '#4A2C1D', '#7A4428', '#A8582E', '#D9A55C', '#F0D9A0', '#FF7EBB', '#5AA9FF']],
   ['shirt', 'Trøje', M.shirt, CLOTH], ['pants', 'Bukser', M.pants, CLOTH]];
-const picked = {}; let partNow = 'shirt';
-function showSwatches() { const [part, , m, list] = CHOICES.find(c => c[0] === partNow), box = document.getElementById('swatches'); box.innerHTML = '';
-  for (const c of list) { const b = document.createElement('button'); b.style.background = c; b.setAttribute('aria-label', c); b.classList.toggle('on', picked[part] === c);
-    b.onclick = () => { picked[part] = c; m.color.set(c); recolour(part, c); showSwatches(); }; box.append(b); }
+const picked = {}, START = { skin: '#EDB98A', hair: '#4A2C1D', shirt: '#FF7A2F', pants: '#2C3E8C' }; let partNow = 'shirt', allOpen = false;
+const apply = (part, c) => { picked[part] = c; CHOICES.find(x => x[0] === part)[2].color.set(c); recolour(part, c); };
+function showSwatches() { const [part, , , list] = CHOICES.find(c => c[0] === partNow), box = document.getElementById('swatches'); box.innerHTML = '';
+  for (const c of list) { const b = document.createElement('button'); b.style.background = c; b.setAttribute('aria-label', c); b.classList.toggle('on', !allOpen && picked[part] === c);
+    b.onclick = () => { allOpen = false; apply(part, c); showSwatches(); }; box.append(b); }
+  const all = document.createElement('button'); all.className = 'all'; all.setAttribute('aria-label', 'Alle farver'); all.classList.toggle('on', allOpen);
+  all.onclick = () => { allOpen = !allOpen; showSwatches(); }; box.append(all);
+  document.getElementById('sliders').hidden = !allOpen; if (allOpen) slidersFrom(picked[part] || START[part]);
   document.querySelectorAll('#parts button').forEach(b => b.classList.toggle('on', b.dataset.part === partNow)); }
+// the sliders: colour (hue), strength (saturation) and light, set from the part's colour now; moving one colours it
+const S = { h: document.getElementById('s-h'), s: document.getElementById('s-s'), l: document.getElementById('s-l') };
+function slidersFrom(hexColour) { const hsl = {}; new THREE.Color().setStyle(hexColour, THREE.SRGBColorSpace).getHSL(hsl, THREE.SRGBColorSpace);
+  S.h.value = Math.round(hsl.h * 360); S.s.value = Math.round(hsl.s * 100); S.l.value = Math.round(hsl.l * 100); paintTracks(); }
+function paintTracks() { const h = S.h.value, s = S.s.value, l = S.l.value;
+  S.s.style.background = `linear-gradient(90deg, hsl(${h},0%,${l}%), hsl(${h},100%,${l}%))`;
+  S.l.style.background = `linear-gradient(90deg, hsl(${h},${s}%,5%), hsl(${h},${s}%,50%), hsl(${h},${s}%,95%))`; }
+for (const el of Object.values(S)) el.addEventListener('input', () => { paintTracks();
+  const c = '#' + new THREE.Color().setHSL(S.h.value / 360, S.s.value / 100, S.l.value / 100, THREE.SRGBColorSpace).getHexString(THREE.SRGBColorSpace); apply(partNow, c); });
 for (const [part, name] of CHOICES) { const b = document.createElement('button'); b.textContent = name; b.dataset.part = part; b.onclick = () => { partNow = part; showSwatches(); }; document.getElementById('parts').append(b); }
 showSwatches();
 
@@ -210,23 +236,82 @@ const ANIMS = {
     head.rotation.z = w * .15; arms.forEach(a => { a.sh.rotation.set(0, 0, (1.2 + w * a.s * .6) * a.s); a.el.rotation.set(0, 0, (.6 + w * .3) * a.s); });
     legs.forEach((l, i) => l.rotation.x = (i ? 1 : -1) * w * .25); }
 };
-// the AI figure has no skeleton yet: it stands, hops and dances as a whole (its holder moved, turned and squashed)
+// ---- a simple skeleton for the AI figure, made here: Meshy's figure comes without one. Its joints were measured on
+// the figure as it stands (A-pose, arms a little out, in the model's own units: 1.9 high, feet at -0.95), and each
+// point of it is tied to the bones near it by where it lies - the arms by being out beside the body, the legs by being
+// below the crotch - softly across each joint, so elbows, knees and shoulders bend smoothly ----
+const J = { hips: [0, -.2], chest: [0, .2], neck: [0, .53], shoulder: [.17, .399], elbow: [.255, .095], hip: [.105, -.305], knee: [.125, -.571], ankle: [.125, -.809] };
+const RIG = {}; // bones by name, made by rig()
+function rig(mesh) {
+  const g = mesh.geometry, pos = g.attributes.position, n = pos.count, top = .951, H = 1.903;
+  const sm = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+  const names = ['hips', 'chest', 'neck', 'armL', 'foreL', 'armR', 'foreR', 'thighL', 'shinL', 'thighR', 'shinR', 'footL', 'footR'];
+  const idx = Object.fromEntries(names.map((nm, i) => [nm, i]));
+  const skinIndex = new Uint16Array(n * 4), skinWeight = new Float32Array(n * 4), armOf = new Int8Array(n); // (0 body, 1 arm, -1 not decided: above the armpit)
+  for (let v = 0; v < n; v++) { const x = pos.getX(v), y = pos.getY(v), t = (top - y) / H, s = x >= 0 ? 'L' : 'R', ax = Math.abs(x), w = {};
+    // arms: out beside the body (a gap from 0.40 down), the sleeves and shoulders blended in above it
+    // (the gap between arm and body, measured: 0.175 out by the chest, widening to 0.225 by the hands, where the shorts
+    // are wide - and the hands end above the shorts' hem)
+    const gap = t <= .44 ? .175 : t >= .54 ? .225 : .175 + (t - .44) * .5;
+    let a = 0; if (t > .25 && t < .64) a = t >= .40 ? (ax > gap ? 1 : 0) : sm(.14, .21, ax) * sm(.25, .3, t);
+    armOf[v] = t >= .40 ? (a ? 1 : 0) : -1;
+    // legs: below the crotch, the top of the shorts blended in
+    const l = a ? 0 : sm(.62, .7, t);
+    if (a) { const f = sm(J.elbow[1] + .04, J.elbow[1] - .04, y); w['arm' + s] = a * (1 - f); w['fore' + s] = a * f; }
+    if (l) { const k = sm(J.knee[1] + .045, J.knee[1] - .045, y), ft = sm(.895, .92, t); w['thigh' + s] = l * (1 - k); w['shin' + s] = l * k * (1 - ft); w['foot' + s] = l * k * ft; }
+    const r = 1 - a - l; if (r > 0) { const nk = sm(.245, .2, t), ch = sm(.62, .5, t) * (1 - nk); w.neck = r * nk; w.chest = r * ch; w.hips = r * (1 - nk - ch); }
+    const list = Object.entries(w).filter(e => e[1] > 1e-4).sort((p, q) => q[1] - p[1]).slice(0, 4), sum = list.reduce((s2, e) => s2 + e[1], 0);
+    list.forEach(([nm, wt], k) => { skinIndex[v * 4 + k] = idx[nm]; skinWeight[v * 4 + k] = wt / sum; }); }
+  // (below the armpit arm and body are apart: a triangle joining the two is a thin web in the model, hidden while the arm
+  // hangs, stretched across the air when it moves - those are left out)
+  if (g.index) { const ix = g.index.array, keep = []; let dropped = 0;
+    for (let f = 0; f < ix.length; f += 3) { const p = armOf[ix[f]], q = armOf[ix[f + 1]], r2 = armOf[ix[f + 2]];
+      if (p >= 0 && q >= 0 && r2 >= 0 && (p !== q || q !== r2)) { dropped++; continue; } keep.push(ix[f], ix[f + 1], ix[f + 2]); }
+    if (dropped) g.setIndex(new THREE.BufferAttribute(n > 65535 ? new Uint32Array(keep) : new Uint16Array(keep), 1)); }
+  g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(skinIndex, 4)); g.setAttribute('skinWeight', new THREE.Float32BufferAttribute(skinWeight, 4));
+  // the bones, each placed at its joint (positions relative to its parent)
+  const at = {}, parent = { hips: null, chest: 'hips', neck: 'chest', armL: 'chest', foreL: 'armL', armR: 'chest', foreR: 'armR', thighL: 'hips', shinL: 'thighL', footL: 'shinL', thighR: 'hips', shinR: 'thighR', footR: 'shinR' };
+  for (const sd of [['L', 1], ['R', -1]]) { const [S, k] = sd;
+    at['arm' + S] = [J.shoulder[0] * k, J.shoulder[1]]; at['fore' + S] = [J.elbow[0] * k, J.elbow[1]];
+    at['thigh' + S] = [J.hip[0] * k, J.hip[1]]; at['shin' + S] = [J.knee[0] * k, J.knee[1]]; at['foot' + S] = [J.ankle[0] * k, J.ankle[1]]; }
+  at.hips = J.hips; at.chest = J.chest; at.neck = J.neck;
+  const bones = names.map(nm => { const b = new THREE.Bone(); b.name = nm; RIG[nm] = b; return b; });
+  names.forEach(nm => { const p = parent[nm], b = RIG[nm]; b.position.set(at[nm][0] - (p ? at[p][0] : 0), at[nm][1] - (p ? at[p][1] : 0), 0); if (p) RIG[p].add(b); });
+  const skinned = new THREE.SkinnedMesh(g, mesh.material); skinned.castShadow = true;
+  skinned.position.copy(mesh.position); skinned.quaternion.copy(mesh.quaternion); skinned.scale.copy(mesh.scale);
+  skinned.add(RIG.hips); skinned.bind(new THREE.Skeleton(bones));
+  mesh.parent.add(skinned); mesh.parent.remove(mesh); return skinned; }
+// bending the legs by angle a (knees forward, shins back, feet kept flat), the hips lowered by as much, so the feet
+// stay on the ground; and the arms out to the side by angle b (each side's own way)
+const THIGH = J.hip[1] - J.knee[1], SHIN = J.knee[1] - J.ankle[1];
+function pose({ bend = 0, arms = 0, lean = 0, armL = null, foreL = 0, armR = null, foreR = 0, bendL = null, bendR = null, sway = 0 } = {}) {
+  if (!RIG.hips) return;
+  const legs = { L: bendL ?? bend, R: bendR ?? bend }; let drop = 0;
+  for (const S of ['L', 'R']) { const a = legs[S]; RIG['thigh' + S].rotation.x = -a; RIG['shin' + S].rotation.x = 2 * a; RIG['foot' + S].rotation.x = -a; drop = Math.max(drop, (THIGH + SHIN) * (1 - Math.cos(a))); }
+  RIG.hips.position.y = J.hips[1] - drop; RIG.hips.rotation.z = sway; RIG.chest.rotation.set(lean, 0, -sway * .6);
+  RIG.armL.rotation.set(0, 0, armL ?? arms); RIG.foreL.rotation.set(0, 0, foreL); RIG.armR.rotation.set(0, 0, -(armR ?? arms)); RIG.foreR.rotation.set(0, 0, -foreR); }
+
+// the AI figure: the skeleton moves its limbs, its holder lifts it off the ground and turns it
 const holder = new THREE.Group(); scene.add(holder); let spinAngle = 0;
 const WHOLE = {
-  staa: t => { holder.position.y = 0; holder.rotation.set(0, 0, 0); holder.scale.set(1, 1 + Math.sin(t * 2.2) * .006, 1); },
-  vink: t => WHOLE.staa(t),
-  // (a cartoon hop, since the knees cannot bend yet: it dips and leans in to take off, stretches up in the air, and is
-  // squashed as it lands, before it straightens again)
-  hop: t => { const p = (t * 1.1) % 1, sm = x => x * x * (3 - 2 * x), seg = (a, b) => sm(Math.min(1, Math.max(0, (p - a) / (b - a))));
-    let sq = 1, y = 0, lean = 0;
-    if (p < .22) { const d = seg(0, .22); sq = 1 - .16 * d; lean = .12 * d; }                                   // dip
-    else if (p < .3) { const d = seg(.22, .3); sq = .84 + .26 * d; lean = .12 * (1 - d); y = .08 * d; }          // push off
-    else if (p < .72) { const d = (p - .3) / .42; y = .08 + .5 * Math.sin(d * Math.PI); sq = 1.1 - .1 * Math.sin(d * Math.PI); } // in the air
-    else if (p < .82) { const d = seg(.72, .82); sq = 1 - .18 * d; }                                            // land
-    else { const d = seg(.82, 1); sq = .82 + .18 * d + .04 * Math.sin(d * Math.PI); }                          // straighten
-    holder.position.y = y; holder.rotation.set(lean, 0, 0); holder.scale.set(1 / Math.sqrt(sq), sq, 1 / Math.sqrt(sq)); },
-  dans: t => { const w = Math.sin(t * 5); holder.position.y = Math.abs(Math.cos(t * 5)) * .07; holder.rotation.set(0, Math.sin(t * 2.5) * .5, w * .1);
-    holder.scale.set(1, 1, 1); }
+  staa: t => { holder.position.y = 0; holder.rotation.set(0, 0, 0); pose({ arms: .03 + Math.sin(t * 2.2) * .02, lean: Math.sin(t * 2.2) * .01 }); },
+  // waving: the left arm (seen on the right) raised high, the forearm waving outwards from the elbow
+  vink: t => { holder.position.y = 0; holder.rotation.set(0, 0, 0); const up = Math.min(1, t * 3), u = up * up * (3 - 2 * up);
+    pose({ arms: .03, armL: .03 + u * 2.35, foreL: u * (.35 + Math.sin(t * 9) * .4), sway: -.04 * u }); },
+  // a hop: it bends its knees and leans in to take off, pushes off with the arms swinging out to the sides, tucks a
+  // little in the air with the arms half raised for balance, and lands bending its knees again before standing up
+  hop: t => { const p = (t * 1.05) % 1, sm = x => x * x * (3 - 2 * x), seg = (a, b) => sm(Math.min(1, Math.max(0, (p - a) / (b - a))));
+    let bend = 0, arms = .03, lean = 0, y = 0;
+    if (p < .24) { const d = seg(0, .24); bend = .62 * d; lean = .22 * d; arms = .03 + .25 * d; }                        // crouch
+    else if (p < .32) { const d = seg(.24, .32); bend = .62 * (1 - d); lean = .22 * (1 - d); arms = .28 + .85 * d; y = .1 * d; } // push off
+    else if (p < .74) { const d = (p - .32) / .42, h = Math.sin(d * Math.PI); y = .1 + .55 * h; bend = .22 * h; arms = 1.13 - .25 * h; } // in the air
+    else if (p < .84) { const d = seg(.74, .84); bend = .55 * d; lean = .15 * d; arms = .88 - .3 * d; }                  // land
+    else { const d = seg(.84, 1); bend = .55 * (1 - d); lean = .15 * (1 - d); arms = .58 - .55 * d; }                     // stand up
+    holder.position.y = y; holder.rotation.set(0, 0, 0); pose({ bend, arms, lean }); },
+  // dancing: bouncing on alternate knees, swaying the hips, the arms up and down in turn, turning a little to and fro
+  dans: t => { const w = Math.sin(t * 5), c = Math.cos(t * 5);
+    holder.position.y = 0; holder.rotation.set(0, Math.sin(t * 2.5) * .45, 0);
+    pose({ bendL: .18 + .16 * Math.max(0, w), bendR: .18 + .16 * Math.max(0, -w), sway: w * .1, armL: 1.0 + w * .55, armR: 1.0 - w * .55, foreL: .5 + c * .3, foreR: .5 - c * .3 }); }
 };
 function reset() { hips.position.y = .78; hips.rotation.set(0, 0, 0); chest.rotation.set(0, 0, 0); chest.scale.set(1, 1, 1); head.rotation.set(0, 0, 0); legs.forEach(l => l.rotation.set(0, 0, 0)); }
 document.querySelectorAll('[data-anim]').forEach(b => b.onclick = () => { anim = b.dataset.anim; since = clock.getElapsedTime(); reset();
@@ -242,8 +327,10 @@ let glb = null, mixer = null; const glbActions = {};
     const box = new THREE.Box3().setFromObject(glb), size = box.getSize(new THREE.Vector3()), k = 2.15 / size.y;
     glb.scale.setScalar(k); glb.position.y = -box.min.y * k; fig.visible = false; /* (the AI figure is shown first, when there is one) */
     // (Meshy marks the surface partly metallic - skin and cloth are not, and metal made darker colours near black)
-    glb.traverse(o => { if (!o.isMesh) return; o.castShadow = true; if (o.material.map && !tex) o.material.map = setupTexture(o.material.map);
-      o.material.metalness = 0; o.material.metalnessMap = null; o.material.needsUpdate = true; });
+    const meshes = []; glb.traverse(o => { if (o.isMesh) meshes.push(o); });
+    for (const o of meshes) { if (o.material.map && !tex) o.material.map = setupTexture(o.material.map);
+      o.material.metalness = 0; o.material.metalnessMap = null; o.material.needsUpdate = true;
+      if (!g.animations.length && o === meshes[0]) rig(o); else o.castShadow = true; } // (its own skeleton, if it ever has one, instead)
     holder.add(glb);
     mixer = new THREE.AnimationMixer(glb); g.animations.forEach((c, i) => { glbActions[['staa', 'vink', 'hop', 'dans'][i] || c.name] = mixer.clipAction(c); }); glbActions.staa?.play();
     // (a 3D service often gives each movement as a file of its own, the same figure and skeleton: figur-staa.glb,
@@ -251,17 +338,18 @@ let glb = null, mixer = null; const glbActions = {};
     for (const name of ['staa', 'vink', 'hop', 'dans']) fetch(`figur-${name}.glb`, { method: 'HEAD' }).then(r => { if (!r.ok) return;
       new GLTFLoader().load(`figur-${name}.glb`, a => { if (!a.animations[0]) return; glbActions[name] = mixer.clipAction(a.animations[0]);
         if (name === anim) glbActions[name].play(); }); });
-    // (Vink needs a skeleton: hidden on the AI figure until it has its own waving movement)
+    // (Vink needs a skeleton: hidden on the AI figure if it has none)
     const btn = document.getElementById('which'), wave = document.querySelector('[data-anim="vink"]');
     const show = ai => { holder.visible = ai; fig.visible = !ai; btn.textContent = ai ? 'Vis prøvefigur' : 'Vis AI-figur';
-      wave.hidden = ai && !glbActions.vink; if (wave.hidden && anim === 'vink') document.querySelector('[data-anim="staa"]').click(); };
+      wave.hidden = ai && !glbActions.vink && !RIG.hips; if (wave.hidden && anim === 'vink') document.querySelector('[data-anim="staa"]').click(); };
     btn.style.display = 'block'; show(true); btn.onclick = () => show(!holder.visible); }); })();
 
 // ---- render loop ----
 const clock = new THREE.Clock();
-function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h;
-  camera.position.z = w < h ? 7.4 : 6.2; camera.updateProjectionMatrix(); }
-addEventListener('resize', resize); resize();
+// (the picture moved up by half the button bar's height, so the figure stands clear of the bar however tall it is)
+function resize() { const w = innerWidth, h = innerHeight, bar = document.querySelector('.bar').offsetHeight; renderer.setSize(w, h, false); camera.aspect = w / h;
+  camera.position.z = w < h ? 7.4 : 6.2; camera.setViewOffset(w, h, 0, bar * .45, w, h); camera.updateProjectionMatrix(); }
+addEventListener('resize', resize); resize(); new ResizeObserver(resize).observe(document.querySelector('.bar'));
 renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElapsedTime();
   ANIMS[anim](t - since); if (spin) { fig.rotation.y += dt * 1.2; spinAngle += dt * 1.2; }
   if (glb && !glbActions[anim]) WHOLE[anim](t - since); glb && (glb.rotation.y = spinAngle); // (its own movement, when it has one, instead)
