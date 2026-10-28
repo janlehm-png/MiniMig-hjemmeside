@@ -236,7 +236,27 @@ function whitesByPlace(fbx) {
     if (mx > 75 && mx - mn < .16 * mx) tex.label[p] = place[i] > 128 ? PARTS.shirt : place[i + 1] > 128 ? PARTS.pants : tex.label[p];
     const l = tex.label[p]; if (l) { sums[l] += .3 * s[i] + .59 * s[i + 1] + .11 * s[i + 2]; counts[l]++; } }
   tex.mid = sums.map((v, l) => counts[l] ? v / counts[l] : 128); }
+// the hair, a part of its own with its own colour picture: all of it gets the hair colour, lit as it was (against the
+// middle brightness of its brown; the hair uses no other part of the picture, and its darkest strands and the edges
+// round its pieces must change too, or they show as specks)
+let hairTex = null;
+function setupHairTexture(img) {
+  const w = img.width, h = img.height, canvas = document.createElement('canvas'); canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true }); ctx.drawImage(img, 0, 0);
+  const src = ctx.getImageData(0, 0, w, h).data.slice(), mask = new Uint8Array(w * h); let sum = 0, n = 0;
+  for (let p = 0, i = 0; p < w * h; p++, i += 4) { const mx = Math.max(src[i], src[i + 1], src[i + 2]), mn = Math.min(src[i], src[i + 1], src[i + 2]);
+    mask[p] = 1; if (mx > 15 && mx < 184 && (mx - mn) / mx > .42 && mx === src[i]) { sum += .3 * src[i] + .59 * src[i + 1] + .11 * src[i + 2]; n++; } }
+  const t = new THREE.CanvasTexture(canvas); t.colorSpace = THREE.SRGBColorSpace;
+  hairTex = { ctx, src, mask, mid: n ? sum / n : 80, texture: t, w, h }; return t; }
+function recolourHair(hexColour) {
+  if (!hairTex) return; const n = parseInt(hexColour.slice(1), 16), c = [(n >> 16 & 255), (n >> 8 & 255), (n & 255)];
+  const out = hairTex.ctx.createImageData(hairTex.w, hairTex.h), o = out.data, s = hairTex.src;
+  for (let p = 0, i = 0; p < hairTex.w * hairTex.h; p++, i += 4) { o[i + 3] = 255;
+    if (!hairTex.mask[p]) { o[i] = s[i]; o[i + 1] = s[i + 1]; o[i + 2] = s[i + 2]; continue; }
+    const k = (.3 * s[i] + .59 * s[i + 1] + .11 * s[i + 2]) / hairTex.mid; for (let j = 0; j < 3; j++) o[i + j] = Math.min(255, c[j] * k); }
+  hairTex.ctx.putImageData(out, 0, 0); hairTex.texture.needsUpdate = true; }
 function recolour(part, hexColour) {
+  if (part === 'hair') recolourHair(hexColour);
   // (the picked colour read straight from its #rrggbb code: a THREE.Color would hold it in linear light, too dark here)
   if (!tex) return; const n = parseInt(hexColour.slice(1), 16); tex.colours[PARTS[part]] = { r: (n >> 16 & 255) / 255, g: (n >> 8 & 255) / 255, b: (n & 255) / 255 };
   const out = tex.ctx.createImageData(tex.w, tex.h), o = out.data, s = tex.src;
@@ -364,6 +384,33 @@ const exists = async u => { try { return (await fetch(u, { method: 'HEAD' })).ok
 // a figure with a skeleton made in Mixamo, if there is one: figur.fbx (the figure, its skeleton and its first movement,
 // the waving) and figur-staa/hop/dans.fbx (more movements for the same skeleton). Mixamo leaves the figure grey: its
 // colours come from figur-farve.jpg, Meshy's painted texture. Buttons without a movement are hidden.
+// a hairstyle: <name>.json (the hair cut out of a Meshy head by haar-ud.ps1, with that head's eye whites) and
+// <name>.jpg. It is set on the figure's head so the eyes meet - as far apart and in the same place as the figure's own
+// eye whites - and then follows the head bone. Nothing happens if the files are missing.
+async function loadHair(fbx, name) {
+  if (!(await exists(`${name}.json${FIGUR_V}`))) return;
+  const [d, img] = await Promise.all([fetch(`${name}.json${FIGUR_V}`).then(r => r.json()),
+    new Promise(ok => { const i = new Image(); i.onload = () => ok(i); i.src = `${name}.jpg${FIGUR_V}`; })]);
+  // the figure's eye whites, where they are now: white in its colour picture, in the head (the figure's top 15 %)
+  fbx.updateMatrixWorld(true); let body = null; fbx.traverse(o => { if (o.isSkinnedMesh && !body) body = o; }); if (!body || !tex) { console.warn('hår: ingen figur'); return; }
+  const all = new THREE.Box3().setFromObject(body, true), topY = all.max.y - (all.max.y - all.min.y) * .15, midX = (all.min.x + all.max.x) / 2;
+  const geo = body.geometry, uv = geo.attributes.uv, ix = geo.index, at = k => ix ? ix.getX(k) : k, v = new THREE.Vector3();
+  const eyes = [[0, 0, 0, 0], [0, 0, 0, 0]];
+  for (let k = 0, n = ix ? ix.count : geo.attributes.position.count; k < n; k += 3) {
+    let u = 0, w = 0; for (let j = 0; j < 3; j++) { u += uv.getX(at(k + j)) / 3; w += uv.getY(at(k + j)) / 3; }
+    const i = (Math.min(tex.h - 1, Math.max(0, Math.floor((1 - w) * tex.h))) * tex.w + Math.min(tex.w - 1, Math.max(0, Math.floor(u * tex.w)))) * 4, s = tex.src;
+    const mx = Math.max(s[i], s[i + 1], s[i + 2]), mn = Math.min(s[i], s[i + 1], s[i + 2]); if (mx < 200 || mx - mn > 40) continue;
+    body.getVertexPosition(at(k), v); v.applyMatrix4(body.matrixWorld); if (v.y < topY) continue;
+    const e = eyes[v.x < midX ? 0 : 1]; e[0] += v.x; e[1] += v.y; e[2] += v.z; e[3]++; }
+  if (!eyes[0][3] || !eyes[1][3]) { console.warn('hår: fandt ikke figurens øjne', eyes, topY, midX); return; }  const mine = eyes.map(e => new THREE.Vector3(e[0], e[1], e[2]).divideScalar(e[3])), theirs = d.eyes.map(e => new THREE.Vector3(...e));
+  const scale = mine[0].distanceTo(mine[1]) / theirs[0].distanceTo(theirs[1]);
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(d.position, 3));
+  g.setAttribute('normal', new THREE.Float32BufferAttribute(d.normal, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(d.uv, 2)); g.setIndex(d.index);
+  const hair = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ map: setupHairTexture(img), roughness: .8, metalness: 0, side: THREE.DoubleSide }));
+  hair.castShadow = true; hair.name = 'hair'; hair.scale.setScalar(scale);
+  hair.position.copy(mine[0].clone().add(mine[1]).multiplyScalar(.5)).sub(theirs[0].clone().add(theirs[1]).multiplyScalar(.5 * scale));
+  hair.updateMatrixWorld(true); let bone = null; fbx.traverse(o => { if (o.isBone && /Head$/.test(o.name) && !bone) bone = o; });
+  (bone || fbx).attach(hair); }
 // (FIGUR_V goes up with each new figure: a browser that remembers the last figure's files fetches them again - an iPad
 // once put the old figure's colour picture on the new figure)
 const FIGUR_V = '?v=2';
@@ -375,6 +422,7 @@ async function loadFbx() { if (!(await exists('figur.fbx' + FIGUR_V))) return fa
   whitesByPlace(fbx);
   const box = new THREE.Box3().setFromObject(fbx), size = box.getSize(new THREE.Vector3()), k = 2.15 / size.y;
   fbx.scale.setScalar(k); fbx.position.y = -box.min.y * k; holder.add(fbx); glb = fbx; fig.visible = false;
+  await loadHair(fbx, 'haar-kort');
   mixer = new THREE.AnimationMixer(fbx); if (fbx.animations[0]) glbActions.vink = mixer.clipAction(fbx.animations[0]);
   // (each movement preferably as figur-<name>.json: only the movement, taken out of Mixamo's file - a few hundred KB
   // where the .fbx, the whole figure again, is 19 MB)
