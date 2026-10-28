@@ -215,6 +215,27 @@ function setupTexture(map) {
   const t = new THREE.CanvasTexture(canvas); t.flipY = map.flipY; t.colorSpace = map.colorSpace; t.wrapS = map.wrapS; t.wrapT = map.wrapT; t.channel = map.channel;
   tex = { canvas, ctx, src, label, mid, colours: {}, texture: t, w, h };
   return t; }
+// (a white vest and shorts, as on the bald base figure, can't be told from the eye whites by their colour: each white
+// pixel is sorted by where it sits on the body instead - head and neck stay as they are, the vest down to the waist,
+// the shorts below it. Each triangle of the figure, in its T-pose, is painted at its place in the picture)
+function whitesByPlace(fbx) {
+  if (!tex) return; const c = document.createElement('canvas'); c.width = tex.w; c.height = tex.h;
+  const g = c.getContext('2d'); g.lineJoin = 'round';
+  // (twice: first with wide edges, so the picture's margins round each piece - which the screen blends in at seams and
+  // from afar - get the piece's part too, then exactly)
+  for (const wide of [12, 1]) { g.lineWidth = wide; fbx.traverse(o => { if (!o.isMesh || !o.geometry.attributes.uv) return;
+    const geo = o.geometry, pos = geo.attributes.position, uv = geo.attributes.uv, ix = geo.index, at = k => ix ? ix.getX(k) : k;
+    geo.computeBoundingBox(); const top = geo.boundingBox.max.y, H = top - geo.boundingBox.min.y;
+    for (let k = 0, n = ix ? ix.count : pos.count; k < n; k += 3) { const v = [at(k), at(k + 1), at(k + 2)];
+      const f = (top - (pos.getY(v[0]) + pos.getY(v[1]) + pos.getY(v[2])) / 3) / H;
+      g.fillStyle = g.strokeStyle = f < .2 ? '#000' : f < .53 ? '#f00' : '#0f0'; g.beginPath();
+      v.forEach((i, j) => { const x = uv.getX(i) * tex.w, y = (1 - uv.getY(i)) * tex.h; j ? g.lineTo(x, y) : g.moveTo(x, y); });
+      g.closePath(); g.fill(); g.stroke(); } }); }
+  const place = g.getImageData(0, 0, tex.w, tex.h).data, s = tex.src, sums = [0, 0, 0, 0, 0], counts = [0, 0, 0, 0, 0];
+  for (let p = 0, i = 0; p < tex.w * tex.h; p++, i += 4) { const mx = Math.max(s[i], s[i + 1], s[i + 2]), mn = Math.min(s[i], s[i + 1], s[i + 2]);
+    if (mx > 75 && mx - mn < .16 * mx) tex.label[p] = place[i] > 128 ? PARTS.shirt : place[i + 1] > 128 ? PARTS.pants : tex.label[p];
+    const l = tex.label[p]; if (l) { sums[l] += .3 * s[i] + .59 * s[i + 1] + .11 * s[i + 2]; counts[l]++; } }
+  tex.mid = sums.map((v, l) => counts[l] ? v / counts[l] : 128); }
 function recolour(part, hexColour) {
   // (the picked colour read straight from its #rrggbb code: a THREE.Color would hold it in linear light, too dark here)
   if (!tex) return; const n = parseInt(hexColour.slice(1), 16); tex.colours[PARTS[part]] = { r: (n >> 16 & 255) / 255, g: (n >> 8 & 255) / 255, b: (n & 255) / 255 };
@@ -348,6 +369,7 @@ async function loadFbx() { if (!(await exists('figur.fbx'))) return false;
   const fbx = await load('figur.fbx'), map = await new Promise(ok => new THREE.TextureLoader().load('figur-farve.jpg', ok));
   map.colorSpace = THREE.SRGBColorSpace; const coloured = setupTexture(map);
   fbx.traverse(o => { if (!o.isMesh) return; o.castShadow = true; o.material = new THREE.MeshStandardMaterial({ map: coloured, roughness: .75, metalness: 0 }); });
+  whitesByPlace(fbx);
   const box = new THREE.Box3().setFromObject(fbx), size = box.getSize(new THREE.Vector3()), k = 2.15 / size.y;
   fbx.scale.setScalar(k); fbx.position.y = -box.min.y * k; holder.add(fbx); glb = fbx; fig.visible = false;
   mixer = new THREE.AnimationMixer(fbx); if (fbx.animations[0]) glbActions.vink = mixer.clipAction(fbx.animations[0]);
