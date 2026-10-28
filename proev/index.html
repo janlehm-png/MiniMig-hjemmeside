@@ -49,8 +49,8 @@ header { display: flex; align-items: baseline; justify-content: space-between; g
 .main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 20px; align-items: start; }
 .stage { position: relative; border-radius: 28px; aspect-ratio: 2 / 3; max-width: 100%;
   background: radial-gradient(circle at 50% 42%, var(--sun-soft) 0 38%, var(--sun) 100%); box-shadow: 0 10px 30px var(--shadow); overflow: hidden; }
-.stage { cursor: zoom-in; }
-.stage.zoomed { cursor: zoom-out; }
+.stage.can-zoom { cursor: zoom-in; } /* (only on the tabs that zoom: elsewhere a tap does nothing, so the plain arrow) */
+.stage.can-zoom.zoomed { cursor: zoom-out; }
 /* everything on the stage (scene, shadow, figure) zooms together, e.g. in on the face for the Eyes tab */
 .stage .zoom { position: absolute; inset: 0; transform-origin: 0 0; background-size: cover; background-position: center; }
 @media (prefers-reduced-motion: no-preference) { .stage .zoom { transition: transform .45s ease; } }
@@ -421,7 +421,7 @@ function load(name, tries = 4) {
     im.onload = () => ok([name, im]);
     im.onerror = () => tries > 1 ? setTimeout(() => load(name, tries - 1).then(ok), 700) : ok([name, null]);
     im.src = 'dele/' + name + '.png?v=' + PICS_V + (tries < 4 ? '-' + tries : ''); }); }
-const PICS_V = 101; // raised when pictures change, so phones and browsers fetch the new ones instead of old copies
+const PICS_V = 106; // raised when pictures change, so phones and browsers fetch the new ones instead of old copies
 
 // per part: which pixels take the chosen colour (coloured ones; on shoes not the white soles) and their middle brightness
 function prepare(name, im) {
@@ -543,6 +543,13 @@ function smoothWrist(o, d, s) {
     for (let v = -3; v <= 3; v++) { const q = (y + v) * W + x, j = at(x, y + v); if (skinNow[q] && was[j + 3] >= 250 && !isHandle(q)) { for (let c = 0; c < 3; c++) acc[c] += was[j + c]; m++; } }
     if (m > 2) for (let c = 0; c < 3; c++) o[i + c] = acc[c] / m; }
 }
+// the shorts' width, row by row (first and last solid pixel), made once per pair of shorts
+const tuckSpans = {};
+function tuckSpan(name) { if (tuckSpans[name]) return tuckSpans[name]; const d = data[name], rows = [];
+  if (d) for (let y = 0; y < H; y++) { let a = -1, b = -1; for (let x = 0; x < W; x++) if (d.px[(y * W + x) * 4 + 3] > 100) { if (a < 0) a = x; b = x; } if (a >= 0) rows[y] = [a, b]; }
+  return tuckSpans[name] = rows; }
+// whether the base's skin (an arm, beside the shorts) is within 5 pixels of p
+const nearArm = (base, p) => { for (let v = -5; v <= 5; v += 1) for (let u = -5; u <= 5; u += 1) if (u * u + v * v <= 25 && base.paint[p + v * W + u] === 1) return true; return false; };
 // whether the base has underwear (paint 2) within d pixels straight beside, above or below p
 const near = (base, p, d) => { for (let k = 1; k <= d; k++) if (base.paint[p - k] === 2 || base.paint[p + k] === 2 || base.paint[p - k * W] === 2 || base.paint[p + k * W] === 2) return true; return false; };
 // the shoulder by a raised arm: the pictures leave a square notch of background between the neck and the arm, where a
@@ -633,11 +640,12 @@ function compose(s, ctx) {
   const pantsC = s.pants !== 'ingen' ? hex(colBase(s, 'pantsColor')) : null, bareLegs = DRESSES.includes(s.top) && s.pants === 'ingen';
   for (let i = 0, p = 0; p < W * H; i += 4, p++) {
     let r = base.px[i], g = base.px[i + 1], b = base.px[i + 2], a = base.px[i + 3];
-    if (base.paint[p] === 1 && !(s.underTop && base.L[p] < .42 && b >= r && near(base, p, 2))) { skinNow[p] = 1; const k = base.L[p] / base.mid; r = tint(skin[0], k); g = tint(skin[1], k); b = tint(skin[2], k); }
+    if (base.paint[p] === 1 && !(s.underTop && p < WAIST * W && base.L[p] < .42 && b >= r && near(base, p, 2))) { skinNow[p] = 1; const k = base.L[p] / base.mid; r = tint(skin[0], k); g = tint(skin[1], k); b = tint(skin[2], k); }
     // (the underwear's dark blue seam lines - down its sides, under the arms - count as underwear in a new figure's own
     // underwear colour; left as drawn, they showed as black lines on a white vest)
     // (and its dark outline where it meets the skin - under the arm - which on a white vest showed as a black line)
-    else if (base.paint[p] === 2 || (s.underTop && a > 0 && (base.paint[p] === 0 || base.paint[p] === 1) &&
+    // (only the vest: the shorts' dark hem round the legs stays as drawn)
+    else if (base.paint[p] === 2 || (s.underTop && a > 0 && p < WAIST * W && (base.paint[p] === 0 || base.paint[p] === 1) &&
       ((!base.paint[p] && b > r + 15 && near(base, p, 1)) || (base.L[p] < .42 && b >= r && near(base, p, 2))))) { // the underwear edges peeping out take the colour of what is worn over them
       const c = (p / W | 0) < WAIST ? topC : pantsC;
       // under a dress there are bare legs: the shorts' last soft edges (round the bare-thigh patch) turn to skin
@@ -766,7 +774,10 @@ function compose(s, ctx) {
       if ((p >= fistEnd && (d.paint[p] || d.px[i] - d.px[i + 2] <= 10)) || (fistEnd < W * H && d.paint[p] === 3)) continue;
       if (handsOver && p < (WAIST + 35) * W && handsOver.paint[p] === 4 && handsOver.px[i + 3] > 200) continue;
       // a tucked-in top ends under the waistband: none of its cloth below it shows beside the shorts
-      if (tucked && name === topOf(s) && d.paint[p] !== 4 && p >= (PANTS_TOP[s.pants] + 2) * W) continue;
+      // (only across the shorts' own width: a long sleeve on the arm hanging beside them goes on down to the wrist)
+      if (tucked && name === topOf(s) && d.paint[p] !== 4 && p >= (PANTS_TOP[s.pants] + 2) * W) { const sp = tuckSpan(s.pants)[p / W | 0], x = p % W;
+        // (right beside them only over the arm: there the top's hem stuck out a little; further out it is all sleeve)
+        if (!sp || (x >= sp[0] - 2 && x <= sp[1] + 2) || (x >= sp[0] - 8 && x <= sp[1] + 8 && !nearArm(base, p))) continue; }
       if (p >= over && (d.paint[p] === 3 || d.paint[p] === 4)) continue;
       // (any top's "hide the base" marks below the waist never cut through trousers worn under it - they showed as white
       // holes and dots along the hem)
@@ -804,6 +815,11 @@ function compose(s, ctx) {
     if (name === s.pants) for (let p = (PANTS_TOP[name] || WAIST) * W, i = p * 4; p < W * H; p++, i += 4) if (base.paint[p] === 2 && !d.px[i + 3]) o[i + 3] = 0;
     if (cuffKeep) for (let k = 0; k < cuffKeep.length; k += 5) blend(o, cuffKeep[k], cuffKeep[k + 1], cuffKeep[k + 2], cuffKeep[k + 3], cuffKeep[k + 4]);
     else if (name === 'haand-knyttet-vink') smoothWrist(o, d, s);
+    // gloves or mittens on the umbrella hand: the fist's skin, down to the wrist, in their colour, lit as the skin was
+    if (name === 'haand-knyttet-vink' && (s.hands === 'handsker' || s.hands === 'vanter')) {
+      const gc = hex(s.handColor || CLOTH[7]), sl = lum(skin[0], skin[1], skin[2]) || .5, end = (WRIST + (s._fistDy || 0)) * W;
+      for (let p = 0; p < end; p++) if (d.paint[p] === 4 && d.px[p * 4 + 3] && skinNow[p]) { const i = p * 4, sh = lum(o[i], o[i + 1], o[i + 2]) / sl,
+        k = s.hands === 'vanter' ? .92 + .1 * Math.min(1, sh) : Math.min(1.05, sh); o[i] = tint(gc[0], k); o[i + 1] = tint(gc[1], k); o[i + 2] = tint(gc[2], k); } }
     // a fringe over the brows: the brows show softly through it (where the hair covers them, not round them)
     if (name === s.hair) for (let k = 0; k < browPx.length; k += 5) { const i = browPx[k];
       if (o[i] !== browPx[k + 1] || o[i + 1] !== browPx[k + 2] || o[i + 2] !== browPx[k + 3]) blend(o, i, browPx[k + 1], browPx[k + 2], browPx[k + 3], browPx[k + 4] * BROW_THROUGH); }
@@ -965,8 +981,13 @@ function drawHands(o, s, skin) {
   const shade = i => lum(o[i], o[i + 1], o[i + 2]) / sl;
   const paint = (i, col, k) => { o[i] = tint(col[0], k); o[i + 1] = tint(col[1], k); o[i + 2] = tint(col[2], k); };
   const isSkin = (x, y) => { x = Math.round(x); y = Math.round(y); return x >= 0 && y >= 0 && x < W && y < H && skinNow[y * W + x] === 1; };
+  // (the raised hand holding the umbrella is the fist part, drawn later over the open hand: nothing is drawn on the
+  // open hand then - it would be left in bits beside the fist - the gloves are coloured onto the fist instead, and a
+  // watch or ring goes on the other hand)
+  const fist = s.item === 'paraply' && poseOf(s) === 'vink' && !itemBlocked(s, 'paraply');
   for (const side of [0, 1]) {
-    if ((kind === 'ur' || kind === 'ring') && !side) continue; // (one hand only)
+    if (fist && side === 1) continue;
+    if ((kind === 'ur' || kind === 'ring') && side === (fist ? 1 : 0)) continue; // (one hand only)
     const z = handZone(s, side); if (!z) continue; const [x0, y0, x1, y1] = z.box, hl = z.len, px = [];
     const { ux, uy } = z, depth = (x, y) => z.best - (x * ux + y * uy);
     for (const [x, y, d] of z.pix) { const i = (y * W + x) * 4; if (o[i + 3]) px.push([x, y, i, d]); }
@@ -1155,8 +1176,8 @@ const ZOOM_VIEW = { oejne: [256, 150, 2.2], bryn: [256, 150, 2.2], mund: [256, 1
 let zoomOn = true;
 const FIG_SCALE = .86; // as in the CSS (.stage canvas)
 function zoom() {
-  const st = document.getElementById('stage'), v = zoomOn && (tab === 'haender' ? handView() : ZOOM_VIEW[tab]);
-  st.classList.toggle('zoomed', !!v);
+  const st = document.getElementById('stage'), view = tab === 'haender' ? handView() : ZOOM_VIEW[tab], v = zoomOn && view;
+  st.classList.toggle('can-zoom', !!view); st.classList.toggle('zoomed', !!v);
   if (!v) { document.getElementById('zoom').style.transform = ''; return; }
   let px = v[0] / W, py = v[1] / H; const k = v[2];
   px = .5 + (px - .5) * FIG_SCALE; py = .85 + (py - .85) * FIG_SCALE; // the figure stands a little smaller on the stage
