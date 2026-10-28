@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MiniMig 3D-forsøg</title>
+<meta name="robots" content="noindex, nofollow"><!-- (a hidden try-out page: kept out of search engines) -->
+<!-- Trin 1 af 3D-forsøget: en scene hvor en figur kan drejes, vinke, hoppe og danse, og farverne skiftes.
+     Prøvefiguren er bygget af simple former; ligger der en figur.glb (fra en 3D-tjeneste) i mappen, kan den vises i stedet. -->
+<style>
+  :root { --ink: #3A2E5C; --tile: #FFFFFF; --line: #E6DEFF; --accent: #7C5CFF; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #FFF8E1; color: var(--ink); font: 15px/1.3 system-ui, sans-serif; overflow: hidden; }
+  #scene { position: fixed; inset: 0; touch-action: none; }
+  .bar { position: fixed; left: 0; right: 0; bottom: 0; padding: 10px max(12px, env(safe-area-inset-left)) calc(10px + env(safe-area-inset-bottom));
+    display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; background: linear-gradient(transparent, rgba(255, 248, 225, .95) 30%); }
+  .bar button { border: 2px solid var(--line); background: var(--tile); color: var(--ink); border-radius: 16px; padding: 10px 14px;
+    font: 700 15px/1 system-ui, sans-serif; cursor: pointer; }
+  .bar button.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent) inset; }
+  .colors { display: flex; gap: 6px; align-items: center; }
+  .colors label { font-size: 12px; font-weight: 700; }
+  .colors input { width: 34px; height: 34px; border: 0; padding: 0; background: none; cursor: pointer; }
+  .top { position: fixed; top: calc(10px + env(safe-area-inset-top)); left: 12px; right: 12px; display: flex; justify-content: space-between; gap: 8px; pointer-events: none; }
+  .top > * { pointer-events: auto; }
+  .tag { background: var(--tile); border: 2px solid var(--line); border-radius: 14px; padding: 6px 10px; font-weight: 700; font-size: 13px; }
+  #which { display: none; }
+</style>
+</head>
+<body>
+<canvas id="scene"></canvas>
+<div class="top"><span class="tag">3D-forsøg · træk for at dreje, knib for at zoome</span><button class="tag" id="which">Vis AI-figur</button></div>
+<div class="bar">
+  <button data-anim="staa" class="on">Stå</button>
+  <button data-anim="vink">Vink</button>
+  <button data-anim="hop">Hop</button>
+  <button data-anim="dans">Dans</button>
+  <button id="spin">Drej rundt</button>
+  <span class="colors">
+    <label>Hud <input type="color" id="c-skin" value="#EDB98A"></label>
+    <label>Hår <input type="color" id="c-hair" value="#4A2C1D"></label>
+    <label>Trøje <input type="color" id="c-shirt" value="#FF7A2F"></label>
+    <label>Bukser <input type="color" id="c-pants" value="#3D8BFF"></label>
+  </span>
+</div>
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+               "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+const canvas = document.getElementById('scene');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(30, 1, .1, 100);
+camera.position.set(0, 1.25, 6.2);
+const controls = new OrbitControls(camera, canvas);
+controls.target.set(0, 1.05, 0); controls.enablePan = false; controls.enableDamping = true;
+controls.minDistance = 2.5; controls.maxDistance = 10; controls.minPolarAngle = .5; controls.maxPolarAngle = 1.75;
+
+// light: soft sky light, a warm key light with soft shadow, and a rim light from behind
+scene.add(new THREE.HemisphereLight(0xFFFFFF, 0xFFE2A8, 1.4));
+const key = new THREE.DirectionalLight(0xFFF4E0, 2.2); key.position.set(2.5, 5, 4); key.castShadow = true;
+key.shadow.mapSize.set(1024, 1024); key.shadow.camera.left = -2; key.shadow.camera.right = 2; key.shadow.camera.top = 3; key.shadow.camera.bottom = -1; key.shadow.radius = 6;
+scene.add(key);
+const rim = new THREE.DirectionalLight(0xD8E6FF, 1.2); rim.position.set(-3, 3, -4); scene.add(rim);
+// the floor: a sunny disc that only catches the shadow
+const floor = new THREE.Mesh(new THREE.CircleGeometry(2.2, 48), new THREE.ShadowMaterial({ opacity: .18 }));
+floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
+const disc = new THREE.Mesh(new THREE.CircleGeometry(1.4, 48), new THREE.MeshBasicMaterial({ color: 0xFFE07A, transparent: true, opacity: .55 }));
+disc.rotation.x = -Math.PI / 2; disc.position.y = .001; scene.add(disc);
+
+// ---- the try-out figure: chibi proportions like MiniMig (a big head, a small body), built of rounded shapes and
+// joined at "joints" (empty objects) that the animations turn ----
+const mat = c => new THREE.MeshStandardMaterial({ color: c, roughness: .55, metalness: 0 });
+const M = { skin: mat('#EDB98A'), hair: mat('#4A2C1D'), shirt: mat('#FF7A2F'), pants: mat('#3D8BFF'), shoe: mat('#E8384F'), sole: mat('#FFFFFF') };
+const mesh = (g, m, x = 0, y = 0, z = 0) => { const o = new THREE.Mesh(g, m); o.position.set(x, y, z); o.castShadow = true; return o; };
+const capsule = (r, len) => new THREE.CapsuleGeometry(r, len, 8, 20);
+const joint = (parent, x, y, z) => { const j = new THREE.Object3D(); j.position.set(x, y, z); parent.add(j); return j; };
+
+const fig = new THREE.Group(); scene.add(fig);
+const hips = joint(fig, 0, .78, 0);
+// body: shorts and shirt
+hips.add(mesh(capsule(.27, .12), M.pants, 0, .02, 0));
+const chest = joint(hips, 0, .12, 0);
+chest.add(mesh(capsule(.28, .3), M.shirt, 0, .2, 0));
+// legs (hip joints), each a thigh in the shorts, a bare shin and a shoe
+const legs = [-1, 1].map(s => { const h = joint(hips, .13 * s, -.05, 0);
+  h.add(mesh(capsule(.12, .14), M.pants, 0, -.1, 0));
+  h.add(mesh(capsule(.09, .32), M.skin, 0, -.38, 0));
+  const shoe = mesh(new THREE.SphereGeometry(.13, 20, 14), M.shoe, 0, -.68, .05); shoe.scale.set(1, .7, 1.45); h.add(shoe);
+  const sole = mesh(new THREE.CylinderGeometry(.12, .12, .04, 24), M.sole, 0, -.735, .05); sole.scale.set(1, 1, 1.5); h.add(sole);
+  return h; });
+// arms (shoulder joints) with short sleeves, an elbow joint, and a round hand
+const arms = [-1, 1].map(s => { const sh = joint(chest, .33 * s, .36, 0);
+  sh.add(mesh(new THREE.SphereGeometry(.14, 20, 14), M.shirt, 0, -.04, 0));
+  sh.add(mesh(capsule(.075, .16), M.skin, 0, -.17, 0));
+  const el = joint(sh, 0, -.27, 0);
+  el.add(mesh(capsule(.07, .16), M.skin, 0, -.1, 0));
+  el.add(mesh(new THREE.SphereGeometry(.09, 18, 14), M.skin, 0, -.24, 0));
+  sh.rotation.z = .12 * s; // arms hang a little away from the body
+  return { sh, el, s }; });
+// neck and head
+const neck = joint(chest, 0, .5, 0);
+neck.add(mesh(capsule(.08, .06), M.skin, 0, .02, 0));
+const head = joint(neck, 0, .45, 0);
+const skull = mesh(new THREE.SphereGeometry(.44, 40, 30), M.skin); skull.scale.set(1, .97, .94); head.add(skull);
+[-1, 1].map(s => { const ear = mesh(new THREE.SphereGeometry(.08, 16, 12), M.skin, .43 * s, -.02, 0); ear.scale.set(.6, 1, .8); head.add(ear); });
+// hair: a cap over the back and top, and a fringe
+const cap = mesh(new THREE.SphereGeometry(.47, 40, 30, 0, Math.PI * 2, 0, Math.PI * .56), M.hair, 0, .02, -.02); cap.scale.set(1, 1, .98); cap.rotation.x = -.35; head.add(cap);
+// (a sphere patch centred on the front, +z: phi around π/2)
+const fringe = mesh(new THREE.SphereGeometry(.455, 40, 20, Math.PI * .12, Math.PI * .76, Math.PI * .08, Math.PI * .24), M.hair, 0, .03, 0); head.add(fringe);
+// the face: painted on a canvas, laid on a patch of the head's front
+function faceTexture() {
+  const c = document.createElement('canvas'); c.width = 512; c.height = 512; const g = c.getContext('2d');
+  g.translate(256, 300); g.scale(1.35, 1.35); g.translate(-256, -280); // (the features drawn a bit bigger, round the middle)
+  const eye = (x) => { g.fillStyle = '#FFFFFF'; g.beginPath(); g.ellipse(x, 270, 46, 54, 0, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#7A4A1E'; g.beginPath(); g.arc(x, 280, 34, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#1E120A'; g.beginPath(); g.arc(x, 282, 18, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#FFFFFF'; g.beginPath(); g.arc(x - 12, 266, 10, 0, Math.PI * 2); g.fill(); g.beginPath(); g.arc(x + 12, 296, 5, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = '#2B1A10'; g.lineWidth = 7; g.lineCap = 'round'; g.beginPath(); g.ellipse(x, 270, 46, 54, 0, Math.PI * 1.1, Math.PI * 1.9); g.stroke(); };
+  eye(176); eye(336);
+  g.strokeStyle = '#4A2C1D'; g.lineWidth = 12; g.lineCap = 'round';
+  for (const x of [176, 336]) { g.beginPath(); g.moveTo(x - 40, 192); g.quadraticCurveTo(x, 172, x + 40, 190); g.stroke(); }
+  g.fillStyle = 'rgba(255,120,120,.28)'; for (const x of [130, 382]) { g.beginPath(); g.ellipse(x, 350, 38, 22, 0, 0, Math.PI * 2); g.fill(); }
+  g.strokeStyle = 'rgba(120,60,30,.55)'; g.lineWidth = 6; g.beginPath(); g.arc(256, 330, 10, Math.PI * .15, Math.PI * .85); g.stroke();
+  g.strokeStyle = '#8A3A2A'; g.lineWidth = 9; g.beginPath(); g.arc(256, 355, 42, Math.PI * .2, Math.PI * .8); g.stroke();
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t; }
+const face = new THREE.Mesh(new THREE.SphereGeometry(.443, 40, 30, Math.PI * .29, Math.PI * .42, Math.PI * .3, Math.PI * .42),
+  new THREE.MeshStandardMaterial({ map: faceTexture(), transparent: true, roughness: .6 }));
+face.scale.set(1, .97, .94); head.add(face);
+fig.traverse(o => { if (o.isMesh) o.castShadow = true; });
+
+// ---- colours ----
+const link = (id, m) => document.getElementById(id).addEventListener('input', e => m.color.set(e.target.value));
+link('c-skin', M.skin); link('c-hair', M.hair); link('c-shirt', M.shirt); link('c-pants', M.pants);
+
+// ---- animations: each sets the joints for time t (seconds) ----
+let anim = 'staa', since = 0, spin = false;
+const ease = x => x * x * (3 - 2 * x);
+const ANIMS = {
+  staa: t => { const b = Math.sin(t * 2.2) * .012; hips.position.y = .78 + b; head.rotation.z = Math.sin(t * 1.1) * .04;
+    arms.forEach(a => { a.sh.rotation.set(0, 0, .12 * a.s + Math.sin(t * 2.2) * .02 * a.s); a.el.rotation.set(0, 0, 0); }); },
+  vink: t => { ANIMS.staa(t); const a = arms[1], up = ease(Math.min(1, t * 3));
+    a.sh.rotation.z = .12 + up * 2.3; a.el.rotation.z = up * (-.25 + Math.sin(t * 9) * .45); /* (the forearm waves outwards, not over the head) */ head.rotation.z = -.08 * up; },
+  hop: t => { const p = (t * 1.4) % 1, h = Math.sin(p * Math.PI); hips.position.y = .78 + h * .45;
+    const squash = p < .12 || p > .88 ? .94 : 1.02; chest.scale.set(1 / squash, squash, 1);
+    arms.forEach(a => { a.sh.rotation.set(0, 0, (.12 + h * 2.2) * a.s); a.el.rotation.set(0, 0, 0); });
+    legs.forEach(l => l.rotation.x = -h * .3); },
+  dans: t => { const w = Math.sin(t * 5); hips.position.y = .78 + Math.abs(Math.cos(t * 5)) * .06; hips.rotation.z = w * .12; chest.rotation.z = -w * .1;
+    head.rotation.z = w * .15; arms.forEach(a => { a.sh.rotation.set(0, 0, (1.2 + w * a.s * .6) * a.s); a.el.rotation.set(0, 0, (.6 + w * .3) * a.s); });
+    legs.forEach((l, i) => l.rotation.x = (i ? 1 : -1) * w * .25); }
+};
+function reset() { hips.position.y = .78; hips.rotation.set(0, 0, 0); chest.rotation.set(0, 0, 0); chest.scale.set(1, 1, 1); head.rotation.set(0, 0, 0); legs.forEach(l => l.rotation.set(0, 0, 0)); }
+document.querySelectorAll('[data-anim]').forEach(b => b.onclick = () => { anim = b.dataset.anim; since = clock.getElapsedTime(); reset();
+  if (glb && glbActions[anim]) { Object.values(glbActions).forEach(x => x.fadeOut(.3)); glbActions[anim].reset().fadeIn(.3).play(); }
+  document.querySelectorAll('[data-anim]').forEach(x => x.classList.toggle('on', x === b)); });
+document.getElementById('spin').onclick = e => { spin = !spin; e.target.classList.toggle('on', spin); };
+
+// ---- an AI-made figure, if there is one (figur.glb next to this page): shown instead of the try-out figure ----
+let glb = null, mixer = null; const glbActions = {};
+// (or figur.json with figur-tex*.jpg: the same figure repacked by glb-til-json.ps1, where .glb files are not served)
+(async () => { let url = null; for (const u of ['figur.glb', 'figur.json']) { try { if ((await fetch(u, { method: 'HEAD' })).ok) { url = u; break; } } catch (e) {} }
+  if (url) new GLTFLoader().load(url, g => { glb = g.scene;
+    const box = new THREE.Box3().setFromObject(glb), size = box.getSize(new THREE.Vector3()), k = 2.15 / size.y;
+    glb.scale.setScalar(k); glb.position.y = -box.min.y * k; fig.visible = false; /* (the AI figure is shown first, when there is one) */ glb.traverse(o => { if (o.isMesh) o.castShadow = true; }); scene.add(glb);
+    mixer = new THREE.AnimationMixer(glb); g.animations.forEach((c, i) => { glbActions[['staa', 'vink', 'hop', 'dans'][i] || c.name] = mixer.clipAction(c); }); glbActions.staa?.play();
+    // (a 3D service often gives each movement as a file of its own, the same figure and skeleton: figur-staa.glb,
+    // figur-vink.glb, figur-hop.glb, figur-dans.glb - their movements are put on this figure)
+    for (const name of ['staa', 'vink', 'hop', 'dans']) fetch(`figur-${name}.glb`, { method: 'HEAD' }).then(r => { if (!r.ok) return;
+      new GLTFLoader().load(`figur-${name}.glb`, a => { if (!a.animations[0]) return; glbActions[name] = mixer.clipAction(a.animations[0]);
+        if (name === anim) glbActions[name].play(); }); });
+    const btn = document.getElementById('which'); btn.style.display = 'block'; btn.textContent = 'Vis prøvefigur';
+    btn.onclick = () => { glb.visible = !glb.visible; fig.visible = !glb.visible; btn.textContent = glb.visible ? 'Vis prøvefigur' : 'Vis AI-figur'; }; }); })();
+
+// ---- render loop ----
+const clock = new THREE.Clock();
+function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h;
+  camera.position.z = w < h ? 7.4 : 6.2; camera.updateProjectionMatrix(); }
+addEventListener('resize', resize); resize();
+renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElapsedTime();
+  ANIMS[anim](t - since); if (spin) { fig.rotation.y += dt * 1.2; if (glb) glb.rotation.y += dt * 1.2; }
+  if (mixer) mixer.update(dt); controls.update(); renderer.render(scene, camera); });
+</script>
+</body>
+</html>

@@ -22,7 +22,8 @@ if ($html -notmatch 'pwa.js') {
 }
 [IO.File]::WriteAllText($gamePath, $html, $utf8)
 $files = @(Get-ChildItem -LiteralPath $root -Recurse -File | Where-Object {
- $_.FullName -notmatch '[\\/]\.git[\\/]' -and $_.Extension -in '.html','.css','.png','.jpg','.webmanifest','.js' -and $_.Name -notin 'service-worker.js','precache-manifest.js'
+ # (3d-forsoeg: a hidden try-out page, never part of the offline game)
+ $_.FullName -notmatch '[\\/]\.git[\\/]' -and $_.FullName -notmatch '[\\/]3d-forsoeg[\\/]' -and $_.Extension -in '.html','.css','.png','.jpg','.webmanifest','.js' -and $_.Name -notin 'service-worker.js','precache-manifest.js'
 } | Sort-Object FullName)
 $paths = @($files | ForEach-Object { $_.FullName.Substring($root.Length + 1).Replace('\','/') })
 $hashes = ($files | ForEach-Object { (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash }) -join ''
