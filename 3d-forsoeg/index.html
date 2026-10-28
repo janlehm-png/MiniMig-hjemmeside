@@ -11,7 +11,9 @@
   :root { --ink: #3A2E5C; --tile: #FFFFFF; --line: #E6DEFF; --accent: #7C5CFF; }
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; background: #FFF8E1; color: var(--ink); font: 15px/1.3 system-ui, sans-serif; overflow: hidden; }
-  #scene { position: fixed; inset: 0; touch-action: none; }
+  /* (the size set here: on a sharp screen - an iPad, a phone - the canvas holds twice the pixels, and without it showed
+     twice too big, the figure off to the right) */
+  #scene { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
   .bar { position: fixed; left: 0; right: 0; bottom: 0; padding: 10px max(12px, env(safe-area-inset-left)) calc(10px + env(safe-area-inset-bottom));
     display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; background: linear-gradient(transparent, rgba(255, 248, 225, .95) 30%); }
   .bar button { border: 2px solid var(--line); background: var(--tile); color: var(--ink); border-radius: 16px; padding: 10px 14px;
