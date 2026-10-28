@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>MiniMig 3D-forsøg</title>
 <meta name="robots" content="noindex, nofollow"><!-- (a hidden try-out page: kept out of search engines) -->
-<!-- Trin 1 af 3D-forsøget: en scene hvor en figur kan drejes, vinke, hoppe og danse, og farverne skiftes.
-     Prøvefiguren er bygget af simple former; ligger der en figur.glb (fra en 3D-tjeneste) i mappen, kan den vises i stedet. -->
+<!-- 3D-forsøget: MiniMigs grundfigur (Meshy, skelet og bevægelser fra Mixamo), der kan drejes, vinke, hoppe og danse,
+     skifte frisure og farves om. -->
 <style>
   :root { --ink: #3A2E5C; --tile: #FFFFFF; --line: #E6DEFF; --accent: #7C5CFF; }
   * { box-sizing: border-box; }
@@ -38,13 +38,11 @@
   #s-h { background: linear-gradient(90deg, hsl(0,80%,55%), hsl(60,80%,55%), hsl(120,80%,55%), hsl(180,80%,55%), hsl(240,80%,55%), hsl(300,80%,55%), hsl(360,80%,55%)); }
   .top { position: fixed; top: calc(10px + env(safe-area-inset-top)); left: 12px; right: 12px; display: flex; justify-content: space-between; gap: 8px; pointer-events: none; }
   .top > * { pointer-events: auto; }
-  .tag { background: var(--tile); border: 2px solid var(--line); border-radius: 14px; padding: 6px 10px; font-weight: 700; font-size: 13px; }
-  #which { display: none; }
-</style>
+  .tag { background: var(--tile); border: 2px solid var(--line); border-radius: 14px; padding: 6px 10px; font-weight: 700; font-size: 13px; }</style>
 </head>
 <body>
 <canvas id="scene"></canvas>
-<div class="top"><span class="tag">3D-forsøg · træk for at dreje, knib for at zoome</span><button class="tag" id="which">Vis AI-figur</button></div>
+<div class="top"><span class="tag" id="tag">Henter figuren …</span></div>
 <div class="bar">
   <button data-anim="staa" class="on">Stå</button>
   <button data-anim="vink">Vink</button>
@@ -65,7 +63,6 @@
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
 
 const canvas = document.getElementById('scene');
@@ -96,76 +93,15 @@ floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
 const disc = new THREE.Mesh(new THREE.CircleGeometry(1.4, 48), new THREE.MeshBasicMaterial({ color: 0xFFE07A, transparent: true, opacity: .55 }));
 disc.rotation.x = -Math.PI / 2; disc.position.y = .001; scene.add(disc);
 
-// ---- the try-out figure: chibi proportions like MiniMig (a big head, a small body), built of rounded shapes and
-// joined at "joints" (empty objects) that the animations turn ----
-const mat = c => new THREE.MeshStandardMaterial({ color: c, roughness: .55, metalness: 0 });
-const M = { skin: mat('#EDB98A'), hair: mat('#4A2C1D'), shirt: mat('#FF7A2F'), pants: mat('#3D8BFF'), shoe: mat('#E8384F'), sole: mat('#FFFFFF') };
-const mesh = (g, m, x = 0, y = 0, z = 0) => { const o = new THREE.Mesh(g, m); o.position.set(x, y, z); o.castShadow = true; return o; };
-const capsule = (r, len) => new THREE.CapsuleGeometry(r, len, 8, 20);
-const joint = (parent, x, y, z) => { const j = new THREE.Object3D(); j.position.set(x, y, z); parent.add(j); return j; };
-
-const fig = new THREE.Group(); scene.add(fig);
-const hips = joint(fig, 0, .78, 0);
-// body: shorts and shirt
-hips.add(mesh(capsule(.27, .12), M.pants, 0, .02, 0));
-const chest = joint(hips, 0, .12, 0);
-chest.add(mesh(capsule(.28, .3), M.shirt, 0, .2, 0));
-// legs (hip joints), each a thigh in the shorts, a bare shin and a shoe
-const legs = [-1, 1].map(s => { const h = joint(hips, .13 * s, -.05, 0);
-  h.add(mesh(capsule(.12, .14), M.pants, 0, -.1, 0));
-  h.add(mesh(capsule(.09, .32), M.skin, 0, -.38, 0));
-  const shoe = mesh(new THREE.SphereGeometry(.13, 20, 14), M.shoe, 0, -.68, .05); shoe.scale.set(1, .7, 1.45); h.add(shoe);
-  const sole = mesh(new THREE.CylinderGeometry(.12, .12, .04, 24), M.sole, 0, -.735, .05); sole.scale.set(1, 1, 1.5); h.add(sole);
-  return h; });
-// arms (shoulder joints) with short sleeves, an elbow joint, and a round hand
-const arms = [-1, 1].map(s => { const sh = joint(chest, .33 * s, .36, 0);
-  sh.add(mesh(new THREE.SphereGeometry(.14, 20, 14), M.shirt, 0, -.04, 0));
-  sh.add(mesh(capsule(.075, .16), M.skin, 0, -.17, 0));
-  const el = joint(sh, 0, -.27, 0);
-  el.add(mesh(capsule(.07, .16), M.skin, 0, -.1, 0));
-  el.add(mesh(new THREE.SphereGeometry(.09, 18, 14), M.skin, 0, -.24, 0));
-  sh.rotation.z = .12 * s; // arms hang a little away from the body
-  return { sh, el, s }; });
-// neck and head
-const neck = joint(chest, 0, .5, 0);
-neck.add(mesh(capsule(.08, .06), M.skin, 0, .02, 0));
-const head = joint(neck, 0, .45, 0);
-const skull = mesh(new THREE.SphereGeometry(.44, 40, 30), M.skin); skull.scale.set(1, .97, .94); head.add(skull);
-[-1, 1].map(s => { const ear = mesh(new THREE.SphereGeometry(.08, 16, 12), M.skin, .43 * s, -.02, 0); ear.scale.set(.6, 1, .8); head.add(ear); });
-// hair: a cap over the back and top, and a fringe
-const cap = mesh(new THREE.SphereGeometry(.47, 40, 30, 0, Math.PI * 2, 0, Math.PI * .56), M.hair, 0, .02, -.02); cap.scale.set(1, 1, .98); cap.rotation.x = -.35; head.add(cap);
-// (a sphere patch centred on the front, +z: phi around π/2)
-const fringe = mesh(new THREE.SphereGeometry(.455, 40, 20, Math.PI * .12, Math.PI * .76, Math.PI * .08, Math.PI * .24), M.hair, 0, .03, 0); head.add(fringe);
-// the face: painted on a canvas, laid on a patch of the head's front
-function faceTexture() {
-  const c = document.createElement('canvas'); c.width = 512; c.height = 512; const g = c.getContext('2d');
-  g.translate(256, 300); g.scale(1.35, 1.35); g.translate(-256, -280); // (the features drawn a bit bigger, round the middle)
-  const eye = (x) => { g.fillStyle = '#FFFFFF'; g.beginPath(); g.ellipse(x, 270, 46, 54, 0, 0, Math.PI * 2); g.fill();
-    g.fillStyle = '#7A4A1E'; g.beginPath(); g.arc(x, 280, 34, 0, Math.PI * 2); g.fill();
-    g.fillStyle = '#1E120A'; g.beginPath(); g.arc(x, 282, 18, 0, Math.PI * 2); g.fill();
-    g.fillStyle = '#FFFFFF'; g.beginPath(); g.arc(x - 12, 266, 10, 0, Math.PI * 2); g.fill(); g.beginPath(); g.arc(x + 12, 296, 5, 0, Math.PI * 2); g.fill();
-    g.strokeStyle = '#2B1A10'; g.lineWidth = 7; g.lineCap = 'round'; g.beginPath(); g.ellipse(x, 270, 46, 54, 0, Math.PI * 1.1, Math.PI * 1.9); g.stroke(); };
-  eye(176); eye(336);
-  g.strokeStyle = '#4A2C1D'; g.lineWidth = 12; g.lineCap = 'round';
-  for (const x of [176, 336]) { g.beginPath(); g.moveTo(x - 40, 192); g.quadraticCurveTo(x, 172, x + 40, 190); g.stroke(); }
-  g.fillStyle = 'rgba(255,120,120,.28)'; for (const x of [130, 382]) { g.beginPath(); g.ellipse(x, 350, 38, 22, 0, 0, Math.PI * 2); g.fill(); }
-  g.strokeStyle = 'rgba(120,60,30,.55)'; g.lineWidth = 6; g.beginPath(); g.arc(256, 330, 10, Math.PI * .15, Math.PI * .85); g.stroke();
-  g.strokeStyle = '#8A3A2A'; g.lineWidth = 9; g.beginPath(); g.arc(256, 355, 42, Math.PI * .2, Math.PI * .8); g.stroke();
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t; }
-const face = new THREE.Mesh(new THREE.SphereGeometry(.443, 40, 30, Math.PI * .29, Math.PI * .42, Math.PI * .3, Math.PI * .42),
-  new THREE.MeshStandardMaterial({ map: faceTexture(), transparent: true, roughness: .6 }));
-face.scale.set(1, .97, .94); head.add(face);
-fig.traverse(o => { if (o.isMesh) o.castShadow = true; });
-
-// ---- colours: the try-out figure's materials, and the AI figure's painted texture (recolour, below) ----
+// ---- colours: the figure's painted texture, recoloured (below) ----
 // (the app's own colours: skin, hair, and its clothes colours)
 const CLOTH = ['#E8384F', '#FF7A2F', '#FFC233', '#2FB872', '#13BFA6', '#3D8BFF', '#46699E', '#7A4DFF', '#FF6FB1', '#F4F1EA', '#3A3550'];
-const CHOICES = [['skin', 'Hud', M.skin, ['#F6D0AE', '#EDB98A', '#D9965F', '#B5713F', '#8D5530', '#5A3520']],
-  ['hair', 'Hår', M.hair, ['#2A1C17', '#4A2C1D', '#7A4428', '#A8582E', '#D9A55C', '#F0D9A0', '#FF7EBB', '#5AA9FF']],
-  ['shirt', 'Trøje', M.shirt, CLOTH], ['pants', 'Bukser', M.pants, CLOTH]];
+const CHOICES = [['skin', 'Hud', ['#F6D0AE', '#EDB98A', '#D9965F', '#B5713F', '#8D5530', '#5A3520']],
+  ['hair', 'Hår', ['#2A1C17', '#4A2C1D', '#7A4428', '#A8582E', '#D9A55C', '#F0D9A0', '#FF7EBB', '#5AA9FF']],
+  ['shirt', 'Trøje', CLOTH], ['pants', 'Bukser', CLOTH]];
 const picked = {}, START = { skin: '#EDB98A', hair: '#4A2C1D', shirt: '#FF7A2F', pants: '#2C3E8C' }; let partNow = 'shirt', allOpen = false;
-const apply = (part, c) => { picked[part] = c; CHOICES.find(x => x[0] === part)[2].color.set(c); recolour(part, c); };
-function showSwatches() { const [part, , , list] = CHOICES.find(c => c[0] === partNow), box = document.getElementById('swatches'); box.innerHTML = '';
+const apply = (part, c) => { picked[part] = c; recolour(part, c); };
+function showSwatches() { const [part, , list] = CHOICES.find(c => c[0] === partNow), box = document.getElementById('swatches'); box.innerHTML = '';
   for (const c of list) { const b = document.createElement('button'); b.style.background = c; b.setAttribute('aria-label', c); b.classList.toggle('on', !allOpen && picked[part] === c);
     b.onclick = () => { allOpen = false; apply(part, c); showSwatches(); }; box.append(b); }
   const all = document.createElement('button'); all.className = 'all'; all.setAttribute('aria-label', 'Alle farver'); all.classList.toggle('on', allOpen);
@@ -269,122 +205,19 @@ function recolour(part, hexColour) {
     o[i] = Math.min(255, c.r * 255 * k); o[i + 1] = Math.min(255, c.g * 255 * k); o[i + 2] = Math.min(255, c.b * 255 * k); o[i + 3] = 255; }
   tex.ctx.putImageData(out, 0, 0); tex.texture.needsUpdate = true; }
 
-// ---- animations: each sets the joints for time t (seconds) ----
-let anim = 'staa', since = 0, spin = false;
-const ease = x => x * x * (3 - 2 * x);
-const ANIMS = {
-  staa: t => { const b = Math.sin(t * 2.2) * .012; hips.position.y = .78 + b; head.rotation.z = Math.sin(t * 1.1) * .04;
-    arms.forEach(a => { a.sh.rotation.set(0, 0, .12 * a.s + Math.sin(t * 2.2) * .02 * a.s); a.el.rotation.set(0, 0, 0); }); },
-  vink: t => { ANIMS.staa(t); const a = arms[1], up = ease(Math.min(1, t * 3));
-    a.sh.rotation.z = .12 + up * 2.3; a.el.rotation.z = up * (-.25 + Math.sin(t * 9) * .45); /* (the forearm waves outwards, not over the head) */ head.rotation.z = -.08 * up; },
-  hop: t => { const p = (t * 1.4) % 1, h = Math.sin(p * Math.PI); hips.position.y = .78 + h * .45;
-    const squash = p < .12 || p > .88 ? .94 : 1.02; chest.scale.set(1 / squash, squash, 1);
-    arms.forEach(a => { a.sh.rotation.set(0, 0, (.12 + h * 2.2) * a.s); a.el.rotation.set(0, 0, 0); });
-    legs.forEach(l => l.rotation.x = -h * .3); },
-  dans: t => { const w = Math.sin(t * 5); hips.position.y = .78 + Math.abs(Math.cos(t * 5)) * .06; hips.rotation.z = w * .12; chest.rotation.z = -w * .1;
-    head.rotation.z = w * .15; arms.forEach(a => { a.sh.rotation.set(0, 0, (1.2 + w * a.s * .6) * a.s); a.el.rotation.set(0, 0, (.6 + w * .3) * a.s); });
-    legs.forEach((l, i) => l.rotation.x = (i ? 1 : -1) * w * .25); }
-};
-// ---- a simple skeleton for the AI figure, made here: Meshy's figure comes without one. Its joints were measured on
-// the figure as it stands (A-pose, arms a little out, in the model's own units: 1.9 high, feet at -0.95), and each
-// point of it is tied to the bones near it by where it lies - the arms by being out beside the body, the legs by being
-// below the crotch - softly across each joint, so elbows, knees and shoulders bend smoothly ----
-const J = { hips: [0, -.2], chest: [0, .2], neck: [0, .53], shoulder: [.17, .399], elbow: [.255, .095], hip: [.105, -.305], knee: [.125, -.571], ankle: [.125, -.809] };
-const RIG = {}; // bones by name, made by rig()
-function rig(mesh) {
-  const g = mesh.geometry, pos = g.attributes.position, n = pos.count, top = .951, H = 1.903;
-  const sm = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
-  const names = ['hips', 'chest', 'neck', 'armL', 'foreL', 'armR', 'foreR', 'thighL', 'shinL', 'thighR', 'shinR', 'footL', 'footR'];
-  const idx = Object.fromEntries(names.map((nm, i) => [nm, i]));
-  const skinIndex = new Uint16Array(n * 4), skinWeight = new Float32Array(n * 4), armOf = new Int8Array(n); // (0 body, 1 arm, -1 not decided: above the armpit)
-  for (let v = 0; v < n; v++) { const x = pos.getX(v), y = pos.getY(v), t = (top - y) / H, s = x >= 0 ? 'L' : 'R', ax = Math.abs(x), w = {};
-    // arms: out beside the body (a gap from 0.40 down), the sleeves and shoulders blended in above it
-    // (the gap between arm and body, measured: 0.175 out by the chest, widening to 0.225 by the hands, where the shorts
-    // are wide - and the hands end above the shorts' hem)
-    const gap = t <= .44 ? .175 : t >= .54 ? .225 : .175 + (t - .44) * .5;
-    // (above the armpit arm and body are one: there the arm is what lies out beyond a slanting line from the armpit,
-    // 0.155 out at 0.40 down, to the top of the shoulder, 0.2 out at 0.26 - the side of the body below it stays put)
-    const edge = .155 + (.40 - t) * .32;
-    // (the side of the body just inside that line, and just below the armpit, follows a little: the skin there
-    // stretches over a wider band, not into one sharp dark wedge)
-    let a = 0; if (t > .25 && t < .64) a = t >= .40 ? (ax > gap ? 1 : .35 * sm(gap - .05, gap, ax) * sm(.48, .40, t))
-      : (.35 * sm(edge - .06, edge - .008, ax) + .65 * sm(edge - .008, edge + .02, ax)) * sm(.25, .29, t);
-    armOf[v] = t >= .40 ? (a > .5 ? 1 : 0) : -1;
-    // legs: below the crotch, the top of the shorts blended in
-    const l = a ? 0 : sm(.62, .7, t);
-    // (the elbow blended over a long stretch of the arm, so it bends in a curve, not a kink)
-    if (a) { const f = sm(J.elbow[1] + .085, J.elbow[1] - .085, y); w['arm' + s] = a * (1 - f); w['fore' + s] = a * f; }
-    if (l) { const k = sm(J.knee[1] + .045, J.knee[1] - .045, y), ft = sm(.895, .92, t); w['thigh' + s] = l * (1 - k); w['shin' + s] = l * k * (1 - ft); w['foot' + s] = l * k * ft; }
-    const r = 1 - a - l; if (r > 0) { const nk = sm(.245, .2, t), ch = sm(.62, .5, t) * (1 - nk); w.neck = r * nk; w.chest = r * ch; w.hips = r * (1 - nk - ch); }
-    const list = Object.entries(w).filter(e => e[1] > 1e-4).sort((p, q) => q[1] - p[1]).slice(0, 4), sum = list.reduce((s2, e) => s2 + e[1], 0);
-    list.forEach(([nm, wt], k) => { skinIndex[v * 4 + k] = idx[nm]; skinWeight[v * 4 + k] = wt / sum; }); }
-  // (below the armpit arm and body are apart: a triangle joining the two is a thin web in the model, hidden while the arm
-  // hangs, stretched across the air when it moves - those are left out)
-  if (g.index) { const ix = g.index.array, keep = []; let dropped = 0;
-    for (let f = 0; f < ix.length; f += 3) { const p = armOf[ix[f]], q = armOf[ix[f + 1]], r2 = armOf[ix[f + 2]];
-      if (p >= 0 && q >= 0 && r2 >= 0 && (p !== q || q !== r2)) { dropped++; continue; } keep.push(ix[f], ix[f + 1], ix[f + 2]); }
-    if (dropped) g.setIndex(new THREE.BufferAttribute(n > 65535 ? new Uint32Array(keep) : new Uint16Array(keep), 1)); }
-  g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(skinIndex, 4)); g.setAttribute('skinWeight', new THREE.Float32BufferAttribute(skinWeight, 4));
-  // the bones, each placed at its joint (positions relative to its parent)
-  const at = {}, parent = { hips: null, chest: 'hips', neck: 'chest', armL: 'chest', foreL: 'armL', armR: 'chest', foreR: 'armR', thighL: 'hips', shinL: 'thighL', footL: 'shinL', thighR: 'hips', shinR: 'thighR', footR: 'shinR' };
-  for (const sd of [['L', 1], ['R', -1]]) { const [S, k] = sd;
-    at['arm' + S] = [J.shoulder[0] * k, J.shoulder[1]]; at['fore' + S] = [J.elbow[0] * k, J.elbow[1]];
-    at['thigh' + S] = [J.hip[0] * k, J.hip[1]]; at['shin' + S] = [J.knee[0] * k, J.knee[1]]; at['foot' + S] = [J.ankle[0] * k, J.ankle[1]]; }
-  at.hips = J.hips; at.chest = J.chest; at.neck = J.neck;
-  const bones = names.map(nm => { const b = new THREE.Bone(); b.name = nm; RIG[nm] = b; return b; });
-  names.forEach(nm => { const p = parent[nm], b = RIG[nm]; b.position.set(at[nm][0] - (p ? at[p][0] : 0), at[nm][1] - (p ? at[p][1] : 0), 0); if (p) RIG[p].add(b); });
-  const skinned = new THREE.SkinnedMesh(g, mesh.material); skinned.castShadow = true;
-  skinned.position.copy(mesh.position); skinned.quaternion.copy(mesh.quaternion); skinned.scale.copy(mesh.scale);
-  skinned.add(RIG.hips); skinned.bind(new THREE.Skeleton(bones));
-  mesh.parent.add(skinned); mesh.parent.remove(mesh); return skinned; }
-// bending the legs by angle a (knees forward, shins back, feet kept flat), the hips lowered by as much, so the feet
-// stay on the ground; and the arms out to the side by angle b (each side's own way)
-const THIGH = J.hip[1] - J.knee[1], SHIN = J.knee[1] - J.ankle[1];
-// (twistL/R: the forearm turned about its own length - the palm, facing the thigh as it stands, turned to the front)
-function pose({ bend = 0, arms = 0, lean = 0, armL = null, foreL = 0, armR = null, foreR = 0, bendL = null, bendR = null, sway = 0, twistL = 0, twistR = 0 } = {}) {
-  if (!RIG.hips) return;
-  const legs = { L: bendL ?? bend, R: bendR ?? bend }; let drop = 0;
-  for (const S of ['L', 'R']) { const a = legs[S]; RIG['thigh' + S].rotation.x = -a; RIG['shin' + S].rotation.x = 2 * a; RIG['foot' + S].rotation.x = -a; drop = Math.max(drop, (THIGH + SHIN) * (1 - Math.cos(a))); }
-  RIG.hips.position.y = J.hips[1] - drop; RIG.hips.rotation.z = sway; RIG.chest.rotation.set(lean, 0, -sway * .6);
-  // (the forearm turned about its length first, then bent: Euler order ZYX)
-  RIG.armL.rotation.set(0, 0, armL ?? arms); RIG.foreL.rotation.order = 'ZYX'; RIG.foreL.rotation.set(0, twistL, foreL);
-  RIG.armR.rotation.set(0, 0, -(armR ?? arms)); RIG.foreR.rotation.order = 'ZYX'; RIG.foreR.rotation.set(0, -twistR, -foreR); }
-
-// the AI figure: the skeleton moves its limbs, its holder lifts it off the ground and turns it
-const holder = new THREE.Group(); scene.add(holder); let spinAngle = 0;
-const WHOLE = {
-  staa: t => { holder.position.y = 0; holder.rotation.set(0, 0, 0); pose({ arms: .03 + Math.sin(t * 2.2) * .02, lean: Math.sin(t * 2.2) * .01 }); },
-  // waving as a child does: the left arm (seen on the right) out to the side a little above level, the forearm bent up
-  // from the elbow and waving to and fro, the palm turned to the front (the arm not straight up: that stretched the
-  // armpit into a long strip)
-  vink: t => { holder.position.y = 0; holder.rotation.set(0, 0, 0); const up = Math.min(1, t * 3), u = up * up * (3 - 2 * up);
-    pose({ arms: .03, armL: .03 + u * 1.3, foreL: u * (1.45 + Math.sin(t * 9) * .35), twistL: u * Math.PI / 2, sway: -.04 * u }); },
-  // a hop: it bends its knees and leans in to take off, pushes off with the arms swinging out to the sides, tucks a
-  // little in the air with the arms half raised for balance, and lands bending its knees again before standing up
-  hop: t => { const p = (t * 1.05) % 1, sm = x => x * x * (3 - 2 * x), seg = (a, b) => sm(Math.min(1, Math.max(0, (p - a) / (b - a))));
-    let bend = 0, arms = .03, lean = 0, y = 0;
-    if (p < .24) { const d = seg(0, .24); bend = .62 * d; lean = .22 * d; arms = .03 + .25 * d; }                        // crouch
-    else if (p < .32) { const d = seg(.24, .32); bend = .62 * (1 - d); lean = .22 * (1 - d); arms = .28 + .85 * d; y = .1 * d; } // push off
-    else if (p < .74) { const d = (p - .32) / .42, h = Math.sin(d * Math.PI); y = .1 + .45 * h; bend = .22 * h; arms = 1.13 - .25 * h; } // in the air
-    else if (p < .84) { const d = seg(.74, .84); bend = .55 * d; lean = .15 * d; arms = .88 - .3 * d; }                  // land
-    else { const d = seg(.84, 1); bend = .55 * (1 - d); lean = .15 * (1 - d); arms = .58 - .55 * d; }                     // stand up
-    holder.position.y = y; holder.rotation.set(0, 0, 0); pose({ bend, arms, lean }); },
-  // dancing: bouncing on alternate knees, swaying the hips, the arms up and down in turn, turning a little to and fro
-  dans: t => { const w = Math.sin(t * 5), c = Math.cos(t * 5);
-    holder.position.y = 0; holder.rotation.set(0, Math.sin(t * 2.5) * .45, 0);
-    pose({ bendL: .18 + .16 * Math.max(0, w), bendR: .18 + .16 * Math.max(0, -w), sway: w * .1, armL: 1.0 + w * .55, armR: 1.0 - w * .55, foreL: .5 + c * .3, foreR: .5 - c * .3 }); }
-};
-function reset() { hips.position.y = .78; hips.rotation.set(0, 0, 0); chest.rotation.set(0, 0, 0); chest.scale.set(1, 1, 1); head.rotation.set(0, 0, 0); legs.forEach(l => l.rotation.set(0, 0, 0)); }
-document.querySelectorAll('[data-anim]').forEach(b => b.onclick = () => { anim = b.dataset.anim; since = clock.getElapsedTime(); reset();
+let anim = 'staa', spin = false;
+// the figure stands in a holder, which "Drej rundt" turns (hidden until the figure, its hair and its movements are all
+// in: no bald T-pose for a moment)
+const holder = new THREE.Group(); holder.visible = false; scene.add(holder); let spinAngle = 0;
+document.querySelectorAll('[data-anim]').forEach(b => b.onclick = () => { anim = b.dataset.anim;
   if (glb && glbActions[anim]) { Object.values(glbActions).forEach(x => x.fadeOut(.3)); glbActions[anim].reset().fadeIn(.3).play(); }
   document.querySelectorAll('[data-anim]').forEach(x => x.classList.toggle('on', x === b)); });
 document.getElementById('spin').onclick = e => { spin = !spin; e.target.classList.toggle('on', spin); };
 
-// ---- an AI-made figure, if there is one (figur.glb next to this page): shown instead of the try-out figure ----
+// ---- the figure ----
 let glb = null, mixer = null; const glbActions = {};
-// (or figur.json with figur-tex*.jpg: the same figure repacked by glb-til-json.ps1, where .glb files are not served)
 const exists = async u => { try { return (await fetch(u, { method: 'HEAD' })).ok; } catch (e) { return false; } };
-// a figure with a skeleton made in Mixamo, if there is one: figur.fbx (the figure, its skeleton and its first movement,
+// a figure with a skeleton made in Mixamo: figur.fbx (the figure, its skeleton and its first movement,
 // the waving) and figur-staa/hop/dans.fbx (more movements for the same skeleton). Mixamo leaves the figure grey: its
 // colours come from figur-farve.jpg, Meshy's painted texture. Buttons without a movement are hidden.
 // the hairstyles: <name>.json (the hair cut out of a Meshy head by haar-ud.ps1, with that head's eye whites) and
@@ -438,7 +271,7 @@ async function loadFbx() { if (!(await exists('figur.fbx' + FIGUR_V))) return fa
   fbx.traverse(o => { if (!o.isMesh) return; o.castShadow = true; o.material = new THREE.MeshStandardMaterial({ map: coloured, roughness: .75, metalness: 0 }); });
   whitesByPlace(fbx);
   const box = new THREE.Box3().setFromObject(fbx), size = box.getSize(new THREE.Vector3()), k = 2.15 / size.y;
-  fbx.scale.setScalar(k); fbx.position.y = -box.min.y * k; holder.add(fbx); glb = fbx; fig.visible = false;
+  fbx.scale.setScalar(k); fbx.position.y = -box.min.y * k; holder.add(fbx); glb = fbx;
   measureHead(fbx); await setHair(hairNow);
   mixer = new THREE.AnimationMixer(fbx); if (fbx.animations[0]) glbActions.vink = mixer.clipAction(fbx.animations[0]);
   // (each movement preferably as figur-<name>.json: only the movement, taken out of Mixamo's file - a few hundred KB
@@ -452,34 +285,10 @@ async function loadFbx() { if (!(await exists('figur.fbx' + FIGUR_V))) return fa
   // (no standing movement yet: it stands as in the first frame of the waving, not in the T-pose it was made in)
   if (!glbActions.staa && glbActions.vink) { const still = glbActions.vink.getClip().clone(); still.tracks.forEach(t => { t.times = t.times.slice(0, 1); t.values = t.values.slice(0, t.getValueSize()); }); still.duration = 0; glbActions.staa = mixer.clipAction(still); }
   for (const b of document.querySelectorAll('[data-anim]')) b.hidden = !glbActions[b.dataset.anim];
-  const btn = document.getElementById('which'); btn.style.display = 'block'; btn.textContent = 'Vis prøvefigur';
-  btn.onclick = () => { holder.visible = !holder.visible; fig.visible = !holder.visible; btn.textContent = holder.visible ? 'Vis prøvefigur' : 'Vis AI-figur';
-    for (const b of document.querySelectorAll('[data-anim]')) b.hidden = holder.visible && !glbActions[b.dataset.anim]; };
   (glbActions[anim] || glbActions.staa)?.play();
   // (set on the floor as it stands in its movement - Mixamo moves the hips in its own units, the T-pose's box says little)
-  mixer.update(0); fbx.updateMatrixWorld(true); const now = new THREE.Box3().setFromObject(fbx, true); fbx.position.y -= now.min.y; return true; }
-(async () => { if (await loadFbx()) return;
-  let url = null; for (const u of ['figur.glb', 'figur.json']) { try { if ((await fetch(u, { method: 'HEAD' })).ok) { url = u; break; } } catch (e) {} }
-  if (url) new GLTFLoader().load(url, g => { glb = g.scene;
-    const box = new THREE.Box3().setFromObject(glb), size = box.getSize(new THREE.Vector3()), k = 2.15 / size.y;
-    glb.scale.setScalar(k); glb.position.y = -box.min.y * k; fig.visible = false; /* (the AI figure is shown first, when there is one) */
-    // (Meshy marks the surface partly metallic - skin and cloth are not, and metal made darker colours near black)
-    const meshes = []; glb.traverse(o => { if (o.isMesh) meshes.push(o); });
-    for (const o of meshes) { if (o.material.map && !tex) o.material.map = setupTexture(o.material.map);
-      o.material.metalness = 0; o.material.metalnessMap = null; o.material.needsUpdate = true;
-      if (!g.animations.length && o === meshes[0]) rig(o); else o.castShadow = true; } // (its own skeleton, if it ever has one, instead)
-    holder.add(glb);
-    mixer = new THREE.AnimationMixer(glb); g.animations.forEach((c, i) => { glbActions[['staa', 'vink', 'hop', 'dans'][i] || c.name] = mixer.clipAction(c); }); glbActions.staa?.play();
-    // (a 3D service often gives each movement as a file of its own, the same figure and skeleton: figur-staa.glb,
-    // figur-vink.glb, figur-hop.glb, figur-dans.glb - their movements are put on this figure)
-    for (const name of ['staa', 'vink', 'hop', 'dans']) fetch(`figur-${name}.glb`, { method: 'HEAD' }).then(r => { if (!r.ok) return;
-      new GLTFLoader().load(`figur-${name}.glb`, a => { if (!a.animations[0]) return; glbActions[name] = mixer.clipAction(a.animations[0]);
-        if (name === anim) glbActions[name].play(); }); });
-    // (Vink needs a skeleton: hidden on the AI figure if it has none)
-    const btn = document.getElementById('which'), wave = document.querySelector('[data-anim="vink"]');
-    const show = ai => { holder.visible = ai; fig.visible = !ai; btn.textContent = ai ? 'Vis prøvefigur' : 'Vis AI-figur';
-      wave.hidden = ai && !glbActions.vink && !RIG.hips; if (wave.hidden && anim === 'vink') document.querySelector('[data-anim="staa"]').click(); };
-    btn.style.display = 'block'; show(true); btn.onclick = () => show(!holder.visible); }); })();
+  mixer.update(0); fbx.updateMatrixWorld(true); const now = new THREE.Box3().setFromObject(fbx, true); fbx.position.y -= now.min.y; holder.visible = true; return true; }
+loadFbx().then(ok => { document.getElementById('tag').textContent = ok ? '3D-forsøg · træk for at dreje, knib for at zoome' : 'Figuren kunne ikke hentes'; });
 
 // ---- render loop ----
 const clock = new THREE.Clock();
@@ -488,8 +297,7 @@ function resize() { const w = innerWidth, h = innerHeight, bar = document.queryS
   camera.position.z = w < h ? 8 : 7; camera.setViewOffset(w, h, 0, bar * .4, w, h); /* (room above for the head in a hop) */ camera.updateProjectionMatrix(); }
 addEventListener('resize', resize); resize(); new ResizeObserver(resize).observe(document.querySelector('.bar'));
 renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElapsedTime();
-  ANIMS[anim](t - since); if (spin) { fig.rotation.y += dt * 1.2; spinAngle += dt * 1.2; }
-  if (glb && !glbActions[anim]) WHOLE[anim](t - since); glb && (glb.rotation.y = spinAngle); // (its own movement, when it has one, instead)
+  if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); controls.update(); renderer.render(scene, camera); });
 </script>
 </body>
