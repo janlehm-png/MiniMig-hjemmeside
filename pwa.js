@@ -5,7 +5,6 @@ const panel = document.createElement('aside');
 panel.className = 'pwa-tools';
 panel.setAttribute('aria-label', 'Installation og offline');
 panel.innerHTML = `<button type="button" class="pwa-help">Til voksne</button>
-<button type="button" class="pwa-update" hidden>Hent ny version</button>
 <dialog class="pwa-dialog" aria-labelledby="pwa-title">
 <h2 id="pwa-title" tabindex="-1" autofocus>Til voksne</h2>
 <p>Uden konto og uden reklamer.</p>
@@ -44,12 +43,13 @@ panel.innerHTML = `<button type="button" class="pwa-help">Til voksne</button>
 <form method="dialog"><button>Luk</button></form></dialog>`;
 document.body.append(panel);
 const dialog = panel.querySelector('dialog'), status = panel.querySelector('.pwa-status');
-const install = panel.querySelector('.pwa-install'), update = panel.querySelector('.pwa-update');
+const install = panel.querySelector('.pwa-install');
 panel.querySelector('.pwa-privacy').href = new URL('privatliv/', root);
 panel.querySelector('.pwa-support').href = new URL('support/', root);
 panel.querySelector('.pwa-help').onclick = () => dialog.showModal();
 const standalone = matchMedia('(display-mode: standalone)');
-let prompt, registration, reloading = false;
+let prompt, registration, reloading = false, touched = false;
+['pointerdown', 'keydown'].forEach(type => addEventListener(type, () => { touched = true; }, {capture:true, once:true}));
 function installUI() {
  const installed = standalone.matches || navigator.standalone === true;
  install.hidden = !prompt || installed;
@@ -66,10 +66,18 @@ navigator.serviceWorker.addEventListener('message', event => {
  if(event.data?.type === 'OFFLINE_STATUS') status.textContent = event.data.ready ? 'Spillet kan nu bruges uden internet.' : 'Spillet er ikke klar til brug uden internet. Kontrollér internetforbindelsen, og åbn MiniMig igen.';
 });
 navigator.serviceWorker.addEventListener('controllerchange', () => { if(reloading) location.reload(); else checkReady(); });
-update.onclick = () => { if(registration?.waiting) { reloading = true; registration.waiting.postMessage({type:'SKIP_WAITING'}); } };
+// A new version is fetched quietly in the background and then put in by itself, never in the middle of play: at once
+// if MiniMig has only just been opened and nobody has touched it yet, otherwise when it is put away (the app closed,
+// another app opened, the screen locked). The figure is kept in local storage, so the reload loses nothing.
+function applyUpdate() {
+ if(!registration?.waiting || reloading) return;
+ if(document.hidden || (!touched && performance.now() < 15000)) { reloading = true; registration.waiting.postMessage({type:'SKIP_WAITING'}); }
+}
+// (an installed app is rarely opened afresh - it just comes back from the background - so it looks for a new version then)
+document.addEventListener('visibilitychange', () => { if(document.hidden) applyUpdate(); else registration?.update().catch(() => {}); });
 navigator.serviceWorker.register(new URL('service-worker.js', root), {scope:root.pathname, updateViaCache:'none'}).then(reg => {
  registration = reg;
- const waiting = () => { update.hidden = !reg.waiting; };
+ const waiting = applyUpdate;
  waiting(); checkReady();
  reg.addEventListener('updatefound', () => {
   const worker = reg.installing;

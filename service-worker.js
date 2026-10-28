@@ -32,7 +32,7 @@ self.addEventListener('fetch', event => {
  if(!KNOWN.has(url.href)) return;
  // The website's own pages (front page, Til forældre, Support, Privatliv) are fetched fresh whenever there is a
  // connection, so new texts show at once; the saved copy is only for when there is none. The game itself keeps
- // its saved release until "Hent ny version" is pressed.
+ // its saved release until pwa.js puts the new one in (when MiniMig is opened or put away, never during play).
  if(event.request.mode === 'navigate' && !url.pathname.includes('/proev/')) {
   event.respondWith((async () => {
    const cache = await caches.open(CACHE);

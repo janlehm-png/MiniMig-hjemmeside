@@ -61,9 +61,11 @@ const server=http.createServer((req,res)=>{
  assert(await page.evaluate(()=>JSON.parse(localStorage.minimig2).bg)==='rummet');
  await context.setOffline(false);
  version2=true;
+ // (the page has been played with, so the new version waits until it is put away - a hidden page)
  await page.evaluate(async()=>{await (await navigator.serviceWorker.getRegistration()).update()});
- await page.locator('.pwa-update:not([hidden])').waitFor({timeout:60000});
- await page.locator('.pwa-update').click();
+ await page.waitForFunction(async()=>!!(await navigator.serviceWorker.getRegistration()).waiting,{},{timeout:60000});
+ await page.evaluate(()=>{Object.defineProperty(document,'hidden',{value:true,configurable:true});document.dispatchEvent(new Event('visibilitychange'));});
+ await page.waitForLoadState('load');
  await page.waitForFunction(()=>navigator.serviceWorker.controller && document.querySelector('.pwa-status')?.textContent==='Spillet kan nu bruges uden internet.');
  await page.waitForFunction(async()=> (await caches.keys()).some(k=>k.endsWith('test-update')));
  assert(await page.evaluate(()=>JSON.parse(localStorage.minimig2).bg)==='rummet');

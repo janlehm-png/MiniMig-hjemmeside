@@ -15,8 +15,10 @@ Ingen eksterne biblioteker, skrifttyper eller analysetjenester er tilføjet.
 Service workeren gemmer alle 166 spil- og hjemmesidefiler før installationen
 betragtes som færdig. Status kontrollerer, at alle filer findes i cachen.
 Spillets billedversioner og genforsøgsparametre bruger samme versionsbestemte cache.
-En opdatering venter, til brugeren trykker Hent ny version eller alle gamle faner
-lukkes. Lokal figurdata slettes ikke ved en opdatering.
+En opdatering hentes i baggrunden og tages i brug af sig selv (pwa.js): med det samme,
+hvis spillet lige er åbnet og ingen har rørt det endnu, ellers når siden skjules
+(appen lukkes, en anden app åbnes, skærmen låses). Når appen kommer tilbage fra
+baggrunden, kigges der efter en ny version. Lokal figurdata slettes ikke ved en opdatering.
 Cache-navne er afgrænset til denne apps adresse. Browseren kan rydde lagring;
 offline er derfor ikke en garanti for permanent opbevaring.
 
@@ -29,7 +31,7 @@ manifest, mobiljusteringer og PWA-betjening. Bygningen er idempotent.
 - Installer på en fysisk iPhone/iPad via Safari og en Android via Chrome.
 - Kontroller hjemmeskærmsikon, tastatur ved navn, rotation og tilbagevenden.
 - Ryd webstedsdata og kontroller, at første besøg uden net ikke loves at virke.
-- Udgiv en opdatering, kontrollér knappen og at figuren bevares.
+- Udgiv en opdatering, kontrollér at den slår igennem af sig selv, og at figuren bevares.
 
 ## Kilder til installationsvejledningen
 - Apple: https://support.apple.com/guide/iphone/open-as-web-app-iphea86e5236/ios
