@@ -364,9 +364,12 @@ const exists = async u => { try { return (await fetch(u, { method: 'HEAD' })).ok
 // a figure with a skeleton made in Mixamo, if there is one: figur.fbx (the figure, its skeleton and its first movement,
 // the waving) and figur-staa/hop/dans.fbx (more movements for the same skeleton). Mixamo leaves the figure grey: its
 // colours come from figur-farve.jpg, Meshy's painted texture. Buttons without a movement are hidden.
-async function loadFbx() { if (!(await exists('figur.fbx'))) return false;
-  const loader = new FBXLoader(), load = u => new Promise((ok, bad) => loader.load(u, ok, undefined, bad));
-  const fbx = await load('figur.fbx'), map = await new Promise(ok => new THREE.TextureLoader().load('figur-farve.jpg', ok));
+// (FIGUR_V goes up with each new figure: a browser that remembers the last figure's files fetches them again - an iPad
+// once put the old figure's colour picture on the new figure)
+const FIGUR_V = '?v=2';
+async function loadFbx() { if (!(await exists('figur.fbx' + FIGUR_V))) return false;
+  const loader = new FBXLoader(), load = u => new Promise((ok, bad) => loader.load(u + FIGUR_V, ok, undefined, bad));
+  const fbx = await load('figur.fbx'), map = await new Promise(ok => new THREE.TextureLoader().load('figur-farve.jpg' + FIGUR_V, ok));
   map.colorSpace = THREE.SRGBColorSpace; const coloured = setupTexture(map);
   fbx.traverse(o => { if (!o.isMesh) return; o.castShadow = true; o.material = new THREE.MeshStandardMaterial({ map: coloured, roughness: .75, metalness: 0 }); });
   whitesByPlace(fbx);
@@ -379,8 +382,8 @@ async function loadFbx() { if (!(await exists('figur.fbx'))) return false;
   const onTheSpot = clip => { const t = clip.tracks.find(tr => tr.name === 'mixamorigHips.position'); if (!t) return clip;
     for (let i = 0; i < t.values.length; i += 3) { t.values[i] = t.values[0]; t.values[i + 2] = t.values[2]; } return clip; };
   for (const name of ['vink', 'staa', 'hop', 'dans']) {
-    if (await exists(`figur-${name}.json`)) glbActions[name] = mixer.clipAction(onTheSpot(THREE.AnimationClip.parse(await (await fetch(`figur-${name}.json`)).json())));
-    else if (name !== 'vink' && await exists(`figur-${name}.fbx`)) { const a = await load(`figur-${name}.fbx`); if (a.animations[0]) glbActions[name] = mixer.clipAction(a.animations[0]); } }
+    if (await exists(`figur-${name}.json${FIGUR_V}`)) glbActions[name] = mixer.clipAction(onTheSpot(THREE.AnimationClip.parse(await (await fetch(`figur-${name}.json${FIGUR_V}`)).json())));
+    else if (name !== 'vink' && await exists(`figur-${name}.fbx${FIGUR_V}`)) { const a = await load(`figur-${name}.fbx`); if (a.animations[0]) glbActions[name] = mixer.clipAction(a.animations[0]); } }
   // (no standing movement yet: it stands as in the first frame of the waving, not in the T-pose it was made in)
   if (!glbActions.staa && glbActions.vink) { const still = glbActions.vink.getClip().clone(); still.tracks.forEach(t => { t.times = t.times.slice(0, 1); t.values = t.values.slice(0, t.getValueSize()); }); still.duration = 0; glbActions.staa = mixer.clipAction(still); }
   for (const b of document.querySelectorAll('[data-anim]')) b.hidden = !glbActions[b.dataset.anim];
