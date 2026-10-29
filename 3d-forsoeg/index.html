@@ -263,7 +263,7 @@ const LIFT = .5; // (how far long hair below the chin is lifted, in eyes' distan
 // each braid (the hair below the ears, on each side) turned in place: about its start under the ear, from where it hangs
 // now to a line down to the front of the chest, a little in from the shoulder and resting just off it. The turn fades in
 // over the first bit below the start, so the braid leaves the head smoothly. (W, the hair's points, are changed in place)
-function braidsForward(W, n, apart, eyeY) {
+function braidsForward(W, n, apart, eyeY, eyeZ) {
   const rootY = eyeY - .9 * apart, fade = .35 * apart, part = new Float32Array(n), turns = [new THREE.Quaternion(), new THREE.Quaternion()];
   const front = (x, y) => { let z = -Infinity; for (const list of hairBase.surface.grid.values()) for (let j = 0; j < list.length; j += 6)
     if (Math.abs(list[j] - x) < .25 * apart && Math.abs(list[j + 1] - y) < .25 * apart) z = Math.max(z, list[j + 2]); return z; };
@@ -277,20 +277,24 @@ function braidsForward(W, n, apart, eyeY) {
     const lowY = ys[Math.floor(ys.length * .03)], end = new THREE.Vector3(); let en = 0;
     for (let i = 0; i < n; i++) if (side(i) && W[i * 3 + 1] <= lowY) { end.x += W[i * 3]; end.y += W[i * 3 + 1]; end.z += W[i * 3 + 2]; en++; }
     end.divideScalar(en); const len = end.distanceTo(root);
-    // (aimed at the middle of the chest, and stretched along its length to get there if it is too short)
-    const to = new THREE.Vector3(root.x * .8, eyeY - 2.6 * apart, 0), chest = front(to.x, to.y); if (!isFinite(chest)) continue;
+    // (where it starts on the figure: right under the ear - the head it was made on had it further back, at the nape -
+    // so it can fall steeply to the chest)
+    const start = new THREE.Vector3(root.x, rootY - .1 * apart, Math.max(root.z, eyeZ - .85 * apart));
+    // (aimed at the top of the chest, on its front a little in from the shoulder, and made just long enough to get there
+    // - pressed together along its length, so the hair tie stays at its end)
+    const to = new THREE.Vector3(root.x * .65, eyeY - 2.0 * apart, 0), chest = front(to.x, to.y); if (!isFinite(chest)) continue;
     // (as close to the chest as it can rest while the whole straight braid - as thick as it is - stays clear of the
     // shoulder on the way down)
     const pt = new THREE.Vector3();
-    for (let off = .1; off <= 2.5; off += .05) { to.z = chest + off * apart; let clear = true;
-      for (let t = .1; t <= 1 && clear; t += .1) { pt.lerpVectors(root, to, t); if (inside(pt, .12 * apart)) clear = false; }
+    for (let off = .05; off <= 2.5; off += .05) { to.z = chest + off * apart; let clear = true;
+      for (let t = .1; t <= 1 && clear; t += .1) { pt.lerpVectors(start, to, t); if (inside(pt, .1 * apart)) clear = false; }
       if (clear) break; }
-    const axis = to.clone().sub(root), stretch = Math.min(1.8, Math.max(1, axis.length() / len)); axis.normalize();
+    const axis = to.clone().sub(start), stretch = Math.min(1.8, Math.max(.4, axis.length() / len)); axis.normalize();
     turns[s].setFromUnitVectors(end.clone().sub(root).normalize(), axis);
     const q = new THREE.Vector3();
     for (let i = 0; i < n; i++) { if (!side(i)) continue; const y = W[i * 3 + 1]; if (y >= rootY) continue;
       const k = Math.min(1, (rootY - y) / fade), f = k * k * (3 - 2 * k); part[i] = f;
-      q.fromArray(W, i * 3).sub(root).applyQuaternion(turns[s]); q.addScaledVector(axis, q.dot(axis) * (stretch - 1)).add(root); W[i * 3] += (q.x - W[i * 3]) * f; W[i * 3 + 1] += (q.y - W[i * 3 + 1]) * f; W[i * 3 + 2] += (q.z - W[i * 3 + 2]) * f; } }
+      q.fromArray(W, i * 3).sub(root).applyQuaternion(turns[s]); q.addScaledVector(axis, q.dot(axis) * (stretch - 1)).add(start); W[i * 3] += (q.x - W[i * 3]) * f; W[i * 3 + 1] += (q.y - W[i * 3 + 1]) * f; W[i * 3 + 2] += (q.z - W[i * 3 + 2]) * f; } }
   return { part, turns }; }
 async function loadHair(name) {
   const opts = HAIRS.find(h => h[0] === name)?.[2] || {};
@@ -321,7 +325,7 @@ async function loadHair(name) {
     shift[s].set(0, LIFT * apart, Math.min(.3 * apart, needs[s][Math.floor(needs[s].length * .9)])); }
   // (braids: each is turned as one straight piece about where it starts, just under the ear, until it points down and
   // forward to rest on the front of the chest - a straight line, clear of the shoulder)
-  const bend = opts.braids ? braidsForward(W, n, apart, eyeY) : null;
+  const bend = opts.braids ? braidsForward(W, n, apart, eyeY, (mine[0].z + mine[1].z) / 2) : null;
   for (let i = 0; i < n; i++) { p.fromArray(W, i * 3); const w = weight[i];
     p.addScaledVector(shift[p.x < 0 ? 0 : 1], Math.min(1, 6 * (1 - w)));
     a.copy(p).applyMatrix4(hairBase.headBack); b.copy(p).applyMatrix4(hairBase.chestBack); a.lerp(b, 1 - w); pos.setXYZ(i, a.x, a.y, a.z);
