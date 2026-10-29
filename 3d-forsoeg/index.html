@@ -248,10 +248,14 @@ function measureHead(fbx) {
   // (the figure's surface from the chin to the chest, its points in a grid of little boxes: long hair is laid on it)
   const [L, R] = hairBase.eyes, apart = L.distanceTo(R), eyeY = (L.y + R.y) / 2, box = .4 * apart, grid = new Map();
   const turn = new THREE.Matrix3().getNormalMatrix(body.matrixWorld), q = new THREE.Vector3(), nn = new THREE.Vector3(), P = geo.attributes.position, N = geo.attributes.normal;
+  // (and, seen from the front, how far forward the figure comes at each spot - in squares a sixteenth of the eyes'
+  // distance wide: where a braid rests, the chest right behind it, not the rounder middle of the chest beside it)
+  const fine = .06 * apart, face = new Map();
   for (let i = 0; i < P.count; i++) { body.getVertexPosition(i, q).applyMatrix4(body.matrixWorld); if (q.y > eyeY - .5 * apart || q.y < eyeY - 5 * apart) continue;
     nn.fromBufferAttribute(N, i).applyMatrix3(turn).normalize(); const key = [q.x, q.y, q.z].map(c => Math.floor(c / box)).join();
-    if (!grid.has(key)) grid.set(key, []); grid.get(key).push(q.x, q.y, q.z, nn.x, nn.y, nn.z); }
-  hairBase.surface = { grid, box }; }
+    if (!grid.has(key)) grid.set(key, []); grid.get(key).push(q.x, q.y, q.z, nn.x, nn.y, nn.z);
+    const fk = `${Math.floor(q.x / fine)},${Math.floor(q.y / fine)}`; if (!(face.get(fk) >= q.z)) face.set(fk, q.z); }
+  hairBase.surface = { grid, box, face, fine }; }
 // how far a point lies inside the figure's surface (more than a small margin), and the way out: by the nearest point of it
 function inside(p, margin) { const { grid, box } = hairBase.surface, k = [p.x, p.y, p.z].map(c => Math.floor(c / box));
   let best = null, bestD = Infinity;
@@ -265,8 +269,12 @@ const LIFT = .5; // (how far long hair below the chin is lifted, in eyes' distan
 // over the first bit below the start, so the braid leaves the head smoothly. (W, the hair's points, are changed in place)
 function braidsForward(W, n, apart, eyeY, eyeZ) {
   const rootY = eyeY - .9 * apart, fade = .35 * apart, part = new Float32Array(n), turns = [new THREE.Quaternion(), new THREE.Quaternion()];
-  const front = (x, y) => { let z = -Infinity; for (const list of hairBase.surface.grid.values()) for (let j = 0; j < list.length; j += 6)
-    if (Math.abs(list[j] - x) < .25 * apart && Math.abs(list[j + 1] - y) < .25 * apart) z = Math.max(z, list[j + 2]); return z; };
+  // (how far forward the figure comes right at x, y - the nearest little square that has any of it)
+  const front = (x, y) => { const { face, fine } = hairBase.surface, cx = Math.floor(x / fine), cy = Math.floor(y / fine);
+    for (let r = 0; r <= 2; r++) { let z = -Infinity;
+      for (let dx = -r; dx <= r; dx++) for (let dy = -r; dy <= r; dy++) { const v = face.get(`${cx + dx},${cy + dy}`); if (v !== undefined) z = Math.max(z, v); }
+      if (isFinite(z)) return z; }
+    return -Infinity; };
   for (const s of [0, 1]) { const side = i => (W[i * 3] < 0 ? 0 : 1) === s, root = new THREE.Vector3(), ys = []; let rn = 0, outX = 0;
     // (the start: the braid's own hair just below the ears - the outer part of that slice, not the hair over the nape)
     const inSlice = y => y < rootY && y > rootY - .2 * apart;
