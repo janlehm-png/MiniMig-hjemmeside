@@ -223,7 +223,7 @@ const exists = async u => { try { return (await fetch(u, { method: 'HEAD' })).ok
 // the hairstyles: <name>.json (the hair cut out of a Meshy head by haar-ud.ps1, with that head's eye whites) and
 // <name>.jpg. Each is set on the figure's head so the eyes meet - as far apart and in the same place as the figure's
 // own eye whites - and then follows the head bone. A style is fetched the first time it is chosen.
-const HAIRS = [['', 'Skaldet'], ['haar-kort', 'Kort'], ['haar-bob', 'Bob'], ['haar-kroeller', 'Krøller'], ['haar-strit', 'Strit'], ['haar-fletninger', 'Fletninger', { braids: true }]];
+const HAIRS = [['', 'Skaldet'], ['haar-kort', 'Kort'], ['haar-bob', 'Bob'], ['haar-kroeller', 'Krøller'], ['haar-strit', 'Strit'], ['haar-fletninger', 'Fletninger', { braids: true }], ['haar-fletning', 'Fletning']];
 let hairNow = 'haar-kort', hairBase = null; const hairMeshes = {};
 // the figure's eye whites and head bone, measured once as it stands when loaded (in its T-pose, before it moves)
 function measureHead(fbx) {
