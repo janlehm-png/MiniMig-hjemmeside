@@ -379,7 +379,7 @@ async function setHair(name) {
 // ---- clothes: <name>.json and <name>.jpg (cut out of a whole figure made in Meshy, by haar-ud.ps1 -Cloth), set on
 // the figure by its height and feet - both figures come from the same picture of MiniMig, so the rest fits - and moved
 // as the body is: each point of the garment moves as the nearest point of the body does, so sleeves follow the arms
-const TOPS = [['', 'Undertrøje'], ['toej-tshirt', 'T-shirt']];
+const TOPS = [['', 'Undertrøje'], ['toej-tshirt', 'T-shirt'], ['toej-haette', 'Hættetrøje'], ['toej-fodbold', 'Fodboldtrøje']];
 let topNow = ''; const topMeshes = {};
 async function loadCloth(name) {
   if (!hairBase || !(await exists(`${name}.json${FIGUR_V}`))) return null;
