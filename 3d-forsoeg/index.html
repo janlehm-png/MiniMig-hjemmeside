@@ -294,7 +294,19 @@ function braidsForward(W, n, apart, eyeY, eyeZ) {
     const q = new THREE.Vector3();
     for (let i = 0; i < n; i++) { if (!side(i)) continue; const y = W[i * 3 + 1]; if (y >= rootY) continue;
       const k = Math.min(1, (rootY - y) / fade), f = k * k * (3 - 2 * k); part[i] = f;
-      q.fromArray(W, i * 3).sub(root).applyQuaternion(turns[s]); q.addScaledVector(axis, q.dot(axis) * (stretch - 1)).add(start); W[i * 3] += (q.x - W[i * 3]) * f; W[i * 3 + 1] += (q.y - W[i * 3 + 1]) * f; W[i * 3 + 2] += (q.z - W[i * 3 + 2]) * f; } }
+      q.fromArray(W, i * 3).sub(root).applyQuaternion(turns[s]); q.addScaledVector(axis, q.dot(axis) * (stretch - 1)).add(start); W[i * 3] += (q.x - W[i * 3]) * f; W[i * 3 + 1] += (q.y - W[i * 3 + 1]) * f; W[i * 3 + 2] += (q.z - W[i * 3 + 2]) * f; }
+    // (then laid against the chest: cut across in thin slices from top to bottom, each slice moved back until the
+    // braid's back just touches the chest in front of it - smoothed, so the braid bends with the chest, not in steps)
+    const slice = .1 * apart, idx = []; let top = -Infinity, bottom = Infinity;
+    for (let i = 0; i < n; i++) if (side(i) && part[i] > .99) { idx.push(i); top = Math.max(top, W[i * 3 + 1]); bottom = Math.min(bottom, W[i * 3 + 1]); }
+    const m = Math.ceil((top - bottom) / slice) + 1, sx = new Float32Array(m), sc = new Float32Array(m), sz = new Float32Array(m).fill(Infinity), back = new Float32Array(m);
+    const at = y => Math.min(m - 1, Math.max(0, Math.floor((y - bottom) / slice)));
+    for (const i of idx) { const k = at(W[i * 3 + 1]); sx[k] += W[i * 3]; sc[k]++; sz[k] = Math.min(sz[k], W[i * 3 + 2]); }
+    for (let k = 0; k < m; k++) { if (!sc[k]) continue; const chestZ = front(sx[k] / sc[k], bottom + (k + .5) * slice);
+      if (isFinite(chestZ) && sz[k] - chestZ > .03 * apart) back[k] = sz[k] - chestZ - .03 * apart; }
+    const smooth = back.map((v, k) => (back[Math.max(0, k - 1)] + 2 * v + back[Math.min(m - 1, k + 1)]) / 4);
+    for (const i of idx) { const y = W[i * 3 + 1], u = (y - bottom) / slice - .5, k0 = Math.min(m - 1, Math.max(0, Math.floor(u))), k1 = Math.min(m - 1, k0 + 1), t = Math.min(1, Math.max(0, u - k0));
+      W[i * 3 + 2] -= smooth[k0] * (1 - t) + smooth[k1] * t; } }
   return { part, turns }; }
 async function loadHair(name) {
   const opts = HAIRS.find(h => h[0] === name)?.[2] || {};
