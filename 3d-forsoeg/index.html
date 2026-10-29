@@ -223,7 +223,7 @@ const exists = async u => { try { return (await fetch(u, { method: 'HEAD' })).ok
 // the hairstyles: <name>.json (the hair cut out of a Meshy head by haar-ud.ps1, with that head's eye whites) and
 // <name>.jpg. Each is set on the figure's head so the eyes meet - as far apart and in the same place as the figure's
 // own eye whites - and then follows the head bone. A style is fetched the first time it is chosen.
-const HAIRS = [['', 'Skaldet'], ['haar-kort', 'Kort'], ['haar-bob', 'Bob'], ['haar-kroeller', 'Krøller'], ['haar-strit', 'Strit']];
+const HAIRS = [['', 'Skaldet'], ['haar-kort', 'Kort'], ['haar-bob', 'Bob'], ['haar-kroeller', 'Krøller'], ['haar-strit', 'Strit'], ['haar-fletninger', 'Fletninger', { braids: true }]];
 let hairNow = 'haar-kort', hairBase = null; const hairMeshes = {};
 // the figure's eye whites and head bone, measured once as it stands when loaded (in its T-pose, before it moves)
 function measureHead(fbx) {
@@ -239,21 +239,99 @@ function measureHead(fbx) {
     body.getVertexPosition(at(k), v); v.applyMatrix4(body.matrixWorld); if (v.y < topY) continue;
     const e = eyes[v.x < midX ? 0 : 1]; e[0] += v.x; e[1] += v.y; e[2] += v.z; e[3]++; }
   if (!eyes[0][3] || !eyes[1][3]) { console.warn('hår: fandt ikke figurens øjne', eyes, topY, midX); return; }
-  let bone = null; fbx.traverse(o => { if (o.isBone && /Head$/.test(o.name) && !bone) bone = o; }); bone = bone || fbx;
-  hairBase = { eyes: eyes.map(e => new THREE.Vector3(e[0], e[1], e[2]).divideScalar(e[3])), bone, inv: bone.matrixWorld.clone().invert() }; }
+  // (the head and the upper chest, as they are now: for each, what takes a point of the figure as it was made to where
+  // that bone puts it now - and back)
+  const sk = body.skeleton, bone = re => sk.bones.findIndex(b => re.test(b.name));
+  const back = i => sk.bones[i].matrixWorld.clone().multiply(sk.boneInverses[i]).multiply(body.bindMatrix).invert();
+  const head = bone(/Head$/), chest = bone(/Spine2$/); if (head < 0 || chest < 0) { console.warn('hår: fandt ikke hoved og bryst'); return; }
+  hairBase = { eyes: eyes.map(e => new THREE.Vector3(e[0], e[1], e[2]).divideScalar(e[3])), body, head, chest, headBack: back(head), chestBack: back(chest) };
+  // (the figure's surface from the chin to the chest, its points in a grid of little boxes: long hair is laid on it)
+  const [L, R] = hairBase.eyes, apart = L.distanceTo(R), eyeY = (L.y + R.y) / 2, box = .4 * apart, grid = new Map();
+  const turn = new THREE.Matrix3().getNormalMatrix(body.matrixWorld), q = new THREE.Vector3(), nn = new THREE.Vector3(), P = geo.attributes.position, N = geo.attributes.normal;
+  for (let i = 0; i < P.count; i++) { body.getVertexPosition(i, q).applyMatrix4(body.matrixWorld); if (q.y > eyeY - .5 * apart || q.y < eyeY - 5 * apart) continue;
+    nn.fromBufferAttribute(N, i).applyMatrix3(turn).normalize(); const key = [q.x, q.y, q.z].map(c => Math.floor(c / box)).join();
+    if (!grid.has(key)) grid.set(key, []); grid.get(key).push(q.x, q.y, q.z, nn.x, nn.y, nn.z); }
+  hairBase.surface = { grid, box }; }
+// how far a point lies inside the figure's surface (more than a small margin), and the way out: by the nearest point of it
+function inside(p, margin) { const { grid, box } = hairBase.surface, k = [p.x, p.y, p.z].map(c => Math.floor(c / box));
+  let best = null, bestD = Infinity;
+  for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) for (let dz = -1; dz <= 1; dz++) { const list = grid.get([k[0] + dx, k[1] + dy, k[2] + dz].join()); if (!list) continue;
+    for (let j = 0; j < list.length; j += 6) { const d2 = (p.x - list[j]) ** 2 + (p.y - list[j + 1]) ** 2 + (p.z - list[j + 2]) ** 2; if (d2 < bestD) { bestD = d2; best = list.slice(j, j + 6); } } }
+  if (!best) return null; const need = margin - ((p.x - best[0]) * best[3] + (p.y - best[1]) * best[4] + (p.z - best[2]) * best[5]);
+  return need > 0 ? { need, way: new THREE.Vector3(best[3], best[4], best[5]) } : null; }
+const LIFT = .5; // (how far long hair below the chin is lifted, in eyes' distances)
+// each braid (the hair below the ears, on each side) turned in place: about its start under the ear, from where it hangs
+// now to a line down to the front of the chest, a little in from the shoulder and resting just off it. The turn fades in
+// over the first bit below the start, so the braid leaves the head smoothly. (W, the hair's points, are changed in place)
+function braidsForward(W, n, apart, eyeY) {
+  const rootY = eyeY - .9 * apart, fade = .35 * apart, part = new Float32Array(n), turns = [new THREE.Quaternion(), new THREE.Quaternion()];
+  const front = (x, y) => { let z = -Infinity; for (const list of hairBase.surface.grid.values()) for (let j = 0; j < list.length; j += 6)
+    if (Math.abs(list[j] - x) < .25 * apart && Math.abs(list[j + 1] - y) < .25 * apart) z = Math.max(z, list[j + 2]); return z; };
+  for (const s of [0, 1]) { const side = i => (W[i * 3] < 0 ? 0 : 1) === s, root = new THREE.Vector3(), ys = []; let rn = 0, outX = 0;
+    // (the start: the braid's own hair just below the ears - the outer part of that slice, not the hair over the nape)
+    const inSlice = y => y < rootY && y > rootY - .2 * apart;
+    for (let i = 0; i < n; i++) if (side(i) && inSlice(W[i * 3 + 1])) outX = Math.max(outX, Math.abs(W[i * 3]));
+    for (let i = 0; i < n; i++) if (side(i)) { const y = W[i * 3 + 1]; if (y < rootY) ys.push(y);
+      if (inSlice(y) && Math.abs(W[i * 3]) > .6 * outX) { root.x += W[i * 3]; root.y += y; root.z += W[i * 3 + 2]; rn++; } }
+    if (!rn || ys.length < 50) continue; root.divideScalar(rn); ys.sort((x, y) => x - y);
+    const lowY = ys[Math.floor(ys.length * .03)], end = new THREE.Vector3(); let en = 0;
+    for (let i = 0; i < n; i++) if (side(i) && W[i * 3 + 1] <= lowY) { end.x += W[i * 3]; end.y += W[i * 3 + 1]; end.z += W[i * 3 + 2]; en++; }
+    end.divideScalar(en); const len = end.distanceTo(root);
+    // (aimed at the middle of the chest, and stretched along its length to get there if it is too short)
+    const to = new THREE.Vector3(root.x * .8, eyeY - 2.6 * apart, 0), chest = front(to.x, to.y); if (!isFinite(chest)) continue;
+    // (as close to the chest as it can rest while the whole straight braid - as thick as it is - stays clear of the
+    // shoulder on the way down)
+    const pt = new THREE.Vector3();
+    for (let off = .1; off <= 2.5; off += .05) { to.z = chest + off * apart; let clear = true;
+      for (let t = .1; t <= 1 && clear; t += .1) { pt.lerpVectors(root, to, t); if (inside(pt, .12 * apart)) clear = false; }
+      if (clear) break; }
+    const axis = to.clone().sub(root), stretch = Math.min(1.8, Math.max(1, axis.length() / len)); axis.normalize();
+    turns[s].setFromUnitVectors(end.clone().sub(root).normalize(), axis);
+    const q = new THREE.Vector3();
+    for (let i = 0; i < n; i++) { if (!side(i)) continue; const y = W[i * 3 + 1]; if (y >= rootY) continue;
+      const k = Math.min(1, (rootY - y) / fade), f = k * k * (3 - 2 * k); part[i] = f;
+      q.fromArray(W, i * 3).sub(root).applyQuaternion(turns[s]); q.addScaledVector(axis, q.dot(axis) * (stretch - 1)).add(root); W[i * 3] += (q.x - W[i * 3]) * f; W[i * 3 + 1] += (q.y - W[i * 3 + 1]) * f; W[i * 3 + 2] += (q.z - W[i * 3 + 2]) * f; } }
+  return { part, turns }; }
 async function loadHair(name) {
+  const opts = HAIRS.find(h => h[0] === name)?.[2] || {};
   if (!hairBase || !(await exists(`${name}.json${FIGUR_V}`))) return null;
   const [d, img] = await Promise.all([fetch(`${name}.json${FIGUR_V}`).then(r => r.json()),
     new Promise(ok => { const i = new Image(); i.onload = () => ok(i); i.src = `${name}.jpg${FIGUR_V}`; })]);
   const mine = hairBase.eyes, theirs = d.eyes.map(e => new THREE.Vector3(...e)), scale = mine[0].distanceTo(mine[1]) / theirs[0].distanceTo(theirs[1]);
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(d.position, 3));
   g.setAttribute('normal', new THREE.Float32BufferAttribute(d.normal, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(d.uv, 2)); g.setIndex(d.index);
-  const hair = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ map: setupHairTexture(img), roughness: .8, metalness: 0, side: THREE.DoubleSide }));
-  hair.castShadow = true; hair.name = name;
-  // (placed as on the figure when it was measured, then held by the head bone wherever the head is now)
+  // (placed as on the figure when it was measured; then the hair down to the chin follows the head, and below it - long
+  // braids, curls on the shoulders - glides over to following the upper chest by the shoulders: it moves with the body
+  // and does not cut into the shoulders when the head turns)
   const at = mine[0].clone().add(mine[1]).multiplyScalar(.5).sub(theirs[0].clone().add(theirs[1]).multiplyScalar(.5 * scale));
-  hairBase.inv.clone().multiply(new THREE.Matrix4().compose(at, new THREE.Quaternion(), new THREE.Vector3(scale, scale, scale))).decompose(hair.position, hair.quaternion, hair.scale);
-  hairBase.bone.add(hair); if (picked.hair) recolourHair(picked.hair); return hair; }
+  const place = new THREE.Matrix4().compose(at, new THREE.Quaternion(), new THREE.Vector3(scale, scale, scale));
+  const apart = mine[0].distanceTo(mine[1]), eyeY = (mine[0].y + mine[1].y) / 2, top = eyeY - 1.3 * apart, bottom = eyeY - 2.6 * apart;
+  const pos = g.attributes.position, nrm = g.attributes.normal, n = pos.count, skinIndex = new Uint16Array(n * 4), skinWeight = new Float32Array(n * 4);
+  const turn = new THREE.Matrix3().getNormalMatrix(hairBase.headBack.clone().multiply(place)), p = new THREE.Vector3(), a = new THREE.Vector3(), b = new THREE.Vector3();
+  // (the figure has a shorter neck and higher shoulders than the head the hair was made on: long hair hanging down would
+  // go into its shoulders. Each side's hair below the chin is moved forward as one piece - its shape kept - until nearly
+  // all of it lies in front of the shoulders and chest; it starts moving just below the chin, so it bends forward over
+  // the shoulder rather than through it)
+  const weight = new Float32Array(n), shift = [new THREE.Vector3(), new THREE.Vector3()], needs = [[], []], W = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++) { p.fromBufferAttribute(pos, i).applyMatrix4(place); W.set([p.x, p.y, p.z], i * 3);
+    const k = Math.min(1, Math.max(0, (p.y - bottom) / (top - bottom))); weight[i] = k * k * (3 - 2 * k);
+    if (!opts.braids && weight[i] < 1 && hairBase.surface) { const hit = inside(p, .12 * apart); if (hit) needs[p.x < 0 ? 0 : 1].push(hit.need / Math.max(.5, hit.way.z)); } }
+  // (only when a real part of it is inside - a few curl tips touching the shoulders are left as they are)
+  for (const s of [0, 1]) { if (needs[s].length < .02 * n) continue; needs[s].sort((x, y) => x - y);
+    shift[s].set(0, LIFT * apart, Math.min(.3 * apart, needs[s][Math.floor(needs[s].length * .9)])); }
+  // (braids: each is turned as one straight piece about where it starts, just under the ear, until it points down and
+  // forward to rest on the front of the chest - a straight line, clear of the shoulder)
+  const bend = opts.braids ? braidsForward(W, n, apart, eyeY) : null;
+  for (let i = 0; i < n; i++) { p.fromArray(W, i * 3); const w = weight[i];
+    p.addScaledVector(shift[p.x < 0 ? 0 : 1], Math.min(1, 6 * (1 - w)));
+    a.copy(p).applyMatrix4(hairBase.headBack); b.copy(p).applyMatrix4(hairBase.chestBack); a.lerp(b, 1 - w); pos.setXYZ(i, a.x, a.y, a.z);
+    p.fromBufferAttribute(nrm, i).applyMatrix3(turn); if (bend && bend.part[i] > .5) p.applyQuaternion(bend.turns[W[i * 3] < 0 ? 0 : 1]); p.normalize(); nrm.setXYZ(i, p.x, p.y, p.z);
+    skinIndex[i * 4] = hairBase.head; skinIndex[i * 4 + 1] = hairBase.chest; skinWeight[i * 4] = w; skinWeight[i * 4 + 1] = 1 - w; }
+  g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(skinIndex, 4)); g.setAttribute('skinWeight', new THREE.Float32BufferAttribute(skinWeight, 4));
+  const hair = new THREE.SkinnedMesh(g, new THREE.MeshStandardMaterial({ map: setupHairTexture(img), roughness: .8, metalness: 0, side: THREE.DoubleSide }));
+  hair.castShadow = true; hair.name = name; hair.frustumCulled = false;
+  const body = hairBase.body; hair.position.copy(body.position); hair.quaternion.copy(body.quaternion); hair.scale.copy(body.scale);
+  body.parent.add(hair); hair.bind(body.skeleton, body.bindMatrix); if (picked.hair) recolourHair(picked.hair); return hair; }
 // (the styles as buttons above the hair colours, shown while Hår is chosen)
 async function setHair(name) {
   hairNow = name; const box = document.getElementById('styles'); box.innerHTML = '';
@@ -263,7 +341,7 @@ async function setHair(name) {
   for (const [n, m] of Object.entries(hairMeshes)) if (m) m.visible = n === hairNow; }
 // (FIGUR_V goes up with each new figure: a browser that remembers the last figure's files fetches them again - an iPad
 // once put the old figure's colour picture on the new figure)
-const FIGUR_V = '?v=4';
+const FIGUR_V = '?v=5';
 async function loadFbx() { if (!(await exists('figur.fbx' + FIGUR_V))) return false;
   const loader = new FBXLoader(), load = u => new Promise((ok, bad) => loader.load(u + FIGUR_V, ok, undefined, bad));
   const fbx = await load('figur.fbx'), map = await new Promise(ok => new THREE.TextureLoader().load('figur-farve.jpg' + FIGUR_V, ok));
