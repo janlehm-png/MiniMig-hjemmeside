@@ -108,7 +108,12 @@ function showSwatches() { const [part, , list] = CHOICES.find(c => c[0] === part
   all.onclick = () => { allOpen = !allOpen; showSwatches(); }; box.append(all);
   document.getElementById('sliders').hidden = !allOpen; if (allOpen) slidersFrom(picked[part] || START[part]);
   document.querySelectorAll('#parts button').forEach(b => b.classList.toggle('on', b.dataset.part === partNow));
-  const styles = document.getElementById('styles'); styles.hidden = partNow !== 'hair' || !styles.childElementCount; }
+  renderStyles(); }
+// (the styles as buttons above the colours: hairstyles while Hår is chosen, tops while Trøje is; none before the figure)
+function renderStyles() { const box = document.getElementById('styles'), list = typeof styleLists === 'undefined' ? null : styleLists()[partNow];
+  box.innerHTML = ''; box.hidden = !list || !hairBase;
+  if (box.hidden) return; const [items, now, set] = list;
+  for (const [n, label] of items) { const b = document.createElement('button'); b.textContent = label; b.classList.toggle('on', n === now); b.onclick = () => set(n); box.append(b); } }
 // the sliders: colour (hue), strength (saturation) and light, set from the part's colour now; moving one colours it
 const S = { h: document.getElementById('s-h'), s: document.getElementById('s-s'), l: document.getElementById('s-l') };
 function slidersFrom(hexColour) { const hsl = {}; new THREE.Color().setStyle(hexColour, THREE.SRGBColorSpace).getHSL(hsl, THREE.SRGBColorSpace);
@@ -177,25 +182,28 @@ function whitesByPlace(fbx) {
 // the hair, a part of its own with its own colour picture: all of it gets the hair colour, lit as it was (against the
 // middle brightness of its brown; the hair uses no other part of the picture, and its darkest strands and the edges
 // round its pieces must change too, or they show as specks)
-const hairTexs = [];
-function setupHairTexture(img) {
+// (clothes the same way, in their own list: a top takes the Trøje colour)
+const hairTexs = [], clothTexs = [];
+function setupHairTexture(img, list = hairTexs) {
   const w = img.width, h = img.height, canvas = document.createElement('canvas'); canvas.width = w; canvas.height = h;
   const ctx = canvas.getContext('2d', { willReadFrequently: true }); ctx.drawImage(img, 0, 0);
   const src = ctx.getImageData(0, 0, w, h).data.slice(), mask = new Uint8Array(w * h); let sum = 0, n = 0;
   for (let p = 0, i = 0; p < w * h; p++, i += 4) { const mx = Math.max(src[i], src[i + 1], src[i + 2]), mn = Math.min(src[i], src[i + 1], src[i + 2]);
-    mask[p] = 1; if (mx > 15 && mx < 184 && (mx - mn) / mx > .42 && mx === src[i]) { sum += .3 * src[i] + .59 * src[i + 1] + .11 * src[i + 2]; n++; } }
+    // (the middle brightness of its own colour: brown for hair, blue for clothes - what a new colour is measured against)
+    const own = list === clothTexs ? mx > 25 && (mx - mn) / mx > .25 && mx === src[i + 2] : mx > 15 && mx < 184 && (mx - mn) / mx > .42 && mx === src[i];
+    mask[p] = 1; if (own) { sum += .3 * src[i] + .59 * src[i + 1] + .11 * src[i + 2]; n++; } }
   const t = new THREE.CanvasTexture(canvas); t.colorSpace = THREE.SRGBColorSpace;
-  hairTexs.push({ ctx, src, mask, mid: n ? sum / n : 80, texture: t, w, h }); return t; }
-function recolourHair(hexColour) {
+  list.push({ ctx, src, mask, mid: n ? sum / n : 80, texture: t, w, h }); return t; }
+function recolourHair(hexColour, list = hairTexs) {
   const n = parseInt(hexColour.slice(1), 16), c = [(n >> 16 & 255), (n >> 8 & 255), (n & 255)];
-  for (const hairTex of hairTexs) {
+  for (const hairTex of list) {
   const out = hairTex.ctx.createImageData(hairTex.w, hairTex.h), o = out.data, s = hairTex.src;
   for (let p = 0, i = 0; p < hairTex.w * hairTex.h; p++, i += 4) { o[i + 3] = 255;
     if (!hairTex.mask[p]) { o[i] = s[i]; o[i + 1] = s[i + 1]; o[i + 2] = s[i + 2]; continue; }
     const k = (.3 * s[i] + .59 * s[i + 1] + .11 * s[i + 2]) / hairTex.mid; for (let j = 0; j < 3; j++) o[i + j] = Math.min(255, c[j] * k); }
   hairTex.ctx.putImageData(out, 0, 0); hairTex.texture.needsUpdate = true; } }
 function recolour(part, hexColour) {
-  if (part === 'hair') recolourHair(hexColour);
+  if (part === 'hair') recolourHair(hexColour); if (part === 'shirt') recolourHair(hexColour, clothTexs);
   // (the picked colour read straight from its #rrggbb code: a THREE.Color would hold it in linear light, too dark here)
   if (!tex) return; const n = parseInt(hexColour.slice(1), 16); tex.colours[PARTS[part]] = { r: (n >> 16 & 255) / 255, g: (n >> 8 & 255) / 255, b: (n & 255) / 255 };
   const out = tex.ctx.createImageData(tex.w, tex.h), o = out.data, s = tex.src;
@@ -255,7 +263,13 @@ function measureHead(fbx) {
     nn.fromBufferAttribute(N, i).applyMatrix3(turn).normalize(); const key = [q.x, q.y, q.z].map(c => Math.floor(c / box)).join();
     if (!grid.has(key)) grid.set(key, []); grid.get(key).push(q.x, q.y, q.z, nn.x, nn.y, nn.z);
     const fk = `${Math.floor(q.x / fine)},${Math.floor(q.y / fine)}`; if (!(face.get(fk) >= q.z)) face.set(fk, q.z); }
-  hairBase.surface = { grid, box, face, fine }; }
+  hairBase.surface = { grid, box, face, fine };
+  // (the whole body as it stands, for clothes: each point with the way out of the body there, in little boxes)
+  const H = all.max.y - all.min.y, cell = .04 * H, pts = new Float32Array(P.count * 6), wgrid = new Map();
+  for (let i = 0; i < P.count; i++) { body.getVertexPosition(i, q).applyMatrix4(body.matrixWorld); nn.fromBufferAttribute(N, i).applyMatrix3(turn).normalize();
+    pts.set([q.x, q.y, q.z, nn.x, nn.y, nn.z], i * 6); const key = `${Math.floor(q.x / cell)},${Math.floor(q.y / cell)},${Math.floor(q.z / cell)}`;
+    if (!wgrid.has(key)) wgrid.set(key, []); wgrid.get(key).push(i); }
+  hairBase.whole = { pts, cell, grid: wgrid, inv: body.matrixWorld.clone().invert(), H }; hairBase.box = all.clone(); }
 // how far a point lies inside the figure's surface (more than a small margin), and the way out: by the nearest point of it
 function inside(p, margin) { const { grid, box } = hairBase.surface, k = [p.x, p.y, p.z].map(c => Math.floor(c / box));
   let best = null, bestD = Infinity;
@@ -356,13 +370,49 @@ async function loadHair(name) {
   hair.castShadow = true; hair.name = name; hair.frustumCulled = false;
   const body = hairBase.body; hair.position.copy(body.position); hair.quaternion.copy(body.quaternion); hair.scale.copy(body.scale);
   body.parent.add(hair); hair.bind(body.skeleton, body.bindMatrix); if (picked.hair) recolourHair(picked.hair); return hair; }
-// (the styles as buttons above the hair colours, shown while Hår is chosen)
+var styleLists = () => ({ hair: [HAIRS, hairNow, setHair], shirt: [TOPS, topNow, setTop] });
 async function setHair(name) {
-  hairNow = name; const box = document.getElementById('styles'); box.innerHTML = '';
-  for (const [n, label] of HAIRS) { const b = document.createElement('button'); b.textContent = label; b.classList.toggle('on', n === hairNow); b.onclick = () => setHair(n); box.append(b); }
-  showSwatches();
+  hairNow = name; renderStyles();
   if (name && !hairMeshes[name]) hairMeshes[name] = await loadHair(name);
   for (const [n, m] of Object.entries(hairMeshes)) if (m) m.visible = n === hairNow; }
+
+// ---- clothes: <name>.json and <name>.jpg (cut out of a whole figure made in Meshy, by haar-ud.ps1 -Cloth), set on
+// the figure by its height and feet - both figures come from the same picture of MiniMig, so the rest fits - and moved
+// as the body is: each point of the garment moves as the nearest point of the body does, so sleeves follow the arms
+const TOPS = [['', 'Undertrøje'], ['toej-tshirt', 'T-shirt']];
+let topNow = ''; const topMeshes = {};
+async function loadCloth(name) {
+  if (!hairBase || !(await exists(`${name}.json${FIGUR_V}`))) return null;
+  const [d, img] = await Promise.all([fetch(`${name}.json${FIGUR_V}`).then(r => r.json()),
+    new Promise(ok => { const i = new Image(); i.onload = () => ok(i); i.src = `${name}.jpg${FIGUR_V}`; })]);
+  const B = hairBase.box, [x0, y0, z0, x1, y1, z1] = d.box, s = (B.max.y - B.min.y) / (y1 - y0);
+  const off = new THREE.Vector3((B.min.x + B.max.x) / 2 - s * (x0 + x1) / 2, B.min.y - s * y0, (B.min.z + B.max.z) / 2 - s * (z0 + z1) / 2);
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(d.position, 3));
+  g.setAttribute('normal', new THREE.Float32BufferAttribute(d.normal, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(d.uv, 2)); g.setIndex(d.index);
+  const { pts, cell, grid, inv, H } = hairBase.whole, bsi = hairBase.body.geometry.attributes.skinIndex, bsw = hairBase.body.geometry.attributes.skinWeight;
+  const pos = g.attributes.position, n = pos.count, skinIndex = new Uint16Array(n * 4), skinWeight = new Float32Array(n * 4), w = new THREE.Vector3(), q = new THREE.Vector3();
+  const margin = .006 * H;
+  for (let i = 0; i < n; i++) { w.fromBufferAttribute(pos, i).multiplyScalar(s).add(off);
+    // (the nearest point of the body, in the little boxes round it)
+    let best = -1, bestD = Infinity; const k = [w.x, w.y, w.z].map(c => Math.floor(c / cell));
+    for (let r = 1; r <= 3 && best < 0; r++) for (let dx = -r; dx <= r; dx++) for (let dy = -r; dy <= r; dy++) for (let dz = -r; dz <= r; dz++) {
+      const list = grid.get(`${k[0] + dx},${k[1] + dy},${k[2] + dz}`); if (!list) continue;
+      for (const j of list) { const d2 = (w.x - pts[j * 6]) ** 2 + (w.y - pts[j * 6 + 1]) ** 2 + (w.z - pts[j * 6 + 2]) ** 2; if (d2 < bestD) { bestD = d2; best = j; } } }
+    if (best < 0) continue;
+    // (kept just outside the body - over the vest - where the two figures differ a little)
+    const out = (w.x - pts[best * 6]) * pts[best * 6 + 3] + (w.y - pts[best * 6 + 1]) * pts[best * 6 + 4] + (w.z - pts[best * 6 + 2]) * pts[best * 6 + 5];
+    if (out < margin) w.addScaledVector(q.set(pts[best * 6 + 3], pts[best * 6 + 4], pts[best * 6 + 5]), margin - out);
+    w.applyMatrix4(inv); pos.setXYZ(i, w.x, w.y, w.z);
+    for (let c = 0; c < 4; c++) { skinIndex[i * 4 + c] = bsi.getComponent(best, c); skinWeight[i * 4 + c] = bsw.getComponent(best, c); } }
+  g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(skinIndex, 4)); g.setAttribute('skinWeight', new THREE.Float32BufferAttribute(skinWeight, 4));
+  const cloth = new THREE.SkinnedMesh(g, new THREE.MeshStandardMaterial({ map: setupHairTexture(img, clothTexs), roughness: .85, metalness: 0, side: THREE.DoubleSide }));
+  cloth.castShadow = true; cloth.name = name; cloth.frustumCulled = false;
+  const body = hairBase.body; cloth.position.copy(body.position); cloth.quaternion.copy(body.quaternion); cloth.scale.copy(body.scale);
+  body.parent.add(cloth); cloth.bind(body.skeleton, body.bindMatrix); if (picked.shirt) recolourHair(picked.shirt, clothTexs); return cloth; }
+async function setTop(name) {
+  topNow = name; renderStyles();
+  if (name && !topMeshes[name]) topMeshes[name] = await loadCloth(name);
+  for (const [n, m] of Object.entries(topMeshes)) if (m) m.visible = n === topNow; }
 // (FIGUR_V goes up with each new figure: a browser that remembers the last figure's files fetches them again - an iPad
 // once put the old figure's colour picture on the new figure)
 const FIGUR_V = '?v=5';
