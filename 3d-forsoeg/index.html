@@ -21,7 +21,7 @@
   .bar button.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent) inset; }
   /* the colours: a part chosen above, its colours as small round buttons below (no pop-up over the figure) */
   .colors { flex-basis: 100%; display: flex; flex-direction: column; align-items: center; gap: 6px; }
-  .parts { display: flex; gap: 6px; }
+  .parts { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
   .parts button { padding: 6px 12px; font-size: 13px; border-radius: 12px; }
   .parts[hidden] { display: none; }
   .swatches { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
@@ -98,8 +98,8 @@ disc.rotation.x = -Math.PI / 2; disc.position.y = .001; scene.add(disc);
 const CLOTH = ['#E8384F', '#FF7A2F', '#FFC233', '#2FB872', '#13BFA6', '#3D8BFF', '#46699E', '#7A4DFF', '#FF6FB1', '#F4F1EA', '#3A3550'];
 const CHOICES = [['skin', 'Hud', ['#F6D0AE', '#EDB98A', '#D9965F', '#B5713F', '#8D5530', '#5A3520']],
   ['hair', 'Hår', ['#2A1C17', '#4A2C1D', '#7A4428', '#A8582E', '#D9A55C', '#F0D9A0', '#FF7EBB', '#5AA9FF']],
-  ['shirt', 'Trøje', CLOTH], ['pants', 'Bukser', CLOTH]];
-const picked = {}, START = { skin: '#EDB98A', hair: '#4A2C1D', shirt: '#FF7A2F', pants: '#2C3E8C' }; let partNow = 'shirt', allOpen = false;
+  ['shirt', 'Trøje', CLOTH], ['pants', 'Bukser', CLOTH], ['dress', 'Kjole', CLOTH], ['shoe', 'Sko', CLOTH], ['hat', 'Hat', CLOTH], ['glasses', 'Briller', CLOTH]];
+const picked = {}, START = { skin: '#EDB98A', hair: '#4A2C1D', shirt: '#FF7A2F', pants: '#2C3E8C', dress: '#3D8BFF', shoe: '#3D8BFF', hat: '#3D8BFF', glasses: '#3D8BFF' }; let partNow = 'shirt', allOpen = false;
 const apply = (part, c) => { picked[part] = c; recolour(part, c); };
 function showSwatches() { const [part, , list] = CHOICES.find(c => c[0] === partNow), box = document.getElementById('swatches'); box.innerHTML = '';
   for (const c of list) { const b = document.createElement('button'); b.style.background = c; b.setAttribute('aria-label', c); b.classList.toggle('on', !allOpen && picked[part] === c);
@@ -190,7 +190,7 @@ function setupHairTexture(img, list = hairTexs) {
   const src = ctx.getImageData(0, 0, w, h).data.slice(), mask = new Uint8Array(w * h); let sum = 0, n = 0;
   for (let p = 0, i = 0; p < w * h; p++, i += 4) { const mx = Math.max(src[i], src[i + 1], src[i + 2]), mn = Math.min(src[i], src[i + 1], src[i + 2]);
     // (the middle brightness of its own colour: brown for hair, blue for clothes - what a new colour is measured against)
-    const own = list === clothTexs ? mx > 25 && (mx - mn) / mx > .25 && mx === src[i + 2] : mx > 15 && mx < 184 && (mx - mn) / mx > .42 && mx === src[i];
+    const own = list !== hairTexs ? mx > 25 && (mx - mn) / mx > .25 && mx === src[i + 2] : mx > 15 && mx < 184 && (mx - mn) / mx > .42 && mx === src[i];
     mask[p] = 1; if (own) { sum += .3 * src[i] + .59 * src[i + 1] + .11 * src[i + 2]; n++; } }
   const t = new THREE.CanvasTexture(canvas); t.colorSpace = THREE.SRGBColorSpace;
   list.push({ ctx, src, mask, mid: n ? sum / n : 80, texture: t, w, h }); return t; }
@@ -203,7 +203,7 @@ function recolourHair(hexColour, list = hairTexs) {
     const k = (.3 * s[i] + .59 * s[i + 1] + .11 * s[i + 2]) / hairTex.mid; for (let j = 0; j < 3; j++) o[i + j] = Math.min(255, c[j] * k); }
   hairTex.ctx.putImageData(out, 0, 0); hairTex.texture.needsUpdate = true; } }
 function recolour(part, hexColour) {
-  if (part === 'hair') recolourHair(hexColour); if (part === 'shirt') recolourHair(hexColour, clothTexs);
+  if (part === 'hair') recolourHair(hexColour); if (typeof GARMENTS !== 'undefined' && GARMENTS[part]) recolourHair(hexColour, GARMENTS[part].texs);
   // (the picked colour read straight from its #rrggbb code: a THREE.Color would hold it in linear light, too dark here)
   if (!tex) return; const n = parseInt(hexColour.slice(1), 16); tex.colours[PARTS[part]] = { r: (n >> 16 & 255) / 255, g: (n >> 8 & 255) / 255, b: (n & 255) / 255 };
   const out = tex.ctx.createImageData(tex.w, tex.h), o = out.data, s = tex.src;
@@ -251,8 +251,9 @@ function measureHead(fbx) {
   // that bone puts it now - and back)
   const sk = body.skeleton, bone = re => sk.bones.findIndex(b => re.test(b.name));
   const back = i => sk.bones[i].matrixWorld.clone().multiply(sk.boneInverses[i]).multiply(body.bindMatrix).invert();
-  const head = bone(/Head$/), chest = bone(/Spine2$/); if (head < 0 || chest < 0) { console.warn('hår: fandt ikke hoved og bryst'); return; }
-  hairBase = { eyes: eyes.map(e => new THREE.Vector3(e[0], e[1], e[2]).divideScalar(e[3])), body, head, chest, headBack: back(head), chestBack: back(chest) };
+  const head = bone(/Head$/), chest = bone(/Spine2$/), hips = bone(/Hips$/); if (head < 0 || chest < 0) { console.warn('hår: fandt ikke hoved og bryst'); return; }
+  hairBase = { eyes: eyes.map(e => new THREE.Vector3(e[0], e[1], e[2]).divideScalar(e[3])), body, head, chest, headBack: back(head), chestBack: back(chest),
+    hips, hipY: sk.bones[Math.max(0, hips)].getWorldPosition(new THREE.Vector3()).y };
   // (the figure's surface from the chin to the chest, its points in a grid of little boxes: long hair is laid on it)
   const [L, R] = hairBase.eyes, apart = L.distanceTo(R), eyeY = (L.y + R.y) / 2, box = .4 * apart, grid = new Map();
   const turn = new THREE.Matrix3().getNormalMatrix(body.matrixWorld), q = new THREE.Vector3(), nn = new THREE.Vector3(), P = geo.attributes.position, N = geo.attributes.normal;
@@ -330,18 +331,21 @@ function braidsForward(W, n, apart, eyeY, eyeZ) {
     for (const i of idx) { const y = W[i * 3 + 1], u = (y - bottom) / slice - .5, k0 = Math.min(m - 1, Math.max(0, Math.floor(u))), k1 = Math.min(m - 1, k0 + 1), t = Math.min(1, Math.max(0, u - k0));
       W[i * 3 + 2] -= smooth[k0] * (1 - t) + smooth[k1] * t; } }
   return { part, turns }; }
-async function loadHair(name) {
-  const opts = HAIRS.find(h => h[0] === name)?.[2] || {};
+// (hats and glasses are put on the same way: made on a bald head, set by the eyes, held by the head - with their own
+// colour list and part, and made a little bigger where they must sit over the hair)
+async function loadHair(name, list = hairTexs, colourPart = 'hair', extra = {}) {
+  const opts = HAIRS.find(h => h[0] === name)?.[2] || extra;
   if (!hairBase || !(await exists(`${name}.json${FIGUR_V}`))) return null;
   const [d, img] = await Promise.all([fetch(`${name}.json${FIGUR_V}`).then(r => r.json()),
     new Promise(ok => { const i = new Image(); i.onload = () => ok(i); i.src = `${name}.jpg${FIGUR_V}`; })]);
-  const mine = hairBase.eyes, theirs = d.eyes.map(e => new THREE.Vector3(...e)), scale = mine[0].distanceTo(mine[1]) / theirs[0].distanceTo(theirs[1]);
+  const mine = hairBase.eyes, theirs = d.eyes.map(e => new THREE.Vector3(...e)), scale = mine[0].distanceTo(mine[1]) / theirs[0].distanceTo(theirs[1]) * (opts.grow || 1);
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(d.position, 3));
   g.setAttribute('normal', new THREE.Float32BufferAttribute(d.normal, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(d.uv, 2)); g.setIndex(d.index);
   // (placed as on the figure when it was measured; then the hair down to the chin follows the head, and below it - long
   // braids, curls on the shoulders - glides over to following the upper chest by the shoulders: it moves with the body
   // and does not cut into the shoulders when the head turns)
   const at = mine[0].clone().add(mine[1]).multiplyScalar(.5).sub(theirs[0].clone().add(theirs[1]).multiplyScalar(.5 * scale));
+  if (opts.lift) at.y += opts.lift * mine[0].distanceTo(mine[1]);
   const place = new THREE.Matrix4().compose(at, new THREE.Quaternion(), new THREE.Vector3(scale, scale, scale));
   const apart = mine[0].distanceTo(mine[1]), eyeY = (mine[0].y + mine[1].y) / 2, top = eyeY - 1.3 * apart, bottom = eyeY - 2.6 * apart;
   const pos = g.attributes.position, nrm = g.attributes.normal, n = pos.count, skinIndex = new Uint16Array(n * 4), skinWeight = new Float32Array(n * 4);
@@ -366,11 +370,12 @@ async function loadHair(name) {
     p.fromBufferAttribute(nrm, i).applyMatrix3(turn); if (bend && bend.part[i] > .5) p.applyQuaternion(bend.turns[W[i * 3] < 0 ? 0 : 1]); p.normalize(); nrm.setXYZ(i, p.x, p.y, p.z);
     skinIndex[i * 4] = hairBase.head; skinIndex[i * 4 + 1] = hairBase.chest; skinWeight[i * 4] = w; skinWeight[i * 4 + 1] = 1 - w; }
   g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(skinIndex, 4)); g.setAttribute('skinWeight', new THREE.Float32BufferAttribute(skinWeight, 4));
-  const hair = new THREE.SkinnedMesh(g, new THREE.MeshStandardMaterial({ map: setupHairTexture(img), roughness: .8, metalness: 0, side: THREE.DoubleSide }));
+  const hair = new THREE.SkinnedMesh(g, new THREE.MeshStandardMaterial({ map: setupHairTexture(img, list), roughness: .8, metalness: 0, side: THREE.DoubleSide }));
   hair.castShadow = true; hair.name = name; hair.frustumCulled = false;
   const body = hairBase.body; hair.position.copy(body.position); hair.quaternion.copy(body.quaternion); hair.scale.copy(body.scale);
-  body.parent.add(hair); hair.bind(body.skeleton, body.bindMatrix); if (picked.hair) recolourHair(picked.hair); return hair; }
-var styleLists = () => ({ hair: [HAIRS, hairNow, setHair], shirt: [TOPS, topNow, setTop] });
+  body.parent.add(hair); hair.bind(body.skeleton, body.bindMatrix); if (picked[colourPart]) recolourHair(picked[colourPart], list); return hair; }
+var styleLists = () => ({ hair: [HAIRS, hairNow, setHair],
+  ...Object.fromEntries(Object.entries(GARMENTS).map(([part, G]) => [part, [G.items, G.now, n => setGarment(part, n)]])) });
 async function setHair(name) {
   hairNow = name; renderStyles();
   if (name && !hairMeshes[name]) hairMeshes[name] = await loadHair(name);
@@ -379,9 +384,27 @@ async function setHair(name) {
 // ---- clothes: <name>.json and <name>.jpg (cut out of a whole figure made in Meshy, by haar-ud.ps1 -Cloth), set on
 // the figure by its height and feet - both figures come from the same picture of MiniMig, so the rest fits - and moved
 // as the body is: each point of the garment moves as the nearest point of the body does, so sleeves follow the arms
-const TOPS = [['', 'Undertrøje'], ['toej-tshirt', 'T-shirt'], ['toej-haette', 'Hættetrøje'], ['toej-fodbold', 'Fodboldtrøje']];
-let topNow = ''; const topMeshes = {};
-async function loadCloth(name) {
+// (each kind of thing to wear: its choices - the first is none - its own colour pictures, and how it is put on: a dress
+// with a skirt that hangs from the hips; hats and glasses on the head like hair, hats a little bigger to sit over hair)
+const GARMENTS = {
+  shirt: { items: [['', 'Undertrøje'], ['toej-tshirt', 'T-shirt'], ['toej-haette', 'Hættetrøje'], ['toej-fodbold', 'Fodboldtrøje']], texs: clothTexs },
+  pants: { items: [['', 'Undershorts'], ['bukser-lange', 'Lange bukser'], ['bukser-shorts', 'Shorts'], ['bukser-cowboy', 'Cowboybukser'], ['bukser-fodbold', 'Fodboldbukser']], texs: [] },
+  dress: { items: [['', 'Ingen kjole'], ['kjole-sommer', 'Sommerkjole'], ['kjole-prinsesse', 'Prinsessekjole'], ['kjole-havfrue', 'Havfruekjole', { skirt: false }]], texs: [], skirt: true },
+  shoe: { items: [['', 'Bare fødder'], ['sko-sneakers', 'Sneakers'], ['sko-gummi', 'Gummistøvler'], ['sko-ballet', 'Balletsko']], texs: [] },
+  // (hats were made on a bald head: on top of hair they are raised - lift, in eyes' distances - or, a cap, made wider)
+  hat: { items: [['', 'Ingen hat'], ['hat-kasket', 'Kasket', { grow: 1.32, lift: .25 }], ['hat-krone', 'Krone', { grow: 1.05, lift: .55 }], ['hat-kanin', 'Kaninører', { grow: 1.12, lift: .3 }],
+    ['hat-sloejfe', 'Sløjfe', { grow: 1.05, lift: .35 }]], texs: [], head: true },
+  glasses: { items: [['', 'Ingen briller'], ['briller-runde', 'Runde'], ['briller-sol', 'Solbriller'], ['briller-hjerte', 'Hjerte'], ['briller-stjerne', 'Stjerne']], texs: [], head: true } };
+for (const G of Object.values(GARMENTS)) { G.now = ''; G.meshes = {}; }
+async function setGarment(part, name) { const G = GARMENTS[part]; G.now = name;
+  // (a dress is worn instead of a top and trousers, and the other way round)
+  if (name && part === 'dress') GARMENTS.shirt.now = GARMENTS.pants.now = '';
+  if (name && (part === 'shirt' || part === 'pants')) GARMENTS.dress.now = '';
+  renderStyles();
+  if (name && !G.meshes[name]) G.meshes[name] = G.head ? await loadHair(name, G.texs, part, G.items.find(i => i[0] === name)?.[2] || {}) : await loadCloth(name, part);
+  for (const g of Object.values(GARMENTS)) for (const [n, m] of Object.entries(g.meshes)) if (m) m.visible = n === g.now; }
+async function loadCloth(name, part) {
+  const G = GARMENTS[part];
   if (!hairBase || !(await exists(`${name}.json${FIGUR_V}`))) return null;
   const [d, img] = await Promise.all([fetch(`${name}.json${FIGUR_V}`).then(r => r.json()),
     new Promise(ok => { const i = new Image(); i.onload = () => ok(i); i.src = `${name}.jpg${FIGUR_V}`; })]);
@@ -402,17 +425,19 @@ async function loadCloth(name) {
     // (kept just outside the body - over the vest - where the two figures differ a little)
     const out = (w.x - pts[best * 6]) * pts[best * 6 + 3] + (w.y - pts[best * 6 + 1]) * pts[best * 6 + 4] + (w.z - pts[best * 6 + 2]) * pts[best * 6 + 5];
     if (out < margin) w.addScaledVector(q.set(pts[best * 6 + 3], pts[best * 6 + 4], pts[best * 6 + 5]), margin - out);
-    w.applyMatrix4(inv); pos.setXYZ(i, w.x, w.y, w.z);
-    for (let c = 0; c < 4; c++) { skinIndex[i * 4 + c] = bsi.getComponent(best, c); skinWeight[i * 4 + c] = bsw.getComponent(best, c); } }
+    const wy = w.y; w.applyMatrix4(inv); pos.setXYZ(i, w.x, w.y, w.z);
+    // (a skirt hangs from the hips: below them it goes over to following the hips alone, so it does not tear apart
+    // between the legs when they move)
+    // (a tight one - the mermaid dress - follows the legs instead, like trousers)
+    const hang = (G.items.find(it => it[0] === name)?.[2]?.skirt ?? G.skirt) ? Math.min(1, Math.max(0, (hairBase.hipY - wy) / (.08 * H))) : 0, ws = {};
+    for (let c = 0; c < 4; c++) { const b = bsi.getComponent(best, c), v = bsw.getComponent(best, c) * (1 - hang); if (v) ws[b] = (ws[b] || 0) + v; }
+    if (hang) ws[hairBase.hips] = (ws[hairBase.hips] || 0) + hang;
+    Object.entries(ws).sort((p1, p2) => p2[1] - p1[1]).slice(0, 4).forEach(([b, v], c) => { skinIndex[i * 4 + c] = +b; skinWeight[i * 4 + c] = v; }); }
   g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(skinIndex, 4)); g.setAttribute('skinWeight', new THREE.Float32BufferAttribute(skinWeight, 4));
-  const cloth = new THREE.SkinnedMesh(g, new THREE.MeshStandardMaterial({ map: setupHairTexture(img, clothTexs), roughness: .85, metalness: 0, side: THREE.DoubleSide }));
-  cloth.castShadow = true; cloth.name = name; cloth.frustumCulled = false;
+  g.normalizeNormals(); const cloth = new THREE.SkinnedMesh(g, new THREE.MeshStandardMaterial({ map: setupHairTexture(img, G.texs), roughness: .85, metalness: 0, side: THREE.DoubleSide }));
+  cloth.castShadow = true; cloth.name = name; cloth.frustumCulled = false; cloth.normalizeSkinWeights();
   const body = hairBase.body; cloth.position.copy(body.position); cloth.quaternion.copy(body.quaternion); cloth.scale.copy(body.scale);
-  body.parent.add(cloth); cloth.bind(body.skeleton, body.bindMatrix); if (picked.shirt) recolourHair(picked.shirt, clothTexs); return cloth; }
-async function setTop(name) {
-  topNow = name; renderStyles();
-  if (name && !topMeshes[name]) topMeshes[name] = await loadCloth(name);
-  for (const [n, m] of Object.entries(topMeshes)) if (m) m.visible = n === topNow; }
+  body.parent.add(cloth); cloth.bind(body.skeleton, body.bindMatrix); if (picked[part]) recolourHair(picked[part], G.texs); return cloth; }
 // (FIGUR_V goes up with each new figure: a browser that remembers the last figure's files fetches them again - an iPad
 // once put the old figure's colour picture on the new figure)
 const FIGUR_V = '?v=5';
