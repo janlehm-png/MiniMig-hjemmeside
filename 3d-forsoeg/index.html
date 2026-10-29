@@ -206,8 +206,15 @@ function recolour(part, hexColour) {
   if (part === 'hair') recolourHair(hexColour); if (typeof GARMENTS !== 'undefined' && GARMENTS[part]) recolourHair(hexColour, GARMENTS[part].texs);
   // (the picked colour read straight from its #rrggbb code: a THREE.Color would hold it in linear light, too dark here)
   if (!tex) return; const n = parseInt(hexColour.slice(1), 16); tex.colours[PARTS[part]] = { r: (n >> 16 & 255) / 255, g: (n >> 8 & 255) / 255, b: (n & 255) / 255 };
-  const out = tex.ctx.createImageData(tex.w, tex.h), o = out.data, s = tex.src;
-  for (let p = 0, i = 0; p < tex.w * tex.h; p++, i += 4) { const c = tex.colours[tex.label[p]];
+  redrawBody(); }
+// (under a dress the vest and shorts are painted in the skin's colour: they would show at the neckline, under the arms
+// and through a tight skirt)
+function redrawBody() {
+  if (!tex) return; const out = tex.ctx.createImageData(tex.w, tex.h), o = out.data, s = tex.src;
+  if (!tex.skin) { let r = 0, g = 0, b = 0, m = 0; for (let p = 0, i = 0; p < tex.w * tex.h; p++, i += 4) if (tex.label[p] === PARTS.skin) { r += s[i]; g += s[i + 1]; b += s[i + 2]; m++; }
+    tex.skin = { r: r / m / 255, g: g / m / 255, b: b / m / 255 }; }
+  for (let p = 0, i = 0; p < tex.w * tex.h; p++, i += 4) { const l = tex.label[p];
+    const c = tex.dressed && (l === PARTS.shirt || l === PARTS.pants) ? tex.colours[PARTS.skin] || tex.skin : tex.colours[l];
     if (!c) { o[i] = s[i]; o[i + 1] = s[i + 1]; o[i + 2] = s[i + 2]; o[i + 3] = 255; continue; }
     const k = (.3 * s[i] + .59 * s[i + 1] + .11 * s[i + 2]) / tex.mid[tex.label[p]];
     o[i] = Math.min(255, c.r * 255 * k); o[i + 1] = Math.min(255, c.g * 255 * k); o[i + 2] = Math.min(255, c.b * 255 * k); o[i + 3] = 255; }
@@ -389,7 +396,7 @@ async function setHair(name) {
 const GARMENTS = {
   shirt: { items: [['', 'Undertrøje'], ['toej-tshirt', 'T-shirt'], ['toej-haette', 'Hættetrøje'], ['toej-fodbold', 'Fodboldtrøje']], texs: clothTexs },
   pants: { items: [['', 'Undershorts'], ['bukser-lange', 'Lange bukser'], ['bukser-shorts', 'Shorts'], ['bukser-cowboy', 'Cowboybukser'], ['bukser-fodbold', 'Fodboldbukser']], texs: [] },
-  dress: { items: [['', 'Ingen kjole'], ['kjole-sommer', 'Sommerkjole'], ['kjole-prinsesse', 'Prinsessekjole'], ['kjole-havfrue', 'Havfruekjole', { skirt: false }]], texs: [], skirt: true },
+  dress: { items: [['', 'Ingen kjole'], ['kjole-sommer', 'Sommerkjole'], ['kjole-prinsesse', 'Prinsessekjole'], ['kjole-havfrue', 'Havfruekjole', { skirt: false, margin: .012 }]], texs: [], skirt: true, noArms: true },
   shoe: { items: [['', 'Bare fødder'], ['sko-sneakers', 'Sneakers'], ['sko-gummi', 'Gummistøvler'], ['sko-ballet', 'Balletsko']], texs: [] },
   // (hats were made on a bald head: on top of hair they are raised - lift, in eyes' distances - or, a cap, made wider)
   hat: { items: [['', 'Ingen hat'], ['hat-kasket', 'Kasket', { grow: 1.32, lift: .25 }], ['hat-krone', 'Krone', { grow: 1.05, lift: .55 }], ['hat-kanin', 'Kaninører', { grow: 1.12, lift: .3 }],
@@ -400,6 +407,7 @@ async function setGarment(part, name) { const G = GARMENTS[part]; G.now = name;
   // (a dress is worn instead of a top and trousers, and the other way round)
   if (name && part === 'dress') GARMENTS.shirt.now = GARMENTS.pants.now = '';
   if (name && (part === 'shirt' || part === 'pants')) GARMENTS.dress.now = '';
+  if (tex && tex.dressed !== !!GARMENTS.dress.now) { tex.dressed = !!GARMENTS.dress.now; redrawBody(); }
   renderStyles();
   if (name && !G.meshes[name]) G.meshes[name] = G.head ? await loadHair(name, G.texs, part, G.items.find(i => i[0] === name)?.[2] || {}) : await loadCloth(name, part);
   for (const g of Object.values(GARMENTS)) for (const [n, m] of Object.entries(g.meshes)) if (m) m.visible = n === g.now; }
@@ -414,7 +422,10 @@ async function loadCloth(name, part) {
   g.setAttribute('normal', new THREE.Float32BufferAttribute(d.normal, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(d.uv, 2)); g.setIndex(d.index);
   const { pts, cell, grid, inv, H } = hairBase.whole, bsi = hairBase.body.geometry.attributes.skinIndex, bsw = hairBase.body.geometry.attributes.skinWeight;
   const pos = g.attributes.position, n = pos.count, skinIndex = new Uint16Array(n * 4), skinWeight = new Float32Array(n * 4), w = new THREE.Vector3(), q = new THREE.Vector3();
-  const margin = .006 * H;
+  // (a tight garment - the mermaid dress - a little further out, so the shorts under it don't show through)
+  const margin = (G.items.find(it => it[0] === name)?.[2]?.margin ?? .006) * H;
+  // (a dress has no sleeves: blue Meshy put along an arm or round a hand is dropped)
+  const arms = new Set(G.noArms ? hairBase.body.skeleton.bones.flatMap((b, j) => /Arm|Hand/.test(b.name) ? [j] : []) : []), onArm = new Uint8Array(n);
   for (let i = 0; i < n; i++) { w.fromBufferAttribute(pos, i).multiplyScalar(s).add(off);
     // (the nearest point of the body, in the little boxes round it)
     let best = -1, bestD = Infinity; const k = [w.x, w.y, w.z].map(c => Math.floor(c / cell));
@@ -422,6 +433,7 @@ async function loadCloth(name, part) {
       const list = grid.get(`${k[0] + dx},${k[1] + dy},${k[2] + dz}`); if (!list) continue;
       for (const j of list) { const d2 = (w.x - pts[j * 6]) ** 2 + (w.y - pts[j * 6 + 1]) ** 2 + (w.z - pts[j * 6 + 2]) ** 2; if (d2 < bestD) { bestD = d2; best = j; } } }
     if (best < 0) continue;
+    let a = 0; for (let c = 0; c < 4; c++) if (arms.has(bsi.getComponent(best, c))) a += bsw.getComponent(best, c); onArm[i] = a > .5;
     // (kept just outside the body - over the vest - where the two figures differ a little)
     const out = (w.x - pts[best * 6]) * pts[best * 6 + 3] + (w.y - pts[best * 6 + 1]) * pts[best * 6 + 4] + (w.z - pts[best * 6 + 2]) * pts[best * 6 + 5];
     if (out < margin) w.addScaledVector(q.set(pts[best * 6 + 3], pts[best * 6 + 4], pts[best * 6 + 5]), margin - out);
@@ -433,6 +445,7 @@ async function loadCloth(name, part) {
     for (let c = 0; c < 4; c++) { const b = bsi.getComponent(best, c), v = bsw.getComponent(best, c) * (1 - hang); if (v) ws[b] = (ws[b] || 0) + v; }
     if (hang) ws[hairBase.hips] = (ws[hairBase.hips] || 0) + hang;
     Object.entries(ws).sort((p1, p2) => p2[1] - p1[1]).slice(0, 4).forEach(([b, v], c) => { skinIndex[i * 4 + c] = +b; skinWeight[i * 4 + c] = v; }); }
+  if (arms.size) { const idx = g.index.array, keep = []; for (let t = 0; t < idx.length; t += 3) if (!onArm[idx[t]] && !onArm[idx[t + 1]] && !onArm[idx[t + 2]]) keep.push(idx[t], idx[t + 1], idx[t + 2]); g.setIndex(keep); }
   g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(skinIndex, 4)); g.setAttribute('skinWeight', new THREE.Float32BufferAttribute(skinWeight, 4));
   g.normalizeNormals(); const cloth = new THREE.SkinnedMesh(g, new THREE.MeshStandardMaterial({ map: setupHairTexture(img, G.texs), roughness: .85, metalness: 0, side: THREE.DoubleSide }));
   cloth.castShadow = true; cloth.name = name; cloth.frustumCulled = false; cloth.normalizeSkinWeights();
@@ -440,7 +453,7 @@ async function loadCloth(name, part) {
   body.parent.add(cloth); cloth.bind(body.skeleton, body.bindMatrix); if (picked[part]) recolourHair(picked[part], G.texs); return cloth; }
 // (FIGUR_V goes up with each new figure: a browser that remembers the last figure's files fetches them again - an iPad
 // once put the old figure's colour picture on the new figure)
-const FIGUR_V = '?v=5';
+const FIGUR_V = '?v=6';
 async function loadFbx() { if (!(await exists('figur.fbx' + FIGUR_V))) return false;
   const loader = new FBXLoader(), load = u => new Promise((ok, bad) => loader.load(u + FIGUR_V, ok, undefined, bad));
   const fbx = await load('figur.fbx'), map = await new Promise(ok => new THREE.TextureLoader().load('figur-farve.jpg' + FIGUR_V, ok));
