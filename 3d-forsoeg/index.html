@@ -453,21 +453,30 @@ const GARMENTS = {
   hat: { items: [['', 'Ingen hat'], ['hat-kasket', 'Kasket', { grow: 1.32, lift: .25 }], ['hat-krone', 'Krone', { grow: 1.05, lift: .55 }], ['hat-kanin', 'Kaninører', { grow: 1.12, lift: .3 }],
     ['hat-sloejfe', 'Sløjfe', { grow: 1.05, lift: .35 }]], texs: [], head: true },
   glasses: { items: [['', 'Ingen briller'], ['briller-runde', 'Runde'], ['briller-sol', 'Solbriller'], ['briller-hjerte', 'Hjerte'], ['briller-stjerne', 'Stjerne']], texs: [], head: true } };
-for (const G of Object.values(GARMENTS)) { G.now = ''; G.meshes = {}; }
-async function setGarment(part, name) { const G = GARMENTS[part]; G.now = name;
-  // (a dress is worn instead of a top and trousers, and the other way round)
-  if (name && part === 'dress') GARMENTS.shirt.now = GARMENTS.pants.now = '';
+// (now: what is chosen, shown: what the figure has on - the same once all of it is loaded)
+for (const G of Object.values(GARMENTS)) { G.now = G.shown = ''; G.meshes = {}; G.loading = {}; }
+let dressing = 0;
+async function setGarment(part, name) { const G = GARMENTS[part], ask = ++dressing;
+  // (a dress is worn instead of a top and trousers, and the other way round; taking the dress off puts back the top and
+  // trousers worn before it - the white vest came back instead)
+  if (name && part === 'dress') { if (!G.now) G.before = { shirt: GARMENTS.shirt.now, pants: GARMENTS.pants.now }; GARMENTS.shirt.now = GARMENTS.pants.now = ''; }
+  if (!name && part === 'dress' && G.now && G.before) { GARMENTS.shirt.now = G.before.shirt; GARMENTS.pants.now = G.before.pants; }
   if (name && (part === 'shirt' || part === 'pants')) GARMENTS.dress.now = '';
+  G.now = name; renderStyles();
+  // (everything changed at once, when all of it is loaded - the underwear went skin coloured and the last dress stayed on
+  // while a new one loaded; a choice made meanwhile wins)
+  for (const [p, g] of Object.entries(GARMENTS)) if (g.now && !g.meshes[g.now]) { const n = g.now;
+    g.loading[n] ??= g.head ? loadHair(n, g.texs, p, g.items.find(i => i[0] === n)?.[2] || {}) : loadCloth(n, p); g.meshes[n] = await g.loading[n]; }
+  if (ask !== dressing) return;
+  for (const g of Object.values(GARMENTS)) g.shown = g.now;
   const shirt = !!(GARMENTS.dress.now || GARMENTS.shirt.now), pants = !!(GARMENTS.dress.now || GARMENTS.pants.now);
   if (tex && (!!tex.covered[PARTS.shirt] !== shirt || !!tex.covered[PARTS.pants] !== pants)) { tex.covered = { [PARTS.shirt]: shirt, [PARTS.pants]: pants }; redrawBody(); }
-  renderStyles();
-  if (name && !G.meshes[name]) G.meshes[name] = G.head ? await loadHair(name, G.texs, part, G.items.find(i => i[0] === name)?.[2] || {}) : await loadCloth(name, part);
-  for (const g of Object.values(GARMENTS)) for (const [n, m] of Object.entries(g.meshes)) if (m) m.visible = n === g.now;
+  for (const g of Object.values(GARMENTS)) for (const [n, m] of Object.entries(g.meshes)) if (m) m.visible = n === g.shown;
   hideBody(); }
 // (a wide skirt - the princess dress - takes the arms a little out from the body in every movement, armsOut degrees:
 // hanging straight down the hands went into the skirt)
 const armTurn = new THREE.Quaternion(), armUp = new THREE.Quaternion(), armAxis = new THREE.Vector3();
-function armsOut() { const deg = GARMENTS.dress.items.find(it => it[0] === GARMENTS.dress.now)?.[2]?.armsOut; if (!deg || !hairBase) return;
+function armsOut() { const deg = GARMENTS.dress.items.find(it => it[0] === GARMENTS.dress.shown)?.[2]?.armsOut; if (!deg || !hairBase) return;
   const sk = hairBase.body.skeleton, hips = sk.bones[hairBase.hips]; glb.updateMatrixWorld(true);
   const hx = hips.getWorldPosition(new THREE.Vector3()).applyMatrix4(glb.matrixWorld.clone().invert()).x;
   for (const b of sk.bones) { if (!/(Left|Right)Arm$/.test(b.name)) continue;
@@ -668,7 +677,7 @@ function rimOf(wp, idx) { const spot = spotOf(wp), edges = new Map(), rim = new 
   for (const [e, c] of edges) if (c === 1) for (const s of e.split('|')) rim.add(s);
   return rim; }
 function hideBody() { if (!hairBase) return; const geo = hairBase.body.geometry, n = geo.attributes.position.count, hide = new Uint8Array(n);
-  for (const G of Object.values(GARMENTS)) { const c = G.meshes[G.now]?.userData.covered; if (c) for (let j = 0; j < n; j++) if (c[j]) hide[j] = 1; }
+  for (const G of Object.values(GARMENTS)) { const c = G.meshes[G.shown]?.userData.covered; if (c) for (let j = 0; j < n; j++) if (c[j]) hide[j] = 1; }
   const keep = []; for (let t = 0; t < n; t += 3) if (!(hide[t] && hide[t + 1] && hide[t + 2])) keep.push(t, t + 1, t + 2);
   geo.setIndex(keep.length === n ? null : keep); }
 // (FIGUR_V goes up with each new figure: a browser that remembers the last figure's files fetches them again - an iPad
