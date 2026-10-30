@@ -530,6 +530,11 @@ async function loadCloth(name, part) {
   // (noArm: a point of the body itself, not of an arm - a dress's sides were laid along the arms hanging beside it,
   // not on the body, and stood off it like a box)
   const armPt = new Uint8Array(pts.length / 6); if (arms.size) for (let j = 0; j < armPt.length; j++) { let a = 0; for (let c = 0; c < 4; c++) if (arms.has(bsi.getComponent(j, c))) a += bsw.getComponent(j, c); armPt[j] = a > .5; }
+  // (and nothing of the bodice out past the body's own sides, in hundredths of its height: at the armpits a dress's top corners stood
+  // out sideways, the arm coming down in front of and behind them)
+  const sides = new Map(); if (arms.size) for (let j = 0; j < armPt.length; j++) { let a = 0; for (let c = 0; c < 4; c++) if (lifts.has(bsi.getComponent(j, c))) a += bsw.getComponent(j, c);
+    if (a < .1) { const k = Math.floor(pts[j * 6 + 1] / (.01 * H)); sides.set(k, Math.max(sides.get(k) ?? 0, Math.abs(pts[j * 6] - midX))); } }
+  const sideAt = y => { const k = Math.floor(y / (.01 * H)); return Math.max(sides.get(k - 1) ?? 0, sides.get(k) ?? 0, sides.get(k + 1) ?? 0) || Infinity; };
   const found = new Map(), nearest = (x, y, z, noArm = false) => { const at = `${x},${y},${z},${noArm}`; if (!found.has(at)) found.set(at, nearest1(x, y, z, noArm)); return found.get(at); };
   const nearest1 = (x, y, z, noArm) => { let best = -1, bestD = Infinity; const k = [x, y, z].map(c => Math.floor(c / cell));
     // (ring by ring outwards, each box once)
@@ -544,7 +549,7 @@ async function loadCloth(name, part) {
     // (on an arm: nearer it than the body, and not close by the body either - at the armpits a dress's top was
     // dropped too, notches in it)
     if (arms.size) { const b = nearest(w.x, w.y, w.z, true), d2 = b < 0 ? Infinity : (w.x - pts[b * 6]) ** 2 + (w.y - pts[b * 6 + 1]) ** 2 + (w.z - pts[b * 6 + 2]) ** 2;
-      onArm[i] = armPt[best] && d2 > (.02 * H) ** 2; if (!onArm[i] && b >= 0) best = b; }
+      onArm[i] = armPt[best] && d2 > (.02 * H) ** 2 || w.y > cutTop - .08 * H && Math.abs(w.x - midX) > sideAt(w.y) + .01 * H; if (!onArm[i] && b >= 0) best = b; }
     // (a dress below the hips: also the same point on the other leg, the figure being the same on both sides - see below)
     const other = low ? nearest(2 * midX - w.x, w.y, w.z, arms.size > 0) : -1, bl = w.x < midX ? best : other, br = w.x < midX ? other : best;
     // (kept just outside the body - over the vest - where the two figures differ a little)
@@ -665,7 +670,7 @@ function hideBody() { if (!hairBase) return; const geo = hairBase.body.geometry,
   geo.setIndex(keep.length === n ? null : keep); }
 // (FIGUR_V goes up with each new figure: a browser that remembers the last figure's files fetches them again - an iPad
 // once put the old figure's colour picture on the new figure)
-const FIGUR_V = '?v=8';
+const FIGUR_V = '?v=9';
 async function loadFbx() { if (!(await exists('figur.fbx' + FIGUR_V))) return false;
   const loader = new FBXLoader(), load = u => new Promise((ok, bad) => loader.load(u + FIGUR_V, ok, undefined, bad));
   const fbx = await load('figur.fbx'), map = await new Promise(ok => new THREE.TextureLoader().load('figur-farve.jpg' + FIGUR_V, ok));
