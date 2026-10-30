@@ -447,7 +447,7 @@ async function setHair(name) {
 const GARMENTS = {
   shirt: { items: [['', 'Undertrøje'], ['toej-tshirt', 'T-shirt'], ['toej-haette', 'Hættetrøje'], ['toej-fodbold', 'Fodboldtrøje']], texs: clothTexs },
   pants: { items: [['', 'Undershorts'], ['bukser-lange', 'Lange bukser'], ['bukser-shorts', 'Shorts'], ['bukser-cowboy', 'Cowboyshorts', { cuff: .035 }], ['bukser-fodbold', 'Fodboldbukser']], texs: [], waist: true },
-  dress: { items: [['', 'Ingen kjole'], ['kjole-sommer', 'Sommerkjole'], ['kjole-prinsesse', 'Prinsessekjole', { hang: .5, armsOut: 12 }], ['kjole-havfrue', 'Havfruekjole', { skirt: false, margin: .012, reach: 8, tail: true, snug: .2 }]], texs: [], skirt: true, noArms: true },
+  dress: { items: [['', 'Ingen kjole'], ['kjole-sommer', 'Sommerkjole'], ['kjole-prinsesse', 'Prinsessekjole', { hang: .5, armsOut: 12 }], ['kjole-havfrue', 'Havfruekjole', { skirt: false, margin: .012, reach: 8, tail: true, snug: .2, waist: .15 }]], texs: [], skirt: true, noArms: true },
   shoe: { items: [['', 'Bare fødder'], ['sko-sneakers', 'Sneakers'], ['sko-gummi', 'Gummistøvler'], ['sko-ballet', 'Balletsko']], texs: [] },
   // (hats were made on a bald head: on top of hair they are raised - lift, in eyes' distances - or, a cap, made wider)
   hat: { items: [['', 'Ingen hat'], ['hat-kasket', 'Kasket', { grow: 1.32, lift: .25 }], ['hat-krone', 'Krone', { grow: 1.05, lift: .55 }], ['hat-kanin', 'Kaninører', { grow: 1.12, lift: .3 }],
@@ -524,7 +524,7 @@ async function loadCloth(name, part) {
   // its edge - Meshy left it standing off the chest; the mermaid's, snug fifths of it, the whole bodice down to the hips)
   const snug = part === 'dress' ? (opts.snug || .05) * H : 0;
   let topY = -Infinity; if (snug) for (let i = 0; i < n; i++) topY = Math.max(topY, pos.getY(i) * s + off.y);
-  const nearOf = new Int32Array(n).fill(-1);
+  const nearOf = new Int32Array(n).fill(-1), waistY = bones[Math.max(0, bones.findIndex(b => /Spine1$/.test(b.name)))].getWorldPosition(new THREE.Vector3()).y;
   // (the nearest point of the body, in the little boxes round it)
   // (the garment's corners come several to a spot, one for each piece of its colour picture there - each spot once)
   // (noArm: a point of the body itself, not of an arm - a dress's sides were laid along the arms hanging beside it,
@@ -559,6 +559,9 @@ async function loadCloth(name, part) {
     if (G.waist && y0 > cutTop - .04 * H) w.y = y0; // (near the waistband out sideways only, so it stays level)
     if (snug && y0 > cutTop - .02 * H) w.y = y0; // (and a dress's top edge in sideways only: pulled in along the chest it went up and down like a saw)
     if (cuffOut && i >= cuffOut) w.y -= .004 * H; // (and the cuff a little lower, over the leg's own hem)
+    // (waist: the mermaid's sides taken in at the waist, a part of the width there - the child's body has none of its
+    // own, and the dress went straight down like a tube; the body under it is hidden)
+    if (opts.waist) { const b = Math.max(0, 1 - Math.abs(w.y - waistY) / (.08 * H)); w.x = midX + (w.x - midX) * (1 - opts.waist * b * b * (3 - 2 * b)); }
     const wx = w.x, wy = w.y; wp.set([w.x, w.y, w.z], i * 3); w.applyMatrix4(inv); pos.setXYZ(i, w.x, w.y, w.z);
     // (a skirt follows the legs mostly, a fifth the hips: a knee lifted in the dance takes the skirt with it instead
     // of coming through it, and it does not swing quite as far as the leg)
