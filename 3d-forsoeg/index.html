@@ -447,7 +447,7 @@ async function setHair(name) {
 const GARMENTS = {
   shirt: { items: [['', 'Undertrøje'], ['toej-tshirt', 'T-shirt'], ['toej-haette', 'Hættetrøje'], ['toej-fodbold', 'Fodboldtrøje']], texs: clothTexs },
   pants: { items: [['', 'Undershorts'], ['bukser-lange', 'Lange bukser'], ['bukser-shorts', 'Shorts'], ['bukser-cowboy', 'Cowboyshorts', { cuff: .035 }], ['bukser-fodbold', 'Fodboldbukser']], texs: [], waist: true },
-  dress: { items: [['', 'Ingen kjole'], ['kjole-sommer', 'Sommerkjole'], ['kjole-prinsesse', 'Prinsessekjole', { hang: .5, armsOut: 12 }], ['kjole-havfrue', 'Havfruekjole', { skirt: false, margin: .012, reach: 8, tail: true, snug: true }]], texs: [], skirt: true, noArms: true },
+  dress: { items: [['', 'Ingen kjole'], ['kjole-sommer', 'Sommerkjole'], ['kjole-prinsesse', 'Prinsessekjole', { hang: .5, armsOut: 12 }], ['kjole-havfrue', 'Havfruekjole', { skirt: false, margin: .012, reach: 8, tail: true, snug: .2 }]], texs: [], skirt: true, noArms: true },
   shoe: { items: [['', 'Bare fødder'], ['sko-sneakers', 'Sneakers'], ['sko-gummi', 'Gummistøvler'], ['sko-ballet', 'Balletsko']], texs: [] },
   // (hats were made on a bald head: on top of hair they are raised - lift, in eyes' distances - or, a cap, made wider)
   hat: { items: [['', 'Ingen hat'], ['hat-kasket', 'Kasket', { grow: 1.32, lift: .25 }], ['hat-krone', 'Krone', { grow: 1.05, lift: .55 }], ['hat-kanin', 'Kaninører', { grow: 1.12, lift: .3 }],
@@ -487,9 +487,10 @@ async function loadCloth(name, part) {
   const opts = G.items.find(it => it[0] === name)?.[2] || {};
   // (trousers: the waistband cut straight round, level - Meshy's top edge goes up and down, lower at the front than at the
   // back, the vest showing in the dips: all round it, in sixteen slices, where the edge comes lowest - a tenth of each
-  // slice's edge lower still being stray bits - and cut at the lowest of these; the mermaid dress's top edge the same)
+  // slice's edge lower still being stray bits - and cut at the lowest of these; a dress's top edge the same - the
+  // summer dress had bits of straps at the back, the princess dress a ragged frill)
   let cutTop = Infinity, cuffOut = 0;
-  if (G.waist || opts.snug) { const P = g.attributes.position, raw = new Float32Array(P.count * 3);
+  if (G.waist || part === 'dress') { const P = g.attributes.position, raw = new Float32Array(P.count * 3);
     for (let i = 0; i < P.count; i++) raw.set([P.getX(i) * s + off.x, P.getY(i) * s + off.y, P.getZ(i) * s + off.z], i * 3);
     const spot = spotOf(raw), rim = rimOf(raw, g.index.array), edge = []; let lo = Infinity, hi = -Infinity, cx = 0, cz = 0;
     for (let i = 0; i < P.count; i++) { lo = Math.min(lo, raw[i * 3 + 1]); hi = Math.max(hi, raw[i * 3 + 1]); }
@@ -498,9 +499,14 @@ async function loadCloth(name, part) {
     for (const i of edge) slices[Math.floor((Math.atan2(raw[i * 3] - cx, raw[i * 3 + 2] - cz) / Math.PI + 1) * 8) % 16].push(raw[i * 3 + 1]);
     for (const ys of slices) if (ys.length >= 5) { ys.sort((a, b) => a - b); cutTop = Math.min(cutTop, ys[Math.floor(ys.length * .1)]); }
     // (and the trouser legs' hems level too, a quarter of their edge being bits hanging below them: Meshy's blue on
-    // the backs of the knees and between the legs)
-    const hem = []; for (let i = 0; i < P.count; i++) if (raw[i * 3 + 1] < lo + .25 * (hi - lo) && rim.has(spot(i))) hem.push(raw[i * 3 + 1]);
-    hem.sort((a, b) => a - b); const hemY = hem[Math.floor(hem.length * .75)]; if (G.waist && hem.length) clipAbove(g, (hemY - off.y) / s, true);
+    // the backs of the knees and between the legs; a skirt's hem the same - it went in and out - and the mermaid's fin,
+    // with strips of Meshy's blue on the shins below it)
+    // (a skirt's edges close by the legs not counted: the summer dress has bits of Meshy's blue on the thighs, inside
+    // it, which made it a short one)
+    const W = hairBase.whole, apart = (x, y, z) => { const k = [x, y, z].map(c => Math.floor(c / W.cell)); for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) for (let dz = -1; dz <= 1; dz++)
+      for (const j of W.grid.get(`${k[0] + dx},${k[1] + dy},${k[2] + dz}`) || []) if ((x - W.pts[j * 6]) ** 2 + (y - W.pts[j * 6 + 1]) ** 2 + (z - W.pts[j * 6 + 2]) ** 2 < (.03 * W.H) ** 2) return false; return true; };
+    const hem = []; for (let i = 0; i < P.count; i++) if (raw[i * 3 + 1] < lo + .25 * (hi - lo) && rim.has(spot(i)) && (G.waist || opts.skirt === false || apart(raw[i * 3], raw[i * 3 + 1], raw[i * 3 + 2]))) hem.push(raw[i * 3 + 1]);
+    hem.sort((a, b) => a - b); const hemY = hem[Math.floor(hem.length * (G.waist ? .75 : .25))]; if (hem.length) clipAbove(g, (hemY - off.y) / s, true);
     if (isFinite(cutTop)) clipAbove(g, (cutTop - off.y) / s);
     // (cuff: the legs turned up at the hem, cuff hundredths of the figure's height - the legs' lowest bit again, a little
     // further out; cuffOut marks its corners)
@@ -512,39 +518,49 @@ async function loadCloth(name, part) {
   const margin = (opts.margin ?? (G.waist ? .009 : .006)) * H;
   // (a dress has no sleeves: blue Meshy put along an arm or round a hand is dropped)
   const arms = new Set(G.noArms ? hairBase.body.skeleton.bones.flatMap((b, j) => /Arm|Hand/.test(b.name) ? [j] : []) : []), onArm = new Uint8Array(n), wp = new Float32Array(n * 3).fill(NaN);
-  const legs = part === 'dress', midX = (hairBase.box.min.x + hairBase.box.max.x) / 2;
-  // (snug: the top of a strapless dress - the mermaid's - laid close on the body, over the top twentieth of the figure's
-  // height down from its edge: Meshy left it standing off the chest)
-  let topY = -Infinity; if (opts.snug) for (let i = 0; i < n; i++) topY = Math.max(topY, pos.getY(i) * s + off.y);
+  const legs = part === 'dress', midX = (hairBase.box.min.x + hairBase.box.max.x) / 2, bones = hairBase.body.skeleton.bones;
+  const lifts = new Set(G.noArms ? bones.flatMap((b, j) => /Shoulder|Arm|Hand/.test(b.name) ? [j] : []) : []), chest = Math.max(0, bones.findIndex(b => /Spine2$/.test(b.name)));
+  // (snug: the top of a strapless dress laid close on the body, over the top twentieth of the figure's height down from
+  // its edge - Meshy left it standing off the chest; the mermaid's, snug fifths of it, the whole bodice down to the hips)
+  const snug = part === 'dress' ? (opts.snug || .05) * H : 0;
+  let topY = -Infinity; if (snug) for (let i = 0; i < n; i++) topY = Math.max(topY, pos.getY(i) * s + off.y);
   const nearOf = new Int32Array(n).fill(-1);
   // (the nearest point of the body, in the little boxes round it)
   // (the garment's corners come several to a spot, one for each piece of its colour picture there - each spot once)
-  const found = new Map(), nearest = (x, y, z) => { const at = `${x},${y},${z}`; if (!found.has(at)) found.set(at, nearest1(x, y, z)); return found.get(at); };
-  const nearest1 = (x, y, z) => { let best = -1, bestD = Infinity; const k = [x, y, z].map(c => Math.floor(c / cell));
+  // (noArm: a point of the body itself, not of an arm - a dress's sides were laid along the arms hanging beside it,
+  // not on the body, and stood off it like a box)
+  const armPt = new Uint8Array(pts.length / 6); if (arms.size) for (let j = 0; j < armPt.length; j++) { let a = 0; for (let c = 0; c < 4; c++) if (arms.has(bsi.getComponent(j, c))) a += bsw.getComponent(j, c); armPt[j] = a > .5; }
+  const found = new Map(), nearest = (x, y, z, noArm = false) => { const at = `${x},${y},${z},${noArm}`; if (!found.has(at)) found.set(at, nearest1(x, y, z, noArm)); return found.get(at); };
+  const nearest1 = (x, y, z, noArm) => { let best = -1, bestD = Infinity; const k = [x, y, z].map(c => Math.floor(c / cell));
     // (ring by ring outwards, each box once)
     for (let r = 1; r <= 3 && best < 0; r++) for (let dx = -r; dx <= r; dx++) for (let dy = -r; dy <= r; dy++) for (let dz = -r; dz <= r; dz++) {
       if (r > 1 && Math.max(Math.abs(dx), Math.abs(dy), Math.abs(dz)) < r) continue;
       const list = grid.get(`${k[0] + dx},${k[1] + dy},${k[2] + dz}`); if (!list) continue;
-      for (const j of list) { const d2 = (x - pts[j * 6]) ** 2 + (y - pts[j * 6 + 1]) ** 2 + (z - pts[j * 6 + 2]) ** 2; if (d2 < bestD) { bestD = d2; best = j; } } }
+      for (const j of list) { if (noArm && armPt[j]) continue; const d2 = (x - pts[j * 6]) ** 2 + (y - pts[j * 6 + 1]) ** 2 + (z - pts[j * 6 + 2]) ** 2; if (d2 < bestD) { bestD = d2; best = j; } } }
     return best; };
   for (let i = 0; i < n; i++) { w.fromBufferAttribute(pos, i).multiplyScalar(s).add(off);
-    const best = nearest(w.x, w.y, w.z), low = legs && w.y < hairBase.hipY;
-    // (a dress below the hips: also the same point on the other leg, the figure being the same on both sides - see below)
-    const other = low ? nearest(2 * midX - w.x, w.y, w.z) : -1, bl = w.x < midX ? best : other, br = w.x < midX ? other : best;
+    let best = nearest(w.x, w.y, w.z); const low = legs && w.y < hairBase.hipY;
     if (best < 0) continue;
-    let a = 0; for (let c = 0; c < 4; c++) if (arms.has(bsi.getComponent(best, c))) a += bsw.getComponent(best, c); onArm[i] = a > .5;
+    // (on an arm: nearer it than the body, and not close by the body either - at the armpits a dress's top was
+    // dropped too, notches in it)
+    if (arms.size) { const b = nearest(w.x, w.y, w.z, true), d2 = b < 0 ? Infinity : (w.x - pts[b * 6]) ** 2 + (w.y - pts[b * 6 + 1]) ** 2 + (w.z - pts[b * 6 + 2]) ** 2;
+      onArm[i] = armPt[best] && d2 > (.02 * H) ** 2; if (!onArm[i] && b >= 0) best = b; }
+    // (a dress below the hips: also the same point on the other leg, the figure being the same on both sides - see below)
+    const other = low ? nearest(2 * midX - w.x, w.y, w.z, arms.size > 0) : -1, bl = w.x < midX ? best : other, br = w.x < midX ? other : best;
     // (kept just outside the body - over the vest - where the two figures differ a little)
     const out = (w.x - pts[best * 6]) * pts[best * 6 + 3] + (w.y - pts[best * 6 + 1]) * pts[best * 6 + 4] + (w.z - pts[best * 6 + 2]) * pts[best * 6 + 5];
-    const k = Math.min(1, Math.max(0, 1 - (topY - w.y) / (.05 * H))), f = opts.snug ? k * k * (3 - 2 * k) : 0, fit = margin * (1 - f) + .005 * H * f + (cuffOut && i >= cuffOut ? .012 * H : 0); nearOf[i] = best;
+    const k = snug ? Math.min(1, Math.max(0, 1 - (topY - w.y) / snug)) : 0, f = k * k * (3 - 2 * k), fit = margin * (1 - f) + .005 * H * f + (cuffOut && i >= cuffOut ? .012 * H : 0); nearOf[i] = best;
     const y0 = w.y; if (out < fit || f) w.addScaledVector(q.set(pts[best * 6 + 3], pts[best * 6 + 4], pts[best * 6 + 5]), out < fit ? fit - out : (fit - out) * f);
     if (G.waist && y0 > cutTop - .04 * H) w.y = y0; // (near the waistband out sideways only, so it stays level)
+    if (snug && y0 > cutTop - .02 * H) w.y = y0; // (and a dress's top edge in sideways only: pulled in along the chest it went up and down like a saw)
     if (cuffOut && i >= cuffOut) w.y -= .004 * H; // (and the cuff a little lower, over the leg's own hem)
     const wx = w.x, wy = w.y; wp.set([w.x, w.y, w.z], i * 3); w.applyMatrix4(inv); pos.setXYZ(i, w.x, w.y, w.z);
     // (a skirt follows the legs mostly, a fifth the hips: a knee lifted in the dance takes the skirt with it instead
     // of coming through it, and it does not swing quite as far as the leg)
     // (a tight one - the mermaid dress - follows the legs alone, like trousers)
     const hang = (G.items.find(it => it[0] === name)?.[2]?.skirt ?? G.skirt) ? (G.items.find(it => it[0] === name)?.[2]?.hang ?? .2) * Math.min(1, Math.max(0, (hairBase.hipY - wy) / (.08 * H))) : 0, ws = {};
-    const add = (j, f) => { for (let c = 0; c < 4; c++) { const b = bsi.getComponent(j, c), v = bsw.getComponent(j, c) * f; if (v) ws[b] = (ws[b] || 0) + v; } };
+    // (a dress follows the body alone, not the shoulders and arms: raised arms pulled its top corners up like horns)
+    const add = (j, f) => { for (let c = 0; c < 4; c++) { const b = bsi.getComponent(j, c), v = bsw.getComponent(j, c) * f; if (v && !lifts.has(b)) ws[b] = (ws[b] || 0) + v; } if (!Object.keys(ws).length) ws[chest] = f; };
     // (a dress between the legs follows both, more of the nearer one - it stretches as they part rather than tearing
     // down the middle, where one point followed the left leg and the next the right)
     if (low && bl >= 0 && br >= 0) { const f = Math.min(1, Math.max(0, .5 - (wx - midX) / (.1 * H))); add(bl, f * (1 - hang)); add(br, (1 - f) * (1 - hang)); }
@@ -556,14 +572,19 @@ async function loadCloth(name, part) {
   if (G.waist && isFinite(cutTop)) for (let i = 0; i < n; i++) { const j = nearOf[i], k = Math.min(1, Math.max(0, 1 - (cutTop - wp[i * 3 + 1]) / (.04 * H))); if (j < 0 || !k) continue;
     for (const c of [0, 2]) wp[i * 3 + c] += pts[j * 6 + 3 + c] * .012 * H * k; // (level: out sideways only)
     w.set(wp[i * 3], wp[i * 3 + 1], wp[i * 3 + 2]).applyMatrix4(inv); pos.setXYZ(i, w.x, w.y, w.z); }
-  if (arms.size) { const idx = g.index.array, keep = []; for (let t = 0; t < idx.length; t += 3) if (!onArm[idx[t]] && !onArm[idx[t + 1]] && !onArm[idx[t + 2]]) keep.push(idx[t], idx[t + 1], idx[t + 2]); g.setIndex(keep); }
+  // (nor, in a skirt, what lies flat below the hips: Meshy's blue between the knees, a sheet inside the skirt that
+  // showed as a stripe across the legs at the hem)
+  const flat = t => { const [a, b, c] = [0, 1, 2].map(k => new THREE.Vector3().fromArray(wp, g.index.array[t + k] * 3)); if (!(a.y < hairBase.hipY - .03 * H)) return false;
+    const nrm = b.sub(a).cross(c.sub(a)), l = nrm.length(); return l > 0 && Math.abs(nrm.y) / l > .75; };
+  const skirt = legs && (opts.skirt ?? G.skirt);
+  if (arms.size) { const idx = g.index.array, keep = []; for (let t = 0; t < idx.length; t += 3) if (!onArm[idx[t]] && !onArm[idx[t + 1]] && !onArm[idx[t + 2]] && !(skirt && flat(t))) keep.push(idx[t], idx[t + 1], idx[t + 2]); g.setIndex(keep); }
   g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(skinIndex, 4)); g.setAttribute('skinWeight', new THREE.Float32BufferAttribute(skinWeight, 4));
   g.normalizeNormals(); const cloth = new THREE.SkinnedMesh(g, new THREE.MeshStandardMaterial({ map: setupHairTexture(img, G.texs), roughness: .85, metalness: 0, side: THREE.DoubleSide }));
   cloth.castShadow = true; cloth.name = name; cloth.frustumCulled = false; cloth.normalizeSkinWeights();
   const body = hairBase.body; cloth.position.copy(body.position); cloth.quaternion.copy(body.quaternion); cloth.scale.copy(body.scale);
   body.parent.add(cloth); cloth.bind(body.skeleton, body.bindMatrix); if (picked[part]) recolourHair(picked[part], G.texs);
   // (trousers sit further out - their waistband most - and are looked for further out)
-  cloth.userData.covered = coverBody(wp, g.index.array, H, opts.reach ?? (G.waist ? 3 : 2), opts.tail, cutTop, G.waist); return cloth; }
+  cloth.userData.covered = coverBody(wp, g.index.array, H, opts.reach ?? (G.waist ? 3 : 2), opts.tail, G.waist || opts.snug ? cutTop : Infinity, G.waist); return cloth; }
 // (the body close under a garment is hidden, so it cannot poke through it when the figure moves - the white underwear
 // came through the trousers at the hips and knees in the dance; under a wide skirt the legs stay)
 // (reach: how far under it, in hundredths of the figure's height - further for the mermaid dress, a knee lifted in
