@@ -564,13 +564,16 @@ function makeCloth(name, part, opts) {
     const vb = K.neckY - .07 * H, vcut = p => Math.min(p[1] - vb, .003 * H + .045 * H * clamp((p[1] - vb) / (.07 * H)) - side(p), p[2] - K.cz);
     const neck = p => Math.max(Math.min(p[1] - low(p), K.nr + .012 * H - Math.hypot(p[0] - K.mid, p[2] - K.nz)),
       p[1] - K.neckY - .04 * H - Math.max(0, side(p) - .13 * H) * 10, opts.vneck ? vcut(p) : -Infinity);
-    edges = [{ f: p => hem - p[1], bare: .03 * H }, { f: neck, bare: .02 * H, trim: !!opts.trim }, { f: p => side(p) - sleeveX, fold: (opts.fold || 0) * H, bare: .03 * H, trim: !!opts.trim }];
+    // (a tucked top's body hidden right down to its bottom: so close to it, the underpants came through it otherwise)
+    edges = [{ f: p => hem - p[1], bare: (opts.tuck ? .003 : .03) * H }, { f: neck, bare: .02 * H, trim: !!opts.trim }, { f: p => side(p) - sleeveX, fold: (opts.fold || 0) * H, bare: .03 * H, trim: !!opts.trim }];
     // (the sleeves a little wider towards their ends; the pocket on the tummy standing out a little)
     // (and from the trousers' top down a little looser, evenly, over their waistband and its loops - stepping out there,
     // the T-shirt's bottom was lumpy; tucked in, the other way: inside the trousers)
     const ease = v => { v = clamp(v); return v * v * (3 - 2 * v); };
     out = p => { let o = .009 + .006 * clamp((side(p) - K.shoulderX) / (sleeveX - K.shoulderX));
-      o += opts.tuck ? -.006 * ease((top + .03 * H - p[1]) / (.03 * H)) : .004 * ease((top + .03 * H - p[1]) / (.06 * H));
+      // (tucked, right in on the body from the trousers' top down: a little further out, it lay as far out as their
+      // waistband, and the two colours came through each other in patches)
+      o += opts.tuck ? -.009 * ease((top + .02 * H - p[1]) / (.02 * H)) : .004 * ease((top + .03 * H - p[1]) / (.06 * H));
       if (opts.hood) o += .05 * Math.sqrt(hood(p));
       if (opts.pocket && pocket(p)) o += .006; return o * H; };
     var pocket = p => p[2] > K.cz && side(p) < .075 * H && p[1] > hem + .02 * H && p[1] < hem + .1 * H;
@@ -885,13 +888,14 @@ function waistband(g, wp, si, sw, top, H, inv, loops, img, body) {
   fill(rLo); fill(rHi); for (let b = 0; b < N; b++) if (from[b] < 0) from[b] = 0; for (let k = 1; k < N; k++) for (let b = 0; b < N; b++) if (!from[b]) from[b] = from[(b + 1) % N] || from[(b + N - 1) % N];
   // (smoothed: the average of five slices, but never inside the body - the band goes round evenly; just outside it, over
   // the vest and the trousers. The most of the neighbours first made it stand out at the sides, where the body turns)
-  const smooth = r => Array.from(r, (v, b) => Math.max(v, [-2, -1, 0, 1, 2].reduce((t, e) => t + r[(b + e + N) % N], 0) / 5) + .0015 * H);
+  // (that far out leaves room for a top tucked in under it - closer, it came through in specks)
+  const smooth = r => Array.from(r, (v, b) => Math.max(v, [-2, -1, 0, 1, 2].reduce((t, e) => t + r[(b + e + N) % N], 0) / 5) + .0025 * H);
   const Rlo = smooth(rLo), Rhi = smooth(rHi).map((v, b) => Math.min(v, Rlo[b])), R = Rlo;
   // (and the trousers kept inside the band, and below it widening no faster than they go down - their top stood out
   // past it at the sides)
   const pos = g.attributes.position, v0 = new THREE.Vector3();
   for (let i = 0; i < n; i++) { const y = wp[i * 3 + 1]; if (!used[i] || y < top - .1 * H) continue; const dx = wp[i * 3] - cx, dz = wp[i * 3 + 2] - cz, d = Math.hypot(dx, dz);
-    const b = bin(i), t = Math.min(1, Math.max(0, (y - top + .03 * H) / (.032 * H))), lim = R[b] + (Rhi[b] - R[b]) * t - .001 * H + Math.max(0, top - .033 * H - y); if (d <= lim || !d) continue;
+    const b = bin(i), t = Math.min(1, Math.max(0, (y - top + .03 * H) / (.032 * H))), lim = R[b] + (Rhi[b] - R[b]) * t - .0003 * H + Math.max(0, top - .033 * H - y); if (d <= lim || !d) continue;
     wp[i * 3] = cx + dx * lim / d; wp[i * 3 + 2] = cz + dz * lim / d; v0.fromArray(wp, i * 3).applyMatrix4(inv); pos.setXYZ(i, v0.x, v0.y, v0.z); }
   // (its colour one spot of the picture: of the trousers' corners just below the band, the one most like the middle of
   // their colours - each slice's own spot made it striped, light seams and dark folds among them)
