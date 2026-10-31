@@ -521,13 +521,17 @@ function makeCloth(name, part, opts) {
     for (const j of v) { const k = spot(j), n = ways.get(k) || [0, 0, 0]; for (let e = 0; e < 3; e++) n[e] += pts[j * 6 + 3 + e]; ways.set(k, n); } }
   // (a corner: where it is, its way out, and the bones it follows; one of the body's, or one between two on a triangle's
   // side where the hem or the top cuts it - the triangles cut there, so the edges are straight)
-  const own = j => ({ p: [pts[j * 6], pts[j * 6 + 1], pts[j * 6 + 2]], n: ways.get(spot(j)), w: [0, 1, 2, 3].reduce((w, c) => { const b = bsi.getComponent(j, c); w[b] = (w[b] || 0) + bsw.getComponent(j, c); return w; }, {}) });
+  const own = j => ({ key: spot(j), p: [pts[j * 6], pts[j * 6 + 1], pts[j * 6 + 2]], n: ways.get(spot(j)), w: [0, 1, 2, 3].reduce((w, c) => { const b = bsi.getComponent(j, c); w[b] = (w[b] || 0) + bsw.getComponent(j, c); return w; }, {}) });
   const between = (a, b, y) => { const t = (y - a.p[1]) / (b.p[1] - a.p[1]), w = {};
     for (const [k, v] of Object.entries(a.w)) w[k] = (w[k] || 0) + v * (1 - t); for (const [k, v] of Object.entries(b.w)) w[k] = (w[k] || 0) + v * t;
-    return { p: a.p.map((c, e) => e === 1 ? y : c + (b.p[e] - c) * t), n: a.n.map((c, e) => c + (b.n[e] - c) * t), w }; };
+    return { key: [a.key, b.key].sort().join('|') + '|' + y, p: a.p.map((c, e) => e === 1 ? y : c + (b.p[e] - c) * t), n: a.n.map((c, e) => c + (b.n[e] - c) * t), w }; };
   const cut = (poly, y, keepAbove) => { const out = []; for (let k = 0; k < poly.length; k++) { const a = poly[k], b = poly[(k + 1) % poly.length], ia = keepAbove ? a.p[1] >= y : a.p[1] <= y, ib = keepAbove ? b.p[1] >= y : b.p[1] <= y;
     if (ia) out.push(a); if (ia !== ib) out.push(between(a, b, y)); } return out; };
-  const list = []; for (const v of tris) { const poly = cut(cut(v.map(own), hem, true), top, false); for (let k = 1; k + 1 < poly.length; k++) list.push(poly[0], poly[k], poly[k + 1]); }
+  // (each spot one corner, shared by all the triangles there - the body has one per triangle, and three times as many
+  // corners were too many for the iPad: it drew only the waistband and bits of the hem)
+  const list = [], ids = new Map(), tri = []; for (const v of tris) { const poly = cut(cut(v.map(own), hem, true), top, false);
+    const at = poly.map(c => { if (!ids.has(c.key)) { ids.set(c.key, list.length); list.push(c); } return ids.get(c.key); });
+    for (let k = 1; k + 1 < at.length; k++) tri.push(at[0], at[k], at[k + 1]); }
   const m = list.length, wp = new Float32Array(m * 3), P = new Float32Array(m * 3), N = new Float32Array(m * 3), U = new Float32Array(m * 2), si = new Uint16Array(m * 4), sw = new Float32Array(m * 4), w = new THREE.Vector3(), n = new THREE.Vector3();
   list.forEach((c, i) => { const y = c.p[1], s = Math.min(1, Math.max(0, (crotch - y) / (crotch - hem)));
     n.fromArray(c.n).normalize(); w.fromArray(c.p).addScaledVector(n, (.006 + (opts.flare || 0) * s * s) * H);
@@ -535,7 +539,7 @@ function makeCloth(name, part, opts) {
     w.applyMatrix4(inv); P.set([w.x, w.y, w.z], i * 3); n.transformDirection(inv); N.set([n.x, n.y, n.z], i * 3);
     Object.entries(c.w).sort((p, q) => q[1] - p[1]).slice(0, 4).forEach(([b, v], k) => { si[i * 4 + k] = +b; sw[i * 4 + k] = v; }); });
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(P, 3)); g.setAttribute('normal', new THREE.BufferAttribute(N, 3));
-  g.setAttribute('uv', new THREE.BufferAttribute(U, 2)); g.setIndex(Array.from({ length: m }, (_, i) => i));
+  g.setAttribute('uv', new THREE.BufferAttribute(U, 2)); g.setIndex(tri);
   // (the cloth: blue with a fine diagonal weave and a little unevenness, repeated)
   const cv = document.createElement('canvas'); cv.width = cv.height = 256; const cx = cv.getContext('2d'), im = cx.createImageData(256, 256);
   for (let y = 0; y < 256; y++) for (let x = 0; x < 256; x++) { const o = (y * 256 + x) * 4, k = ((x + y) % 6 < 2 ? -9 : 0) + (Math.random() - .5) * 14;
