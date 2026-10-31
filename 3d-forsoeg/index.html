@@ -446,7 +446,7 @@ async function setHair(name) {
 // with a skirt that hangs from the hips; hats and glasses on the head like hair, hats a little bigger to sit over hair)
 const GARMENTS = {
   shirt: { items: [['', 'Undertrøje'], ['toej-tshirt', 'T-shirt'], ['toej-haette', 'Hættetrøje'], ['toej-fodbold', 'Fodboldtrøje']], texs: clothTexs },
-  pants: { items: [['', 'Undershorts'], ['bukser-lange', 'Lange bukser'], ['bukser-shorts', 'Shorts'], ['bukser-cowboy', 'Cowboyshorts', { cuff: .035 }], ['bukser-fodbold', 'Fodboldbukser']], texs: [], waist: true },
+  pants: { items: [['', 'Undershorts'], ['bukser-lange', 'Lange bukser'], ['bukser-shorts', 'Shorts'], ['bukser-cowboy', 'Cowboyshorts', { cuff: .035 }], ['bukser-fodbold', 'Fodboldbukser', { loops: false }]], texs: [], waist: true },
   dress: { items: [['', 'Ingen kjole'], ['kjole-sommer', 'Sommerkjole'], ['kjole-prinsesse', 'Prinsessekjole', { hang: .5, armsOut: 12 }], ['kjole-havfrue', 'Havfruekjole', { skirt: false, margin: .012, reach: 8, tail: true, snug: .2, waist: .15 }]], texs: [], skirt: true, noArms: true },
   shoe: { items: [['', 'Bare fødder'], ['sko-sneakers', 'Sneakers'], ['sko-gummi', 'Gummistøvler'], ['sko-ballet', 'Balletsko']], texs: [] },
   // (hats were made on a bald head: on top of hair they are raised - lift, in eyes' distances - or, a cap, made wider)
@@ -526,12 +526,14 @@ async function loadCloth(name, part) {
   // (trousers too, a little: the thighs came through just above the hems)
   const margin = (opts.margin ?? (G.waist ? .009 : .006)) * H;
   // (a dress has no sleeves: blue Meshy put along an arm or round a hand is dropped)
-  const arms = new Set(G.noArms ? hairBase.body.skeleton.bones.flatMap((b, j) => /Arm|Hand/.test(b.name) ? [j] : []) : []), onArm = new Uint8Array(n), wp = new Float32Array(n * 3).fill(NaN);
+  // (trousers are laid on the body alone too, not on the hands hanging by the hips: their waistband stood out at the sides)
+  const arms = new Set(G.noArms || G.waist ? hairBase.body.skeleton.bones.flatMap((b, j) => /Arm|Hand/.test(b.name) ? [j] : []) : []), onArm = new Uint8Array(n), wp = new Float32Array(n * 3).fill(NaN);
   const legs = part === 'dress', midX = (hairBase.box.min.x + hairBase.box.max.x) / 2, bones = hairBase.body.skeleton.bones;
   const lifts = new Set(G.noArms ? bones.flatMap((b, j) => /Shoulder|Arm|Hand/.test(b.name) ? [j] : []) : []), chest = Math.max(0, bones.findIndex(b => /Spine2$/.test(b.name)));
   // (snug: the top of a strapless dress laid close on the body, over the top twentieth of the figure's height down from
   // its edge - Meshy left it standing off the chest; the mermaid's, snug fifths of it, the whole bodice down to the hips)
-  const snug = part === 'dress' ? (opts.snug || .05) * H : 0;
+  // (trousers: their top sixteenth, the waistband - Meshy made them wide there, standing out at the sides)
+  const snug = part === 'dress' ? (opts.snug || .05) * H : G.waist ? .06 * H : 0;
   let topY = -Infinity; if (snug) for (let i = 0; i < n; i++) topY = Math.max(topY, pos.getY(i) * s + off.y);
   const nearOf = new Int32Array(n).fill(-1), waistY = bones[Math.max(0, bones.findIndex(b => /Spine1$/.test(b.name)))].getWorldPosition(new THREE.Vector3()).y;
   // (the nearest point of the body, in the little boxes round it)
@@ -547,7 +549,8 @@ async function loadCloth(name, part) {
   const found = new Map(), nearest = (x, y, z, noArm = false) => { const at = `${x},${y},${z},${noArm}`; if (!found.has(at)) found.set(at, nearest1(x, y, z, noArm)); return found.get(at); };
   const nearest1 = (x, y, z, noArm) => { let best = -1, bestD = Infinity; const k = [x, y, z].map(c => Math.floor(c / cell));
     // (ring by ring outwards, each box once)
-    for (let r = 1; r <= 3 && best < 0; r++) for (let dx = -r; dx <= r; dx++) for (let dy = -r; dy <= r; dy++) for (let dz = -r; dz <= r; dz++) {
+    // (the body without the arms further: trousers' sides Meshy laid out against the hands were too far from it)
+    for (let r = 1; r <= (noArm ? 8 : 3) && best < 0; r++) for (let dx = -r; dx <= r; dx++) for (let dy = -r; dy <= r; dy++) for (let dz = -r; dz <= r; dz++) {
       if (r > 1 && Math.max(Math.abs(dx), Math.abs(dy), Math.abs(dz)) < r) continue;
       const list = grid.get(`${k[0] + dx},${k[1] + dy},${k[2] + dz}`); if (!list) continue;
       for (const j of list) { if (noArm && armPt[j]) continue; const d2 = (x - pts[j * 6]) ** 2 + (y - pts[j * 6 + 1]) ** 2 + (z - pts[j * 6 + 2]) ** 2; if (d2 < bestD) { bestD = d2; best = j; } } }
@@ -558,7 +561,7 @@ async function loadCloth(name, part) {
     // (on an arm: nearer it than the body, and not close by the body either - at the armpits a dress's top was
     // dropped too, notches in it)
     if (arms.size) { const b = nearest(w.x, w.y, w.z, true), d2 = b < 0 ? Infinity : (w.x - pts[b * 6]) ** 2 + (w.y - pts[b * 6 + 1]) ** 2 + (w.z - pts[b * 6 + 2]) ** 2;
-      onArm[i] = armPt[best] && d2 > (.02 * H) ** 2 || w.y > cutTop - .08 * H && Math.abs(w.x - midX) > sideAt(w.y) + .01 * H; if (!onArm[i] && b >= 0) best = b; }
+      onArm[i] = G.noArms && armPt[best] && d2 > (.02 * H) ** 2 || w.y > cutTop - .08 * H && Math.abs(w.x - midX) > sideAt(w.y) + .01 * H; if (!onArm[i] && b >= 0) best = b; }
     // (a dress below the hips: also the same point on the other leg, the figure being the same on both sides - see below)
     const other = low ? nearest(2 * midX - w.x, w.y, w.z, arms.size > 0) : -1, bl = w.x < midX ? best : other, br = w.x < midX ? other : best;
     // (kept just outside the body - over the vest - where the two figures differ a little)
@@ -587,7 +590,7 @@ async function loadCloth(name, part) {
   // (trousers: the waistband - the top twenty-fifth - a little further out, over the vest's hem and the shorts' band,
   // which came out through it)
   if (G.waist && isFinite(cutTop)) for (let i = 0; i < n; i++) { const j = nearOf[i], k = Math.min(1, Math.max(0, 1 - (cutTop - wp[i * 3 + 1]) / (.04 * H))); if (j < 0 || !k) continue;
-    for (const c of [0, 2]) wp[i * 3 + c] += pts[j * 6 + 3 + c] * .012 * H * k; // (level: out sideways only)
+    for (const c of [0, 2]) wp[i * 3 + c] += pts[j * 6 + 3 + c] * .004 * H * k; // (level: out sideways only; the band of its own covers the rest)
     w.set(wp[i * 3], wp[i * 3 + 1], wp[i * 3 + 2]).applyMatrix4(inv); pos.setXYZ(i, w.x, w.y, w.z); }
   // (nor, in a skirt, what lies flat below the hips: Meshy's blue between the knees, a sheet inside the skirt that
   // showed as a stripe across the legs at the hem)
@@ -595,13 +598,15 @@ async function loadCloth(name, part) {
     const nrm = b.sub(a).cross(c.sub(a)), l = nrm.length(); return l > 0 && Math.abs(nrm.y) / l > .75; };
   const skirt = legs && (opts.skirt ?? G.skirt);
   if (arms.size) { const idx = g.index.array, keep = []; for (let t = 0; t < idx.length; t += 3) if (!onArm[idx[t]] && !onArm[idx[t + 1]] && !onArm[idx[t + 2]] && !(skirt && flat(t))) keep.push(idx[t], idx[t + 1], idx[t + 2]); g.setIndex(keep); }
-  g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(skinIndex, 4)); g.setAttribute('skinWeight', new THREE.Float32BufferAttribute(skinWeight, 4));
-  g.normalizeNormals(); const cloth = new THREE.SkinnedMesh(g, new THREE.MeshStandardMaterial({ map: setupHairTexture(img, G.texs), roughness: .85, metalness: 0, side: THREE.DoubleSide }));
+  const ownIdx = Array.from(g.index.array);
+  let si = skinIndex, sw = skinWeight; if (G.waist && isFinite(cutTop)) [si, sw] = waistband(g, wp, skinIndex, skinWeight, cutTop, H, inv, opts.loops ?? true, img);
+  g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(si, 4)); g.setAttribute('skinWeight', new THREE.Float32BufferAttribute(sw, 4));
+  g.normalizeNormals(); const cloth = new THREE.SkinnedMesh(g, new THREE.MeshStandardMaterial({ map: setupHairTexture(img, G.texs), roughness: .85, metalness: 0, side: THREE.DoubleSide, vertexColors: !!g.attributes.color }));
   cloth.castShadow = true; cloth.name = name; cloth.frustumCulled = false; cloth.normalizeSkinWeights();
   const body = hairBase.body; cloth.position.copy(body.position); cloth.quaternion.copy(body.quaternion); cloth.scale.copy(body.scale);
   body.parent.add(cloth); cloth.bind(body.skeleton, body.bindMatrix); if (picked[part]) recolourHair(picked[part], G.texs);
   // (trousers sit further out - their waistband most - and are looked for further out)
-  cloth.userData.covered = coverBody(wp, g.index.array, H, opts.reach ?? (G.waist ? 3 : 2), opts.tail, G.waist || opts.snug ? cutTop : Infinity, G.waist); return cloth; }
+  cloth.userData.covered = coverBody(wp, ownIdx, H, opts.reach ?? (G.waist ? 3 : 2), opts.tail, G.waist || opts.snug ? cutTop : Infinity, G.waist); return cloth; }
 // (the body close under a garment is hidden, so it cannot poke through it when the figure moves - the white underwear
 // came through the trousers at the hips and knees in the dance; under a wide skirt the legs stay)
 // (reach: how far under it, in hundredths of the figure's height - further for the mermaid dress, a knee lifted in
@@ -665,6 +670,58 @@ function clipAbove(g, y, below = false) {
     const poly = []; for (let k = 0; k < 3; k++) { const a = v[k], b = v[(k + 1) % 3]; if (!up[k]) poly.push(a); if (up[k] !== up[(k + 1) % 3]) poly.push(cross(a, b)); }
     for (let k = 1; k + 1 < poly.length; k++) out.push(poly[0], poly[k], poly[k + 1]); }
   at.forEach((a, k) => g.setAttribute(['position', 'normal', 'uv'][k], new THREE.Float32BufferAttribute(vals[k], a.itemSize))); g.setIndex(out); }
+// (trousers: a waistband of their own round the top, a little out over them, with belt loops and a button at the front -
+// Meshy's had none, the fabric only stopped there. Its colour is the trousers' just below it, a shade darker, and it
+// moves as they do there. Added to g in the mesh's own place - inv - with a colour for each corner, the trousers' own
+// left as they are; the skin indices and weights back, with the band's after the trousers')
+function waistband(g, wp, si, sw, top, H, inv, loops, img) {
+  const n = wp.length / 3, uv = g.attributes.uv, N = 72, used = new Uint8Array(n); for (const i of g.index.array) used[i] = 1;
+  let cx = 0, cz = 0, c = 0; for (let i = 0; i < n; i++) if (used[i] && wp[i * 3 + 1] > top - .03 * H) { cx += wp[i * 3]; cz += wp[i * 3 + 2]; c++; }
+  if (!c) return [si, sw]; cx /= c; cz /= c;
+  // (round it in N slices from the back, through the front - a = 0 - to the back again: how far out the trousers come
+  // at the top, and one of their corners a little lower down for the colour and the movement)
+  const bin = i => Math.floor((Math.atan2(wp[i * 3] - cx, wp[i * 3 + 2] - cz) / (2 * Math.PI) + .5) * N) % N, ang = b => (b + .5) / N * 2 * Math.PI - Math.PI;
+  const r = new Float32Array(N), from = new Int32Array(N).fill(-1);
+  for (let i = 0; i < n; i++) { if (!used[i]) continue; const y = wp[i * 3 + 1], b = bin(i), d = Math.hypot(wp[i * 3] - cx, wp[i * 3 + 2] - cz);
+    if (y > top - .03 * H) r[b] = Math.max(r[b], d); if (y < top - .02 * H && y > top - .05 * H && from[b] < 0) from[b] = i; }
+  const fill = a => { for (let k = 1; k < N; k++) for (let b = 0; b < N; b++) if (!a[b]) for (const e of [b - 1, b + 1]) { const v = a[(e + N) % N]; if (v) { a[b] = v; break; } } };
+  fill(r); for (let b = 0; b < N; b++) if (from[b] < 0) from[b] = 0; for (let k = 1; k < N; k++) for (let b = 0; b < N; b++) if (!from[b]) from[b] = from[(b + 1) % N] || from[(b + N - 1) % N];
+  // (smoothed: the most of five slices, then their average - the band goes round evenly, nowhere inside the trousers)
+  const most = Array.from(r, (_, b) => Math.max(...[-2, -1, 0, 1, 2].map(e => r[(b + e + N) % N])));
+  const R = most.map((_, b) => [-2, -1, 0, 1, 2].reduce((t, e) => t + most[(b + e + N) % N], 0) / 5);
+  // (its colour one spot of the picture: of the trousers' corners just below the band, the one most like the middle of
+  // their colours - each slice's own spot made it striped, light seams and dark folds among them)
+  const cv = document.createElement('canvas'); cv.width = img.width; cv.height = img.height; const cx2 = cv.getContext('2d'); cx2.drawImage(img, 0, 0);
+  const px = cx2.getImageData(0, 0, img.width, img.height).data, rgb = i => { const o = (Math.min(img.height - 1, Math.floor((1 - uv.getY(i)) * img.height)) * img.width + Math.min(img.width - 1, Math.floor(uv.getX(i) * img.width))) * 4; return [px[o], px[o + 1], px[o + 2]]; };
+  const cols = Array.from(from, rgb), mid = [0, 1, 2].map(k => cols.map(c => c[k]).sort((p, q) => p - q)[cols.length >> 1]);
+  let pick = from[0], bestD = Infinity; cols.forEach((c, b) => { const d = (c[0] - mid[0]) ** 2 + (c[1] - mid[1]) ** 2 + (c[2] - mid[2]) ** 2; if (d < bestD) { bestD = d; pick = from[b]; } });
+  const P = [], U = [], C = [], S = [], W = [], I = [], v = new THREE.Vector3();
+  // (a corner at angle a, rad out from the middle, side along the band)
+  const corner = (rad, y, a, shade, side = 0) => { const k = Math.round((a / (2 * Math.PI) + .5) * N - .5), fb = from[(k % N + N) % N], j = P.length / 3;
+    v.set(cx + Math.sin(a) * rad + Math.cos(a) * side, y, cz + Math.cos(a) * rad - Math.sin(a) * side).applyMatrix4(inv); P.push(v.x, v.y, v.z);
+    U.push(uv.getX(pick), uv.getY(pick)); C.push(shade, shade, shade); for (let q = 0; q < 4; q++) { S.push(si[fb * 4 + q]); W.push(sw[fb * 4 + q]); } return j; };
+  const quad = (a, b, c2, d) => I.push(a, b, c2, a, c2, d);
+  const bh = .03 * H, o = .002 * H, y0 = top - bh, y1 = top + .002 * H;
+  // (the band: its front, its top folded in to the trousers, and underneath, closed against them)
+  for (const [ra, ya, rb, yb] of [[0, y0, 0, y1], [0, y1, -.008 * H, y1], [-.006 * H, y0, 0, y0]]) {
+    const first = P.length / 3; for (let b = 0; b <= N; b++) { const a = ang(b % N) - Math.PI / N; corner(R[b % N] + o + ra, ya, a, .88); corner(R[b % N] + o + rb, yb, a, .88); }
+    for (let b = 0; b < N; b++) quad(first + b * 2, first + b * 2 + 2, first + b * 2 + 3, first + b * 2 + 1); }
+  const at = a => { const b = Math.floor((a / (2 * Math.PI) + .5) * N) % N; return R[(b + N) % N] + o; };
+  // (a little box standing on the band: half its width, its height from - to, how far out, and how dark)
+  const box = (a, half, ya, yb, depth, shade) => { const rad = at(a), f = P.length / 3;
+    for (const [s, d] of [[-1, 0], [1, 0], [1, depth], [-1, depth]]) for (const y of [ya, yb]) corner(rad + d, y, a, shade, s * half);
+    // (corners: 0/1 left inner low/high, 2/3 right inner, 4/5 right outer, 6/7 left outer)
+    quad(f + 6, f + 4, f + 5, f + 7); quad(f + 0, f + 6, f + 7, f + 1); quad(f + 4, f + 2, f + 3, f + 5); quad(f + 7, f + 5, f + 3, f + 1); quad(f + 0, f + 2, f + 4, f + 6); };
+  // (belt loops: two at the front, one at each hip, two at the back and one in the middle of it)
+  if (loops) for (const a of [-.55, .55, -1.5, 1.5, -2.45, 2.45, Math.PI - .001]) box(a, .006 * H, y0 - .005 * H, y1 + .003 * H, .005 * H, .78);
+  // (and a button in front, dark)
+  box(0, .006 * H, top - bh / 2 - .006 * H, top - bh / 2 + .006 * H, .004 * H, .35);
+  const e = new THREE.BufferGeometry(); e.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); e.setIndex(I); e.computeVertexNormals();
+  const m = g.attributes.position.count, add = (k, vals, size) => { const a = g.attributes[k]; g.setAttribute(k, new THREE.Float32BufferAttribute([...a.array, ...vals], size)); };
+  add('position', P, 3); add('normal', e.attributes.normal.array, 3); add('uv', U, 2);
+  g.setAttribute('color', new THREE.Float32BufferAttribute([...new Array(m * 3).fill(1), ...C], 3));
+  g.setIndex([...g.index.array, ...I.map(i => i + m)]);
+  return [Uint16Array.from([...si, ...S]), Float32Array.from([...sw, ...W])]; }
 // (another garment's triangles added to g, as corners of their own after g's - the number of g's own corners back)
 function mergeInto(g, c) {
   const n = g.attributes.position.count, idx = Array.from(g.index.array);
