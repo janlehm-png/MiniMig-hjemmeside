@@ -448,10 +448,10 @@ const GARMENTS = {
   // (tops and trousers made from the figure's own body - makeCloth; the Meshy ones were fitted on, with holes and edges
   // that stood out)
   shirt: { items: [['', 'Undertrøje'], ['toej-tshirt', 'T-shirt', { made: true, sleeve: .3, length: .01 }],
-    ['toej-haette', 'Hættetrøje', { made: true, sleeve: .99, length: .04, hood: true, pocket: true, cloth: 'smooth' }],
-    ['toej-fodbold', 'Fodboldtrøje', { made: true, sleeve: .32, tuck: true, trim: true, cloth: 'smooth' }]], texs: clothTexs },
+    ['toej-haette', 'Hættetrøje', { made: true, sleeve: 1.06, length: .04, hood: true, pocket: true, cloth: 'smooth' }],
+    ['toej-fodbold', 'Fodboldtrøje', { made: true, sleeve: .32, length: .01, tuck: true, trim: true, cloth: 'smooth' }]], texs: clothTexs },
   pants: { items: [['', 'Undershorts'], ['bukser-lange', 'Lange bukser', { made: true, hem: .06, flare: .008, loose: .008 }], ['bukser-shorts', 'Shorts', { made: true, hem: .3, flare: .016, cuff: .03 }],
-    ['bukser-cowboy', 'Cowboyshorts', { made: true, hem: .24, flare: .012, cuff: .035, cloth: 'denim' }], ['bukser-fodbold', 'Fodboldbukser', { made: true, hem: .32, flare: .028, loops: false, cloth: 'smooth' }]], texs: [], waist: true },
+    ['bukser-cowboy', 'Cowboyshorts', { made: true, hem: .24, flare: .012, cuff: .035, cloth: 'denim' }], ['bukser-fodbold', 'Fodboldbukser', { made: true, hem: .32, flare: .01, loops: false, cloth: 'smooth' }]], texs: [], waist: true },
   dress: { items: [['', 'Ingen kjole'], ['kjole-sommer', 'Sommerkjole'], ['kjole-prinsesse', 'Prinsessekjole', { hang: .5, armsOut: 12 }], ['kjole-havfrue', 'Havfruekjole', { skirt: false, margin: .012, reach: 8, tail: true, snug: .2, waist: .15 }]], texs: [], skirt: true, noArms: true },
   shoe: { items: [['', 'Bare fødder'], ['sko-sneakers', 'Sneakers'], ['sko-gummi', 'Gummistøvler'], ['sko-ballet', 'Balletsko']], texs: [] },
   // (hats were made on a bald head: on top of hair they are raised - lift, in eyes' distances - or, a cap, made wider)
@@ -547,11 +547,11 @@ function makeCloth(name, part, opts) {
   // (level: below it the garment is put out sideways only, so its bottom edge stays straight)
   let edges, out, level = Infinity;
   if (pants) { const hem = opts.hem * H;
-    edges = [{ f: p => hem - p[1], fold: (opts.cuff || 0) * H, bare: .05 * H }, { f: p => p[1] - top, bare: .003 * H }];
+    edges = [{ f: p => hem - p[1], fold: (opts.cuff || 0) * H, bare: .03 * H }, { f: p => p[1] - top, bare: .003 * H }];
     // (loose: the legs that much further out all the way down, from just under the crotch - long trousers sat like tights)
     out = p => { const s = clamp((crotch - p[1]) / (crotch - hem)); return (.006 + (opts.flare || 0) * s * s + (opts.loose || 0) * clamp((crotch - p[1]) / (.06 * H))) * H; }; }
-  // (tucked: a top's bottom inside the trousers, a little below their top)
-  else { const hem = opts.tuck ? top - .03 * H : hipY - (opts.length || 0) * H, sleeveX = K.shoulderX + opts.sleeve * (K.wristX - K.shoulderX); level = hem + .03 * H;
+  // (tucked: a top's bottom inside the trousers - as long as a T-shirt, so with underpants only no tummy shows)
+  else { const hem = hipY - (opts.length || 0) * H, sleeveX = K.shoulderX + opts.sleeve * (K.wristX - K.shoulderX); level = hem + .03 * H;
     // (the neck: round it, a little out from it, and below the bottom of it - lower at the front, with a V there for the
     // football shirt. Cut only near the neck: what lies further out from it - the shoulders - is kept whatever its
     // height; cut by height alone it was wide and square, ragged on the shoulders)
@@ -570,7 +570,7 @@ function makeCloth(name, part, opts) {
     // the T-shirt's bottom was lumpy; tucked in, the other way: inside the trousers)
     const ease = v => { v = clamp(v); return v * v * (3 - 2 * v); };
     out = p => { let o = .009 + .006 * clamp((side(p) - K.shoulderX) / (sleeveX - K.shoulderX));
-      o += opts.tuck ? -.0075 * ease((top + .03 * H - p[1]) / (.03 * H)) : .004 * ease((top + .03 * H - p[1]) / (.06 * H));
+      o += opts.tuck ? -.006 * ease((top + .03 * H - p[1]) / (.03 * H)) : .004 * ease((top + .03 * H - p[1]) / (.06 * H));
       if (opts.hood) o += .05 * Math.sqrt(hood(p));
       if (opts.pocket && pocket(p)) o += .006; return o * H; };
     var pocket = p => p[2] > K.cz && side(p) < .075 * H && p[1] > hem + .02 * H && p[1] < hem + .1 * H;
@@ -607,9 +607,40 @@ function makeCloth(name, part, opts) {
   // in, narrower there - and back in at the fold's top, so it looks folded double; as light as the rest)
   edges.forEach((e, i) => { if (e.fold) for (const v of tris) add(cut(inside(v), p => -e.f(p) - e.fold, 'f' + i), 'fold' + i + '|', { fold: i }); });
   const m = list.length, wp = new Float32Array(m * 3), P = new Float32Array(m * 3), N = new Float32Array(m * 3), U = new Float32Array(m * 2), C = new Float32Array(m * 3), si = new Uint16Array(m * 4), sw = new Float32Array(m * 4), w = new THREE.Vector3(), n = new THREE.Vector3();
-  list.forEach((c, i) => { const e = edges[c.fold], fold = e ? .012 * (1 - (-e.f(c.p) / e.fold) ** 8) : 0;
-    n.fromArray(c.n).normalize(); w.fromArray(c.p).addScaledVector(n, out(c.p) + fold * H); if (c.p[1] < level) w.y = c.p[1];
-    wp.set([w.x, w.y, w.z], i * 3); U.set([(w.x + w.z) * 3, w.y * 3], i * 2);
+  // (each corner's way out from the body, evened out over its neighbours - the underside of the underpants' edge points
+  // down, and out that way the cloth bulged there; level, for corners kept at their heights)
+  const want = new Float32Array(m), dir = new Float32Array(m * 3), nb = Array.from({ length: m }, () => new Set());
+  for (let t = 0; t < tri.length; t += 3) for (let k = 0; k < 3; k++) { const a = tri[t + k], b = tri[t + (k + 1) % 3]; nb[a].add(b); nb[b].add(a); }
+  const nbs = nb.map(s => [...s]), tmp = new Float32Array(m * 3);
+  list.forEach((c, i) => { n.fromArray(c.n).normalize(); dir.set([n.x, n.y, n.z], i * 3); });
+  for (let it = 0; it < 30; it++) { for (let i = 0; i < m; i++) { let x = dir[i * 3], y = dir[i * 3 + 1], z = dir[i * 3 + 2]; for (const j of nbs[i]) { x += dir[j * 3]; y += dir[j * 3 + 1]; z += dir[j * 3 + 2]; }
+      if (list[i].p[1] < level) y = 0; const l = Math.hypot(x, y, z) || 1; tmp.set([x / l, y / l, z / l], i * 3); } dir.set(tmp); }
+  list.forEach((c, i) => { const e = edges[c.fold], fold = e ? .012 * (1 - (-e.f(c.p) / e.fold) ** 8) : 0; want[i] = out(c.p) + fold * H;
+    w.fromArray(c.p).addScaledVector(n.fromArray(dir, i * 3), want[i]); if (c.p[1] < level) w.y = c.p[1]; wp.set([w.x, w.y, w.z], i * 3); });
+  // (trouser legs: laid round each leg by a table of how far out the leg comes, at each height and all the way round it,
+  // from its middle - the table smoothed up and down, every bump letting off only slowly below and above it, so the
+  // cloth goes smoothly over the edge of the underpants modelled on the figure, a step on the thighs before. Smoothing
+  // the corners themselves drew each leg in like a ring and kept the step - and on a tucked-in top drew it out over the
+  // trousers. Up at the crotch the legs join, and there the cloth goes back to lying on the body)
+  if (pants) { const slab = .01 * H, NB = 48, top0 = Math.floor((crotch - .02 * H) / slab), legs = {};
+    for (const s of [-1, 1]) { const cx = new Float64Array(top0 + 1), cz = new Float64Array(top0 + 1), cn = new Float64Array(top0 + 1);
+      for (let j = 0; j < armPt.length; j++) { const y = pts[j * 6 + 1], k = Math.floor(y / slab); if (armPt[j] || k < 0 || k > top0 || Math.sign(pts[j * 6] - K.mid) !== s) continue; cx[k] += pts[j * 6]; cz[k] += pts[j * 6 + 2]; cn[k]++; }
+      // (the middle of the leg at each height, evened out over a few heights)
+      const ax = [], az = []; for (let k = 0; k <= top0; k++) { let x = 0, z = 0, c = 0; for (let e = -3; e <= 3; e++) { const q = Math.min(top0, Math.max(0, k + e)); if (cn[q]) { x += cx[q] / cn[q]; z += cz[q] / cn[q]; c++; } } ax[k] = c ? x / c : K.mid + s * .05 * H; az[k] = c ? z / c : K.cz; }
+      const r = Array.from({ length: top0 + 1 }, () => new Float32Array(NB)), bin = (x, z, k) => (Math.atan2(x - ax[k], z - az[k]) / (2 * Math.PI) + .5) * NB;
+      for (let j = 0; j < armPt.length; j++) { const y = pts[j * 6 + 1], k = Math.floor(y / slab); if (armPt[j] || k < 0 || k > top0 || Math.sign(pts[j * 6] - K.mid) !== s) continue;
+        const b = Math.floor(bin(pts[j * 6], pts[j * 6 + 2], k)) % NB; r[k][b] = Math.max(r[k][b], Math.hypot(pts[j * 6] - ax[k], pts[j * 6 + 2] - az[k])); }
+      for (const row of r) for (let it = 0; it < NB; it++) for (let b = 0; b < NB; b++) if (!row[b]) row[b] = row[(b + 1) % NB] || row[(b + NB - 1) % NB];
+      // (each bump letting off slowly: a quarter as much as the height away from it, then evened out over five heights)
+      const up = r.map((row, k) => row.map((_, b) => { let v = 0; for (let e = -20; e <= 20; e++) { const q = k + e; if (q >= 0 && q <= top0) v = Math.max(v, r[q][b] - .25 * Math.abs(e) * slab); } return v; }));
+      const sm = up.map((row, k) => row.map((_, b) => { let v = 0, c = 0; for (let e = -2; e <= 2; e++) { const q = k + e; if (q >= 0 && q <= top0) { v += up[q][b]; c++; } } return v / c; }));
+      legs[s] = { ax, az, sm, bin }; }
+    const at = (L, y, ang) => { const f = Math.min(top0, Math.max(0, y / slab - .5)), k0 = Math.floor(f), k1 = Math.min(top0, k0 + 1), t = f - k0, b0 = Math.floor(ang) % NB, b1 = (b0 + 1) % NB, u = ang - Math.floor(ang);
+      const v = k => L.sm[k][b0] * (1 - u) + L.sm[k][b1] * u; return [L.ax[k0] * (1 - t) + L.ax[k1] * t, L.az[k0] * (1 - t) + L.az[k1] * t, v(k0) * (1 - t) + v(k1) * t]; };
+    list.forEach((c, i) => { const y = c.p[1], blend = clamp((crotch - .02 * H - y) / (.04 * H)); if (!blend) return; const L = legs[Math.sign(c.p[0] - K.mid) || 1], k = Math.min(top0, Math.max(0, Math.floor(y / slab)));
+      const [x0, z0] = [L.ax[k], L.az[k]], ang = L.bin(c.p[0], c.p[2], k), [axx, axz, R] = at(L, y, ang), a = (ang / NB - .5) * 2 * Math.PI, rad = R + want[i];
+      wp[i * 3] += (axx + Math.sin(a) * rad - wp[i * 3]) * blend; wp[i * 3 + 2] += (axz + Math.cos(a) * rad - wp[i * 3 + 2]) * blend; }); }
+  list.forEach((c, i) => { n.fromArray(dir, i * 3); w.fromArray(wp, i * 3); U.set([(w.x + w.z) * 3, w.y * 3], i * 2);
     // (shades: a pocket, and the trimmed edges)
     const rim = hood && opts.hood ? hood(c.p) : 0, shade = (pocket && opts.pocket && pocket(c.p) ? .8 : 1) * (rim > 0 && rim < .25 ? .6 : 1) *(edges.some(e => e.trim && -e.f(c.p) < .018 * H) ? .55 : 1); C.set([shade, shade, shade], i * 3);
     w.applyMatrix4(inv); P.set([w.x, w.y, w.z], i * 3); n.transformDirection(inv); N.set([n.x, n.y, n.z], i * 3);
