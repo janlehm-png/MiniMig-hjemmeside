@@ -446,7 +446,8 @@ async function setHair(name) {
 // with a skirt that hangs from the hips; hats and glasses on the head like hair, hats a little bigger to sit over hair)
 const GARMENTS = {
   shirt: { items: [['', 'Undertrøje'], ['toej-tshirt', 'T-shirt'], ['toej-haette', 'Hættetrøje'], ['toej-fodbold', 'Fodboldtrøje']], texs: clothTexs },
-  pants: { items: [['', 'Undershorts'], ['bukser-lange', 'Lange bukser'], ['bukser-shorts', 'Shorts'], ['bukser-cowboy', 'Cowboyshorts', { cuff: .035 }], ['bukser-fodbold', 'Fodboldbukser', { loops: false }]], texs: [], waist: true },
+  pants: { items: [['', 'Undershorts'], ['bukser-lange', 'Lange bukser'], ['bukser-shorts', 'Shorts'], ['bukser-cowboy', 'Cowboyshorts', { cuff: .035 }], ['bukser-fodbold', 'Fodboldbukser', { loops: false }],
+    ['shorts-ny', 'Nye shorts', { made: true, hem: .3, flare: .016 }]], texs: [], waist: true },
   dress: { items: [['', 'Ingen kjole'], ['kjole-sommer', 'Sommerkjole'], ['kjole-prinsesse', 'Prinsessekjole', { hang: .5, armsOut: 12 }], ['kjole-havfrue', 'Havfruekjole', { skirt: false, margin: .012, reach: 8, tail: true, snug: .2, waist: .15 }]], texs: [], skirt: true, noArms: true },
   shoe: { items: [['', 'Bare fødder'], ['sko-sneakers', 'Sneakers'], ['sko-gummi', 'Gummistøvler'], ['sko-ballet', 'Balletsko']], texs: [] },
   // (hats were made on a bald head: on top of hair they are raised - lift, in eyes' distances - or, a cap, made wider)
@@ -466,7 +467,8 @@ async function setGarment(part, name) { const G = GARMENTS[part], ask = ++dressi
   // (everything changed at once, when all of it is loaded - the underwear went skin coloured and the last dress stayed on
   // while a new one loaded; a choice made meanwhile wins)
   for (const [p, g] of Object.entries(GARMENTS)) if (g.now && !g.meshes[g.now]) { const n = g.now;
-    g.loading[n] ??= g.head ? loadHair(n, g.texs, p, g.items.find(i => i[0] === n)?.[2] || {}) : loadCloth(n, p); g.meshes[n] = await g.loading[n]; }
+    g.loading[n] ??= g.head ? loadHair(n, g.texs, p, g.items.find(i => i[0] === n)?.[2] || {})
+      : g.items.find(i => i[0] === n)?.[2]?.made ? Promise.resolve(makeCloth(n, p, g.items.find(i => i[0] === n)[2])) : loadCloth(n, p); g.meshes[n] = await g.loading[n]; }
   if (ask !== dressing) return;
   for (const g of Object.values(GARMENTS)) g.shown = g.now;
   const shirt = !!(GARMENTS.dress.now || GARMENTS.shirt.now), pants = !!(GARMENTS.dress.now || GARMENTS.pants.now);
@@ -501,6 +503,57 @@ function armsOut() { const deg = GARMENTS.dress.items.find(it => it[0] === GARME
     const side = Math.sign(b.getWorldPosition(new THREE.Vector3()).applyMatrix4(glb.matrixWorld.clone().invert()).x - hx);
     armAxis.set(0, 0, 1).applyQuaternion(glb.getWorldQuaternion(armUp)); armTurn.setFromAxisAngle(armAxis, side * deg * Math.PI / 180);
     b.parent.getWorldQuaternion(armUp); b.quaternion.premultiply(armUp.clone().invert().multiply(armTurn).multiply(armUp)); b.updateMatrixWorld(true); } }
+// (a garment made from the figure's own body instead of a Meshy one: the part of it the garment covers - from hem up to
+// the navel, hem in fractions of the height - laid a little outside it, the legs a little wider towards the hem (flare). It
+// always fits, has no holes, and moves exactly as the body does - a knee crossing the other takes it along. Its cloth a
+// picture of its own, coloured like the others, and a waistband as theirs)
+function makeCloth(name, part, opts) {
+  const G = GARMENTS[part], body = hairBase.body, geo = body.geometry, idx = geo.index?.array, { pts, inv, H } = hairBase.whole;
+  const bsi = geo.attributes.skinIndex, bsw = geo.attributes.skinWeight, bones = body.skeleton.bones, corners = idx ? idx.length : geo.attributes.position.count;
+  const top = hairBase.hipY + .06 * H, hem = opts.hem * H, crotch = hairBase.hipY - .06 * H, at = c => idx ? idx[c] : c;
+  const arms = new Set(bones.flatMap((b, j) => /Arm|Hand/.test(b.name) ? [j] : [])), armPt = new Uint8Array(pts.length / 6);
+  for (let j = 0; j < armPt.length; j++) { let a = 0; for (let c = 0; c < 4; c++) if (arms.has(bsi.getComponent(j, c))) a += bsw.getComponent(j, c); armPt[j] = a > .5; }
+  // (the body's triangles between hem and top, by their middles - and each spot's way out the average of the corners
+  // there, so the garment does not come apart where the body's colour picture has a seam)
+  const ways = new Map(), spot = j => `${pts[j * 6]},${pts[j * 6 + 1]},${pts[j * 6 + 2]}`, tris = [];
+  for (let c = 0; c < corners; c += 3) { const v = [at(c), at(c + 1), at(c + 2)], ys = v.map(j => pts[j * 6 + 1]);
+    if (Math.max(...ys) < hem || Math.min(...ys) > top || v.some(j => armPt[j])) continue; tris.push(v);
+    for (const j of v) { const k = spot(j), n = ways.get(k) || [0, 0, 0]; for (let e = 0; e < 3; e++) n[e] += pts[j * 6 + 3 + e]; ways.set(k, n); } }
+  // (a corner: where it is, its way out, and the bones it follows; one of the body's, or one between two on a triangle's
+  // side where the hem or the top cuts it - the triangles cut there, so the edges are straight)
+  const own = j => ({ p: [pts[j * 6], pts[j * 6 + 1], pts[j * 6 + 2]], n: ways.get(spot(j)), w: [0, 1, 2, 3].reduce((w, c) => { const b = bsi.getComponent(j, c); w[b] = (w[b] || 0) + bsw.getComponent(j, c); return w; }, {}) });
+  const between = (a, b, y) => { const t = (y - a.p[1]) / (b.p[1] - a.p[1]), w = {};
+    for (const [k, v] of Object.entries(a.w)) w[k] = (w[k] || 0) + v * (1 - t); for (const [k, v] of Object.entries(b.w)) w[k] = (w[k] || 0) + v * t;
+    return { p: a.p.map((c, e) => e === 1 ? y : c + (b.p[e] - c) * t), n: a.n.map((c, e) => c + (b.n[e] - c) * t), w }; };
+  const cut = (poly, y, keepAbove) => { const out = []; for (let k = 0; k < poly.length; k++) { const a = poly[k], b = poly[(k + 1) % poly.length], ia = keepAbove ? a.p[1] >= y : a.p[1] <= y, ib = keepAbove ? b.p[1] >= y : b.p[1] <= y;
+    if (ia) out.push(a); if (ia !== ib) out.push(between(a, b, y)); } return out; };
+  const list = []; for (const v of tris) { const poly = cut(cut(v.map(own), hem, true), top, false); for (let k = 1; k + 1 < poly.length; k++) list.push(poly[0], poly[k], poly[k + 1]); }
+  const m = list.length, wp = new Float32Array(m * 3), P = new Float32Array(m * 3), N = new Float32Array(m * 3), U = new Float32Array(m * 2), si = new Uint16Array(m * 4), sw = new Float32Array(m * 4), w = new THREE.Vector3(), n = new THREE.Vector3();
+  list.forEach((c, i) => { const y = c.p[1], s = Math.min(1, Math.max(0, (crotch - y) / (crotch - hem)));
+    n.fromArray(c.n).normalize(); w.fromArray(c.p).addScaledVector(n, (.006 + (opts.flare || 0) * s * s) * H);
+    w.y = y; wp.set([w.x, w.y, w.z], i * 3); U.set([(w.x + w.z) * 3, w.y * 3], i * 2);
+    w.applyMatrix4(inv); P.set([w.x, w.y, w.z], i * 3); n.transformDirection(inv); N.set([n.x, n.y, n.z], i * 3);
+    Object.entries(c.w).sort((p, q) => q[1] - p[1]).slice(0, 4).forEach(([b, v], k) => { si[i * 4 + k] = +b; sw[i * 4 + k] = v; }); });
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(P, 3)); g.setAttribute('normal', new THREE.BufferAttribute(N, 3));
+  g.setAttribute('uv', new THREE.BufferAttribute(U, 2)); g.setIndex(Array.from({ length: m }, (_, i) => i));
+  // (the cloth: blue with a fine diagonal weave and a little unevenness, repeated)
+  const cv = document.createElement('canvas'); cv.width = cv.height = 256; const cx = cv.getContext('2d'), im = cx.createImageData(256, 256);
+  for (let y = 0; y < 256; y++) for (let x = 0; x < 256; x++) { const o = (y * 256 + x) * 4, k = ((x + y) % 6 < 2 ? -9 : 0) + (Math.random() - .5) * 14;
+    im.data.set([44 + k * .4, 72 + k * .6, 170 + k, 255], o); }
+  cx.putImageData(im, 0, 0);
+  const [si2, sw2] = waistband(g, wp, si, sw, top, H, inv, opts.loops ?? true, cv, { pts, armPt });
+  // (the hem a shade darker, as if turned up)
+  const col = g.attributes.color; for (let i = 0; i < m; i++) if (wp[i * 3 + 1] < hem + .012 * H) col.setXYZ(i, .82, .82, .82);
+  g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(si2, 4)); g.setAttribute('skinWeight', new THREE.Float32BufferAttribute(sw2, 4));
+  const map = setupHairTexture(cv, G.texs); map.wrapS = map.wrapT = THREE.RepeatWrapping;
+  const cloth = new THREE.SkinnedMesh(g, new THREE.MeshStandardMaterial({ map, roughness: .85, metalness: 0, side: THREE.DoubleSide, vertexColors: true }));
+  cloth.castShadow = true; cloth.name = name; cloth.frustumCulled = false; cloth.normalizeSkinWeights(); cloth.userData.orig = g.attributes.position.array.slice();
+  cloth.position.copy(body.position); cloth.quaternion.copy(body.quaternion); cloth.scale.copy(body.scale);
+  body.parent.add(cloth); cloth.bind(body.skeleton, body.bindMatrix); if (picked[part]) recolourHair(picked[part], G.texs);
+  // (the body under it hidden, but not near the hem: with a knee lifted one sees up the leg, and the hidden thigh's ragged
+  // edge showed there - it moves just as the garment does, so it cannot come through it anyway)
+  const covered = new Uint8Array(pts.length / 6); for (let j = 0; j < covered.length; j++) { const y = pts[j * 6 + 1]; covered[j] = !armPt[j] && y > hem + .05 * H && y < top - .003 * H ? 1 : 0; }
+  cloth.userData.covered = covered; return cloth; }
 async function loadCloth(name, part) {
   const G = GARMENTS[part];
   if (!hairBase || !(await exists(`${name}.json${FIGUR_V}`))) return null;
