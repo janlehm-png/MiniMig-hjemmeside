@@ -450,8 +450,8 @@ const GARMENTS = {
   shirt: { items: [['', 'Undertrøje'], ['toej-tshirt', 'T-shirt', { made: true, sleeve: .3, length: .01 }],
     ['toej-haette', 'Hættetrøje', { made: true, sleeve: 1.06, length: .04, hood: true, pocket: true, cloth: 'smooth' }],
     ['toej-fodbold', 'Fodboldtrøje', { made: true, sleeve: .32, length: .01, tuck: true, trim: true, cloth: 'smooth' }]], texs: clothTexs },
-  pants: { items: [['', 'Undershorts'], ['bukser-lange', 'Lange bukser', { made: true, hem: .06, flare: .008, loose: .008 }], ['bukser-shorts', 'Shorts', { made: true, hem: .3, flare: .016, cuff: .03 }],
-    ['bukser-cowboy', 'Cowboyshorts', { made: true, hem: .24, flare: .012, cuff: .035, cloth: 'denim' }], ['bukser-fodbold', 'Fodboldbukser', { made: true, hem: .32, flare: .01, loops: false, cloth: 'smooth' }]], texs: [], waist: true },
+  pants: { items: [['', 'Undershorts'], ['bukser-lange', 'Lange bukser', { made: true, hem: .06, loose: .004 }], ['bukser-shorts', 'Shorts', { made: true, hem: .3, cuff: .03 }],
+    ['bukser-cowboy', 'Cowboyshorts', { made: true, hem: .24, cuff: .035, cloth: 'denim' }], ['bukser-fodbold', 'Fodboldbukser', { made: true, hem: .32, loose: .004, loops: false, cloth: 'smooth' }]], texs: [], waist: true },
   dress: { items: [['', 'Ingen kjole'], ['kjole-sommer', 'Sommerkjole'], ['kjole-prinsesse', 'Prinsessekjole', { hang: .5, armsOut: 12 }], ['kjole-havfrue', 'Havfruekjole', { skirt: false, margin: .012, reach: 8, tail: true, snug: .2, waist: .15 }]], texs: [], skirt: true, noArms: true },
   shoe: { items: [['', 'Bare fødder'], ['sko-sneakers', 'Sneakers'], ['sko-gummi', 'Gummistøvler'], ['sko-ballet', 'Balletsko']], texs: [] },
   // (hats were made on a bald head: on top of hair they are raised - lift, in eyes' distances - or, a cap, made wider)
@@ -547,7 +547,7 @@ function makeCloth(name, part, opts) {
   // (level: below it the garment is put out sideways only, so its bottom edge stays straight)
   let edges, out, level = Infinity;
   if (pants) { const hem = opts.hem * H;
-    edges = [{ f: p => hem - p[1], fold: (opts.cuff || 0) * H, bare: .03 * H }, { f: p => p[1] - top, bare: .003 * H }];
+    edges = [{ f: p => hem - p[1], fold: (opts.cuff || 0) * H, bare: .012 * H }, { f: p => p[1] - top, bare: .003 * H }];
     // (loose: the legs that much further out all the way down, from just under the crotch - long trousers sat like tights)
     out = p => { const s = clamp((crotch - p[1]) / (crotch - hem)); return (.006 + (opts.flare || 0) * s * s + (opts.loose || 0) * clamp((crotch - p[1]) / (.06 * H))) * H; }; }
   // (tucked: a top's bottom inside the trousers - as long as a T-shirt, so with underpants only no tummy shows)
@@ -631,9 +631,11 @@ function makeCloth(name, part, opts) {
       for (let j = 0; j < armPt.length; j++) { const y = pts[j * 6 + 1], k = Math.floor(y / slab); if (armPt[j] || k < 0 || k > top0 || Math.sign(pts[j * 6] - K.mid) !== s) continue;
         const b = Math.floor(bin(pts[j * 6], pts[j * 6 + 2], k)) % NB; r[k][b] = Math.max(r[k][b], Math.hypot(pts[j * 6] - ax[k], pts[j * 6 + 2] - az[k])); }
       for (const row of r) for (let it = 0; it < NB; it++) for (let b = 0; b < NB; b++) if (!row[b]) row[b] = row[(b + 1) % NB] || row[(b + NB - 1) % NB];
-      // (each bump letting off slowly: a quarter as much as the height away from it, then evened out over five heights)
-      const up = r.map((row, k) => row.map((_, b) => { let v = 0; for (let e = -20; e <= 20; e++) { const q = k + e; if (q >= 0 && q <= top0) v = Math.max(v, r[q][b] - .25 * Math.abs(e) * slab); } return v; }));
-      const sm = up.map((row, k) => row.map((_, b) => { let v = 0, c = 0; for (let e = -2; e <= 2; e++) { const q = k + e; if (q >= 0 && q <= top0) { v += up[q][b]; c++; } } return v / c; }));
+      // (evened out up and down the leg, the average over eight hundredths of the height above and below: the underpants'
+      // edge melts into the leg, which goes on straight. Kept out over every bump, before, the legs flared out in a cone
+      // from it, or - out as far as anything above - went down as wide as the hips. What is left of the edge under the
+      // cloth is hidden with the body)
+      const sm = r.map((row, k) => row.map((_, b) => { let v = 0, c = 0; for (let e = -8; e <= 8; e++) { const q = k + e; if (q >= 0 && q <= top0) { v += r[q][b]; c++; } } return v / c; }));
       legs[s] = { ax, az, sm, bin }; }
     const at = (L, y, ang) => { const f = Math.min(top0, Math.max(0, y / slab - .5)), k0 = Math.floor(f), k1 = Math.min(top0, k0 + 1), t = f - k0, b0 = Math.floor(ang) % NB, b1 = (b0 + 1) % NB, u = ang - Math.floor(ang);
       const v = k => L.sm[k][b0] * (1 - u) + L.sm[k][b1] * u; return [L.ax[k0] * (1 - t) + L.ax[k1] * t, L.az[k0] * (1 - t) + L.az[k1] * t, v(k0) * (1 - t) + v(k1) * t]; };
