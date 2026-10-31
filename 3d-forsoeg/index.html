@@ -447,7 +447,7 @@ async function setHair(name) {
 const GARMENTS = {
   shirt: { items: [['', 'Undertrøje'], ['toej-tshirt', 'T-shirt'], ['toej-haette', 'Hættetrøje'], ['toej-fodbold', 'Fodboldtrøje']], texs: clothTexs },
   pants: { items: [['', 'Undershorts'], ['bukser-lange', 'Lange bukser'], ['bukser-shorts', 'Shorts'], ['bukser-cowboy', 'Cowboyshorts', { cuff: .035 }], ['bukser-fodbold', 'Fodboldbukser', { loops: false }],
-    ['shorts-ny', 'Nye shorts', { made: true, hem: .3, flare: .016 }]], texs: [], waist: true },
+    ['shorts-ny', 'Nye shorts', { made: true, hem: .3, flare: .016, cuff: .03 }]], texs: [], waist: true },
   dress: { items: [['', 'Ingen kjole'], ['kjole-sommer', 'Sommerkjole'], ['kjole-prinsesse', 'Prinsessekjole', { hang: .5, armsOut: 12 }], ['kjole-havfrue', 'Havfruekjole', { skirt: false, margin: .012, reach: 8, tail: true, snug: .2, waist: .15 }]], texs: [], skirt: true, noArms: true },
   shoe: { items: [['', 'Bare fødder'], ['sko-sneakers', 'Sneakers'], ['sko-gummi', 'Gummistøvler'], ['sko-ballet', 'Balletsko']], texs: [] },
   // (hats were made on a bald head: on top of hair they are raised - lift, in eyes' distances - or, a cap, made wider)
@@ -534,9 +534,15 @@ function makeCloth(name, part, opts) {
   const list = [], ids = new Map(), tri = []; for (const v of tris) { const poly = cut(cut(v.map(own), hem, true), top, false);
     const at = poly.map(c => { if (!ids.has(c.key)) { ids.set(c.key, list.length); list.push(c); } return ids.get(c.key); });
     for (let k = 1; k + 1 < at.length; k++) tri.push(at[0], at[k], at[k + 1]); }
+  // (the legs turned up at the hem: the same cloth again over its lowest cuff hundredths, further out - the darker hem
+  // alone looked turned in, the leg narrower there - and back in to the leg at its top edge, so it looks folded double)
+  const cuff = (opts.cuff || 0) * H; if (cuff) for (const v of tris) { const poly = cut(cut(v.map(own), hem, true), hem + cuff, false);
+    const at = poly.map(c => { const k = 'cuff|' + c.key; if (!ids.has(k)) { ids.set(k, list.length); list.push({ ...c, cuff: true }); } return ids.get(k); });
+    for (let k = 1; k + 1 < at.length; k++) tri.push(at[0], at[k], at[k + 1]); }
   const m = list.length, wp = new Float32Array(m * 3), P = new Float32Array(m * 3), N = new Float32Array(m * 3), U = new Float32Array(m * 2), si = new Uint16Array(m * 4), sw = new Float32Array(m * 4), w = new THREE.Vector3(), n = new THREE.Vector3();
   list.forEach((c, i) => { const y = c.p[1], s = Math.min(1, Math.max(0, (crotch - y) / (crotch - hem)));
-    n.fromArray(c.n).normalize(); w.fromArray(c.p).addScaledVector(n, (.006 + (opts.flare || 0) * s * s) * H);
+    const fold = c.cuff ? .008 * (1 - ((y - hem) / cuff) ** 4) : 0;
+    n.fromArray(c.n).normalize(); w.fromArray(c.p).addScaledVector(n, (.006 + (opts.flare || 0) * s * s + fold) * H);
     w.y = y; wp.set([w.x, w.y, w.z], i * 3); U.set([(w.x + w.z) * 3, w.y * 3], i * 2);
     w.applyMatrix4(inv); P.set([w.x, w.y, w.z], i * 3); n.transformDirection(inv); N.set([n.x, n.y, n.z], i * 3);
     Object.entries(c.w).sort((p, q) => q[1] - p[1]).slice(0, 4).forEach(([b, v], k) => { si[i * 4 + k] = +b; sw[i * 4 + k] = v; }); });
@@ -548,8 +554,8 @@ function makeCloth(name, part, opts) {
     im.data.set([44 + k * .4, 72 + k * .6, 170 + k, 255], o); }
   cx.putImageData(im, 0, 0);
   const [si2, sw2] = waistband(g, wp, si, sw, top, H, inv, opts.loops ?? true, cv, { pts, armPt });
-  // (the hem a shade darker, as if turned up)
-  const col = g.attributes.color; for (let i = 0; i < m; i++) if (wp[i * 3 + 1] < hem + .012 * H) col.setXYZ(i, .82, .82, .82);
+  // (the cuff a shade darker, the cloth's other side)
+  const col = g.attributes.color; list.forEach((c, i) => { if (c.cuff) col.setXYZ(i, .92, .92, .92); });
   g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(si2, 4)); g.setAttribute('skinWeight', new THREE.Float32BufferAttribute(sw2, 4));
   const map = setupHairTexture(cv, G.texs); map.wrapS = map.wrapT = THREE.RepeatWrapping;
   const cloth = new THREE.SkinnedMesh(g, new THREE.MeshStandardMaterial({ map, roughness: .85, metalness: 0, side: THREE.DoubleSide, vertexColors: true }));
