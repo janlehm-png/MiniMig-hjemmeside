@@ -508,9 +508,11 @@ function armsOut() { const deg = GARMENTS.dress.items.find(it => it[0] === GARME
 // always fits, has no holes, and moves exactly as the body does - a knee crossing the other takes it along. Its cloth a
 // picture of its own, coloured like the others, and a waistband as theirs)
 function makeCloth(name, part, opts) {
-  const G = GARMENTS[part], body = hairBase.body, geo = body.geometry, idx = geo.index?.array, { pts, inv, H } = hairBase.whole;
-  const bsi = geo.attributes.skinIndex, bsw = geo.attributes.skinWeight, bones = body.skeleton.bones, corners = idx ? idx.length : geo.attributes.position.count;
-  const top = hairBase.hipY + .06 * H, hem = opts.hem * H, crotch = hairBase.hipY - .06 * H, at = c => idx ? idx[c] : c;
+  // (all of the body's triangles, three corners each in turn - not its index, which hides what other trousers cover: made
+  // after those had been on, the shorts had a hole there and only their hem and waistband showed)
+  const G = GARMENTS[part], body = hairBase.body, geo = body.geometry, { pts, inv, H } = hairBase.whole;
+  const bsi = geo.attributes.skinIndex, bsw = geo.attributes.skinWeight, bones = body.skeleton.bones, corners = geo.attributes.position.count;
+  const top = hairBase.hipY + .06 * H, hem = opts.hem * H, crotch = hairBase.hipY - .06 * H, at = c => c;
   const arms = new Set(bones.flatMap((b, j) => /Arm|Hand/.test(b.name) ? [j] : [])), armPt = new Uint8Array(pts.length / 6);
   for (let j = 0; j < armPt.length; j++) { let a = 0; for (let c = 0; c < 4; c++) if (arms.has(bsi.getComponent(j, c))) a += bsw.getComponent(j, c); armPt[j] = a > .5; }
   // (the body's triangles between hem and top, by their middles - and each spot's way out the average of the corners
