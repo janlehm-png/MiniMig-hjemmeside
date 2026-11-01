@@ -483,7 +483,8 @@ async function setGarment(part, name) { const G = GARMENTS[part], ask = ++dressi
 // trousers came out through the T-shirt's hem. Each time from the top's own shape, kept in orig)
 function layer() { const top = GARMENTS.shirt.meshes[GARMENTS.shirt.shown], under = GARMENTS.pants.meshes[GARMENTS.pants.shown]; if (!top) return;
   // (both made from the body, the top already lies outside the trousers - pushed out by them it went in ruffles)
-  const P = top.geometry.attributes.position; P.array.set(top.userData.orig); P.needsUpdate = true; if (!under || top.userData.made && under.userData.made) return;
+  // (a top that goes in the trousers tucked in only when there are trousers to go in)
+  const P = top.geometry.attributes.position; P.array.set(top.userData.tucked && under?.userData.made ? top.userData.tucked : top.userData.orig); P.needsUpdate = true; if (!under || top.userData.made && under.userData.made) return;
   const { inv, H } = hairBase.whole, M = inv.clone().invert(), v = new THREE.Vector3(), N = 72, step = .01 * H, Q = under.geometry.attributes.position, w = new Float32Array(Q.count * 3);
   let lo = Infinity, hi = -Infinity, cx = 0, cz = 0, c = 0;
   for (let i = 0; i < Q.count; i++) { v.fromBufferAttribute(Q, i).applyMatrix4(M); w.set([v.x, v.y, v.z], i * 3); lo = Math.min(lo, v.y); hi = Math.max(hi, v.y); }
@@ -545,7 +546,7 @@ function makeCloth(name, part, opts) {
   // so it cannot come through it anyway)
   // (and how far out from the body it lies at each point)
   // (level: below it the garment is put out sideways only, so its bottom edge stays straight)
-  let edges, out, level = Infinity;
+  let edges, out, level = Infinity, tuckIn = null;
   if (pants) { const hem = opts.hem * H;
     edges = [{ f: p => hem - p[1], fold: (opts.cuff || 0) * H, bare: .012 * H }, { f: p => p[1] - top, bare: .003 * H }];
     // (loose: the legs that much further out all the way down, from just under the crotch - long trousers sat like tights)
@@ -571,11 +572,14 @@ function makeCloth(name, part, opts) {
     // the T-shirt's bottom was lumpy; tucked in, the other way: inside the trousers)
     const ease = v => { v = clamp(v); return v * v * (3 - 2 * v); };
     out = p => { let o = .009 + .006 * clamp((side(p) - K.shoulderX) / (sleeveX - K.shoulderX));
-      // (tucked, right in on the body from the trousers' top down: a little further out, it lay as far out as their
-      // waistband, and the two colours came through each other in patches)
-      o += opts.tuck ? -.009 * ease((top + .02 * H - p[1]) / (.02 * H)) : .004 * ease((top + .03 * H - p[1]) / (.06 * H));
+      // (by .004 the T-shirt and hoodie stood out too wide at the bottom)
+      if (!opts.tuck) o += .0015 * ease((top + .03 * H - p[1]) / (.06 * H));
       if (opts.hood) o += .05 * Math.sqrt(hood(p));
       if (opts.pocket && pocket(p)) o += .006; return o * H; };
+    // (tucked, right in on the body from the trousers' top down: a little further out, it lay as far out as their
+    // waistband, and the two colours came through each other in patches. Only with trousers on - with underpants only,
+    // on the body like that, the underpants came through its bottom edge in jags)
+    if (opts.tuck) tuckIn = p => -.009 * ease((top + .02 * H - p[1]) / (.02 * H)) * H;
     var pocket = p => p[2] > K.cz && side(p) < .075 * H && p[1] > hem + .02 * H && p[1] < hem + .1 * H;
     // (the hood lying down on the back: a rounded pouch below the neck, behind the back only - spread round the neck it
     // made lumps on the shoulders, seen from the front - with its rim darker, so it reads as a hood from behind)
@@ -612,14 +616,15 @@ function makeCloth(name, part, opts) {
   const m = list.length, wp = new Float32Array(m * 3), P = new Float32Array(m * 3), N = new Float32Array(m * 3), U = new Float32Array(m * 2), C = new Float32Array(m * 3), si = new Uint16Array(m * 4), sw = new Float32Array(m * 4), w = new THREE.Vector3(), n = new THREE.Vector3();
   // (each corner's way out from the body, evened out over its neighbours - the underside of the underpants' edge points
   // down, and out that way the cloth bulged there; level, for corners kept at their heights)
-  const want = new Float32Array(m), dir = new Float32Array(m * 3), nb = Array.from({ length: m }, () => new Set());
+  const T = tuckIn && new Float32Array(m * 3), want = new Float32Array(m), dir = new Float32Array(m * 3), nb = Array.from({ length: m }, () => new Set());
   for (let t = 0; t < tri.length; t += 3) for (let k = 0; k < 3; k++) { const a = tri[t + k], b = tri[t + (k + 1) % 3]; nb[a].add(b); nb[b].add(a); }
   const nbs = nb.map(s => [...s]), tmp = new Float32Array(m * 3);
   list.forEach((c, i) => { n.fromArray(c.n).normalize(); dir.set([n.x, n.y, n.z], i * 3); });
   for (let it = 0; it < 30; it++) { for (let i = 0; i < m; i++) { let x = dir[i * 3], y = dir[i * 3 + 1], z = dir[i * 3 + 2]; for (const j of nbs[i]) { x += dir[j * 3]; y += dir[j * 3 + 1]; z += dir[j * 3 + 2]; }
       if (list[i].p[1] < level) y = 0; const l = Math.hypot(x, y, z) || 1; tmp.set([x / l, y / l, z / l], i * 3); } dir.set(tmp); }
   list.forEach((c, i) => { const e = edges[c.fold], fold = e ? .012 * (1 - (-e.f(c.p) / e.fold) ** 8) : 0; want[i] = out(c.p) + fold * H;
-    w.fromArray(c.p).addScaledVector(n.fromArray(dir, i * 3), want[i]); if (c.p[1] < level) w.y = c.p[1]; wp.set([w.x, w.y, w.z], i * 3); });
+    w.fromArray(c.p).addScaledVector(n.fromArray(dir, i * 3), want[i]); if (c.p[1] < level) w.y = c.p[1]; wp.set([w.x, w.y, w.z], i * 3);
+    if (tuckIn) { w.addScaledVector(n, tuckIn(c.p)).applyMatrix4(inv); T.set([w.x, w.y, w.z], i * 3); } });
   // (trouser legs: laid round each leg by a table of how far out the leg comes, at each height and all the way round it,
   // from its middle - the table smoothed up and down, every bump letting off only slowly below and above it, so the
   // cloth goes smoothly over the edge of the underpants modelled on the figure, a step on the thighs before. Smoothing
@@ -668,7 +673,7 @@ function makeCloth(name, part, opts) {
   body.parent.add(cloth); cloth.bind(body.skeleton, body.bindMatrix); if (picked[part]) recolourHair(picked[part], G.texs);
   // (the body under it hidden, all but near its edges)
   const covered = new Uint8Array(pts.length / 6); for (let j = 0; j < covered.length; j++) covered[j] = !(pants && armPt[j]) && edges.every(e => e.f(P3(j)) < -e.bare) ? 1 : 0;
-  cloth.userData.covered = covered; cloth.userData.made = true; return cloth; }
+  cloth.userData.covered = covered; cloth.userData.made = true; cloth.userData.tucked = T; return cloth; }
 async function loadCloth(name, part) {
   const G = GARMENTS[part];
   if (!hairBase || !(await exists(`${name}.json${FIGUR_V}`))) return null;
@@ -923,7 +928,8 @@ function waistband(g, wp, si, sw, top, H, inv, loops, img, body) {
     quad(f + 6, f + 4, f + 5, f + 7); quad(f + 0, f + 6, f + 7, f + 1); quad(f + 4, f + 2, f + 3, f + 5); quad(f + 7, f + 5, f + 3, f + 1); quad(f + 0, f + 2, f + 4, f + 6); };
   // (belt loops: two at the front, one at each hip, two at the back and one in the middle of it)
   // (flat, and the hip ones a little forward, off the sides, so seen from the front nothing stands out there)
-  if (loops) for (const a of [-.55, .55, -1.2, 1.2, -2.45, 2.45, Math.PI - .001]) box(a, .006 * H, y0 - .005 * H, y1 + .003 * H, .003 * H, .78);
+  // (thin, so a T-shirt let out only a little over the band still covers them - deeper, they came through it in specks)
+  if (loops) for (const a of [-.55, .55, -1.2, 1.2, -2.45, 2.45, Math.PI - .001]) box(a, .006 * H, y0 - .005 * H, y1 + .003 * H, .0015 * H, .78);
   // (and a button in front, dark - not on football shorts' elastic)
   if (body.button ?? true) box(0,.006 * H, top - bh / 2 - .006 * H, top - bh / 2 + .006 * H, .004 * H, .35);
   const e = new THREE.BufferGeometry(); e.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); e.setIndex(I); e.computeVertexNormals();
