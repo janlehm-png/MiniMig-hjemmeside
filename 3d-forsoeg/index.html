@@ -75,8 +75,7 @@ const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(30, 1, .1, 100);
 camera.position.set(0, 1.25, 6.2);
 const controls = new OrbitControls(camera, canvas);
-controls.target.set(0, 1.05, 0); controls.enablePan = false; controls.enableDamping = true;controls.minDistance = 2.5; controls.maxDistance = 10; controls.minPolarAngle = .5; controls.maxPolarAngle = 1.75;
-// light: soft sky light, a warm key light with soft shadow, and a rim light from behind
+controls.target.set(0, 1.05, 0); controls.enablePan = false; controls.enableDamping = true;controls.minDistance = 2.5; controls.maxDistance = 10; controls.minPolarAngle = .5; controls.maxPolarAngle = 1.75;// light: soft sky light, a warm key light with soft shadow, and a rim light from behind
 scene.add(new THREE.HemisphereLight(0xFFFFFF, 0xFFE2A8, 1.4));
 const key = new THREE.DirectionalLight(0xFFF4E0, 2.2); key.position.set(2.5, 5, 4); key.castShadow = true;
 key.shadow.mapSize.set(1024, 1024); key.shadow.camera.left = -2; key.shadow.camera.right = 2; key.shadow.camera.top = 3; key.shadow.camera.bottom = -1; key.shadow.radius = 6;
@@ -435,7 +434,41 @@ var styleLists = () => ({ hair: [HAIRS, hairNow, setHair],
 async function setHair(name) {
   hairNow = name; renderStyles();
   if (name && !hairMeshes[name]) hairMeshes[name] = await loadHair(name);
-  for (const [n, m] of Object.entries(hairMeshes)) if (m) m.visible = n === hairNow; }
+  for (const [n, m] of Object.entries(hairMeshes)) if (m) m.visible = n === hairNow; hatHair(); }
+// (a cap over hair: the hair under it - up to its edge all round - left out, and the hair just below the edge drawn in
+// to it, so it comes out from under the cap. One size of cap for all: made big enough for the fullest hair, it sat
+// loose on short hair, and fuller hair came out through it, top and back. Each time from the hair's own shape, kept in orig)
+function hatHair() {
+  for (const m of Object.values(hairMeshes)) if (m?.userData.orig) { m.geometry.attributes.position.array.set(m.userData.orig); m.geometry.attributes.position.needsUpdate = true; m.geometry.setIndex(m.userData.origIndex); }
+  const hair = hairMeshes[hairNow], G = GARMENTS.hat, hat = G.meshes[G.shown];
+  if (!hair || !hat || !G.items.find(i => i[0] === G.shown)?.[2]?.cap) return;
+  const P = hair.geometry.attributes.position; hair.userData.orig ??= P.array.slice(); hair.userData.origIndex ??= hair.geometry.index.clone();
+  const M = hairBase.whole.inv.clone().invert(), v = new THREE.Vector3(), [L, R] = hairBase.eyes, apart = L.distanceTo(R), eyeZ = (L.z + R.z) / 2;
+  // (the cap's crown - not its peak, out in front of the eyes - round its middle, in N slices: how low its edge comes in
+  // each, and how far out it is there)
+  const C = hat.geometry.attributes.position, crown = [], all = new Float32Array(24); let cx = 0, cz = 0;
+  for (let i = 0; i < C.count; i++) { v.fromBufferAttribute(C, i).applyMatrix4(M); if (v.z < eyeZ - .1 * apart) { crown.push(v.x, v.y, v.z); cx += v.x; cz += v.z; } }
+  cx /= crown.length / 3; cz /= crown.length / 3;
+  const N = 24, bin = (x, z) => Math.floor((Math.atan2(x - cx, z - cz) / (2 * Math.PI) + .5) * N) % N, rimY = new Float32Array(N).fill(Infinity), rimR = new Float32Array(N), n = new Float32Array(N);
+  for (let i = 0; i < C.count; i++) { v.fromBufferAttribute(C, i).applyMatrix4(M); all[bin(v.x, v.z)]++; }
+  for (let i = 0; i < crown.length; i += 3) { const b = bin(crown[i], crown[i + 2]); rimY[b] = Math.min(rimY[b], crown[i + 1]); n[b]++; }
+  for (let i = 0; i < crown.length; i += 3) { const b = bin(crown[i], crown[i + 2]); if (crown[i + 1] < rimY[b] + .15 * apart) rimR[b] = Math.max(rimR[b], Math.hypot(crown[i] - cx, crown[i + 2] - cz)); }
+  // (the slices at the front, where the peak was left out and only the top of the crown is in them, the edge found
+  // between the nearest whole slices on either side - from that top it went far too high, the hair came through there)
+  const whole = b => n[b] > .6 * all[b];
+  for (let b = 0; b < N; b++) if (!whole(b)) { let a = b, c = b, da = 0, dc = 0; while (!whole(a) && da < N) { a = (a + N - 1) % N; da++; } while (!whole(c) && dc < N) { c = (c + 1) % N; dc++; }
+    const t = da / (da + dc); rimY[b] = rimY[a] * (1 - t) + rimY[c] * t; rimR[b] = rimR[a] * (1 - t) + rimR[c] * t; }
+  // (drawn in over half the eyes' distance below the edge, so it widens gently out from under the cap - over less,
+  // it stood out from under it in a ledge)
+  const band = .5 * apart, under = new Uint8Array(P.count);
+  for (let i = 0; i < P.count; i++) { v.fromBufferAttribute(P, i).applyMatrix4(M); const b = bin(v.x, v.z), d = Math.hypot(v.x - cx, v.z - cz);
+    // (left out a little above the edge: drawn in there, it fills the gap between the cap's edge and the head - the
+    // scalp showed in it from behind)
+    if (v.y > rimY[b] + .1 * apart) { under[i] = 1; continue; }
+    const t = Math.min(1, Math.max(0, 1 - (rimY[b] - v.y) / band)), f = t * t * (3 - 2 * t), want = .97 * rimR[b];
+    if (f && d > want) { const k = 1 + (want / d - 1) * f; v.x = cx + (v.x - cx) * k; v.z = cz + (v.z - cz) * k; v.applyMatrix4(hairBase.whole.inv); P.setXYZ(i, v.x, v.y, v.z); } }
+  const idx = hair.userData.origIndex.array, keep = []; for (let t = 0; t < idx.length; t += 3) if (!under[idx[t]] && !under[idx[t + 1]] && !under[idx[t + 2]]) keep.push(idx[t], idx[t + 1], idx[t + 2]);
+  hair.geometry.setIndex(keep); P.needsUpdate = true; }
 
 // ---- clothes: <name>.json and <name>.jpg (cut out of a whole figure made in Meshy, by haar-ud.ps1 -Cloth), set on
 // the figure by its height and feet - both figures come from the same picture of MiniMig, so the rest fits - and moved
@@ -453,7 +486,7 @@ const GARMENTS = {
   dress: { items: [['', 'Ingen kjole'], ['kjole-sommer', 'Sommerkjole'], ['kjole-prinsesse', 'Prinsessekjole', { hang: .5, armsOut: 12 }], ['kjole-havfrue', 'Havfruekjole', { skirt: false, margin: .012, reach: 8, tail: true, snug: .2, waist: .15 }]], texs: [], skirt: true, noArms: true },
   shoe: { items: [['', 'Bare fødder'], ['sko-sneakers', 'Sneakers', { sole: .02 }], ['sko-gummi', 'Gummistøvler', { pale: .9, paleTop: .015 }], ['sko-ballet', 'Balletsko', { paleFrom: .06, flat: .35, solid: .03 }]], texs: [] },
   // (hats were made on a bald head: on top of hair they are raised - lift, in eyes' distances - or, a cap, made wider)
-  hat: { items: [['', 'Ingen hat'], ['hat-kasket', 'Kasket', { grow: 1.32, lift: .25 }], ['hat-krone', 'Krone', { grow: 1.05, lift: .55 }], ['hat-kanin', 'Kaninører', { grow: 1.12, lift: .3 }],
+  hat: { items: [['', 'Ingen hat'], ['hat-kasket', 'Kasket', { grow: 1.12, lift: .1, cap: true }], ['hat-krone', 'Krone', { grow: 1.05, lift: .55 }], ['hat-kanin', 'Kaninører', { grow: 1.12, lift: .3 }],
     ['hat-sloejfe', 'Sløjfe', { grow: 1.05, lift: .35 }]], texs: [], head: true },
   glasses: { items: [['', 'Ingen briller'], ['briller-runde', 'Runde'], ['briller-sol', 'Solbriller'], ['briller-hjerte', 'Hjerte'], ['briller-stjerne', 'Stjerne']], texs: [], head: true } };
 // (now: what is chosen, shown: what the figure has on - the same once all of it is loaded)
@@ -476,7 +509,7 @@ async function setGarment(part, name) { const G = GARMENTS[part], ask = ++dressi
   const shirt = !!(GARMENTS.dress.now || GARMENTS.shirt.now), pants = !!(GARMENTS.dress.now || GARMENTS.pants.now);
   if (tex && (!!tex.covered[PARTS.shirt] !== shirt || !!tex.covered[PARTS.pants] !== pants)) { tex.covered = { [PARTS.shirt]: shirt, [PARTS.pants]: pants }; redrawBody(); }
   for (const g of Object.values(GARMENTS)) for (const [n, m] of Object.entries(g.meshes)) if (m) m.visible = n === g.shown;
-  hideBody(); layer(); }
+  hideBody(); layer(); hatHair(); }
 // (a top over trousers: its lower part let out over them, wherever they come further out - drawn up by the navel the
 // trousers came out through the T-shirt's hem. Each time from the top's own shape, kept in orig)
 function layer() { const top = GARMENTS.shirt.meshes[GARMENTS.shirt.shown], under = GARMENTS.pants.meshes[GARMENTS.pants.shown]; if (!top) return;
