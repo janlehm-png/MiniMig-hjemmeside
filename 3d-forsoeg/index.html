@@ -19,6 +19,10 @@
   .bar button { border: 2px solid var(--line); background: var(--tile); color: var(--ink); border-radius: 16px; padding: 10px 14px;
     font: 700 15px/1 system-ui, sans-serif; cursor: pointer; }
   .bar button.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent) inset; }
+  /* (the movements too, each with a little picture of the figure doing it - ikoner/stilling-*.png, made by the page) */
+  .bar button.pose { padding: 4px 10px 6px; font-size: 12px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .bar button.pose img { width: 48px; height: 48px; pointer-events: none; }
+  .bar button.pose span { pointer-events: none; }
   /* the colours: a part chosen above, its colours as small round buttons below (no pop-up over the figure) */
   .colors { flex-basis: 100%; display: flex; flex-direction: column; align-items: center; gap: 6px; }
   .parts { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
@@ -43,11 +47,11 @@
 <canvas id="scene"></canvas>
 <div class="top"><span class="tag" id="tag">Henter figuren …</span></div>
 <div class="bar">
-  <button data-anim="staa" class="on">Stå</button>
-  <button data-anim="vink">Vink</button>
-  <button data-anim="hop">Hop</button>
-  <button data-anim="dans">Dans</button>
-  <button id="spin">Drej rundt</button>
+  <button data-anim="staa" class="on pose"><img src="ikoner/stilling-staa.png" alt=""><span>Stå</span></button>
+  <button data-anim="vink" class="pose"><img src="ikoner/stilling-vink.png" alt=""><span>Vink</span></button>
+  <button data-anim="hop" class="pose"><img src="ikoner/stilling-hop.png" alt=""><span>Hop</span></button>
+  <button data-anim="dans" class="pose"><img src="ikoner/stilling-dans.png" alt=""><span>Dans</span></button>
+  <button id="spin" class="pose"><img src="ikoner/stilling-drej.png" alt=""><span>Drej rundt</span></button>
   <div class="colors"><div class="parts" id="parts"></div><div class="parts" id="styles" hidden></div>
     <div class="sliders" id="sliders">
       <label>Farve <input type="range" id="s-h" min="0" max="360" step="1"></label>
@@ -417,12 +421,35 @@ function glassesParts(g, img, eyes, opts) {
       for (let x = Math.max(0, lo[0]); x <= Math.min(N - 1, hi[0]); x++) for (let y = Math.max(0, lo[1]); y <= Math.min(M - 1, hi[1]); y++) {
         const px = x + .5, py = y + .5, a = ((v[1][0] - px) * (v[2][1] - py) - (v[2][0] - px) * (v[1][1] - py)) / area, b = ((v[2][0] - px) * (v[0][1] - py) - (v[0][0] - px) * (v[2][1] - py)) / area;
         if (a >= -.05 && b >= -.05 && a + b <= 1.05 || Math.hypot(px - (v[0][0] + v[1][0] + v[2][0]) / 3, py - (v[0][1] + v[1][1] + v[2][1]) / 3) < .7) D[y * N + x] = 1e9; } }
+    // (the outside: the empty squares reachable from the edge; the empty ones it cannot reach are holes in the glass, and
+    // count as glass - measured from them too, the glass round them was taken for frame)
+    const out0 = new Uint8Array(N * M), hole = new Uint8Array(N * M), stack = [];
+    for (let x = 0; x < N; x++) for (const y of [0, M - 1]) stack.push(y * N + x); for (let y = 0; y < M; y++) for (const x of [0, N - 1]) stack.push(y * N + x);
+    while (stack.length) { const i = stack.pop(); if (out0[i] || D[i]) continue; out0[i] = 1; const x = i % N, y = (i / N) | 0;
+      if (x > 0) stack.push(i - 1); if (x < N - 1) stack.push(i + 1); if (y > 0) stack.push(i - N); if (y < M - 1) stack.push(i + N); }
+    for (let i = 0; i < N * M; i++) if (!D[i] && !out0[i]) { D[i] = 1e9; hole[i] = 1; }
     for (let y = 0; y < M; y++) for (let x = 0; x < N; x++) { const i = y * N + x; if (!D[i]) continue; let d = D[i];
       if (x > 0) d = Math.min(d, D[i - 1] + 1); if (y > 0) d = Math.min(d, D[i - N] + 1); if (x > 0 && y > 0) d = Math.min(d, D[i - N - 1] + 1.41); if (x < N - 1 && y > 0) d = Math.min(d, D[i - N + 1] + 1.41); D[i] = d; }
     for (let y = M - 1; y >= 0; y--) for (let x = N - 1; x >= 0; x--) { const i = y * N + x; if (!D[i]) continue; let d = D[i];
       if (x < N - 1) d = Math.min(d, D[i + 1] + 1); if (y < M - 1) d = Math.min(d, D[i + N] + 1); if (x < N - 1 && y < M - 1) d = Math.min(d, D[i + N + 1] + 1.41); if (x > 0 && y < M - 1) d = Math.min(d, D[i + N - 1] + 1.41); D[i] = d; }
     const inner = new Set(front.filter(t => { const [x, y] = C(t), gx = Math.min(N - 1, Math.max(0, Math.floor((x - x0) / cell))), gy = Math.min(M - 1, Math.max(0, Math.floor((y - y0) / cell))); return D[gy * N + gx] * cell > opts.lens * apart; }));
-    lens = tris.filter(t => inner.has(t)); tris = tris.filter(t => !inner.has(t)); }
+    lens = tris.filter(t => inner.has(t)); tris = tris.filter(t => !inner.has(t));
+    // (the glass made anew, flat, filling the frame's opening right to its inside: Meshy's own had gaps by the frame -
+    // the sunglasses' paler blue there was left out with the head. The opening: the glass's squares and the holes.
+    // Each side's glass a flat plane through the middles of Meshy's)
+    const xc = (eyes[0].x + eyes[1].x) / 2, plane = side => { const pts = lens.map(C).filter(p => Math.sign(p[0] - xc) === side); if (pts.length < 3) return null;
+      // (z = a + b x + c y, least squares)
+      const S = [[0, 0, 0], [0, 0, 0], [0, 0, 0]], r = [0, 0, 0]; for (const [x, y, z] of pts) { const v = [1, x, y]; for (let i = 0; i < 3; i++) { r[i] += v[i] * z; for (let j = 0; j < 3; j++) S[i][j] += v[i] * v[j]; } }
+      const det = m => m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1]) - m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]) + m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]), d0 = det(S);
+      return [0, 1, 2].map(k => det(S.map((row, i) => row.map((v, j) => j === k ? r[i] : v))) / d0); };
+    const planes = { [-1]: plane(-1), 1: plane(1) }, pos = Array.from(P.array), nrm = Array.from(g.attributes.normal.array), uvs = Array.from(uv.array), fresh = [];
+    for (let gy = 0; gy < M; gy++) for (let gx = 0; gx < N; gx++) { const i = gy * N + gx; if (!(D[i] * cell > .4 * opts.lens * apart || hole[i])) continue; // (in under the frame a little: a thin light line showed between them)
+      const cxw = x0 + (gx + .5) * cell, pl = planes[Math.sign(cxw - xc) || 1]; if (!pl) continue; const base = pos.length / 3;
+      for (const [dx, dy] of [[0, 0], [1, 0], [1, 1], [0, 1]]) { const x = x0 + (gx + dx) * cell, y = y0 + (gy + dy) * cell; pos.push(x, y, pl[0] + pl[1] * x + pl[2] * y); nrm.push(0, 0, 1); uvs.push(0, 0); }
+      fresh.push(base, base + 1, base + 2, base, base + 2, base + 3); }
+    if (fresh.length) { g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(nrm, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+      const out = []; for (const t of tris) out.push(idx[t], idx[t + 1], idx[t + 2]); g.setIndex([...out, ...fresh]);
+      g.addGroup(0, out.length, 0); g.addGroup(out.length, fresh.length, 1); return fresh.length / 3; } }
   const out = []; for (const t of [...tris, ...lens]) out.push(idx[t], idx[t + 1], idx[t + 2]); g.setIndex(out);
   if (lens.length) { g.addGroup(0, tris.length * 3, 0); g.addGroup(tris.length * 3, lens.length * 3, 1); }
   return lens.length; }
