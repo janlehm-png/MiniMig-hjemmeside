@@ -451,6 +451,25 @@ function restHat(hat, hair, sink) {
   if (!gaps.length) return; gaps.sort((a, b) => a - b); const dy = gaps[Math.floor(gaps.length * .5)] - sink * apart;
   for (let i = 0; i < P.count; i++) { v.set(W[i * 3], W[i * 3 + 1] + dy, W[i * 3 + 2]).applyMatrix4(hairBase.whole.inv); P.setXYZ(i, v.x, v.y, v.z); }
   P.needsUpdate = true; }
+// (a hairband - the bunny ears' - made bigger or smaller about the middle of the head until it lies on what is under it,
+// the hair or the bald head, out from it by gap eyes' distances: one size for all, it stood off the bald head and was
+// hidden in the hair. How far out the hair and head come, in each direction from the middle; the band is the part of
+// the hat near that, the ears the part far out past it)
+function wrapHat(hat, hair, gap) {
+  const P = hat.geometry.attributes.position; hat.userData.orig ??= P.array.slice(); P.array.set(hat.userData.orig);
+  const M = hairBase.whole.inv.clone().invert(), v = new THREE.Vector3(), [L, R] = hairBase.eyes, apart = L.distanceTo(R), eyeY = (L.y + R.y) / 2;
+  const pts = hairBase.whole.pts, lo = [Infinity, Infinity], hi = [-Infinity, -Infinity];
+  for (let j = 0; j < pts.length; j += 6) if (pts[j + 1] > eyeY) { lo[0] = Math.min(lo[0], pts[j]); hi[0] = Math.max(hi[0], pts[j]); lo[1] = Math.min(lo[1], pts[j + 2]); hi[1] = Math.max(hi[1], pts[j + 2]); }
+  const c = new THREE.Vector3((lo[0] + hi[0]) / 2, eyeY, (lo[1] + hi[1]) / 2), A = 48, far = new Map();
+  const dir = (x, y, z) => { const dx = x - c.x, dy = y - c.y, dz = z - c.z, r = Math.hypot(dx, dy, dz);
+    return [`${Math.floor((Math.atan2(dx, dz) / Math.PI + 1) * A / 2)},${Math.floor(Math.acos(Math.max(-1, Math.min(1, dy / r))) / Math.PI * A / 2)}`, r]; };
+  const put = (x, y, z) => { if (y < eyeY - .5 * apart) return; const [k, r] = dir(x, y, z); if (!(far.get(k) >= r)) far.set(k, r); };
+  for (let j = 0; j < pts.length; j += 6) put(pts[j], pts[j + 1], pts[j + 2]);
+  if (hair) { const Q = hair.geometry.attributes.position; for (const i of hair.geometry.index.array) { v.fromBufferAttribute(Q, i).applyMatrix4(M); put(v.x, v.y, v.z); } }
+  const W = [], ratio = []; for (let i = 0; i < P.count; i++) { v.fromBufferAttribute(P, i).applyMatrix4(M); W.push(v.x, v.y, v.z); const [k, r] = dir(v.x, v.y, v.z), s = far.get(k); if (s && r < 1.25 * s) ratio.push(r / s); }
+  if (ratio.length < 20) return; ratio.sort((a, b) => a - b); const k = (1 + gap * apart / (hi[0] - lo[0]) * 2) / ratio[Math.floor(ratio.length * .1)];
+  for (let i = 0; i < P.count; i++) { v.set(W[i * 3], W[i * 3 + 1], W[i * 3 + 2]).sub(c).multiplyScalar(k).add(c).applyMatrix4(hairBase.whole.inv); P.setXYZ(i, v.x, v.y, v.z); }
+  P.needsUpdate = true; }
 // (a cap over hair: the hair under it - up to its edge all round - left out, and the hair just below the edge drawn in
 // to it, so it comes out from under the cap. One size of cap for all: made big enough for the fullest hair, it sat
 // loose on short hair, and fuller hair came out through it, top and back. Each time from the hair's own shape, kept in orig)
@@ -458,6 +477,7 @@ function hatHair() {
   for (const m of Object.values(hairMeshes)) if (m?.userData.orig) { m.geometry.attributes.position.array.set(m.userData.orig); m.geometry.attributes.position.needsUpdate = true; m.geometry.setIndex(m.userData.origIndex); }
   const hair = hairMeshes[hairNow], G = GARMENTS.hat, hat = G.meshes[G.shown], opts = G.items.find(i => i[0] === G.shown)?.[2] || {};
   if (hat && opts.rest) restHat(hat, hairNow && hair, opts.rest);
+  if (hat && opts.wrap) wrapHat(hat, hairNow && hair, opts.wrap);
   if (!hair || !hat || !opts.cap) return;
   const P = hair.geometry.attributes.position; hair.userData.orig ??= P.array.slice(); hair.userData.origIndex ??= hair.geometry.index.clone();
   const M = hairBase.whole.inv.clone().invert(), v = new THREE.Vector3(), [L, R] = hairBase.eyes, apart = L.distanceTo(R), eyeZ = (L.z + R.z) / 2;
@@ -503,7 +523,7 @@ const GARMENTS = {
   dress: { items: [['', 'Ingen kjole'], ['kjole-sommer', 'Sommerkjole'], ['kjole-prinsesse', 'Prinsessekjole', { hang: .5, armsOut: 12 }], ['kjole-havfrue', 'Havfruekjole', { skirt: false, margin: .012, reach: 8, tail: true, snug: .2, waist: .15 }]], texs: [], skirt: true, noArms: true },
   shoe: { items: [['', 'Bare fødder'], ['sko-sneakers', 'Sneakers', { sole: .02 }], ['sko-gummi', 'Gummistøvler', { pale: .9, paleTop: .015 }], ['sko-ballet', 'Balletsko', { paleFrom: .06, flat: .35, solid: .03 }]], texs: [] },
   // (hats were made on a bald head: on top of hair they are raised - lift, in eyes' distances - or, a cap, made wider)
-  hat: { items: [['', 'Ingen hat'], ['hat-kasket', 'Kasket', { grow: 1.12, lift: .1, cap: true }], ['hat-krone', 'Krone', { grow: 1.05, rest: .12 }], ['hat-kanin', 'Kaninører', { grow: 1.12, lift: .3 }],
+  hat: { items: [['', 'Ingen hat'], ['hat-kasket', 'Kasket', { grow: 1.12, lift: .1, cap: true }], ['hat-krone', 'Krone', { grow: 1.05, rest: .12 }], ['hat-kanin', 'Kaninører', { grow: 1.12, lift: .3, wrap: .02 }],
     ['hat-sloejfe', 'Sløjfe', { grow: 1.05, lift: .35 }]], texs: [], head: true },
   glasses: { items: [['', 'Ingen briller'], ['briller-runde', 'Runde'], ['briller-sol', 'Solbriller'], ['briller-hjerte', 'Hjerte'], ['briller-stjerne', 'Stjerne']], texs: [], head: true } };
 // (now: what is chosen, shown: what the figure has on - the same once all of it is loaded)
