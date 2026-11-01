@@ -22,13 +22,12 @@
   /* the colours: a part chosen above, its colours as small round buttons below (no pop-up over the figure) */
   .colors { flex-basis: 100%; display: flex; flex-direction: column; align-items: center; gap: 6px; }
   .parts { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
-  .parts button { padding: 6px 12px; font-size: 13px; border-radius: 12px; }
+  .parts button { padding: 4px 8px 6px; font-size: 12px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  /* (each part and each choice with its picture over its name, as in the app - the children cannot read yet) */
+  .parts button img { width: 40px; height: 40px; object-fit: contain; }
+  #styles button img { width: 52px; height: 52px; border-radius: 10px; }
   .parts[hidden] { display: none; }
-  .swatches { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
-  .swatches button { width: 32px; height: 32px; padding: 0; border-radius: 50%; border: 3px solid #FFFFFF; box-shadow: 0 0 0 2px var(--line); }
-  .swatches button.on { box-shadow: 0 0 0 3px var(--accent); }
-  /* the whole scale: a rainbow button opens three sliders in the bar (colour, strength, light) */
-  .swatches button.all { background: conic-gradient(#E8384F, #FFC233, #2FB872, #13BFA6, #3D8BFF, #7A4DFF, #FF6FB1, #E8384F); }
+  /* the colours: three sliders (colour, strength, light) for the part chosen - no fixed colours */
   .sliders[hidden] { display: none; }
   .sliders { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 14px; font-size: 12px; font-weight: 700; }
   .sliders label { display: flex; align-items: center; gap: 6px; }
@@ -49,8 +48,8 @@
   <button data-anim="hop">Hop</button>
   <button data-anim="dans">Dans</button>
   <button id="spin">Drej rundt</button>
-  <div class="colors"><div class="parts" id="parts"></div><div class="parts" id="styles" hidden></div><div class="swatches" id="swatches"></div>
-    <div class="sliders" id="sliders" hidden>
+  <div class="colors"><div class="parts" id="parts"></div><div class="parts" id="styles" hidden></div>
+    <div class="sliders" id="sliders">
       <label>Farve <input type="range" id="s-h" min="0" max="360" step="1"></label>
       <label>Styrke <input type="range" id="s-s" min="0" max="100" step="1"></label>
       <label>Lys <input type="range" id="s-l" min="5" max="95" step="1"></label>
@@ -91,26 +90,22 @@ const disc = new THREE.Mesh(new THREE.CircleGeometry(1.4, 48), new THREE.MeshBas
 disc.rotation.x = -Math.PI / 2; disc.position.y = .001; scene.add(disc);
 
 // ---- colours: the figure's painted texture, recoloured (below) ----
-// (the app's own colours: skin, hair, and its clothes colours)
-const CLOTH = ['#E8384F', '#FF7A2F', '#FFC233', '#2FB872', '#13BFA6', '#3D8BFF', '#46699E', '#7A4DFF', '#FF6FB1', '#F4F1EA', '#3A3550'];
-const CHOICES = [['skin', 'Hud', ['#F6D0AE', '#EDB98A', '#D9965F', '#B5713F', '#8D5530', '#5A3520']],
-  ['hair', 'Hår', ['#2A1C17', '#4A2C1D', '#7A4428', '#A8582E', '#D9A55C', '#F0D9A0', '#FF7EBB', '#5AA9FF']],
-  ['shirt', 'Trøje', CLOTH], ['pants', 'Bukser', CLOTH], ['dress', 'Kjole', CLOTH], ['shoe', 'Sko', CLOTH], ['hat', 'Hat', CLOTH], ['glasses', 'Briller', CLOTH]];
-const picked = {}, START = { skin: '#EDB98A', hair: '#4A2C1D', shirt: '#FF7A2F', pants: '#2C3E8C', dress: '#3D8BFF', shoe: '#3D8BFF', hat: '#3D8BFF', glasses: '#3D8BFF' }; let partNow = 'shirt', allOpen = false;
+// (the parts, each with the app's icon for its tab, in ikoner/; the fixed colours are gone - the sliders alone)
+const CHOICES = [['skin', 'Hud', 'hud'], ['hair', 'Hår', 'haar'], ['shirt', 'Trøje', 'troeje'], ['pants', 'Bukser', 'bukser'], ['dress', 'Kjole', 'kjoler'],
+  ['shoe', 'Sko', 'sko'], ['hat', 'Hat', 'hat'], ['glasses', 'Briller', 'briller']];
+const picked = {}, START = { skin: '#EDB98A', hair: '#4A2C1D', shirt: '#FF7A2F', pants: '#2C3E8C', dress: '#3D8BFF', shoe: '#3D8BFF', hat: '#3D8BFF', glasses: '#3D8BFF' }; let partNow = 'shirt';
 const apply = (part, c) => { picked[part] = c; recolour(part, c); };
-function showSwatches() { const [part, , list] = CHOICES.find(c => c[0] === partNow), box = document.getElementById('swatches'); box.innerHTML = '';
-  for (const c of list) { const b = document.createElement('button'); b.style.background = c; b.setAttribute('aria-label', c); b.classList.toggle('on', !allOpen && picked[part] === c);
-    b.onclick = () => { allOpen = false; apply(part, c); showSwatches(); }; box.append(b); }
-  const all = document.createElement('button'); all.className = 'all'; all.setAttribute('aria-label', 'Alle farver'); all.classList.toggle('on', allOpen);
-  all.onclick = () => { allOpen = !allOpen; showSwatches(); }; box.append(all);
-  document.getElementById('sliders').hidden = !allOpen; if (allOpen) slidersFrom(picked[part] || START[part]);
+const iconButton = (src, label) => { const b = document.createElement('button'), i = new Image(); i.src = src; i.alt = ''; i.onerror = () => i.remove();
+  const s = document.createElement('span'); s.textContent = label; b.append(i, s); return b; };
+function showSwatches() { slidersFrom(picked[partNow] || START[partNow]);
   document.querySelectorAll('#parts button').forEach(b => b.classList.toggle('on', b.dataset.part === partNow));
   renderStyles(); }
-// (the styles as buttons above the colours: hairstyles while Hår is chosen, tops while Trøje is; none before the figure)
+// (the styles as buttons above the colours: hairstyles while Hår is chosen, tops while Trøje is; none before the figure -
+// each with a little picture of the figure wearing it, ikoner/valg-<name>.png, made by the page itself: see LÆS-MIG)
 function renderStyles() { const box = document.getElementById('styles'), list = typeof styleLists === 'undefined' ? null : styleLists()[partNow];
   box.innerHTML = ''; box.hidden = !list || !hairBase;
   if (box.hidden) return; const [items, now, set] = list;
-  for (const [n, label] of items) { const b = document.createElement('button'); b.textContent = label; b.classList.toggle('on', n === now); b.onclick = () => set(n); box.append(b); } }
+  for (const [n, label] of items) { const b = iconButton(`ikoner/valg-${n || 'ingen-' + partNow}.png`, label); b.classList.toggle('on', n === now); b.onclick = () => set(n); box.append(b); } }
 // the sliders: colour (hue), strength (saturation) and light, set from the part's colour now; moving one colours it
 const S = { h: document.getElementById('s-h'), s: document.getElementById('s-s'), l: document.getElementById('s-l') };
 function slidersFrom(hexColour) { const hsl = {}; new THREE.Color().setStyle(hexColour, THREE.SRGBColorSpace).getHSL(hsl, THREE.SRGBColorSpace);
@@ -120,7 +115,7 @@ function paintTracks() { const h = S.h.value, s = S.s.value, l = S.l.value;
   S.l.style.background = `linear-gradient(90deg, hsl(${h},${s}%,5%), hsl(${h},${s}%,50%), hsl(${h},${s}%,95%))`; }
 for (const el of Object.values(S)) el.addEventListener('input', () => { paintTracks();
   const c = '#' + new THREE.Color().setHSL(S.h.value / 360, S.s.value / 100, S.l.value / 100, THREE.SRGBColorSpace).getHexString(THREE.SRGBColorSpace); apply(partNow, c); });
-for (const [part, name] of CHOICES) { const b = document.createElement('button'); b.textContent = name; b.dataset.part = part; b.onclick = () => { partNow = part; showSwatches(); }; document.getElementById('parts').append(b); }
+for (const [part, name, icon] of CHOICES) { const b = iconButton(`ikoner/${icon}.png`, name); b.dataset.part = part; b.onclick = () => { partNow = part; showSwatches(); }; document.getElementById('parts').append(b); }
 showSwatches();
 
 // The AI figure's colours are painted into one picture (its texture). Each pixel of it is sorted once by its colour
