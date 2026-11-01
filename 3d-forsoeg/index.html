@@ -76,7 +76,6 @@ const camera = new THREE.PerspectiveCamera(30, 1, .1, 100);
 camera.position.set(0, 1.25, 6.2);
 const controls = new OrbitControls(camera, canvas);
 controls.target.set(0, 1.05, 0); controls.enablePan = false; controls.enableDamping = true;controls.minDistance = 2.5; controls.maxDistance = 10; controls.minPolarAngle = .5; controls.maxPolarAngle = 1.75;
-
 // light: soft sky light, a warm key light with soft shadow, and a rim light from behind
 scene.add(new THREE.HemisphereLight(0xFFFFFF, 0xFFE2A8, 1.4));
 const key = new THREE.DirectionalLight(0xFFF4E0, 2.2); key.position.set(2.5, 5, 4); key.castShadow = true;
@@ -221,7 +220,7 @@ function recolourHair(hexColour, list = hairTexs) {
   const out = hairTex.ctx.createImageData(hairTex.w, hairTex.h), o = out.data, s = hairTex.src;
   for (let p = 0, i = 0; p < hairTex.w * hairTex.h; p++, i += 4) { o[i + 3] = 255;
     if (!hairTex.mask[p]) { o[i] = s[i]; o[i + 1] = s[i + 1]; o[i + 2] = s[i + 2]; continue; }
-    const k = Math.min(hairTex.cap ?? Infinity, (.3 * s[i] + .59 * s[i + 1] + .11 * s[i + 2]) / hairTex.mid); for (let j = 0; j < 3; j++) o[i + j] = Math.min(255, c[j] * k); }
+    const k0 = (.3 * s[i] + .59 * s[i + 1] + .11 * s[i + 2]) / hairTex.mid, k = Math.min(hairTex.cap ?? Infinity, hairTex.flat ? 1 + (k0 - 1) * hairTex.flat : k0); for (let j = 0; j < 3; j++) o[i + j] = Math.min(255, c[j] * k); }
   hairTex.ctx.putImageData(out, 0, 0); hairTex.texture.needsUpdate = true; } }
 function recolour(part, hexColour) {
   if (part === 'hair') recolourHair(hexColour); if (typeof GARMENTS !== 'undefined' && GARMENTS[part]) recolourHair(hexColour, GARMENTS[part].texs);
@@ -452,7 +451,7 @@ const GARMENTS = {
   pants: { items: [['', 'Undershorts'], ['bukser-lange', 'Lange bukser', { made: true, hem: .06, loose: .004 }], ['bukser-shorts', 'Shorts', { made: true, hem: .3, cuff: .03 }],
     ['bukser-cowboy', 'Cowboyshorts', { made: true, hem: .24, cuff: .035, cloth: 'denim' }], ['bukser-fodbold', 'Fodboldbukser', { made: true, hem: .295, loose: .004, loops: false, cloth: 'smooth' }]], texs: [], waist: true },
   dress: { items: [['', 'Ingen kjole'], ['kjole-sommer', 'Sommerkjole'], ['kjole-prinsesse', 'Prinsessekjole', { hang: .5, armsOut: 12 }], ['kjole-havfrue', 'Havfruekjole', { skirt: false, margin: .012, reach: 8, tail: true, snug: .2, waist: .15 }]], texs: [], skirt: true, noArms: true },
-  shoe: { items: [['', 'Bare fødder'], ['sko-sneakers', 'Sneakers', { sole: .02 }], ['sko-gummi', 'Gummistøvler', { pale: .9, paleTop: .015 }], ['sko-ballet', 'Balletsko', { paleFrom: .035 }]], texs: [] },
+  shoe: { items: [['', 'Bare fødder'], ['sko-sneakers', 'Sneakers', { sole: .02 }], ['sko-gummi', 'Gummistøvler', { pale: .9, paleTop: .015 }], ['sko-ballet', 'Balletsko', { paleFrom: .06, flat: .35, solid: .03 }]], texs: [] },
   // (hats were made on a bald head: on top of hair they are raised - lift, in eyes' distances - or, a cap, made wider)
   hat: { items: [['', 'Ingen hat'], ['hat-kasket', 'Kasket', { grow: 1.32, lift: .25 }], ['hat-krone', 'Krone', { grow: 1.05, lift: .55 }], ['hat-kanin', 'Kaninører', { grow: 1.12, lift: .3 }],
     ['hat-sloejfe', 'Sløjfe', { grow: 1.05, lift: .35 }]], texs: [], head: true },
@@ -845,10 +844,12 @@ async function loadCloth(name, part) {
   const body = hairBase.body; cloth.position.copy(body.position); cloth.quaternion.copy(body.quaternion); cloth.scale.copy(body.scale);
   // (shoeTex: a shoe's colour no lighter than a tenth over its middle - the pale kept low on the ballet shoes came out a
   // lighter shade)
-  if (part === 'shoe') G.texs.at(-1).cap = 1.1;
+  // (flat: its light and dark that part of Meshy's, the rest the picked colour itself - the ballet shoes came out patchy,
+  // lighter blotches on the slipper)
+  if (part === 'shoe') Object.assign(G.texs.at(-1), { cap: 1.1, flat: opts.flat });
   body.parent.add(cloth); cloth.bind(body.skeleton, body.bindMatrix); if (picked[part]) recolourHair(picked[part], G.texs);
   // (trousers sit further out - their waistband most - and are looked for further out)
-  cloth.userData.covered = coverBody(wp, ownIdx, H, opts.reach ?? (G.waist ? 3 : 2), opts.tail, G.waist || opts.snug ? cutTop : Infinity, G.waist); return cloth; }
+  cloth.userData.covered = coverBody(wp, ownIdx, H, opts.reach ?? (G.waist ? 3 : 2), opts.tail, G.waist || opts.snug ? cutTop : Infinity, G.waist, opts.solid); return cloth; }
 // (the body close under a garment is hidden, so it cannot poke through it when the figure moves - the white underwear
 // came through the trousers at the hips and knees in the dance; under a wide skirt the legs stay)
 // (reach: how far under it, in hundredths of the figure's height - further for the mermaid dress, a knee lifted in
@@ -858,8 +859,11 @@ async function loadCloth(name, part) {
 // (cutTop: where a waistband was cut straight - the corners along it are its edge, though the flattened triangles there
 // hide that from rimOf)
 // (feet: kept - under trousers the heel came near the inside of a leg and was hidden, a hole in it)
-function coverBody(wp, idx, H, reach, tail, cutTop = Infinity, feet = false) {
+// (solid: the foot hidden altogether up to that part of the figure's height over the shoe's sole - the toes came out
+// through the ballet slippers' tips)
+function coverBody(wp, idx, H, reach, tail, cutTop = Infinity, feet = false, solid = 0) {
   const pts = hairBase.whole.pts, tol = .01 * H, cell = reach * tol, n = wp.length / 3;
+  let solidY = -Infinity; if (solid) { solidY = Infinity; for (const i of idx) solidY = Math.min(solidY, wp[i * 3 + 1]); solidY += solid * H; }
   // (the garment, one corner per little box of a hundredth - all of its edge, the corners on an edge only one triangle
   // has - in boxes as big as the reach: the body is hidden where the nearest of them is not on the edge; past a hem it
   // is, so there is no slit there)
@@ -887,6 +891,7 @@ function coverBody(wp, idx, H, reach, tail, cutTop = Infinity, feet = false) {
     // (in the mermaid's tail the legs go altogether, ankles too, down to where the fin ends: a shin crossing or lifted
     // came out through the fin - the feet below it stay)
     if (tail && y < hairBase.hipY) { covered[j] = y > lo[1] ? 1 : 0; continue; }
+    if (y < solidY) { covered[j] = 1; continue; }
     // (under a waistband cut straight, though, right up to it, near its edge or not: the tummy came out
     // through it as the figure stood - and not above it, where looking down into it showed nothing)
     if (y > cutTop) continue;
@@ -1002,7 +1007,7 @@ function hideBody() { if (!hairBase) return; const geo = hairBase.body.geometry,
   geo.setIndex(keep.length === n ? null : keep); }
 // (FIGUR_V goes up with each new figure: a browser that remembers the last figure's files fetches them again - an iPad
 // once put the old figure's colour picture on the new figure)
-const FIGUR_V = '?v=9';
+const FIGUR_V = '?v=10';
 async function loadFbx() { if (!(await exists('figur.fbx' + FIGUR_V))) return false;
   const loader = new FBXLoader(), load = u => new Promise((ok, bad) => loader.load(u + FIGUR_V, ok, undefined, bad));
   const fbx = await load('figur.fbx'), map = await new Promise(ok => new THREE.TextureLoader().load('figur-farve.jpg' + FIGUR_V, ok));
