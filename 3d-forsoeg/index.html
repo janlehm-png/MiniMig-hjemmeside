@@ -384,6 +384,48 @@ function braidsForward(W, n, apart, eyeY, eyeZ) {
     for (const i of idx) { const y = W[i * 3 + 1], u = (y - bottom) / slice - .5, k0 = Math.min(m - 1, Math.max(0, Math.floor(u))), k1 = Math.min(m - 1, k0 + 1), t = Math.min(1, Math.max(0, u - k0));
       W[i * 3 + 2] -= smooth[k0] * (1 - t) + smooth[k1] * t; } }
   return { part, turns }; }
+// (glasses: pale - Meshy's paler blue, the whole head the sunglasses were made on, below that strength of colour,
+// left out; lens - the glass, told from the frame by its place: seen from the front, further than lens eyes'
+// distances in from the outline of the glasses' front - drawn last, in a see-through material of its own: the star
+// glasses were solid stars that could not be seen through)
+function glassesParts(g, img, eyes, opts) {
+  if (!opts.pale && !opts.lens) return 0;
+  const P = g.attributes.position, uv = g.attributes.uv, idx = Array.from(g.index.array), apart = eyes[0].distanceTo(eyes[1]);
+  let tris = []; for (let t = 0; t < idx.length; t += 3) tris.push(t);
+  if (opts.pale) { const cv = document.createElement('canvas'); cv.width = img.width; cv.height = img.height; const c2 = cv.getContext('2d'); c2.drawImage(img, 0, 0);
+    const px = c2.getImageData(0, 0, img.width, img.height).data;
+    tris = tris.filter(t => { const rgb = [0, 0, 0]; for (let k = 0; k < 3; k++) { const i = idx[t + k], o = (Math.min(img.height - 1, Math.floor((1 - uv.getY(i)) * img.height)) * img.width + Math.min(img.width - 1, Math.floor(uv.getX(i) * img.width))) * 4; for (let e = 0; e < 3; e++) rgb[e] += px[o + e]; }
+      const mx = Math.max(...rgb); return mx && (mx - Math.min(...rgb)) / mx >= opts.pale; });
+    // (and the specks of stronger blue left on the face around them - pieces joined by shared corners, the small ones
+    // dropped)
+    // (corners at the same spot count as one - the colour picture's seams split them)
+    const par = new Int32Array(P.count).map((_, i) => i), find = a => { while (par[a] !== a) a = par[a] = par[par[a]]; return a; }, spot = new Map(), q = .004 * apart;
+    for (let i = 0; i < P.count; i++) { const k = `${Math.round(P.getX(i) / q)},${Math.round(P.getY(i) / q)},${Math.round(P.getZ(i) / q)}`; if (spot.has(k)) par[find(i)] = find(spot.get(k)); else spot.set(k, i); }
+    for (const t of tris) { const a = find(idx[t]); par[find(idx[t + 1])] = a; par[find(idx[t + 2])] = a; }
+    const size = new Map(); for (const t of tris) { const r = find(idx[t]); size.set(r, (size.get(r) || 0) + 1); }
+    tris = tris.filter(t => size.get(find(idx[t])) > .01 * tris.length); }
+  let lens = [];
+  if (opts.lens) { const C = t => [0, 1, 2].map(e => (P.getComponent(idx[t], e) + P.getComponent(idx[t + 1], e) + P.getComponent(idx[t + 2], e)) / 3);
+    // (the front: what is within a third of the eyes' distance of the frontmost part - not the arms going back)
+    let zMax = -Infinity; for (const t of tris) zMax = Math.max(zMax, C(t)[2]); const front = tris.filter(t => C(t)[2] > zMax - .35 * apart);
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity; for (const t of front) for (let k = 0; k < 3; k++) { const i = idx[t + k]; x0 = Math.min(x0, P.getX(i)); x1 = Math.max(x1, P.getX(i)); y0 = Math.min(y0, P.getY(i)); y1 = Math.max(y1, P.getY(i)); }
+    // (the front seen from ahead, filled in in little squares, and how far each is from the outside)
+    const N = 200, cell = (x1 - x0) / N, M = Math.ceil((y1 - y0) / cell) + 1, D = new Float32Array(N * M).fill(0);
+    for (const t of front) { const v = [0, 1, 2].map(k => [(P.getX(idx[t + k]) - x0) / cell, (P.getY(idx[t + k]) - y0) / cell]);
+      const lo = [Math.floor(Math.min(v[0][0], v[1][0], v[2][0])), Math.floor(Math.min(v[0][1], v[1][1], v[2][1]))], hi = [Math.ceil(Math.max(v[0][0], v[1][0], v[2][0])), Math.ceil(Math.max(v[0][1], v[1][1], v[2][1]))];
+      const area = (v[1][0] - v[0][0]) * (v[2][1] - v[0][1]) - (v[2][0] - v[0][0]) * (v[1][1] - v[0][1]);
+      for (let x = Math.max(0, lo[0]); x <= Math.min(N - 1, hi[0]); x++) for (let y = Math.max(0, lo[1]); y <= Math.min(M - 1, hi[1]); y++) {
+        const px = x + .5, py = y + .5, a = ((v[1][0] - px) * (v[2][1] - py) - (v[2][0] - px) * (v[1][1] - py)) / area, b = ((v[2][0] - px) * (v[0][1] - py) - (v[0][0] - px) * (v[2][1] - py)) / area;
+        if (a >= -.05 && b >= -.05 && a + b <= 1.05 || Math.hypot(px - (v[0][0] + v[1][0] + v[2][0]) / 3, py - (v[0][1] + v[1][1] + v[2][1]) / 3) < .7) D[y * N + x] = 1e9; } }
+    for (let y = 0; y < M; y++) for (let x = 0; x < N; x++) { const i = y * N + x; if (!D[i]) continue; let d = D[i];
+      if (x > 0) d = Math.min(d, D[i - 1] + 1); if (y > 0) d = Math.min(d, D[i - N] + 1); if (x > 0 && y > 0) d = Math.min(d, D[i - N - 1] + 1.41); if (x < N - 1 && y > 0) d = Math.min(d, D[i - N + 1] + 1.41); D[i] = d; }
+    for (let y = M - 1; y >= 0; y--) for (let x = N - 1; x >= 0; x--) { const i = y * N + x; if (!D[i]) continue; let d = D[i];
+      if (x < N - 1) d = Math.min(d, D[i + 1] + 1); if (y < M - 1) d = Math.min(d, D[i + N] + 1); if (x < N - 1 && y < M - 1) d = Math.min(d, D[i + N + 1] + 1.41); if (x > 0 && y < M - 1) d = Math.min(d, D[i + N - 1] + 1.41); D[i] = d; }
+    const inner = new Set(front.filter(t => { const [x, y] = C(t), gx = Math.min(N - 1, Math.max(0, Math.floor((x - x0) / cell))), gy = Math.min(M - 1, Math.max(0, Math.floor((y - y0) / cell))); return D[gy * N + gx] * cell > opts.lens * apart; }));
+    lens = tris.filter(t => inner.has(t)); tris = tris.filter(t => !inner.has(t)); }
+  const out = []; for (const t of [...tris, ...lens]) out.push(idx[t], idx[t + 1], idx[t + 2]); g.setIndex(out);
+  if (lens.length) { g.addGroup(0, tris.length * 3, 0); g.addGroup(tris.length * 3, lens.length * 3, 1); }
+  return lens.length; }
 // (hats and glasses are put on the same way: made on a bald head, set by the eyes, held by the head - with their own
 // colour list and part, and made a little bigger where they must sit over the hair)
 async function loadHair(name, list = hairTexs, colourPart = 'hair', extra = {}) {
@@ -394,11 +436,14 @@ async function loadHair(name, list = hairTexs, colourPart = 'hair', extra = {}) 
   const mine = hairBase.eyes, theirs = d.eyes.map(e => new THREE.Vector3(...e)), scale = mine[0].distanceTo(mine[1]) / theirs[0].distanceTo(theirs[1]) * (opts.grow || 1);
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(d.position, 3));
   g.setAttribute('normal', new THREE.Float32BufferAttribute(d.normal, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(d.uv, 2)); g.setIndex(d.index);
+  const lensCount = glassesParts(g, img, theirs, opts);
   // (placed as on the figure when it was measured; then the hair down to the chin follows the head, and below it - long
   // braids, curls on the shoulders - glides over to following the upper chest by the shoulders: it moves with the body
   // and does not cut into the shoulders when the head turns)
   const at = mine[0].clone().add(mine[1]).multiplyScalar(.5).sub(theirs[0].clone().add(theirs[1]).multiplyScalar(.5 * scale));
   if (opts.lift) at.y += opts.lift * mine[0].distanceTo(mine[1]);
+  // (fwd: further out in front, in eyes' distances - glasses whose bridge was hidden in the nose)
+  if (opts.fwd) at.z += opts.fwd * mine[0].distanceTo(mine[1]);
   const place = new THREE.Matrix4().compose(at, new THREE.Quaternion(), new THREE.Vector3(scale, scale, scale));
   const apart = mine[0].distanceTo(mine[1]), eyeY = (mine[0].y + mine[1].y) / 2, top = eyeY - 1.3 * apart, bottom = eyeY - 2.6 * apart;
   const pos = g.attributes.position, nrm = g.attributes.normal, n = pos.count, skinIndex = new Uint16Array(n * 4), skinWeight = new Float32Array(n * 4);
@@ -423,11 +468,17 @@ async function loadHair(name, list = hairTexs, colourPart = 'hair', extra = {}) 
     p.fromBufferAttribute(nrm, i).applyMatrix3(turn); if (bend && bend.part[i] > .5) p.applyQuaternion(bend.turns[W[i * 3] < 0 ? 0 : 1]); p.normalize(); nrm.setXYZ(i, p.x, p.y, p.z);
     skinIndex[i * 4] = hairBase.head; skinIndex[i * 4 + 1] = hairBase.chest; skinWeight[i * 4] = w; skinWeight[i * 4 + 1] = 1 - w; }
   g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(skinIndex, 4)); g.setAttribute('skinWeight', new THREE.Float32BufferAttribute(skinWeight, 4));
-  const hair = new THREE.SkinnedMesh(g, new THREE.MeshStandardMaterial({ map: setupHairTexture(img, list), roughness: .8, metalness: 0, side: THREE.DoubleSide }));
+  let mat = new THREE.MeshStandardMaterial({ map: setupHairTexture(img, list), roughness: .8, metalness: 0, side: THREE.DoubleSide });
+  // (the glass: clear, a little blue - the sunglasses' dark - and not shiny: Meshy's glass is uneven, and shiny it
+  // caught the light in white smears)
+  if (lensCount) mat = [mat, new THREE.MeshStandardMaterial({ color: opts.dark ? 0x1A1F33 : 0xCFE3FF, transparent: true, opacity: opts.dark ? .72 : .22, roughness: .6, metalness: 0, side: THREE.DoubleSide, depthWrite: false })];
+  const hair = new THREE.SkinnedMesh(g, mat);
   hair.castShadow = true; hair.name = name; hair.frustumCulled = false;
   const body = hairBase.body; hair.position.copy(body.position); hair.quaternion.copy(body.quaternion); hair.scale.copy(body.scale);
   // (flat: as on the ballet shoes, the colour nearly the same all over - the bunny ears' lighter insides came out a second shade)
   if (opts.flat) list.at(-1).flat = opts.flat;
+  // (cap: no lighter than that over the middle - the glasses' frames had white smears inside, by the glass)
+  if (opts.cap) list.at(-1).cap = opts.cap;
   body.parent.add(hair); hair.bind(body.skeleton, body.bindMatrix); if (picked[colourPart]) recolourHair(picked[colourPart], list); return hair; }
 var styleLists = () => ({ hair: [HAIRS, hairNow, setHair],
   ...Object.fromEntries(Object.entries(GARMENTS).map(([part, G]) => [part, [G.items, G.now, n => setGarment(part, n)]])) });
@@ -591,7 +642,8 @@ const GARMENTS = {
   // (hats were made on a bald head: on top of hair they are raised - lift, in eyes' distances - or, a cap, made wider)
   hat: { items: [['', 'Ingen hat'], ['hat-kasket', 'Kasket', { grow: 1.12, lift: .1, cap: true }], ['hat-krone', 'Krone', { grow: 1.05, rest: .12 }], ['hat-kanin', 'Kaninører', { grow: 1.12, lift: .3, wrap: .03, ears: .45, thin: .35, scalp: true, flat: .3 }],
     ['hat-sloejfe', 'Sløjfe', { grow: 1.05, lift: .35, move: .02, size: .75 }]], texs: [], head: true },
-  glasses: { items: [['', 'Ingen briller'], ['briller-runde', 'Runde'], ['briller-sol', 'Solbriller'], ['briller-hjerte', 'Hjerte'], ['briller-stjerne', 'Stjerne']], texs: [], head: true } };
+  glasses: { items: [['', 'Ingen briller'], ['briller-runde', 'Runde', { fwd: .12 }], ['briller-sol', 'Solbriller', { pale: .7, lens: .1, dark: true, cap: 1.15 }],
+    ['briller-hjerte', 'Hjerte', { lens: .1, fwd: .1, cap: 1.15 }], ['briller-stjerne', 'Stjerne', { lens: .1, cap: 1.15 }]], texs: [], head: true } };
 // (now: what is chosen, shown: what the figure has on - the same once all of it is loaded)
 for (const G of Object.values(GARMENTS)) { G.now = G.shown = ''; G.meshes = {}; G.loading = {}; }
 let dressing = 0;
