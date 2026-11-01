@@ -75,8 +75,7 @@ const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(30, 1, .1, 100);
 camera.position.set(0, 1.25, 6.2);
 const controls = new OrbitControls(camera, canvas);
-controls.target.set(0, 1.05, 0); controls.enablePan = false; controls.enableDamping = true;
-controls.minDistance = 2.5; controls.maxDistance = 10; controls.minPolarAngle = .5; controls.maxPolarAngle = 1.75;
+controls.target.set(0, 1.05, 0); controls.enablePan = false; controls.enableDamping = true;controls.minDistance = 2.5; controls.maxDistance = 10; controls.minPolarAngle = .5; controls.maxPolarAngle = 1.75;
 
 // light: soft sky light, a warm key light with soft shadow, and a rim light from behind
 scene.add(new THREE.HemisphereLight(0xFFFFFF, 0xFFE2A8, 1.4));
@@ -222,7 +221,7 @@ function recolourHair(hexColour, list = hairTexs) {
   const out = hairTex.ctx.createImageData(hairTex.w, hairTex.h), o = out.data, s = hairTex.src;
   for (let p = 0, i = 0; p < hairTex.w * hairTex.h; p++, i += 4) { o[i + 3] = 255;
     if (!hairTex.mask[p]) { o[i] = s[i]; o[i + 1] = s[i + 1]; o[i + 2] = s[i + 2]; continue; }
-    const k = (.3 * s[i] + .59 * s[i + 1] + .11 * s[i + 2]) / hairTex.mid; for (let j = 0; j < 3; j++) o[i + j] = Math.min(255, c[j] * k); }
+    const k = Math.min(hairTex.cap ?? Infinity, (.3 * s[i] + .59 * s[i + 1] + .11 * s[i + 2]) / hairTex.mid); for (let j = 0; j < 3; j++) o[i + j] = Math.min(255, c[j] * k); }
   hairTex.ctx.putImageData(out, 0, 0); hairTex.texture.needsUpdate = true; } }
 function recolour(part, hexColour) {
   if (part === 'hair') recolourHair(hexColour); if (typeof GARMENTS !== 'undefined' && GARMENTS[part]) recolourHair(hexColour, GARMENTS[part].texs);
@@ -453,7 +452,7 @@ const GARMENTS = {
   pants: { items: [['', 'Undershorts'], ['bukser-lange', 'Lange bukser', { made: true, hem: .06, loose: .004 }], ['bukser-shorts', 'Shorts', { made: true, hem: .3, cuff: .03 }],
     ['bukser-cowboy', 'Cowboyshorts', { made: true, hem: .24, cuff: .035, cloth: 'denim' }], ['bukser-fodbold', 'Fodboldbukser', { made: true, hem: .295, loose: .004, loops: false, cloth: 'smooth' }]], texs: [], waist: true },
   dress: { items: [['', 'Ingen kjole'], ['kjole-sommer', 'Sommerkjole'], ['kjole-prinsesse', 'Prinsessekjole', { hang: .5, armsOut: 12 }], ['kjole-havfrue', 'Havfruekjole', { skirt: false, margin: .012, reach: 8, tail: true, snug: .2, waist: .15 }]], texs: [], skirt: true, noArms: true },
-  shoe: { items: [['', 'Bare fødder'], ['sko-sneakers', 'Sneakers'], ['sko-gummi', 'Gummistøvler'], ['sko-ballet', 'Balletsko']], texs: [] },
+  shoe: { items: [['', 'Bare fødder'], ['sko-sneakers', 'Sneakers', { sole: .02 }], ['sko-gummi', 'Gummistøvler', { pale: .9, paleTop: .015 }], ['sko-ballet', 'Balletsko', { paleFrom: .035 }]], texs: [] },
   // (hats were made on a bald head: on top of hair they are raised - lift, in eyes' distances - or, a cap, made wider)
   hat: { items: [['', 'Ingen hat'], ['hat-kasket', 'Kasket', { grow: 1.32, lift: .25 }], ['hat-krone', 'Krone', { grow: 1.05, lift: .55 }], ['hat-kanin', 'Kaninører', { grow: 1.12, lift: .3 }],
     ['hat-sloejfe', 'Sløjfe', { grow: 1.05, lift: .35 }]], texs: [], head: true },
@@ -684,6 +683,46 @@ async function loadCloth(name, part) {
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(d.position, 3));
   g.setAttribute('normal', new THREE.Float32BufferAttribute(d.normal, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(d.uv, 2)); g.setIndex(d.index);
   const opts = G.items.find(it => it[0] === name)?.[2] || {};
+  // (shoes: Meshy's paler blue on the legs above them and round the ankles dropped - the triangles paler than pale times
+  // the shoe's own blue, measured as the middle of all its triangles. Coloured, they came out a lighter shade of the
+  // shoe's colour: a band above the boots, flaps behind the sneakers, the ballet ribbons in two shades)
+  if (part === 'shoe') { const cv = document.createElement('canvas'); cv.width = img.width; cv.height = img.height; const c2 = cv.getContext('2d'); c2.drawImage(img, 0, 0);
+    const px = c2.getImageData(0, 0, img.width, img.height).data, uv = g.attributes.uv, idx = g.index.array, sat = new Float32Array(idx.length / 3);
+    for (let t = 0; t < idx.length; t += 3) { const rgb = [0, 0, 0]; for (let k = 0; k < 3; k++) { const i = idx[t + k], o = (Math.min(img.height - 1, Math.floor((1 - uv.getY(i)) * img.height)) * img.width + Math.min(img.width - 1, Math.floor(uv.getX(i) * img.width))) * 4; for (let e = 0; e < 3; e++) rgb[e] += px[o + e]; }
+      const mx = Math.max(...rgb); sat[t / 3] = mx === rgb[2] ? (mx - Math.min(...rgb)) / mx : 0; }
+    // (paleFrom: below that, a part of the figure's height over the sole, the pale is kept - on the ballet shoes it is
+    // the slipper itself, and dropped it left holes in them; paleTop: the same, below that far under the top of the
+    // shoe's own colour (where nearly all of it is lower) - the boots' shine, holes in the leg of them. Kept no lighter
+    // than the rest, see shoeTex)
+    const own = Array.from(sat).sort((p, q) => p - q)[sat.length >> 1] * (opts.pale ?? .8), keep = [], P = g.attributes.position;
+    const Y = t => (P.getY(idx[t]) + P.getY(idx[t + 1]) + P.getY(idx[t + 2])) / 3 * s + off.y, ys = [];
+    let lo = Infinity; for (let i = 0; i < P.count; i++) lo = Math.min(lo, P.getY(i) * s + off.y);
+    for (let t = 0; t < idx.length; t += 3) if (sat[t / 3] >= own) ys.push(Y(t)); ys.sort((p, q) => p - q);
+    const H = hairBase.whole.H, from = Math.max(lo + (opts.paleFrom || 0) * H, opts.paleTop ? ys[Math.floor(ys.length * .98)] - opts.paleTop * H : -Infinity);
+    for (let t = 0; t < idx.length; t += 3) if (sat[t / 3] >= own || Y(t) < from) keep.push(idx[t], idx[t + 1], idx[t + 2]); g.setIndex(keep); }
+  // (white: sneakers with white soles and laces, whatever their colour - the sole cut off level at that part of the
+  // figure's height, and laces laid across the top of each foot; their corners from whiteFrom on)
+  let whiteFrom = Infinity;
+  if (opts.sole) { const H = hairBase.whole.H, P = g.attributes.position; let lo = Infinity; for (let i = 0; i < P.count; i++) lo = Math.min(lo, P.getY(i));
+    const cutY = lo + opts.sole * H / s, sole = g.clone(); clipAbove(sole, cutY); clipAbove(g, cutY, true);
+    // (the laces: across the instep, from a little under half the foot's length to three quarters, five of them, each
+    // over the top of the shoe there and a little out from it, a third of the foot's width)
+    const Q = g.attributes.position, used = new Set(g.index.array), midX = (hairBase.box.min.x + hairBase.box.max.x) / 2, W = i => [Q.getX(i) * s + off.x, Q.getY(i) * s + off.y, Q.getZ(i) * s + off.z];
+    const lp = [], li = [], add = (x, y, z) => { lp.push((x - off.x) / s, (y - off.y) / s, (z - off.z) / s); return lp.length / 3 - 1; };
+    for (const side of [-1, 1]) { const foot = [...used].map(W).filter(p => Math.sign(p[0] - midX) === side); if (!foot.length) continue;
+      const z0 = Math.min(...foot.map(p => p[2])), L = Math.max(...foot.map(p => p[2])) - z0;
+      for (let k = 0; k < 5; k++) { const z = z0 + L * (.44 + .07 * k), near = foot.filter(p => Math.abs(p[2] - z) < .03 * L); if (near.length < 3) continue;
+        const x0 = Math.min(...near.map(p => p[0])), x1 = Math.max(...near.map(p => p[0])), cx = (x0 + x1) / 2, hw = .17 * (x1 - x0);
+        const topAt = x => Math.max(...near.filter(p => Math.abs(p[0] - x) < .1 * (x1 - x0)).map(p => p[1]), -Infinity);
+        // (each lace a flat bar: three points across, each at the top of the shoe there, its top and bottom, front and back)
+        const xs = [cx - hw, cx, cx + hw], ys = xs.map(x => { const y = topAt(x); return isFinite(y) ? y : topAt(cx); }), d = .012 * L, th = .003 * H, c = [];
+        xs.forEach((x, j) => { for (const dz of [-d, d]) for (const dy of [-th, th]) c.push(add(x, ys[j] + .002 * H + dy, z + dz)); });
+        // (corners per point j: 4j + (back low, back high, front low, front high))
+        for (let j = 0; j < 2; j++) { const a = 4 * j, b = 4 * j + 4, q = (p0, p1, p2, p3) => li.push(c[p0], c[p1], c[p2], c[p0], c[p2], c[p3]);
+          q(a + 1, b + 1, b + 3, a + 3); q(a, b, b + 1, a + 1); q(a + 2, a + 3, b + 3, b + 2); } } }
+    const laces = new THREE.BufferGeometry(); laces.setAttribute('position', new THREE.Float32BufferAttribute(lp, 3));
+    laces.setAttribute('normal', new THREE.Float32BufferAttribute(lp.map((_, i) => i % 3 === 1 ? 1 : 0), 3)); laces.setAttribute('uv', new THREE.Float32BufferAttribute(new Array(lp.length / 3 * 2).fill(0), 2)); laces.setIndex(li);
+    whiteFrom = mergeInto(g, sole); mergeInto(g, laces); }
   // (trousers: the waistband cut straight round, level - Meshy's top edge goes up and down, lower at the front than at the
   // back, the vest showing in the dips: all round it, in sixteen slices, where the edge comes lowest - a tenth of each
   // slice's edge lower still being stray bits - and cut at the lowest of these; a dress's top edge the same - the
@@ -796,9 +835,17 @@ async function loadCloth(name, part) {
   const ownIdx = Array.from(g.index.array);
   let si = skinIndex, sw = skinWeight; if (G.waist && isFinite(cutTop)) [si, sw] = waistband(g, wp, skinIndex, skinWeight, cutTop, H, inv, opts.loops ?? true, img, { pts, armPt });
   g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(si, 4)); g.setAttribute('skinWeight', new THREE.Float32BufferAttribute(sw, 4));
-  g.normalizeNormals(); const cloth = new THREE.SkinnedMesh(g, new THREE.MeshStandardMaterial({ map: setupHairTexture(img, G.texs), roughness: .85, metalness: 0, side: THREE.DoubleSide, vertexColors: !!g.attributes.color }));
+  g.normalizeNormals(); let mat = new THREE.MeshStandardMaterial({ map: setupHairTexture(img, G.texs), roughness: .85, metalness: 0, side: THREE.DoubleSide, vertexColors: !!g.attributes.color });
+  // (the white parts drawn last, in white of their own)
+  if (isFinite(whiteFrom)) { const idx = g.index.array, own = [], white = []; for (let t = 0; t < idx.length; t += 3) (idx[t] >= whiteFrom ? white : own).push(idx[t], idx[t + 1], idx[t + 2]);
+    g.setIndex([...own, ...white]); g.addGroup(0, own.length, 0); g.addGroup(own.length, white.length, 1);
+    mat = [mat, new THREE.MeshStandardMaterial({ color: 0xf2f2ee, roughness: .8, metalness: 0, side: THREE.DoubleSide })]; }
+  const cloth = new THREE.SkinnedMesh(g, mat);
   cloth.castShadow = true; cloth.name = name; cloth.frustumCulled = false; cloth.normalizeSkinWeights(); cloth.userData.orig = g.attributes.position.array.slice();
   const body = hairBase.body; cloth.position.copy(body.position); cloth.quaternion.copy(body.quaternion); cloth.scale.copy(body.scale);
+  // (shoeTex: a shoe's colour no lighter than a tenth over its middle - the pale kept low on the ballet shoes came out a
+  // lighter shade)
+  if (part === 'shoe') G.texs.at(-1).cap = 1.1;
   body.parent.add(cloth); cloth.bind(body.skeleton, body.bindMatrix); if (picked[part]) recolourHair(picked[part], G.texs);
   // (trousers sit further out - their waistband most - and are looked for further out)
   cloth.userData.covered = coverBody(wp, ownIdx, H, opts.reach ?? (G.waist ? 3 : 2), opts.tail, G.waist || opts.snug ? cutTop : Infinity, G.waist); return cloth; }
