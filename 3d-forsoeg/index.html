@@ -518,6 +518,9 @@ function scalpHat(P, hair, M, v, c, dir, head, apart, eyeY, gap, ears, thin) {
   const ratio = []; for (let i = 0; i < P.count; i++) { if (ear[i]) continue; const [k, r] = dir(W[i * 3], W[i * 3 + 1], W[i * 3 + 2]), s = head.get(k); if (s) ratio.push(r / s); }
   if (ratio.length < 20) return; ratio.sort((a, b) => a - b); const k = (1 + gap) / ratio[Math.floor(ratio.length * .05)];
   for (let i = 0; i < W.length; i++) W[i] = c.getComponent(i % 3) + (W[i] - c.getComponent(i % 3)) * k;
+  // (and the band thinner too, out from the head - as made it was thick as a finger)
+  if (thin !== 1) for (let i = 0; i < P.count; i++) { const [kk, r] = dir(W[i * 3], W[i * 3 + 1], W[i * 3 + 2]), s = head.get(kk); if (!s) continue; const rIn = s * (1 + gap); if (r <= rIn) continue;
+    const f = (rIn + (r - rIn) * thin) / r, w = 1 - ear[i]; for (let e = 0; e < 3; e++) { const o = c.getComponent(e); W[i * 3 + e] += (o + (W[i * 3 + e] - o) * f - W[i * 3 + e]) * w; } }
   // (each ear smaller about the middle of its foot)
   if (ears !== 1) for (const s of [-1, 1]) { const foot = new THREE.Vector3(); let n = 0;
     for (let i = 0; i < P.count; i++) if (Math.sign(W[i * 3] - c.x) === s && ear[i] > 0 && ear[i] < .5) { foot.x += W[i * 3]; foot.y += W[i * 3 + 1]; foot.z += W[i * 3 + 2]; n++; }
@@ -588,7 +591,7 @@ const GARMENTS = {
   dress: { items: [['', 'Ingen kjole'], ['kjole-sommer', 'Sommerkjole'], ['kjole-prinsesse', 'Prinsessekjole', { hang: .5, armsOut: 12 }], ['kjole-havfrue', 'Havfruekjole', { skirt: false, margin: .012, reach: 8, tail: true, snug: .2, waist: .15 }]], texs: [], skirt: true, noArms: true },
   shoe: { items: [['', 'Bare fødder'], ['sko-sneakers', 'Sneakers', { sole: .02 }], ['sko-gummi', 'Gummistøvler', { pale: .9, paleTop: .015 }], ['sko-ballet', 'Balletsko', { paleFrom: .06, flat: .35, solid: .03 }]], texs: [] },
   // (hats were made on a bald head: on top of hair they are raised - lift, in eyes' distances - or, a cap, made wider)
-  hat: { items: [['', 'Ingen hat'], ['hat-kasket', 'Kasket', { grow: 1.12, lift: .1, cap: true }], ['hat-krone', 'Krone', { grow: 1.05, rest: .12 }], ['hat-kanin', 'Kaninører', { grow: 1.12, lift: .3, wrap: .03, ears: .6, thin: .5, scalp: true, flat: .3 }],
+  hat: { items: [['', 'Ingen hat'], ['hat-kasket', 'Kasket', { grow: 1.12, lift: .1, cap: true }], ['hat-krone', 'Krone', { grow: 1.05, rest: .12 }], ['hat-kanin', 'Kaninører', { grow: 1.12, lift: .3, wrap: .03, ears: .45, thin: .35, scalp: true, flat: .3 }],
     ['hat-sloejfe', 'Sløjfe', { grow: 1.05, lift: .35, move: .02, size: .75 }]], texs: [], head: true },
   glasses: { items: [['', 'Ingen briller'], ['briller-runde', 'Runde'], ['briller-sol', 'Solbriller'], ['briller-hjerte', 'Hjerte'], ['briller-stjerne', 'Stjerne']], texs: [], head: true } };
 // (now: what is chosen, shown: what the figure has on - the same once all of it is loaded)
