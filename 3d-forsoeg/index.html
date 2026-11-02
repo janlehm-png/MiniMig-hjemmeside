@@ -282,7 +282,8 @@ function setupBrows(body) {
   const Mo = tex.mouth; if (Mo) { const N = geo.attributes.normal.array, list = [], near = [];
     for (let i = 0; i < n; i++) { const X = (P[i * 3] - cx) / apart, Y = (P[i * 3 + 1] - cy) / apart; if (P[i * 3 + 2] < cz - .4 * apart) continue;
       const rr = Math.hypot(X / Mo.rx, (Y - Mo.my) / Mo.ry); if (rr < 1) list.push(i, rr); if (rr < 1.8) near.push(i); }
-    const r = .2 * apart, cell = new Map(), key = (x, y, z) => `${Math.floor(x / r)},${Math.floor(y / r)},${Math.floor(z / r)}`;
+    // (a third of the eyes' distance: over a fifth, the old smile's crease still showed as a shadow round Åh, Kys, Trist)
+    const r = .34 * apart, cell = new Map(), key = (x, y, z) => `${Math.floor(x / r)},${Math.floor(y / r)},${Math.floor(z / r)}`;
     for (const i of near) { const k = key(P[i * 3], P[i * 3 + 1], P[i * 3 + 2]); if (!cell.has(k)) cell.set(k, []); cell.get(k).push(i); }
     Mo.smooth = new Float32Array(list.length / 2 * 3);
     for (let j = 0; j < list.length; j += 2) { const i = list[j], x = P[i * 3], y = P[i * 3 + 1], z = P[i * 3 + 2], v = [0, 0, 0], gx = Math.floor(x / r), gy = Math.floor(y / r), gz = Math.floor(z / r);
@@ -482,7 +483,7 @@ function drawEyes(o) {
 // (Neutral was dropped by the user, 2026-11-02)
 const MOUTHS = [['mund-smil', 'Smil'],
 // (all about as big as each other - the user found Grin much the biggest)
-  ['mund-grin', 'Grin', { mid: [-.02, .09], hw: .32, open: [.025, .19], lip: [.024, .03], teeth: .065, tongue: .055, crease: true, bulge: [.034, .046] }],
+  ['mund-grin', 'Grin', { mid: [-.02, .09], hw: .32, open: [.025, .19], lip: [.024, .03], teeth: .065, tongue: .055, crease: true, bulge: [.06, .065] }],
   ['mund-tunge', 'Tunge', { mid: [0, .06], hw: .32, open: [.022, .13], lip: [.026, .032], teeth: .05, out: true, crease: true }],
   ['mund-o', 'Åh', { o: 1.2 }], ['mund-kys', 'Kys', { kiss: 1.25 }],
   ['mund-trist', 'Trist', { mid: [.035, -.07], hw: .3, open: [0, 0], lip: [.044, .056], round: .3 }]];
@@ -518,13 +519,7 @@ function smoothLight(a, stride, at) {
   return out; }
 // (the chosen mouth, drawn into the body's colour picture as it is redrawn: o its pixels)
 function drawMouth(o) {
-  const M = tex.mouth, opts = (MOUTHS.find(m => m[0] === mouthNow) || [])[2]; if (!M) return;
-  // (its crease lit smooth under a new mouth, as it was under the smile)
-  if (M.verts && hairBase) { const A = hairBase.body.geometry.attributes.normal, V = M.verts, v = new THREE.Vector3();
-    const s = new THREE.Vector3();
-    for (let j = 0, m = 0; j < V.length; j += 2, m += 3) { v.fromArray(M.normals, m); if (opts) v.lerp(s.fromArray(M.smooth, m), Math.min(1, (1 - V[j + 1]) / .3)).normalize(); v.toArray(A.array, V[j] * 3); }
-    A.needsUpdate = true; }
-  if (!opts) return;
+  const M = tex.mouth, opts = (MOUTHS.find(m => m[0] === mouthNow) || [])[2]; if (!M || !opts) return;
   const T = M.texels, skin = tex.colours[PARTS.skin] || tex.skin, edge = .007;
   // (the colours: lips a soft pink, a third the skin's own; the mouth's inside a deep red; teeth off-white; the tongue pink)
   const mix = (a, b, t) => ({ r: a.r * (1 - t) + b.r * t, g: a.g * (1 - t) + b.g * t, b: a.b * (1 - t) + b.b * t });
@@ -779,7 +774,13 @@ function redrawBody() {
     if (!c) { o[i] = s[i]; o[i + 1] = s[i + 1]; o[i + 2] = s[i + 2]; o[i + 3] = 255; continue; }
     const k = (.3 * s[i] + .59 * s[i + 1] + .11 * s[i + 2]) / tex.mid[tex.label[p]];
     o[i] = Math.min(255, c.r * 255 * k); o[i + 1] = Math.min(255, c.g * 255 * k); o[i + 2] = Math.min(255, c.b * 255 * k); o[i + 3] = 255; }
-  drawEyes(o); drawMouth(o); drawPynt(o); drawNose(o); drawBrows(o); tex.ctx.putImageData(out, 0, 0); tex.texture.needsUpdate = true; smoothUnder(); shapeNose(); bulgeLips(); }
+  drawEyes(o); drawMouth(o); drawPynt(o); drawNose(o); drawBrows(o); tex.ctx.putImageData(out, 0, 0); tex.texture.needsUpdate = true; smoothUnder(); shapeNose(); mouthNormals(); bulgeLips(); }
+// (the smile's crease lit smooth under a new mouth, as it was under the smile - after shapeNose, whose area reaches
+// down over the upper lip and put the crease's light back there)
+function mouthNormals() { const M = tex && tex.mouth, opts = (MOUTHS.find(m => m[0] === mouthNow) || [])[2]; if (!M || !M.verts || !hairBase) return;
+  const A = hairBase.body.geometry.attributes.normal, V = M.verts, v = new THREE.Vector3(), s = new THREE.Vector3();
+  for (let j = 0, m = 0; j < V.length; j += 2, m += 3) { v.fromArray(M.normals, m); if (opts) v.lerp(s.fromArray(M.smooth, m), Math.min(1, (1 - V[j + 1]) / .15)).normalize(); v.toArray(A.array, V[j] * 3); }
+  A.needsUpdate = true; }
 // (the lips standing out a little in the face, for the mouths that ask for it (bulge: how far the upper and the lower
 // lip come out, in eyes' distances) - only the lips: each point moved straight out by a soft hump over the lip's
 // middle line that fades smoothly into the skin round it, so no edge shows from the side. Nothing else of the face is
@@ -792,7 +793,8 @@ function bulgeLips() { const M = tex && tex.mouth; if (!M || !M.pos) return; con
       const c = M.my + opts.mid[0] + opts.mid[1] * u * u, top = c + opts.open[0] * s, bot = c - opts.open[1] * Math.pow(s, 1.3);
       const up = top + opts.lip[0] * Math.pow(s, rd), lo = bot - opts.lip[1] * Math.pow(s, rd + .05);
       // (a hump over each lip's middle, as wide as the lip and a little more, fading out along the mouth to its corners)
-      const hump = (mid, half) => Math.exp(-(((Y - mid) / (half * 1.3 + .012)) ** 2)), along = Math.pow(Math.max(0, 1 - Math.abs(u) ** 2), .8);
+      // (at least .022 wide: the upper lip is thin, and a narrower hump didn't show in the profile)
+      const hump = (mid, half) => Math.exp(-(((Y - mid) / (Math.max(.022, half * 1.3) + .012)) ** 2)), along = Math.pow(Math.max(0, 1 - Math.abs(u) ** 2), .8);
       dz = (b[0] * hump((top + up) / 2, (up - top) / 2) + b[1] * hump((bot + lo) / 2, (bot - lo) / 2)) * along; }
     A.array[i * 3] = M.pos[m]; A.array[i * 3 + 1] = M.pos[m + 1]; A.array[i * 3 + 2] = M.pos[m + 2] + dz * ap; }
   A.needsUpdate = true; }
