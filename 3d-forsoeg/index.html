@@ -340,7 +340,14 @@ function setupEyeShapes(place, inside) {
     for (const [p, [X, Y]] of place) if (Math.sign(X) === side && white(p) && inside.has(p)) { const d = Math.hypot(X - icx, Y - icy);
       if (d > .9 * r && d < 2 * r) { const b = Math.floor((Math.atan2(Y - icy, X - icx) / Math.PI + 1) / 2 * 24) % 24; near[b] = Math.min(near[b], d); } }
     const ws = [...near].filter(d => d < 9);
+    // (the pupil's light: the white inside the iris - where it sits, and how big)
+    const hl = [0, 0, 0, 0];
+    for (const [p, [X, Y]] of place) if (Math.sign(X) === side && white(p) && inside.has(p) && Math.hypot(X - icx, Y - icy) < .75 * r) { hl[0] += X - icx; hl[1] += Y - icy; hl[3]++; }
+    if (hl[3]) { hl[0] /= hl[3]; hl[1] /= hl[3];
+      for (const [p, [X, Y]] of place) if (Math.sign(X) === side && white(p) && inside.has(p) && Math.hypot(X - icx, Y - icy) < .75 * r) hl[2] += (X - icx - hl[0]) ** 2 + (Y - icy - hl[1]) ** 2;
+      hl[2] = Math.sqrt(2 * hl[2] / hl[3]); }
     eyes.push({ side, cx, cy: (y0 + y1) / 2, ew, eh: (y1 - y0) / 2, ix: icx, iy: icy, r, R: ws.length > 5 ? pct(ws, .5) : 1.15 * r, top,
+      light: hl[3] ? { x: hl[0], y: hl[1], r: hl[2] } : { x: .3 * r, y: .3 * r, r: .2 * r },
       white: { r: wh[0] / wh[3], g: wh[1] / wh[3], b: wh[2] / wh[3] },
       colour: { r: rgb[0] / ix.length, g: rgb[1] / ix.length, b: rgb[2] / ix.length } }); }
   // (the zone's texels, and for each: its eye, the skin's light round it, and whether it is in the eye's opening - the
@@ -406,9 +413,20 @@ function drawEyes(o) {
       const re = Math.hypot((sx - E.cx) / E.ew, (sy - E.cy) / E.eh), sm = v => Math.max(0, Math.min(1, v / .03 + .5));
       if (re < 1.02) { const g = opts.big * opts.iris2, icx = E.cx + (E.ix - E.cx) * opts.big, icy = E.cy + (E.iy - E.cy) * opts.big, dI = Math.hypot(X - icx, Y - icy) / (E.R * g);
         const keep = sm(.99 - re); if (dI < 1.6 && keep > 0) {
-          if (dI < 1.05) { const c = sample(E, E.ix + (X - icx) / g, E.iy + (Y - icy) / g, false); if (c) put(i, c, 1, keep * sm(1 - dI)); }
-          const irisC = tex.colours[PARTS.eyes] || E.colour, ringC = { r: dark.r * .7 + irisC.r * .3, g: dark.g * .7 + irisC.g * .3, b: dark.b * .7 + irisC.b * .3 };
+          // (the iris drawn anew, not blown up - blown up, its edges were ragged on a big screen: the eye colour, darker
+          // towards its edge and lighter at its foot, a round black pupil, and the pupil's light where it was, a
+          // smaller one opposite)
+          const irisC = tex.colours[PARTS.eyes] || E.colour, Rt = E.R * g;
+          if (dI < 1.05) { const uy = (Y - icy) / Rt, L = { x: E.light.x, y: E.light.y, r: 1.8 * E.light.r }, gl = g;
+            put(i, irisC, (.72 + .4 * (1 - dI)) * (1 + .35 * Math.max(0, -uy)), keep * sm(1 - dI));
+            put(i, dark, .6, keep * sm(.48 - dI));
+            put(i, E.white, 1, keep * sm((L.r * gl - Math.hypot(X - icx - L.x * gl, Y - icy - L.y * gl)) / Rt));
+            put(i, E.white, 1, .85 * keep * sm((.35 * L.r * gl - Math.hypot(X - icx + .8 * L.x * gl, Y - icy + .8 * L.y * gl)) / Rt)); }
+          const ringC = { r: dark.r * .7 + irisC.r * .3, g: dark.g * .7 + irisC.g * .3, b: dark.b * .7 + irisC.b * .3 };
           put(i, ringC, 1, keep * sm(dI - .88) * sm(1 - dI)); put(i, E.white, 1, keep * sm(dI - 1) * sm(1.6 - dI)); } }
+      // (the lower lid's line drawn anew too, along the opening's foot - ragged in the picture where the iris meets it -
+      // fading out towards the corners)
+      if (sy < E.cy) { const u2 = Math.abs(sx - E.cx) / E.ew, band = Math.max(0, Math.min(1, (.9 - u2) / .2)); if (band > 0) put(i, dark, .9, band * sm(re - .97) * sm(1.05 - re)); }
       continue; }
     if (opts.shut && (!opts.one || E.side > 0)) {
       const rr = Math.hypot(dx / (E.ew * 1.2), dy / (E.eh * 1.45)); if (rr < 1.25) put(i, skin, k, Math.min(1, (1.25 - rr) / .2));
