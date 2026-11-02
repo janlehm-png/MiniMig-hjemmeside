@@ -625,7 +625,7 @@ function setPynt(name) { const k = name.slice(5);
   pyntNow = k === 'ingen' ? [] : pyntNow.includes(k) ? pyntNow.filter(x => x !== k) : pyntNow.filter(x => !(PYNT_CLASH[k] || []).includes(x)).concat(k);
   redrawBody(); renderStyles(); }
 function setupPynt(place) { const w = tex.w, h = tex.h, face = new Map();
-  for (const [p, [X, Y]] of place) if (Math.abs(X) < 1.3 && Y > -1 && Y < .8) face.set(p, [X, Y]);
+  for (const [p, [X, Y]] of place) if (Math.abs(X) < 1.3 && Y > -1 && Y < 1.15) face.set(p, [X, Y]); // (the forehead too)
   for (let r = 0; r < 6; r++) { const add = [];
     for (const [p, v] of face) for (const o of [1, -1, w, -w]) if (p + o >= 0 && p + o < w * h && !face.has(p + o) && !place.has(p + o)) add.push([p + o, v]);
     for (const [p, v] of add) if (!face.has(p)) face.set(p, v); }
@@ -651,23 +651,25 @@ function drawCheeks(ctx, list, skin) {
   ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.18)'; ctx.shadowBlur = 1;
   if (has('hjerter')) { ctx.fillStyle = '#FF4F8B'; for (const [x, y] of CHEEKS) heart(x, y, 5); }
   if (has('stjerne')) star(CHEEKS[1][0], CHEEKS[1][1], 6.5, 2.6, '#FFC233');
-  if (has('regnbue')) { const x = 229, y = 175;
+  // (the user's places: the rainbow further out on the cheek than the app's x 229, the plaster up on the forehead, the
+  // beauty mark a little smaller)
+  if (has('regnbue')) { const x = 218, y = 178;
     ['#FF5A5A', '#FFA43B', '#FFD93B', '#5BD16E', '#4EA8FF', '#9B6BFF'].forEach((col, k) => {
       ctx.strokeStyle = col; ctx.lineWidth = 1.3; ctx.beginPath(); ctx.arc(x, y + 4, 7.5 - k * 1.15, Math.PI, 0); ctx.stroke(); }); }
-  if (has('plet')) { ctx.fillStyle = 'rgba(70,40,30,.85)'; ctx.beginPath(); ctx.arc(271, 178, 1.7, 0, Math.PI * 2); ctx.fill(); }
+  if (has('plet')) { ctx.fillStyle = 'rgba(70,40,30,.85)'; ctx.beginPath(); ctx.arc(271, 178, 1.2, 0, Math.PI * 2); ctx.fill(); }
   if (has('glimmer'))
     [[213, 131, 4.5, '#FFD43B'], [299, 129, 3.8, '#FFFFFF'], [294, 181, 3.2, '#FFD43B'], [218, 183, 3, '#FFFFFF'], [301, 155, 2.6, '#FF9EC4']]
       .forEach(([x, y, R, col]) => star(x, y, R * 1.5, R * .5, col)); // (half as big again as the app's: faint on the 3D face)
   ctx.restore();
-  if (has('plaster')) { ctx.save(); ctx.translate(285, 178); ctx.rotate(-.45);
+  if (has('plaster')) { ctx.save(); ctx.translate(270, 106); ctx.rotate(-.3);
     ctx.fillStyle = '#F3C38F'; ctx.strokeStyle = '#C98D55'; ctx.lineWidth = .8; ctx.beginPath(); ctx.roundRect(-10, -4, 20, 8, 4); ctx.fill(); ctx.stroke();
     ctx.fillStyle = '#E5AE77'; ctx.fillRect(-4, -4, 8, 8);
     ctx.fillStyle = '#C98D55'; for (const [dx, dy] of [[-2, -2], [2, 2], [2, -2], [-2, 2]]) { ctx.beginPath(); ctx.arc(dx, dy, .7, 0, Math.PI * 2); ctx.fill(); }
     ctx.restore(); } }
 // (the chosen things laid on the body's colour picture as it is redrawn: o its pixels. The app's picture from x 176 to
-// 336 and y 100 to 240, four times over)
+// 336 and y 76 to 240 - the forehead included - four times over)
 function drawPynt(o) { const P = tex.pynt; if (!P || !pyntNow.length) return;
-  const S = 4, x0 = 176, y0 = 100, W = 160 * S, H = 140 * S, c = document.createElement('canvas'); c.width = W; c.height = H;
+  const S = 4, x0 = 176, y0 = 76, W = 160 * S, H = 164 * S, c = document.createElement('canvas'); c.width = W; c.height = H;
   const g = c.getContext('2d'), sk = tex.colours[PARTS.skin] || tex.skin; g.scale(S, S); g.translate(-x0, -y0);
   drawCheeks(g, pyntNow, [sk.r * 255, sk.g * 255, sk.b * 255]);
   const d = g.getImageData(0, 0, W, H).data, T = P.texels;
