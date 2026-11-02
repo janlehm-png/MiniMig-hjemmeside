@@ -2215,8 +2215,8 @@ function makeItem(kind) {
     const up = new THREE.Group(); g.add(up); it.float = up; add(ball(.16), mat('#E8384F', .25, '#E8384F'), 0, 0, 0, 1, 1.15, 1, up);
     add(new THREE.ConeGeometry(.022, .035, 12), paint[0], 0, -.19, 0, 1, 1, 1, up);
     it.string = add(stick(.0025, 1, 6), mat('#8E86B5', .6)); }
-  if (kind === 'bamse') { const fur = mat('#9B6A45', .7), pale = mat('#E2C29C', .7); // (held by its arm, hanging at the side)
-    const b = new THREE.Group(); g.add(b); b.position.set(0, -.17, .05);
+  if (kind === 'bamse') { const fur = mat('#9B6A45', .7), pale = mat('#E2C29C', .7); // (held by its ear, hanging at the side)
+    const b = new THREE.Group(); g.add(b); b.position.set(-.05, -.31, .02);
     add(ball(.085), fur, 0, .09, 0, 1, 1.1, .9, b); add(ball(.072), fur, 0, .23, 0, 1, .95, .95, b);
     for (const s of [-1, 1]) { add(ball(.026), fur, s * .055, .29, 0, 1, 1, .6, b); add(ball(.016), pale, s * .055, .29, .012, 1, 1, .4, b);
       add(ball(.03), fur, s * .075, .12, .03, 1, 1.3, 1, b); add(ball(.036), fur, s * .05, .02, .045, 1, .9, 1.2, b); add(ball(.02), pale, s * .05, .02, .085, 1, 1, .3, b);
@@ -2263,6 +2263,36 @@ function makeItem(kind) {
   // (things in the hand bigger - at their own sizes they were small beside the child, smaller than in the app)
   g.scale.setScalar({ bamse: 1.6, tryllestav: 1.9, is: 1.8, blomst: 1.9, bold: 1.35 }[kind] || 1);
   g.visible = false; scene.add(g); return it; }
+// (the left hand closed into a fist, after the movement has set its fingers: each finger bent at its three joints towards
+// the palm - about the line across the hand, worked out from where its bones are now, so it fits every movement - and
+// the thumb laid over them. Returns where the fist holds - the hole through it - and the line across it, from the little
+// finger to the index finger)
+const fv = new THREE.Vector3(), fn = new THREE.Vector3(), fa = new THREE.Vector3(), fq = new THREE.Quaternion(), fr = new THREE.Quaternion();
+function fist() { const P = n => bone(n).getWorldPosition(new THREE.Vector3());
+  // (first the wrist turned, so the thumb's side faces forwards - with the palm backwards, as the movements hold it, a
+  // stick through the fist went sideways into the body)
+  { const arm = P('LeftHand').sub(P('LeftForeArm')).normalize(), a0 = P('LeftHandIndex1').sub(P('LeftHandPinky1')), want = new THREE.Vector3(0, 0, 1).applyQuaternion(glb.getWorldQuaternion(fq));
+    a0.addScaledVector(arm, -a0.dot(arm)).normalize(); want.addScaledVector(arm, -want.dot(arm)).normalize();
+    const ang = Math.atan2(fv.crossVectors(a0, want).dot(arm), a0.dot(want)), h = bone('LeftHand');
+    h.getWorldQuaternion(fq); h.quaternion.multiply(fr.setFromAxisAngle(arm.clone().applyQuaternion(fq.invert()), Math.max(-1.8, Math.min(1.8, ang)))); glb.updateMatrixWorld(true); }
+  const m1 = P('LeftHandMiddle1'), dir = P('LeftHandMiddle2').sub(m1).normalize(), across = P('LeftHandIndex1').sub(P('LeftHandPinky1'));
+  const w = across.length(); across.normalize();
+  // (the palm's side: square to the fingers and the line across, on the thumb's side)
+  fn.crossVectors(across, dir).normalize(); if (fn.dot(P('LeftHandThumb2').sub(m1)) < 0) fn.negate();
+  fa.crossVectors(dir, fn).normalize(); // (turning the fingers about this brings them towards the palm)
+  const turns = [];
+  for (const f of ['Index', 'Middle', 'Ring', 'Pinky']) for (const [k, a] of [[1, 1.25], [2, 1.45], [3, .9]]) turns.push([`LeftHand${f}${k}`, a]);
+  // (the world turns first worked out for each, then made - a parent's turn about the same line leaves the child's line
+  // the same in its own frame)
+  const axes = turns.map(([n]) => { const b = bone(n); b.getWorldQuaternion(fq); return fa.clone().applyQuaternion(fq.invert()); });
+  turns.forEach(([n, a], i) => bone(n)?.quaternion.multiply(fr.setFromAxisAngle(axes[i], a)));
+  // (the thumb: bent in over the curled fingers)
+  const ta = dir.clone(), tAxes = [['LeftHandThumb1', .35], ['LeftHandThumb2', .55], ['LeftHandThumb3', .5]].map(([n, a]) => { const b = bone(n); b.getWorldQuaternion(fq); return [b, ta.clone().negate().applyQuaternion(fq.invert()), a]; });
+  for (const [b, ax, a] of tAxes) b.quaternion.multiply(fr.setFromAxisAngle(ax, a));
+  glb.updateMatrixWorld(true);
+  // (the hole: a little in from the knuckles, towards the palm)
+  const at = m1.clone().addScaledVector(fn, .026).addScaledVector(dir, -.008).addScaledVector(across, -.1 * w);
+  return { at, across, palm: fn.clone(), dir }; }
 // (each frame: the thing put where it is held - in the left hand, or by the right foot, or round the waist - turned as
 // the figure is)
 const iv = new THREE.Vector3(), iw = new THREE.Vector3(), iq = new THREE.Quaternion(), iUp = new THREE.Vector3(0, 1, 0), iBones = {};
@@ -2270,8 +2300,15 @@ const bone = n => iBones[n] ??= (() => { let b = null; glb.traverse(o => { if (o
 function holdItem(t) { if (!item || !glb) return; const g = item.group; glb.getWorldQuaternion(iq);
   if (item.ground) { const f = bone('RightFoot'); f.getWorldPosition(iv); g.position.copy(iw.set(-.05, 0, .2).applyQuaternion(iq)).add(iv); g.position.y = item.ground; g.quaternion.copy(iq); return; }
   if (item.ring) { bone('Hips').getWorldPosition(iv); g.position.copy(iv); g.position.y += .05; g.quaternion.copy(iq); item.ring.rotation.set(Math.PI / 2 + .12 * Math.sin(t * 5), .12 * Math.cos(t * 5), 0); return; }
-  // (the palm: between the wrist and the middle finger's first joint)
-  const h = bone('LeftHand'), m = bone('LeftHandMiddle1'); h.getWorldPosition(iv); if (m) iv.lerp(m.getWorldPosition(iw), .7); g.position.copy(iv); g.quaternion.copy(iq);
+  // (held in a fist - the left hand closed round it, see fist(); a ball lies on the open hand)
+  if (item.kind === 'bold') { const h = bone('LeftHand'), m = bone('LeftHandMiddle1'); h.getWorldPosition(iv); iv.lerp(m.getWorldPosition(iw), .7); g.position.copy(iv); g.quaternion.copy(iq); return; }
+  const grip = fist(); iv.copy(grip.at); g.position.copy(iv);
+  // (a stick - the wand, the flower, the ice cream's cone - through the fist from the little finger's side to the
+  // thumb's, its top out at the thumb, tipped up a little; the teddy hangs from it, upright)
+  // (the end towards the figure's front - the hole's line has no sense of its own; the ice cream nearly upright)
+  if (['tryllestav', 'blomst', 'is'].includes(item.kind)) { const a = grip.across.clone(); if (a.dot(iw.set(0, 0, 1).applyQuaternion(iq)) < 0) a.negate();
+    const k = item.kind === 'is' ? [.35, 1] : [.8, .45]; iw.copy(a).multiplyScalar(k[0]).add(iUp.clone().multiplyScalar(k[1])).normalize(); g.quaternion.setFromUnitVectors(iUp, iw).multiply(iq); return; }
+  g.quaternion.copy(iq);
   if (item.float) { // (the balloon a little above and out from the head, swaying; the string from the hand to it)
     const top = iw.set(.15 + .08 * Math.sin(t * .9), 0, .05 * Math.cos(t * .7)).applyQuaternion(iq); top.y = 2.05 - iv.y; item.float.position.copy(top.clone().applyQuaternion(iq.clone().invert()));
     const knot = top.clone(); knot.y -= .2; const len = knot.length(); item.string.position.copy(knot).multiplyScalar(.5).applyQuaternion(iq.clone().invert());
