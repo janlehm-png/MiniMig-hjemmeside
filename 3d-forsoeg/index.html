@@ -718,7 +718,8 @@ function shapeNose() { const Z = tex && tex.nose; if (!Z) return; const opts = (
   A.needsUpdate = true; Nm.needsUpdate = true;
   // (the clown's ball: made the first time, bound to the head bone alone)
   if (opts.clown && !Z.ball) { const r = .2 * Z.apart, g = new THREE.SphereGeometry(r, 40, 28), cnt = g.attributes.position.count;
-    g.translate(Z.tip[0], Z.tip[1] - .02 * Z.apart, Z.tip[2] + .075 * Z.apart);
+    // (its middle just behind the tip, so it sits close in to the face over the nose)
+    g.translate(Z.tip[0], Z.tip[1] - .02 * Z.apart, Z.tip[2] - .1 * Z.apart);
     g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(new Uint16Array(cnt * 4).fill(0).map((_, k) => k % 4 ? 0 : hairBase.head), 4));
     g.setAttribute('skinWeight', new THREE.Float32BufferAttribute(new Float32Array(cnt * 4).map((_, k) => k % 4 ? 0 : 1), 4));
     Z.ball = new THREE.SkinnedMesh(g, new THREE.MeshStandardMaterial({ color: 0xE3212B, roughness: .28, metalness: 0 })); Z.ball.castShadow = true;
