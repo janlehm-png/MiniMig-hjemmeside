@@ -1798,42 +1798,80 @@ function rimOf(wp, idx) { const spot = spotOf(wp), edges = new Map(), rim = new 
 // dress - and moving with the body; written into a picture of its own, lettered dark on a light top and white on a dark)
 const BADGES = [['ingen', ''], ['stjerne', '⭐'], ['hjerte', '❤️'], ['regnbue', '🌈'], ['enhjoerning', '🦄'],
   ['fodbold', '⚽'], ['raket', '🚀'], ['hund', '🐶'], ['blomst', '🌸']];
-let nameNow = 'Ida', badgeNow = 'stjerne', namePrint = null;
-function chestName() { if (!hairBase) return;
-  if (namePrint) { namePrint.parent.remove(namePrint); namePrint.geometry.dispose(); namePrint.material.map.dispose(); namePrint.material.dispose(); namePrint = null; }
-  const name = nameNow.trim().slice(0, 10), badge = (BADGES.find(b => b[0] === badgeNow) || ['', ''])[1]; if (!name && !badge) return;
+let nameNow = 'Ida', badgeNow = 'stjerne';
+// (a print: a picture on a thin piece of the body's own surface in a box - cx, cy its middle, hw, hh half its width and
+// height, at the front or the back - laid just outside the garment worn there and following the same bones. The picture
+// drawn by draw(g, width, height), the box's left at the picture's left as it is seen)
+const prints = {};
+function printOn(key, at, worn, draw) {
+  const old = prints[key]; if (old) { old.parent.remove(old); old.geometry.dispose(); old.material.map.dispose(); old.material.dispose(); delete prints[key]; }
+  if (!hairBase || !draw) return;
   const body = hairBase.body, geo = body.geometry, { pts, inv, H } = hairBase.whole, K = clothMarks(), M = inv.clone().invert(), v = new THREE.Vector3();
-  // (on a dress lower down: the dresses have no shoulders, and the badge sat on their top edge)
-  const dress = GARMENTS.dress.meshes[GARMENTS.dress.shown], bsi = geo.attributes.skinIndex, bsw = geo.attributes.skinWeight, cy = K.neckY - (dress ? .16 : .115) * H, hw = .08 * H, hh = .055 * H;
-  // (what is worn over the chest: its front there, in the body's own place, as dots to stand just outside)
-  const worn = dress || GARMENTS.shirt.meshes[GARMENTS.shirt.shown], front = [];
+  const bsi = geo.attributes.skinIndex, bsw = geo.attributes.skinWeight, { cx, cy, hw, hh } = at, s = at.back ? -1 : 1;
+  // (what is worn there: its surface on that side, in the body's own place, as dots to stand just outside)
+  const front = [];
   if (worn) { const Q = worn.geometry.attributes.position; for (let i = 0; i < Q.count; i++) { v.fromBufferAttribute(Q, i).applyMatrix4(M);
-    if (v.z > K.cz && Math.abs(v.x - K.mid) < hw * 1.4 && Math.abs(v.y - cy) < hh * 1.4) front.push(v.x, v.y, v.z); } }
-  const r = .015 * H, outAt = (x, y, z) => { let f = z + .003 * H; for (let k = 0; k < front.length; k += 3) if (Math.abs(front[k] - x) < r && Math.abs(front[k + 1] - y) < r) f = Math.max(f, front[k + 2] + .003 * H); return f; };
-  // (the body's triangles facing forwards in the box round the chest)
+    if ((v.z - K.cz) * s > 0 && Math.abs(v.x - cx) < hw * 1.4 && Math.abs(v.y - cy) < hh * 1.4) front.push(v.x, v.y, v.z); } }
+  const r = .015 * H, outAt = (x, y, z) => { let f = z * s + .003 * H; for (let k = 0; k < front.length; k += 3) if (Math.abs(front[k] - x) < r && Math.abs(front[k + 1] - y) < r) f = Math.max(f, front[k + 2] * s + .003 * H); return f * s; };
+  // (the body's triangles facing that way in the box)
   const P = [], U = [], SI = [], SW = [];
   for (let c = 0; c < geo.attributes.position.count; c += 3) { const js = [c, c + 1, c + 2];
-    if (js.some(j => pts[j * 6 + 5] < .3 || pts[j * 6 + 2] < K.cz) || js.every(j => Math.abs(pts[j * 6] - K.mid) > hw || Math.abs(pts[j * 6 + 1] - cy) > hh)) continue;
+    if (js.some(j => pts[j * 6 + 5] * s < .3 || (pts[j * 6 + 2] - K.cz) * s < 0) || js.every(j => Math.abs(pts[j * 6] - cx) > hw || Math.abs(pts[j * 6 + 1] - cy) > hh)) continue;
     for (const j of js) { const x = pts[j * 6], y = pts[j * 6 + 1]; v.set(x, y, outAt(x, y, pts[j * 6 + 2])).applyMatrix4(inv); P.push(v.x, v.y, v.z);
-      U.push((x - K.mid) / (2 * hw) + .5, (y - cy) / (2 * hh) + .5);
+      U.push(s * (x - cx) / (2 * hw) + .5, (y - cy) / (2 * hh) + .5);
       for (let k = 0; k < 4; k++) { SI.push(bsi.getComponent(j, k)); SW.push(bsw.getComponent(j, k)); } } }
   if (!P.length) return;
+  const cv = document.createElement('canvas'); cv.width = 512; cv.height = Math.round(512 * hh / hw); draw(cv.getContext('2d'), cv.width, cv.height);
+  const map = new THREE.CanvasTexture(cv); map.colorSpace = THREE.SRGBColorSpace; map.anisotropy = 4;
+  const ng = new THREE.BufferGeometry(); ng.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); ng.setAttribute('uv', new THREE.Float32BufferAttribute(U, 2));
+  ng.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(SI, 4)); ng.setAttribute('skinWeight', new THREE.Float32BufferAttribute(SW, 4)); ng.computeVertexNormals();
+  const m = prints[key] = new THREE.SkinnedMesh(ng, new THREE.MeshStandardMaterial({ map, transparent: true, depthWrite: false, roughness: .8, metalness: 0, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
+  m.frustumCulled = false; m.position.copy(body.position); m.quaternion.copy(body.quaternion); m.scale.copy(body.scale);
+  body.parent.add(m); m.bind(body.skeleton, body.bindMatrix); }
+// (dark ink on a light garment, white on a dark - as the app's printName)
+const lightCloth = part => { const c = new THREE.Color().setStyle(part ? picked[part] || START[part] : '#FFFFFF', THREE.SRGBColorSpace); return .299 * c.r + .587 * c.g + .114 * c.b > .62; };
+function chestName() { if (!hairBase) return;
+  const name = nameNow.trim().slice(0, 10), badge = (BADGES.find(b => b[0] === badgeNow) || ['', ''])[1];
+  const { H } = hairBase.whole, K = clothMarks(), dress = GARMENTS.dress.meshes[GARMENTS.dress.shown], shirt = GARMENTS.shirt.meshes[GARMENTS.shirt.shown];
+  // (on a dress lower down: the dresses have no shoulders, and the badge sat on their top edge)
+  const light = lightCloth(dress ? 'dress' : shirt ? 'shirt' : '');
   // (the picture: the badge over the name - the name alone in the middle, smaller as it gets longer, as in the app)
-  const cv = document.createElement('canvas'); cv.width = 512; cv.height = Math.round(512 * hh / hw); const g = cv.getContext('2d'), mx = cv.width / 2, my = cv.height / 2;
-  const col = new THREE.Color().setStyle(picked[dress ? 'dress' : 'shirt'] || (worn ? START[dress ? 'dress' : 'shirt'] : '#FFFFFF'), THREE.SRGBColorSpace), light = .299 * col.r + .587 * col.g + .114 * col.b > .62;
+  printOn('name', { cx: K.mid, cy: K.neckY - (dress ? .16 : .115) * H, hw: .08 * H, hh: .055 * H }, dress || shirt, (name || badge) && ((g, w, h) => { const mx = w / 2, my = h / 2;
   g.textAlign = 'center'; g.textBaseline = 'middle';
   if (badge) { g.font = `${name ? 90 : 150}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`; g.fillText(badge, mx, name ? my - 72 : my); }
   if (name) { let size = 120; const font = s => `700 ${s}px ui-rounded, "Arial Rounded MT Bold", system-ui, sans-serif`; g.font = font(size);
     // (a long name kept to the chest's front: wider, its first letters went round the side out of sight)
     while (g.measureText(name).width > 390 && size > 40) g.font = font(--size);
     g.shadowColor = light ? 'rgba(255,255,255,.35)' : 'rgba(0,0,0,.25)'; g.shadowOffsetY = 4; g.shadowBlur = 6;
-    g.fillStyle = light ? '#2B2153' : '#FFFFFF'; g.fillText(name, mx, badge ? my + 48 : my); }
-  const map = new THREE.CanvasTexture(cv); map.colorSpace = THREE.SRGBColorSpace; map.flipY = true; map.anisotropy = 4;
-  const ng = new THREE.BufferGeometry(); ng.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); ng.setAttribute('uv', new THREE.Float32BufferAttribute(U, 2));
-  ng.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(SI, 4)); ng.setAttribute('skinWeight', new THREE.Float32BufferAttribute(SW, 4)); ng.computeVertexNormals();
-  namePrint = new THREE.SkinnedMesh(ng, new THREE.MeshStandardMaterial({ map, transparent: true, depthWrite: false, roughness: .8, metalness: 0, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
-  namePrint.frustumCulled = false; namePrint.position.copy(body.position); namePrint.quaternion.copy(body.quaternion); namePrint.scale.copy(body.scale);
-  body.parent.add(namePrint); namePrint.bind(body.skeleton, body.bindMatrix); }
+    g.fillStyle = light ? '#2B2153' : '#FFFFFF'; g.fillText(name, mx, badge ? my + 48 : my); } }));
+  footballPrints(); }
+// (the football kit, as the app's: the made-up club crest - not any real club's - on the shirt's right chest and the
+// shorts' right leg, as it sits in the app; and a big 10 on the shirt's back)
+function drawCrest(g, cx, cy, h) { const w = h * .82;
+  const shield = () => { g.beginPath(); g.moveTo(-w / 2, -h / 2); g.lineTo(w / 2, -h / 2); g.lineTo(w / 2, h * .05);
+    g.quadraticCurveTo(w / 2, h * .35, 0, h / 2); g.quadraticCurveTo(-w / 2, h * .35, -w / 2, h * .05); g.closePath(); };
+  g.save(); g.translate(cx, cy);
+  g.shadowColor = 'rgba(0,0,0,.25)'; g.shadowBlur = h * .07; g.shadowOffsetY = h * .03;
+  shield(); g.fillStyle = '#FFFFFF'; g.fill(); g.shadowColor = 'transparent';
+  g.scale(.8, .82); shield(); g.save(); g.clip();
+  const gr = g.createLinearGradient(0, -h / 2, 0, h / 2); gr.addColorStop(0, '#2A4FB8'); gr.addColorStop(1, '#16296E');
+  g.fillStyle = gr; g.fillRect(-w, -h, 2 * w, 2 * h);
+  g.strokeStyle = '#FFFFFF'; g.lineWidth = h * .2; g.beginPath(); g.moveTo(-w, h * .75); g.lineTo(w, -h * .45); g.stroke();
+  g.restore();
+  g.fillStyle = '#FFC233'; g.beginPath(); // (a five-pointed star in the upper corner)
+  for (let k = 0; k < 10; k++) { const r = k % 2 ? h * .07 : h * .17, a = -Math.PI / 2 + k * Math.PI / 5; g.lineTo(-w * .17 + r * Math.cos(a), -h * .17 + r * Math.sin(a)); }
+  g.fill(); g.restore(); }
+function footballPrints() { if (!hairBase) return; const { H } = hairBase.whole, K = clothMarks(), hipY = hairBase.hipY;
+  const shirt = GARMENTS.shirt.shown === 'toej-fodbold' && GARMENTS.shirt.meshes[GARMENTS.shirt.shown], pants = GARMENTS.pants.shown === 'bukser-fodbold' && GARMENTS.pants.meshes[GARMENTS.pants.shown];
+  const crest = (g, w, h) => drawCrest(g, w / 2, h / 2, h * .92);
+  // (the figure's right: on the left as one looks at it)
+  printOn('crest', { cx: K.mid - .045 * H, cy: K.neckY - .07 * H, hw: .018 * H, hh: .018 * H }, shirt, shirt && crest);
+  printOn('crest-pants', { cx: K.mid - .055 * H, cy: hipY - .1 * H, hw: .014 * H, hh: .014 * H }, pants, pants && crest);
+  const light = lightCloth('shirt');
+  printOn('number', { cx: K.mid, cy: K.neckY - .13 * H, hw: .075 * H, hh: .075 * H, back: true }, shirt, shirt && ((g, w, h) => {
+    g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = `800 ${h * .78}px ui-rounded, "Arial Rounded MT Bold", system-ui, sans-serif`;
+    g.shadowColor = light ? 'rgba(255,255,255,.35)' : 'rgba(0,0,0,.25)'; g.shadowOffsetY = 5; g.shadowBlur = 8;
+    g.fillStyle = light ? '#2B2153' : '#FFFFFF'; g.fillText('10', w / 2, h / 2 + h * .04); })); }
 // (the tab: a box to write the name in and the badges under it, in place of styles and colours)
 const nameInput = document.getElementById('nameInput'); nameInput.value = nameNow;
 nameInput.addEventListener('input', () => { nameNow = nameInput.value; chestName(); });
