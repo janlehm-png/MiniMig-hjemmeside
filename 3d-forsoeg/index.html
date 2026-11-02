@@ -470,12 +470,14 @@ function drawEyes(o) {
       put(i, tex.colours[PARTS.eyes] || E.colour, 1, cov(sd * E.r)); put(i, dark, 1, cov((.07 - Math.abs(sd)) * E.r)); } } }
 // ---- the mouth: the figure's own smile, or drawn anew in its place, as the eyes are ----
 // (the smile is painted faintly - a soft dark line and some shade on the lips: measured from the front, it is painted
-// over in the skin round it, in an oval half as wide again, and the new mouth drawn there, with lips as in the app:
+// over in the skin round it, in an oval half as wide again and deep enough for a tongue out, and the new mouth drawn
+// there, with lips as in the app:
 // soft pink, fuller below, lit from above. Each but Åh and Kys is given by its middle line - mid: how high, and how much
 // its corners rise (a frown: they fall) - its half width hw, how far it opens above and below that line (open), and how
 // thick its upper and lower lips are (lip); Grin and Tunge show upper teeth (teeth) and Grin a tongue lying inside)
 // (round: how bluntly the lips end at the corners - the smaller, the rounder)
-const MOUTHS = [['mund-smil', 'Smil'], ['mund-neutral', 'Neutral', { mid: [.01, .01], hw: .26, open: [0, 0], lip: [.046, .06], round: .25 }],
+// (Neutral was dropped by the user, 2026-11-02)
+const MOUTHS = [['mund-smil', 'Smil'],
   ['mund-grin', 'Grin', { mid: [-.02, .1], hw: .38, open: [.025, .22], lip: [.024, .03], teeth: .072, tongue: .06, crease: true }],
   ['mund-tunge', 'Tunge', { mid: [0, .05], hw: .28, open: [.02, .1], lip: [.026, .032], teeth: .04, out: true, crease: true }],
   ['mund-o', 'Åh', { o: true }], ['mund-kys', 'Kys', { kiss: true }],
@@ -486,7 +488,7 @@ function setupMouth(place) {
   const s = tex.src, w = tex.w, h = tex.h, ys = []; let mw = 0;
   for (const [p, [X, Y]] of place) { if (Math.abs(X) > .6 || Y > -.3 || Y < -1) continue;
     if ((.3 * s[p * 4] + .59 * s[p * 4 + 1] + .11 * s[p * 4 + 2]) / tex.mid[PARTS.skin] < .85) { ys.push(Y); mw = Math.max(mw, Math.abs(X)); } }
-  if (ys.length < 20) return; const my = ys.reduce((a, b) => a + b) / ys.length, rx = mw * 1.5, ry = .24;
+  if (ys.length < 20) return; const my = ys.reduce((a, b) => a + b) / ys.length, rx = mw * 1.5, ry = .34; // (deep enough for the tongue's tip)
   const zone = new Map(); for (const [p, [X, Y]] of place) if (Math.hypot(X / rx, (Y - my) / ry) < 1) zone.set(p, [X, Y]);
   // (and the unused margin round its pieces, as for the eyes)
   for (let r = 0; r < 12; r++) { const add = [];
@@ -524,7 +526,7 @@ function drawMouth(o) {
   const mix = (a, b, t) => ({ r: a.r * (1 - t) + b.r * t, g: a.g * (1 - t) + b.g * t, b: a.b * (1 - t) + b.b * t });
   // (as the user's reference: lips discreet, close to the skin; inside a deep warm red, the tongue a lighter pink-red)
   const lipC = mix(skin, { r: .74, g: .29, b: .34 }, .5), seamC = { r: .36, g: .12, b: .12 }, insideC = { r: .48, g: .13, b: .13 },
-    teethC = { r: .98, g: .97, b: .94 }, tongueC = { r: .9, g: .42, b: .44 };
+    teethC = { r: .98, g: .97, b: .94 }, tongueC = { r: .9, g: .42, b: .44 }, kissC = mix(skin, { r: .78, g: .3, b: .36 }, .8);
   const cov = d => Math.max(0, Math.min(1, d / edge + .5)), cl = v => Math.max(0, Math.min(1, v)), put = (i, c, k, a) => { if (a <= 0) return;
     o[i] = o[i] * (1 - a) + Math.min(255, c.r * 255 * k) * a; o[i + 1] = o[i + 1] * (1 - a) + Math.min(255, c.g * 255 * k) * a; o[i + 2] = o[i + 2] * (1 - a) + Math.min(255, c.b * 255 * k) * a; };
   // (a lip between its inner edge and its outer: fullest in its middle, a little darker at its rim; the lower one with a
@@ -572,17 +574,21 @@ function drawMouth(o) {
       if (opts.crease) { const cx2 = opts.hw + .035, cy2 = my + opts.mid[0] + opts.mid[1] - .01, dc = Math.hypot(Math.abs(X) - cx2 + .04, Y - cy2), ang = Math.atan2(Y - cy2, Math.abs(X) - cx2 + .04);
         put(i, skin, k * .8, .6 * cl(1 - Math.abs(dc - .045) / .006) * cl((ang + .9) / .3) * cl((.9 - ang) / .3) * cl((Math.abs(X) - cx2 + .02) / .02)); } }
     // (Åh: a round open mouth, its lips all round - fuller below - the inside dark with the tongue's tip at its foot)
-    if (opts.o) { const cy = my - .03, ei = Math.hypot(X / .07, (Y - cy) / .09), eo = Math.hypot(X / .115, (Y - cy + .008) / (Y > cy ? .13 : .145));
+    if (opts.o) { const cy = my - .03, ei = Math.hypot(X / .1, (Y - cy) / .09), eo = Math.hypot(X / .148, (Y - cy + .008) / (Y > cy ? .13 : .145));
       // (how far across the lip: 0 at the opening, 1 at its outer edge - ei / eo is the outer edge's size against the inner's)
       under(i, k, (eo - 1) * .12, X / .12);
       lip(i, k, (ei - 1) * .08, (1 - eo) * .1, (ei - 1) / ((ei / eo - 1) || 1), cl((cy + .03 - Y) / .06), X / .1);
       put(i, insideC, .6 + .45 * cl((cy + .09 - Y) / .18), cov((1 - ei) * .08));
-      const te = Math.hypot(X / .06, (Y - cy + .095) / .05); put(i, tongueC, .75 + .3 * (1 - te), cov((1 - ei) * .08) * cov((1 - te) * .05));
+      const te = Math.hypot(X / .08, (Y - cy + .095) / .05); put(i, tongueC, .75 + .3 * (1 - te), cov((1 - ei) * .08) * cov((1 - te) * .05));
       put(i, seamC, 1, .4 * cov(.004 - Math.abs((1 - ei) * .08))); }
-    // (Kys: small puckered lips, both full and round, the bow in the upper one, a short seam between)
-    if (opts.kiss) { const sy = my - .02, ux = X / .13, s = Math.sqrt(Math.max(0, 1 - ux * ux)), up = sy + .06 * Math.pow(s, .6) * (1 - .3 * Math.exp(-((X / .035) ** 2))), lo = sy - .078 * Math.pow(s, .7);
-      if (Math.abs(ux) < 1.05) { under(i, k, lo - Y, ux); lip(i, k, Y - sy, up - Y, (Y - sy) / (up - sy || 1), false, ux); lip(i, k, sy - Y, Y - lo, (sy - Y) / (sy - lo || 1), true, ux * 1.3);
-        put(i, seamC, 1, .8 * cov(.0045 * s - Math.abs(Y - sy))); } } } }
+    // (Kys: pursed lips pushed forward - narrow, nearly round, the bow in the upper one, a short seam in the middle, lit
+    // most where they stick out and with little creases running out from the middle, as lips gathered for a kiss)
+    if (opts.kiss) { const sy = my - .025, ux = X / .11, s = Math.sqrt(Math.max(0, 1 - ux * ux)), up = sy + .07 * Math.pow(s, .4) * (1 - .25 * Math.exp(-((X / .03) ** 2))), lo = sy - .082 * Math.pow(s, .45);
+      if (Math.abs(ux) < 1.05) { under(i, k, lo - Y, ux); lip(i, k, Y - sy, up - Y, (Y - sy) / (up - sy || 1), false, ux); lip(i, k, sy - Y, Y - lo, (sy - Y) / (sy - lo || 1), true, ux * 1.6);
+        const inLip = cov(Math.min(Y - lo, up - Y)), r = Math.hypot(X, (Y - sy) * 1.2), ang = Math.atan2(Y - sy, X);
+        put(i, { r: 1, g: .92, b: .92 }, 1, .18 * inLip * Math.exp(-((r / .04) ** 2)));
+        put(i, kissC, k, .35 * inLip); put(i, lipC, k * .68, .75 * inLip * cl((r - .025) / .015) * cl(1 - Math.abs(Math.sin(ang * 5)) / .18) * cl(Math.min(up - Y, Y - lo) / .015));
+        put(i, seamC, 1, .85 * cov(.005 * s - Math.abs(Y - sy)) * cl((.45 - Math.abs(ux)) / .15)); } } } }
 // (a shut eye's hollow lit smooth - see setupBrows - and an open one as it was)
 function shutNormals(S, opts) { if (!S.verts || !hairBase) return; const N = hairBase.body.geometry.attributes.normal, A = N.array, V = S.verts, v = new THREE.Vector3();
   for (let j = 0, m = 0; j < V.length; j += 3, m += 3) { const i = V[j], E = S.eyes[V[j + 1]], shut = opts.shut && (!opts.one || E.side > 0);
