@@ -483,7 +483,7 @@ function drawEyes(o) {
 // (Neutral was dropped by the user, 2026-11-02)
 const MOUTHS = [['mund-smil', 'Smil'],
 // (all about as big as each other - the user found Grin much the biggest)
-  ['mund-grin', 'Grin', { mid: [-.02, .09], hw: .32, open: [.025, .19], lip: [.024, .03], teeth: .065, tongue: .055, crease: true, bulge: [.06, .065] }],
+  ['mund-grin', 'Grin', { mid: [-.02, .09], hw: .32, open: [.025, .19], lip: [.024, .03], teeth: .065, teethW: 1.05, tongue: .055, crease: true, bulge: [.06, .065] }],
   ['mund-tunge', 'Tunge', { mid: [0, .06], hw: .32, open: [.022, .13], lip: [.026, .032], teeth: .05, out: true, crease: true }],
   ['mund-o', 'Åh', { o: 1.2 }], ['mund-kys', 'Kys', { kiss: 1.25 }],
   ['mund-trist', 'Trist', { mid: [.035, -.07], hw: .3, open: [0, 0], lip: [.044, .056], round: .3 }]];
@@ -573,8 +573,9 @@ function drawMouth(o) {
           const te = Math.hypot(X / rx, (Y - ty) / ry); tg = cov((1 - te) * .1) * (opts.out ? cov(top - .004 - Y) : cov(dI));
           const depth = cl((top - Y) / (top - bot || 1)), sh = (.72 + .3 * (1 - te * te)) * (.7 + .3 * depth) + .18 * Math.exp(-((X / .05) ** 2 + ((Y - ty - .3 * ry) / .045) ** 2));
           put(i, tongueC, sh, tg); if (opts.out) put(i, { r: .62, g: .24, b: .27 }, 1, tg * .45 * cov(.005 - Math.abs(X)) * cov(Y - ty + .7 * ry)); }
-        // (the upper teeth: across the middle three quarters of the mouth, their ends and lower edge rounded)
-        if (opts.teeth) { const tu = u / .75, ts = Math.sqrt(Math.max(0, 1 - tu * tu)), tb = top - opts.teeth * Math.pow(ts, .5), tooth = Math.abs(((u * 3.6 + .5) % 1 + 1) % 1 - .5);
+        // (the upper teeth: across the middle three quarters of the mouth - for Grin out to the corners (teethW) - their
+        // ends and lower edge rounded)
+        if (opts.teeth) { const tu = u / (opts.teethW || .75), ts = Math.sqrt(Math.max(0, 1 - tu * tu)), tb = top - opts.teeth * Math.pow(ts, .5), tooth = Math.abs(((u * 3.6 + .5) % 1 + 1) % 1 - .5);
           put(i, teethC, k * (.86 + .14 * cl((Y - tb) / opts.teeth)) * (tooth > .46 ? .9 : 1), cov(Math.min(dI, Y - tb)) * (ts > 0 ? 1 : 0)); }
         put(i, seamC, 1, .4 * (1 - tg) * cov(.004 - Math.abs(dI)) * (au < 1 ? 1 : 0)); }
       else if (!open) { put(i, seamC, 1, .85 * cov(.005 * (1 - .5 * u * u) - Math.abs(Y - c)) * cl((.95 - au) / .08)); }
