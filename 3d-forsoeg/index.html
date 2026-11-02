@@ -2248,7 +2248,7 @@ function makeItem(kind) {
   if (kind === 'bold') { // (in the colour with two white stripes round it, as the app's)
     const a = new THREE.Vector3(.5, .8, .3).normalize();
     const [t, draw] = ballPicture(d => { const w = soft(.12 - Math.abs(Math.abs(d.dot(a)) - .4), .02), c = rgb(picked.item || '#3D8BFF'); return c.map(v => v * (1 - w) + 250 * w); });
-    const b = new THREE.Group(); g.add(b); b.position.set(0, -.07, .06); add(ball(.1, 48), new THREE.MeshStandardMaterial({ map: t, roughness: .3 }), 0, 0, 0, 1, 1, 1, b); it.repaint = draw; }
+    const b = new THREE.Group(); g.add(b); add(ball(.1, 48), new THREE.MeshStandardMaterial({ map: t, roughness: .3 }), 0, 0, 0, 1, 1, 1, b); it.repaint = draw; }
   if (kind === 'fodbold') { // (white with black patches round the twelve corners of an icosahedron - a football's)
     const ico = new THREE.IcosahedronGeometry(1, 0), I = ico.attributes.position, corners = []; for (let j = 0; j < I.count; j++) corners.push(new THREE.Vector3().fromBufferAttribute(I, j).normalize());
     const [t] = ballPicture(d => { const k = soft(Math.max(...corners.map(c => d.dot(c))) - .955, .006); return [235 - 215 * k, 235 - 215 * k, 238 - 215 * k]; });
@@ -2272,10 +2272,11 @@ function makeItem(kind) {
 const fv = new THREE.Vector3(), fn = new THREE.Vector3(), fa = new THREE.Vector3(), fq = new THREE.Quaternion(), fr = new THREE.Quaternion();
 // (curl: how far the fingers close - less round something thick, the ice cream's cone, the hole then further from the palm;
 // lift: the wrist tipped up that far, the thumb's side raised - holding the balloon, the wand, the ice cream, the flower)
-function fist(curl = 1, lift = 0) { const P = n => bone(n).getWorldPosition(new THREE.Vector3());
+// (twist false: the wrist left as the movement holds it - for the ball, which lies in the palm)
+function fist(curl = 1, lift = 0, twist = true) { const P = n => bone(n).getWorldPosition(new THREE.Vector3());
   // (first the wrist turned, so the thumb's side faces forwards - with the palm backwards, as the movements hold it, a
   // stick through the fist went sideways into the body)
-  { const arm = P('LeftHand').sub(P('LeftForeArm')).normalize(), a0 = P('LeftHandIndex1').sub(P('LeftHandPinky1')), want = new THREE.Vector3(0, 0, 1).applyQuaternion(glb.getWorldQuaternion(fq));
+  if (twist) { const arm = P('LeftHand').sub(P('LeftForeArm')).normalize(), a0 = P('LeftHandIndex1').sub(P('LeftHandPinky1')), want = new THREE.Vector3(0, 0, 1).applyQuaternion(glb.getWorldQuaternion(fq));
     a0.addScaledVector(arm, -a0.dot(arm)).normalize(); want.addScaledVector(arm, -want.dot(arm)).normalize();
     const ang = Math.atan2(fv.crossVectors(a0, want).dot(arm), a0.dot(want)), h = bone('LeftHand');
     h.getWorldQuaternion(fq); h.quaternion.multiply(fr.setFromAxisAngle(arm.clone().applyQuaternion(fq.invert()), Math.max(-1.8, Math.min(1.8, ang)))); glb.updateMatrixWorld(true);
@@ -2308,7 +2309,10 @@ function holdItem(t) { if (!item || !glb) return; const g = item.group; glb.getW
   if (item.ground) { const f = bone('RightFoot'); f.getWorldPosition(iv); g.position.copy(iw.set(-.05, 0, .2).applyQuaternion(iq)).add(iv); g.position.y = item.ground; g.quaternion.copy(iq); return; }
   if (item.ring) { bone('Hips').getWorldPosition(iv); g.position.copy(iv); g.position.y += .05; g.quaternion.copy(iq); item.ring.rotation.set(Math.PI / 2 + .12 * Math.sin(t * 5), .12 * Math.cos(t * 5), 0); return; }
   // (held in a fist - the left hand closed round it, see fist(); a ball lies on the open hand)
-  if (item.kind === 'bold') { const h = bone('LeftHand'), m = bone('LeftHandMiddle1'); h.getWorldPosition(iv); iv.lerp(m.getWorldPosition(iw), .7); g.position.copy(iv); g.quaternion.copy(iq); return; }
+  // (the ball against the palm, whichever way the hand is turned, the fingers a little round it - in the dance it stayed
+  // where the hand had been)
+  if (item.kind === 'bold') { const p = fist(.3, 0, false), h = bone('LeftHand').getWorldPosition(iw), m = bone('LeftHandMiddle1').getWorldPosition(new THREE.Vector3());
+    g.position.copy(h.lerp(m, .75)).addScaledVector(p.palm, .125); g.quaternion.copy(iq); return; }
   // (the ice cream's cone held round its waffle, the fingers outside it: the hand less closed, the cone held low down -
   // in a full fist the hand went into the cone)
   const grip = fist(item.kind === 'is' ? .55 : 1, ['ballon', 'tryllestav', 'is', 'blomst'].includes(item.kind) ? .45 : 0); iv.copy(grip.at); g.position.copy(iv);
