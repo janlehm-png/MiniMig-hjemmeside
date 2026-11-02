@@ -247,7 +247,10 @@ function setupBrows(body) {
   for (let k = 0; k < n; k += 3) { const a = at(k, P), b = at(k + 1, P), c = at(k + 2, P);
     const e1 = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], e2 = [c[0] - a[0], c[1] - a[1], c[2] - a[2]], nz = e1[0] * e2[1] - e1[1] * e2[0], nl = Math.hypot(e1[1] * e2[2] - e1[2] * e2[1], e1[2] * e2[0] - e1[0] * e2[2], nz);
     const X = [a, b, c].map(v => (v[0] - cx) / apart), Y = [a, b, c].map(v => (v[1] - cy) / apart);
-    if (!(nz > .15 * nl) || (a[2] + b[2] + c[2]) / 3 < cz - .8 * apart || Math.max(...X.map(Math.abs)) > 1.7 || Math.min(...Y) < -.4 || Math.max(...Y) > 1.5) continue;
+    // (round the eyes every piece, whichever way it faces: the eye sits in a hollow whose sides face in and up, and they
+    // showed through a shut eye)
+    const nearEye = Math.abs(Math.abs(X[0] + X[1] + X[2]) / 3 - .48) < .35 && Math.abs(Y[0] + Y[1] + Y[2]) / 3 < .3;
+    if (!(nz > .15 * nl || nearEye) || (a[2] + b[2] + c[2]) / 3 < cz - .8 * apart || Math.max(...X.map(Math.abs)) > 1.7 || Math.min(...Y) < -.4 || Math.max(...Y) > 1.5) continue;
     const q = [px(k), px(k + 1), px(k + 2)], d = (q[1][1] - q[2][1]) * (q[0][0] - q[2][0]) + (q[2][0] - q[1][0]) * (q[0][1] - q[2][1]); if (!d) continue;
     for (let y = Math.floor(Math.min(q[0][1], q[1][1], q[2][1])); y <= Math.ceil(Math.max(q[0][1], q[1][1], q[2][1])); y++)
       for (let x = Math.floor(Math.min(q[0][0], q[1][0], q[2][0])); x <= Math.ceil(Math.max(q[0][0], q[1][0], q[2][0])); x++) {
@@ -258,6 +261,14 @@ function setupBrows(body) {
   for (let r = 0; r < 3; r++) { const add = [];
     for (const p of place.keys()) for (const o of [1, -1, w, -w]) if (p + o >= 0 && p + o < w * h && !place.has(p + o)) add.push([p + o, place.get(p)]);
     for (const [p, v] of add) if (!place.has(p)) place.set(p, v); }
+  setupEyeShapes(place);
+  // (the eye sits in a hollow, whose shade showed through a shut eye: there the points are lit as if the face went
+  // smoothly across - their way out turned towards the average of the ring round the eye, the more the further in)
+  const S = tex.eyeShapes; if (S) { const N = geo.attributes.normal.array, list = [], ring = S.eyes.map(() => [0, 0, 0]);
+    for (let i = 0; i < n; i++) { const X = (P[i * 3] - cx) / apart, Y = (P[i * 3 + 1] - cy) / apart; if (P[i * 3 + 2] < cz - .4 * apart) continue;
+      S.eyes.forEach((E, e) => { const rr = Math.hypot((X - E.cx) / E.ew, (Y - E.cy) / E.eh);
+        if (rr < 1.5) list.push(i, e, rr); else if (rr < 1.9) for (let m = 0; m < 3; m++) ring[e][m] += N[i * 3 + m]; }); }
+    S.ring = ring.map(r => new THREE.Vector3(...r).normalize()); S.verts = new Float32Array(list); S.normals = Float32Array.from(list.filter((_, j) => j % 3 === 0).flatMap(i => [N[i * 3], N[i * 3 + 1], N[i * 3 + 2]])); }
   // (the old brows: the hair's brown above the eyes - from now on a part of their own - and how they lie, side by side
   // folded together: in 24 strips across, from between the eyes outwards, how high their middle is and how thick)
   const N = 24, top = new Float32Array(N).fill(-9), low = new Float32Array(N).fill(9), zone = new Set();
@@ -292,6 +303,92 @@ function drawBrows(o) {
     const half = B.thick(Math.min(B.x1, Math.max(B.x0, ax))) / 2 * (opts.thick || 1), out = Math.max(0, B.x0 - ax, ax - B.x1);
     const d = Math.hypot(Y - c, out), a = Math.max(0, Math.min(1, (half - d) / edge + .5)); if (!a) continue;
     for (const [m, ch] of [[0, 'r'], [1, 'g'], [2, 'b']]) o[i + m] = o[i + m] * (1 - a) + brow[ch] * 255 * (tex.colours[PARTS.brows] ? .9 : 1) * a; } }
+// ---- the eyes' shapes, drawn as the brows are: in the face seen from the front ----
+// (each eye measured there - its opening, the white and the iris, and the iris alone - and round it a zone, an oval
+// 1.75 times the opening, whose texels the shapes are drawn into. Store: the eye a quarter bigger, taken from the texels
+// themselves, the skin round it stretched to meet; Glade and Blink: the eye painted over in the skin and a shut lid
+// drawn - an arch up, or for Blink one eye's lid down; Vipper: three lashes at each eye's outer corner; Stjerner,
+// Hjerter: the iris a star or a heart, in the eye colour, on white)
+const EYES = [['oejne-naturlige', 'Naturlige'], ['oejne-store', 'Store', { big: 1.25 }], ['oejne-glad', 'Glade', { shut: 'up' }],
+  ['oejne-blink', 'Blink', { shut: 'down', one: true }], ['oejne-vipper', 'Vipper', { lashes: true }],
+  ['oejne-stjerne', 'Stjerner', { iris: 'star' }], ['oejne-hjerte', 'Hjerter', { iris: 'heart' }]];
+let eyesNow = 'oejne-naturlige';
+function setEyes(name) { eyesNow = name; redrawBody(); renderStyles(); }
+function setupEyeShapes(place) {
+  const s = tex.src, w = tex.w, h = tex.h, white = p => s[p * 4] > 200 && s[p * 4 + 1] > 200 && s[p * 4 + 2] > 200;
+  const dark = p => Math.max(s[p * 4], s[p * 4 + 1], s[p * 4 + 2]) < 100, pct = (a, f) => { a.sort((x, y) => x - y); return a[Math.floor(f * (a.length - 1))]; };
+  const eyes = [];
+  for (const side of [-1, 1]) {
+    const ox = [], oy = [], ix = [], iy = [], rgb = [0, 0, 0];
+    for (const [p, [X, Y]] of place) { if (Math.sign(X) !== side || Math.abs(X) < .1 || Math.abs(X) > 1.1 || Math.abs(Y) > .4) continue;
+      const iris = tex.label[p] === PARTS.eyes; if (iris || white(p)) { ox.push(X); oy.push(Y); }
+      if (iris) { ix.push(X); iy.push(Y); for (let m = 0; m < 3; m++) rgb[m] += s[p * 4 + m] / 255; } }
+    if (ox.length < 20 || ix.length < 10) return;
+    const x0 = pct(ox, .02), x1 = pct(ox, .98), y0 = pct(oy, .02), y1 = pct(oy, .98), i0 = pct(ix, .03), i1 = pct(ix, .97), r = (i1 - i0) / 2;
+    eyes.push({ side, cx: (x0 + x1) / 2, cy: (y0 + y1) / 2, ew: (x1 - x0) / 2, eh: (y1 - y0) / 2, ix: (i0 + i1) / 2, iy: pct(iy, .03) + r, r,
+      colour: { r: rgb[0] / ix.length, g: rgb[1] / ix.length, b: rgb[2] / ix.length } }); }
+  // (the zone's texels, and for each: its eye, the skin's light round it, and whether it is in the eye's opening - the
+  // white and the whole iris, and the iris's dark rim below the upper lid)
+  const zone = new Map();
+  for (const [p, [X, Y]] of place) for (let e = 0; e < 2; e++) { const E = eyes[e]; if (Math.hypot((X - E.cx) / E.ew, (Y - E.cy) / E.eh) < 1.75) zone.set(p, [X, Y, e]); }
+  // (and the unused margin round the eye's pieces, 12 deep: the old eye there, blended in from afar, showed as brown flecks
+  // on a shut eye)
+  for (let r = 0; r < 12; r++) { const add = [];
+    for (const [p, v] of zone) for (const o of [1, -1, w, -w]) if (p + o >= 0 && p + o < w * h && !zone.has(p + o) && !place.has(p + o)) add.push([p + o, v]);
+    for (const [p, v] of add) if (!zone.has(p)) zone.set(p, v); }
+  const out = [];
+  for (const [p, [X, Y, e]] of zone) { const E = eyes[e], d = Math.hypot(X - E.ix, Y - E.iy) / E.r;
+    // (inside the iris everything - the pupil's light has soft edges, neither white nor dark - and round it its rim)
+    const open = d < 1.05 || white(p) || tex.label[p] === PARTS.eyes || dark(p) && d < 1.2 && Y - E.iy < .45 * E.r;
+    let ks = 0, c = 0; const x = p % w, y = (p - x) / w;
+    for (let dy = -14; dy <= 14; dy += 2) for (let dx = -14; dx <= 14; dx += 2) { const X2 = x + dx, Y2 = y + dy; if (X2 < 0 || Y2 < 0 || X2 >= w || Y2 >= h) continue; const q = Y2 * w + X2;
+      if (tex.label[q] === PARTS.skin && !zone.has(q)) { const i = q * 4; ks += (.3 * s[i] + .59 * s[i + 1] + .11 * s[i + 2]) / tex.mid[PARTS.skin]; c++; } }
+    out.push(p, X, Y, e, c ? ks / c : 1, open ? 1 : 0); }
+  // (for Store: each eye's zone as a little picture seen from the front, which texel lies at each spot - its holes, between
+  // texels further apart than its squares, filled from their neighbours)
+  for (const E of eyes) { E.cell = E.ew / 30; E.gx = E.cx - 1.8 * E.ew; E.gy = E.cy - 1.8 * E.eh; E.gw = Math.ceil(3.6 * E.ew / E.cell); E.gh = Math.ceil(3.6 * E.eh / E.cell); E.grid = new Int32Array(E.gw * E.gh).fill(-1); }
+  for (let j = 0; j < out.length; j += 6) { if (!place.has(out[j])) continue; const E = eyes[out[j + 3]], gx = Math.floor((out[j + 1] - E.gx) / E.cell), gy = Math.floor((out[j + 2] - E.gy) / E.cell);
+    if (gx >= 0 && gy >= 0 && gx < E.gw && gy < E.gh) E.grid[gy * E.gw + gx] = j / 6; }
+  for (const E of eyes) for (let r = 0; r < 4; r++) { const g = E.grid.slice();
+    for (let q = 0; q < g.length; q++) if (g[q] < 0) for (const o of [1, -1, E.gw, -E.gw]) if (q + o >= 0 && q + o < g.length && g[q + o] >= 0) { E.grid[q] = g[q + o]; break; } }
+  tex.eyeShapes = { eyes, texels: new Float32Array(out) }; }
+// (the chosen shape, drawn into the body's colour picture as it is redrawn, before the brows: o its pixels)
+function drawEyes(o) {
+  const S = tex.eyeShapes, opts = (EYES.find(e => e[0] === eyesNow) || [])[2]; if (!S) return; shutNormals(S, opts || {}); if (!opts) return;
+  const T = S.texels, skin = tex.colours[PARTS.skin] || tex.skin, dark = { r: .13, g: .08, b: .06 }, white = { r: .97, g: .97, b: .97 }, edge = .012;
+  const cov = d => Math.max(0, Math.min(1, d / edge + .5)), put = (i, c, k, a) => { if (a <= 0) return;
+    o[i] = o[i] * (1 - a) + Math.min(255, c.r * 255 * k) * a; o[i + 1] = o[i + 1] * (1 - a) + Math.min(255, c.g * 255 * k) * a; o[i + 2] = o[i + 2] * (1 - a) + Math.min(255, c.b * 255 * k) * a; };
+  // (the distance from a point to a stroke from a to b, and how far along it)
+  const seg = (x, y, ax, ay, bx, by) => { const vx = bx - ax, vy = by - ay, t = Math.max(0, Math.min(1, ((x - ax) * vx + (y - ay) * vy) / (vx * vx + vy * vy))); return [Math.hypot(x - ax - t * vx, y - ay - t * vy), t]; };
+  let copy = null; if (opts.big) { copy = new Uint8ClampedArray(T.length / 2); for (let j = 0; j < T.length; j += 6) copy.set(o.subarray(T[j] * 4, T[j] * 4 + 3), j / 2); }
+  for (let j = 0; j < T.length; j += 6) { const p = T[j], X = T[j + 1], Y = T[j + 2], E = S.eyes[T[j + 3]], k = T[j + 4], open = T[j + 5], i = p * 4;
+    const dx = X - E.cx, dy = Y - E.cy, u = Math.min(1, Math.abs(dx) / E.ew);
+    if (opts.big) { const rr = Math.hypot(dx / E.ew, dy / E.eh); if (!rr || rr > 1.7) continue;
+      // (inside, everything a quarter bigger; from 1.375 out to 1.7 squeezed back, so it meets the face round it)
+      const f = rr < 1.375 ? rr / opts.big : 1.1 + (rr - 1.375) * .6 / .325, sx = E.cx + dx * f / rr, sy = E.cy + dy * f / rr;
+      const gx = Math.floor((sx - E.gx) / E.cell), gy = Math.floor((sy - E.gy) / E.cell), z = gx >= 0 && gy >= 0 && gx < E.gw && gy < E.gh ? E.grid[gy * E.gw + gx] : -1;
+      if (z >= 0) o.set(copy.subarray(z * 3, z * 3 + 3), i); continue; }
+    if (opts.shut && (!opts.one || E.side > 0)) {
+      const rr = Math.hypot(dx / (E.ew * 1.2), dy / (E.eh * 1.45)); if (rr < 1.25) put(i, skin, k, Math.min(1, (1.25 - rr) / .2));
+      const yc = opts.shut === 'up' ? -.3 * E.eh + .75 * E.eh * (1 - u * u) : .1 * E.eh - .55 * E.eh * (1 - u * u);
+      put(i, dark, 1, cov(.024 * (1 - .4 * u * u) - Math.hypot(dy - yc, Math.max(0, Math.abs(dx) - E.ew)))); continue; }
+    if (opts.lashes) for (const f of [.4, .66, .9]) { const bx = E.cx + Math.sign(E.cx) * f * E.ew, by = E.cy + .92 * E.eh * Math.sqrt(1 - f * f), a = .35 + .75 * f;
+      const [d, t] = seg(X, Y, bx, by, bx + Math.sign(E.cx) * Math.sin(a) * .11, by + Math.cos(a) * .11); put(i, dark, 1, cov(.017 * (1 - .65 * t) - d)); }
+    if (opts.iris && open) { const ux = (X - E.ix) / E.r, uy = (Y - E.iy) / E.r, rr = Math.hypot(ux, uy); if (rr > 1.3) continue;
+      put(i, white, 1, cov((1.25 - rr) * E.r));
+      // (how far inside the shape, in iris radii: a five-pointed star, or a heart)
+      let sd;
+      if (opts.iris === 'star') { const a = Math.atan2(ux, uy), m = Math.abs(((a / (2 * Math.PI / 5)) % 1 + 1) % 1 - .5) * 2, edgeR = .45 + (1.05 - .45) * Math.pow(m, 1.6); sd = (edgeR - rr) * .8; }
+      // (the heart: two round lobes over a point, its tip at the iris's foot - Inigo Quilez's distance to a heart)
+      else { const px = Math.abs(ux) / 1.75, py = (uy + .95) / 1.75, d2 = (x, y) => x * x + y * y, m = .5 * Math.max(px + py, 0);
+        sd = -1.75 * (px + py > 1 ? Math.sqrt(d2(px - .25, py - .75)) - Math.SQRT2 / 4 : Math.sqrt(Math.min(d2(px, py - 1), d2(px - m, py - m))) * Math.sign(px - py)); }
+      put(i, tex.colours[PARTS.eyes] || E.colour, 1, cov(sd * E.r)); put(i, dark, 1, cov((.07 - Math.abs(sd)) * E.r));
+      put(i, white, 1, cov((.17 - Math.hypot(ux + .25, uy - .3)) * E.r)); } } }
+// (a shut eye's hollow lit smooth - see setupBrows - and an open one as it was)
+function shutNormals(S, opts) { if (!S.verts || !hairBase) return; const N = hairBase.body.geometry.attributes.normal, A = N.array, V = S.verts, v = new THREE.Vector3();
+  for (let j = 0, m = 0; j < V.length; j += 3, m += 3) { const i = V[j], E = S.eyes[V[j + 1]], shut = opts.shut && (!opts.one || E.side > 0);
+    v.fromArray(S.normals, m); if (shut) v.lerp(S.ring[V[j + 1]], Math.min(1, (1.5 - V[j + 2]) / .35)).normalize(); v.toArray(A, i * 3); }
+  N.needsUpdate = true; }
 // the hair, a part of its own with its own colour picture: all of it gets the hair colour, lit as it was (against the
 // middle brightness of its brown; the hair uses no other part of the picture, and its darkest strands and the edges
 // round its pieces must change too, or they show as specks)
@@ -337,7 +434,7 @@ function redrawBody() {
     if (!c) { o[i] = s[i]; o[i + 1] = s[i + 1]; o[i + 2] = s[i + 2]; o[i + 3] = 255; continue; }
     const k = (.3 * s[i] + .59 * s[i + 1] + .11 * s[i + 2]) / tex.mid[tex.label[p]];
     o[i] = Math.min(255, c.r * 255 * k); o[i + 1] = Math.min(255, c.g * 255 * k); o[i + 2] = Math.min(255, c.b * 255 * k); o[i + 3] = 255; }
-  drawBrows(o); tex.ctx.putImageData(out, 0, 0); tex.texture.needsUpdate = true; smoothUnder(); }
+  drawEyes(o); drawBrows(o); tex.ctx.putImageData(out, 0, 0); tex.texture.needsUpdate = true; smoothUnder(); }
 // (the vest is shaped on the body too, its edge a little ridge the light still draws in skin colour: where it is covered
 // the body there is lit as if smooth - each point's way out the average of all within a hundredth and a half of its height)
 function smoothUnder() {
@@ -604,7 +701,7 @@ async function loadHair(name, list = hairTexs, colourPart = 'hair', extra = {}) 
   // (cap: no lighter than that over the middle - the glasses' frames had white smears inside, by the glass)
   if (opts.cap) list.at(-1).cap = opts.cap;
   body.parent.add(hair); hair.bind(body.skeleton, body.bindMatrix); if (picked[colourPart]) recolourHair(picked[colourPart], list); return hair; }
-var styleLists = () => ({ hair: [HAIRS, hairNow, setHair], brows: [BROWS, browsNow, setBrows],
+var styleLists = () => ({ hair: [HAIRS, hairNow, setHair], eyes: [EYES, eyesNow, setEyes], brows: [BROWS, browsNow, setBrows],
   ...Object.fromEntries(Object.entries(GARMENTS).map(([part, G]) => [part, [G.items, G.now, n => setGarment(part, n)]])) });
 async function setHair(name) {
   hairNow = name; renderStyles();
