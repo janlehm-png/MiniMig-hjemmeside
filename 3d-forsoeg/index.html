@@ -535,12 +535,18 @@ function drawMouth(o) {
   // (dIn: how far inside from the mouth's opening or seam - a crisp edge; dOut: from the lip's outer edge - a soft one,
   // so the lip rounds into the skin. The upper lip faces down and lies in shade, lighter at its rim; the lower one faces
   // up and catches the light, darker where it turns under)
-  // (lower: 0 the upper lip's shading, 1 the lower's - Åh's round lip passes from one to the other, without a line)
-  const lip = (i, k, dIn, dOut, t, lower, u) => { const a = cov(dIn) * cl(dOut / .016 + .5); if (a <= 0) return; t = cl(t);
-    // (its light broad and soft - narrow, it ran along the lip as a line)
-    const lo = .88 + .16 * Math.sin(Math.PI * Math.min(1, t * 1.2)) + .14 * Math.exp(-(((t - .4) / .3) ** 2)) * Math.exp(-((u / .5) ** 2)) - .12 * cl((t - .6) / .4) ** 2,
-      hi = .74 + .2 * t + .1 * Math.sin(Math.PI * t), l = +lower;
-    put(i, lipC, k * (lo * l + hi * (1 - l)), a); };
+  // (each lip lit as a round roll: across it, t from the mouth's opening (0) to its outer edge (1), it faces down, forward,
+  // then up - the upper lip the other way about - and round the mouth it turns away at the corners. Lit from above and
+  // in front, its colour runs from a deep red in shade through the lip colour to a light pink, and the lower lip has a
+  // soft gloss. lower: 0 the upper lip, 1 the lower - Åh's round lip passes from one to the other, without a line)
+  const lipShade = mix(lipC, { r: .4, g: .09, b: .12 }, .68), lipLight = mix(lipC, { r: 1, g: .84, b: .84 }, .6);
+  const lipColour = (t, l, u) => { const nz = Math.sin(Math.PI * t), ny = -Math.cos(Math.PI * t) * (1 - l) + Math.cos(Math.PI * t) * l;
+    const d = cl((.28 + .46 * nz + .36 * ny - .08 * u) * (1 - .3 * cl((Math.abs(u) - .65) / .35)));
+    let c = d < .5 ? mix(lipShade, lipC, d / .5) : mix(lipC, lipLight, (d - .5) / .5 * .7);
+    const gloss = l * .55 * Math.exp(-(((t - .32) / .1) ** 2)) * Math.exp(-(((u + .18) / .22) ** 2));
+    return gloss > .01 ? mix(c, { r: 1, g: .93, b: .93 }, gloss) : c; };
+  const lip = (i, k, dIn, dOut, t, lower, u) => { const a = cov(dIn) * cl(dOut / .016 + .5); if (a <= 0) return;
+    put(i, lipColour(cl(t), +lower, u), k, a); };
   // (a soft shade on the skin just under the lower lip, where it turns in)
   const under = (i, k, d, u) => { if (d < 0 || d > .04) return; put(i, skin, k * .84, .55 * (1 - d / .04) * cl(1 - u * u)); };
   const { my } = M;
@@ -584,14 +590,21 @@ function drawMouth(o) {
       put(i, insideC, .6 + .45 * cl((cy + .09 - y) / .18), cov((1 - ei) * .08 * sc));
       const te = Math.hypot(x / .08, (y - cy + .095) / .05); put(i, tongueC, .75 + .3 * (1 - te), cov((1 - ei) * .08 * sc) * cov((1 - te) * .05 * sc));
       put(i, seamC, 1, .4 * cov(.004 - Math.abs((1 - ei) * .08 * sc))); }
-    // (Kys: pursed lips pushed forward - narrow, nearly round, the bow in the upper one, a short seam in the middle, lit
-    // most where they stick out and with little creases running out from the middle, as lips gathered for a kiss)
-    if (opts.kiss) { const sc = opts.kiss, sy = my - .025, ux = X / (.11 * sc), s = Math.sqrt(Math.max(0, 1 - ux * ux)), up = sy + .07 * sc * Math.pow(s, .4) * (1 - .25 * Math.exp(-((X / (.03 * sc)) ** 2))), lo = sy - .082 * sc * Math.pow(s, .45);
-      if (Math.abs(ux) < 1.05) { under(i, k, lo - Y, ux); lip(i, k, Y - sy, up - Y, (Y - sy) / (up - sy || 1), false, ux); lip(i, k, sy - Y, Y - lo, (sy - Y) / (sy - lo || 1), true, ux * 1.6);
-        const inLip = cov(Math.min(Y - lo, up - Y)), r = Math.hypot(X, (Y - sy) * 1.2) / sc, ang = Math.atan2(Y - sy, X);
-        put(i, { r: 1, g: .92, b: .92 }, 1, .18 * inLip * Math.exp(-((r / .04) ** 2)));
-        put(i, kissC, k, .35 * inLip); put(i, lipC, k * .68, .75 * inLip * cl((r - .025) / .015) * cl(1 - Math.abs(Math.sin(ang * 5)) / .18) * cl(Math.min(up - Y, Y - lo) / .015));
-        put(i, seamC, 1, .85 * cov(.005 * s - Math.abs(Y - sy)) * cl((.45 - Math.abs(ux)) / .15)); } } } }
+    // (Kys: the lips gathered and pushed forward into a round pucker - a dome, its top edge with a little bow, lit from
+    // above and in front: lightest where it sticks out most, deep red round its rim; creases run out from a small dark
+    // pucker in the middle, and a short seam either side of it)
+    if (opts.kiss) { const sc = opts.kiss, cy = my - .03, rx = .085 * sc, ry = .075 * sc, ux = X / rx;
+      const top = cy + ry * (1 - .22 * Math.exp(-((ux / .28) ** 2))), uy = Y > cy ? (Y - cy) / (top - cy) : (Y - cy) / (ry * 1.08), r = Math.hypot(ux, uy);
+      if (r < 1.25) { under(i, k, (r - 1) * ry, ux * .8);
+        const a = cl((1 - r) * ry / .012 + .5);
+        if (a > 0) { const nz = Math.sqrt(Math.max(0, 1 - r * r)), d = cl(.3 + .55 * nz + .25 * uy * (1 - nz) - .06 * ux);
+          let c = d < .5 ? mix(lipShade, kissC, d / .5) : mix(kissC, lipLight, (d - .5) / .5 * .75);
+          // (the creases: darker lines running out from the middle, fading out before the rim)
+          const ang = Math.atan2(uy, ux), cr = cl(1 - Math.abs(Math.sin(ang * 4.5)) / .22) * cl((r - .18) / .12) * cl((.85 - r) / .15);
+          c = mix(c, lipShade, .5 * cr);
+          const gloss = .5 * Math.exp(-(((ux + .25) / .22) ** 2 + ((uy - .32) / .2) ** 2)); c = mix(c, { r: 1, g: .93, b: .93 }, gloss);
+          put(i, c, k, a);
+          put(i, seamC, 1, .9 * cl(1 - Math.hypot(ux / 1.6, uy / .7) / .14) + .6 * cov(.0035 - Math.abs(Y - cy)) * cl((.5 - Math.abs(ux)) / .2) * cl((Math.abs(ux) - .1) / .05)); } } } } }
 // (a shut eye's hollow lit smooth - see setupBrows - and an open one as it was)
 function shutNormals(S, opts) { if (!S.verts || !hairBase) return; const N = hairBase.body.geometry.attributes.normal, A = N.array, V = S.verts, v = new THREE.Vector3();
   for (let j = 0, m = 0; j < V.length; j += 3, m += 3) { const i = V[j], E = S.eyes[V[j + 1]], shut = opts.shut && (!opts.one || E.side > 0);
