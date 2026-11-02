@@ -95,9 +95,9 @@ disc.rotation.x = -Math.PI / 2; disc.position.y = .001; scene.add(disc);
 
 // ---- colours: the figure's painted texture, recoloured (below) ----
 // (the parts, each with the app's icon for its tab, in ikoner/; the fixed colours are gone - the sliders alone)
-const CHOICES = [['skin', 'Hud', 'hud'], ['hair', 'Hår', 'haar'], ['shirt', 'Trøje', 'troeje'], ['pants', 'Bukser', 'bukser'], ['dress', 'Kjole', 'kjoler'],
+const CHOICES = [['skin', 'Hud', 'hud'], ['hair', 'Hår', 'haar'], ['eyes', 'Øjne', 'oejne'], ['shirt', 'Trøje', 'troeje'], ['pants', 'Bukser', 'bukser'], ['dress', 'Kjole', 'kjoler'],
   ['shoe', 'Sko', 'sko'], ['hat', 'Hat', 'hat'], ['glasses', 'Briller', 'briller']];
-const picked = {}, START = { skin: '#EDB98A', hair: '#4A2C1D', shirt: '#FF7A2F', pants: '#2C3E8C', dress: '#3D8BFF', shoe: '#3D8BFF', hat: '#3D8BFF', glasses: '#3D8BFF' }; let partNow = 'shirt';
+const picked = {}, START = { skin: '#EDB98A', hair: '#4A2C1D', eyes: '#7A4220', shirt: '#FF7A2F', pants: '#2C3E8C', dress: '#3D8BFF', shoe: '#3D8BFF', hat: '#3D8BFF', glasses: '#3D8BFF' }; let partNow = 'shirt';
 const apply = (part, c) => { picked[part] = c; recolour(part, c); };
 const iconButton = (src, label) => { const b = document.createElement('button'), i = new Image(); i.src = src; i.alt = ''; i.onerror = () => i.remove();
   const s = document.createElement('span'); s.textContent = label; b.append(i, s); return b; };
@@ -126,7 +126,7 @@ showSwatches();
 // into skin (light peach), shirt (strong orange), trousers (blue) and hair (dark brown); the shoes (red, white), eye
 // whites and the rest stay as they are. A new colour for a part is then laid on its pixels, lit as they were (each
 // pixel's brightness against the part's middle brightness), so folds and shading stay.
-const PARTS = { skin: 1, shirt: 2, pants: 3, hair: 4 };
+const PARTS = { skin: 1, shirt: 2, pants: 3, hair: 4, eyes: 5 };
 let tex = null; // { canvas, ctx, src: original pixels, label, mid: middle brightness per part, colours: current per part }
 function partOf(r, g, b) {
   const mx = Math.max(r, g, b), mn = Math.min(r, g, b), v = mx / 255, s = mx ? (mx - mn) / mx : 0;
@@ -170,7 +170,8 @@ function whitesByPlace(fbx) {
       g.fillStyle = g.strokeStyle = f < .2 ? '#000' : f < .53 ? '#f00' : '#0f0'; g.beginPath();
       v.forEach((i, j) => { const x = uv.getX(i) * tex.w, y = (1 - uv.getY(i)) * tex.h; j ? g.lineTo(x, y) : g.moveTo(x, y); });
       g.closePath(); g.fill(); g.stroke(); } }); }
-  const place = g.getImageData(0, 0, tex.w, tex.h).data, s = tex.src, sums = [0, 0, 0, 0, 0], counts = [0, 0, 0, 0, 0];
+  const place = g.getImageData(0, 0, tex.w, tex.h).data, s = tex.src, sums = [0, 0, 0, 0, 0, 0], counts = [0, 0, 0, 0, 0, 0];
+  irisesByPlace(place);
   for (let p = 0, i = 0; p < tex.w * tex.h; p++, i += 4) { const mx = Math.max(s[i], s[i + 1], s[i + 2]), mn = Math.min(s[i], s[i + 1], s[i + 2]);
     if (mx > 75 && mx - mn < .16 * mx) tex.label[p] = place[i] > 128 ? PARTS.shirt : place[i + 1] > 128 ? PARTS.pants : tex.label[p];
     const l = tex.label[p]; if (l) { sums[l] += .3 * s[i] + .59 * s[i + 1] + .11 * s[i + 2]; counts[l]++; } }
@@ -197,6 +198,28 @@ function whitesByPlace(fbx) {
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const p = y * w + x; if (!under[p] && !tex.seam[p]) continue;
     const x0 = Math.max(0, x - B), y0 = Math.max(0, y - B), x1 = Math.min(w, x + B + 1), y1 = Math.min(h, y + B + 1), c = box(C, x0, y0, x1, y1);
     if (c > 20) tex.flat[p] = box(S, x0, y0, x1, y1) / c; } }
+// (the irises, a part of their own: on the head, each a patch of what is neither skin nor white that meets an eye's
+// white - the brows meet none, skin lies between. Its near-black - the pupil and the eye's outline - stays as it is)
+function irisesByPlace(place) {
+  // (an eye's white, or within 4 pixels of it: a pale edge between it and the iris left a piece of an iris out)
+  const w = tex.w, h = tex.h, s = tex.src, pure = new Uint8Array(w * h), white = p => pure[p] === 2;
+  for (let p = 0; p < w * h; p++) if (place[p * 4] < 128 && place[p * 4 + 1] < 128 && s[p * 4] > 230 && s[p * 4 + 1] > 230 && s[p * 4 + 2] > 230) pure[p] = 1;
+  for (let p = 0; p < w * h; p++) if (pure[p] === 1) { const x = p % w, y = (p - x) / w;
+    for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++) { const X = x + dx, Y = y + dy; if (X >= 0 && Y >= 0 && X < w && Y < h && !pure[Y * w + X]) pure[Y * w + X] = 2; } pure[p] = 2; }
+  // (brown or near-black, darker than the skin - its middle brown is sorted as skin by its colour - and not the grey of
+  // the vest's pieces round the neck)
+  const brown = p => { const mx = Math.max(s[p * 4], s[p * 4 + 1], s[p * 4 + 2]), mn = Math.min(s[p * 4], s[p * 4 + 1], s[p * 4 + 2]); return mx < 90 || mx < 180 && mx - mn > .3 * mx && mx === s[p * 4]; };
+  const may = new Uint8Array(w * h); for (let p = 0; p < w * h; p++) may[p] = place[p * 4] < 128 && place[p * 4 + 1] < 128 && brown(p);
+  const seen = new Uint8Array(w * h);
+  for (let p = 0; p < w * h; p++) { if (!may[p] || seen[p]) continue; const patch = [p]; let touch = 0; seen[p] = 1;
+    for (let j = 0; j < patch.length; j++) { const q = patch[j], x = q % w;
+      for (const r of [x + 1 < w ? q + 1 : -1, x ? q - 1 : -1, q + w < w * h ? q + w : -1, q - w]) { if (r < 0) continue; if (white(r)) touch++; if (may[r] && !seen[r]) { seen[r] = 1; patch.push(r); } } }
+    if (touch && patch.length < 6000) for (const q of patch) if (Math.max(s[q * 4], s[q * 4 + 1], s[q * 4 + 2]) > 95 && !nearSkin(q)) tex.label[q] = PARTS.eyes; } }
+// (the soft edge of the eye's outline, where it meets the skin, is brown too: it stays, or the outline gets a coloured rim)
+function nearSkin(q) { const w = tex.w, x = q % w, y = (q - x) / w, s = tex.src;
+  for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) { const X = x + dx, Y = y + dy; if (X < 0 || Y < 0 || X >= w || Y >= tex.h) continue;
+    const p = Y * w + X; if (tex.label[p] === PARTS.skin && s[p * 4] > 200 && s[p * 4 + 2] < 200) return true; }
+  return false; }
 // the hair, a part of its own with its own colour picture: all of it gets the hair colour, lit as it was (against the
 // middle brightness of its brown; the hair uses no other part of the picture, and its darkest strands and the edges
 // round its pieces must change too, or they show as specks)
