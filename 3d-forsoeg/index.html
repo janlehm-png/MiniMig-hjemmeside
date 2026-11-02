@@ -95,13 +95,14 @@ disc.rotation.x = -Math.PI / 2; disc.position.y = .001; scene.add(disc);
 
 // ---- colours: the figure's painted texture, recoloured (below) ----
 // (the parts, each with the app's icon for its tab, in ikoner/; the fixed colours are gone - the sliders alone)
-const CHOICES = [['skin', 'Hud', 'hud'], ['hair', 'Hår', 'haar'], ['eyes', 'Øjne', 'oejne'], ['brows', 'Bryn', 'bryn'], ['shirt', 'Trøje', 'troeje'], ['pants', 'Bukser', 'bukser'], ['dress', 'Kjole', 'kjoler'],
+const CHOICES = [['skin', 'Hud', 'hud'], ['hair', 'Hår', 'haar'], ['eyes', 'Øjne', 'oejne'], ['brows', 'Bryn', 'bryn'], ['mouth', 'Mund', 'mund'], ['shirt', 'Trøje', 'troeje'], ['pants', 'Bukser', 'bukser'], ['dress', 'Kjole', 'kjoler'],
   ['shoe', 'Sko', 'sko'], ['hat', 'Hat', 'hat'], ['glasses', 'Briller', 'briller']];
-const picked = {}, START = { skin: '#EDB98A', hair: '#4A2C1D', eyes: '#7A4220', brows: '#4A2C1D', shirt: '#FF7A2F', pants: '#2C3E8C', dress: '#3D8BFF', shoe: '#3D8BFF', hat: '#3D8BFF', glasses: '#3D8BFF' }; let partNow = 'shirt';
+const picked = {}, START = { skin: '#EDB98A', hair: '#4A2C1D', eyes: '#7A4220', brows: '#4A2C1D', mouth: '#C0505A', shirt: '#FF7A2F', pants: '#2C3E8C', dress: '#3D8BFF', shoe: '#3D8BFF', hat: '#3D8BFF', glasses: '#3D8BFF' }; let partNow = 'shirt';
 const apply = (part, c) => { picked[part] = c; recolour(part, c); };
 const iconButton = (src, label) => { const b = document.createElement('button'), i = new Image(); i.src = src; i.alt = ''; i.onerror = () => i.remove();
   const s = document.createElement('span'); s.textContent = label; b.append(i, s); return b; };
-function showSwatches() { slidersFrom(picked[partNow] || START[partNow]);
+// (the mouth has no colour of its own, as in the app: no sliders under it)
+function showSwatches() { slidersFrom(picked[partNow] || START[partNow]); document.getElementById('sliders').style.display = partNow === 'mouth' ? 'none' : '';
   document.querySelectorAll('#parts button').forEach(b => b.classList.toggle('on', b.dataset.part === partNow));
   renderStyles(); }
 // (the styles as buttons above the colours: hairstyles while Hår is chosen, tops while Trøje is; none before the figure -
@@ -250,7 +251,7 @@ function setupBrows(body) {
     // (round the eyes every piece, whichever way it faces: the eye sits in a hollow whose sides face in and up, and they
     // showed through a shut eye)
     const nearEye = Math.abs(Math.abs(X[0] + X[1] + X[2]) / 3 - .48) < .35 && Math.abs(Y[0] + Y[1] + Y[2]) / 3 < .3;
-    if (!(nz > .15 * nl || nearEye) || (a[2] + b[2] + c[2]) / 3 < cz - .8 * apart || Math.max(...X.map(Math.abs)) > 1.7 || Math.min(...Y) < -.4 || Math.max(...Y) > 1.5) continue;
+    if (!(nz > .15 * nl || nearEye) || (a[2] + b[2] + c[2]) / 3 < cz - .8 * apart || Math.max(...X.map(Math.abs)) > 1.7 || Math.min(...Y) < -1.9 || Math.max(...Y) > 1.5) continue;
     const q = [px(k), px(k + 1), px(k + 2)], d = (q[1][1] - q[2][1]) * (q[0][0] - q[2][0]) + (q[2][0] - q[1][0]) * (q[0][1] - q[2][1]); if (!d) continue;
     for (let y = Math.floor(Math.min(q[0][1], q[1][1], q[2][1])); y <= Math.ceil(Math.max(q[0][1], q[1][1], q[2][1])); y++)
       for (let x = Math.floor(Math.min(q[0][0], q[1][0], q[2][0])); x <= Math.ceil(Math.max(q[0][0], q[1][0], q[2][0])); x++) {
@@ -265,7 +266,7 @@ function setupBrows(body) {
   for (let r = 0; r < 3; r++) { const add = [];
     for (const p of place.keys()) for (const o of [1, -1, w, -w]) if (p + o >= 0 && p + o < w * h && !place.has(p + o)) add.push([p + o, place.get(p)]);
     for (const [p, v] of add) if (!place.has(p)) place.set(p, v); }
-  setupEyeShapes(place, inside);
+  setupEyeShapes(place, inside); setupMouth(place);
   // (the eye sits in a hollow, whose shade showed through a shut eye: there the points are lit as if the face went
   // smoothly across - their way out turned towards the average of the ring round the eye, the more the further in)
   const S = tex.eyeShapes; if (S) { const N = geo.attributes.normal.array, list = [], ring = S.eyes.map(() => [0, 0, 0]);
@@ -273,6 +274,11 @@ function setupBrows(body) {
       S.eyes.forEach((E, e) => { const rr = Math.hypot((X - E.cx) / E.ew, (Y - E.cy) / E.eh);
         if (rr < 1.5) list.push(i, e, rr); else if (rr < 1.9) for (let m = 0; m < 3; m++) ring[e][m] += N[i * 3 + m]; }); }
     S.ring = ring.map(r => new THREE.Vector3(...r).normalize()); S.verts = new Float32Array(list); S.normals = Float32Array.from(list.filter((_, j) => j % 3 === 0).flatMap(i => [N[i * 3], N[i * 3 + 1], N[i * 3 + 2]])); }
+  // (the smile is shaped in the face too, a soft crease that showed under a new mouth: lit smooth the same way)
+  const Mo = tex.mouth; if (Mo) { const N = geo.attributes.normal.array, list = [], ring = [0, 0, 0];
+    for (let i = 0; i < n; i++) { const X = (P[i * 3] - cx) / apart, Y = (P[i * 3 + 1] - cy) / apart; if (P[i * 3 + 2] < cz - .4 * apart) continue;
+      const rr = Math.hypot(X / Mo.rx, (Y - Mo.my) / Mo.ry); if (rr < 1) list.push(i, rr); else if (rr < 1.4) for (let m = 0; m < 3; m++) ring[m] += N[i * 3 + m]; }
+    Mo.ring = new THREE.Vector3(...ring).normalize(); Mo.verts = new Float32Array(list); Mo.normals = Float32Array.from(list.filter((_, j) => j % 2 === 0).flatMap(i => [N[i * 3], N[i * 3 + 1], N[i * 3 + 2]])); }
   // (the old brows: the hair's brown above the eyes - from now on a part of their own - and how they lie, side by side
   // folded together: in 24 strips across, from between the eyes outwards, how high their middle is and how thick)
   const N = 24, top = new Float32Array(N).fill(-9), low = new Float32Array(N).fill(9), zone = new Set();
@@ -375,7 +381,7 @@ function setupEyeShapes(place, inside) {
     if (gx >= 0 && gy >= 0 && gx < E.gw && gy < E.gh) E.grid[gy * E.gw + gx] = j / 6; }
   for (const E of eyes) for (let r = 0; r < 6; r++) { const g = E.grid.slice();
     for (let q = 0; q < g.length; q++) if (g[q] < 0) for (const o of [1, -1, E.gw, -E.gw]) if (q + o >= 0 && q + o < g.length && g[q + o] >= 0) { E.grid[q] = g[q + o]; break; } }
-  tex.eyeShapes = { eyes, texels: new Float32Array(out) }; }
+  tex.eyeShapes = { eyes, texels: smoothLight(out, 6, 4) }; }
 // (the chosen shape, drawn into the body's colour picture as it is redrawn, before the brows: o its pixels)
 function drawEyes(o) {
   const S = tex.eyeShapes, opts = (EYES.find(e => e[0] === eyesNow) || [])[2]; if (!S) return; shutNormals(S, opts || {}); if (!opts) return;
@@ -452,6 +458,74 @@ function drawEyes(o) {
       else { const px = Math.abs(ux) / 1.75, py = (uy + .95) / 1.75, d2 = (x, y) => x * x + y * y, m = .5 * Math.max(px + py, 0);
         sd = -1.75 * (px + py > 1 ? Math.sqrt(d2(px - .25, py - .75)) - Math.SQRT2 / 4 : Math.sqrt(Math.min(d2(px, py - 1), d2(px - m, py - m))) * Math.sign(px - py)); }
       put(i, tex.colours[PARTS.eyes] || E.colour, 1, cov(sd * E.r)); put(i, dark, 1, cov((.07 - Math.abs(sd)) * E.r)); } } }
+// ---- the mouth: the figure's own smile, or drawn anew in its place, as the eyes are ----
+// (the smile is painted faintly - a soft dark line and some shade on the lips: measured from the front, it is painted
+// over in the skin round it, in an oval half as wide again, and the new mouth drawn there: Neutral a straight line,
+// Trist a frown, Grin a wide open smile with teeth, Tunge an open smile with the tongue out, Åh a round open mouth,
+// Kys puckered lips)
+const MOUTHS = [['mund-smil', 'Smil'], ['mund-neutral', 'Neutral', { line: 0 }], ['mund-grin', 'Grin', { open: 'grin' }],
+  ['mund-tunge', 'Tunge', { open: 'tongue' }], ['mund-o', 'Åh', { o: true }], ['mund-kys', 'Kys', { kiss: true }], ['mund-trist', 'Trist', { line: 1 }]];
+let mouthNow = 'mund-smil';
+function setMouth(name) { mouthNow = name; redrawBody(); renderStyles(); }
+function setupMouth(place) {
+  const s = tex.src, w = tex.w, h = tex.h, ys = []; let mw = 0;
+  for (const [p, [X, Y]] of place) { if (Math.abs(X) > .6 || Y > -.3 || Y < -1) continue;
+    if ((.3 * s[p * 4] + .59 * s[p * 4 + 1] + .11 * s[p * 4 + 2]) / tex.mid[PARTS.skin] < .85) { ys.push(Y); mw = Math.max(mw, Math.abs(X)); } }
+  if (ys.length < 20) return; const my = ys.reduce((a, b) => a + b) / ys.length, rx = mw * 1.5, ry = .24;
+  const zone = new Map(); for (const [p, [X, Y]] of place) if (Math.hypot(X / rx, (Y - my) / ry) < 1) zone.set(p, [X, Y]);
+  // (and the unused margin round its pieces, as for the eyes)
+  for (let r = 0; r < 12; r++) { const add = [];
+    for (const [p, v] of zone) for (const o of [1, -1, w, -w]) if (p + o >= 0 && p + o < w * h && !zone.has(p + o) && !place.has(p + o)) add.push([p + o, v]);
+    for (const [p, v] of add) if (!zone.has(p)) zone.set(p, v); }
+  const out = [];
+  for (const [p, [X, Y]] of zone) { let ks = 0, c = 0; const x = p % w, y = (p - x) / w;
+    for (let dy = -14; dy <= 14; dy += 2) for (let dx = -14; dx <= 14; dx += 2) { const X2 = x + dx, Y2 = y + dy; if (X2 < 0 || Y2 < 0 || X2 >= w || Y2 >= h) continue; const q = Y2 * w + X2;
+      if (tex.label[q] === PARTS.skin && !zone.has(q)) { const i = q * 4; ks += (.3 * s[i] + .59 * s[i + 1] + .11 * s[i + 2]) / tex.mid[PARTS.skin]; c++; } }
+    out.push(p, X, Y, c ? ks / c : 1); }
+  tex.mouth = { texels: smoothLight(out, 4, 3), my, mw, rx, ry }; }
+// (the skin's light at painted-over texels, evened out seen from the front: each the average over its spot and the
+// spots round it, a thirtieth of the eyes' distance across - read from each piece of the picture alone, it differed
+// across the seams between them and drew a line down the middle of the mouth. a: [texel, X, Y, ...] in rows of
+// stride, the light at at)
+function smoothLight(a, stride, at) {
+  const cell = 1 / 30, sum = new Map(), key = (x, y) => x * 100003 + y;
+  for (let j = 0; j < a.length; j += stride) { const k = key(Math.floor(a[j + 1] / cell), Math.floor(a[j + 2] / cell)), v = sum.get(k) || [0, 0]; v[0] += a[j + at]; v[1]++; sum.set(k, v); }
+  const out = new Float32Array(a);
+  for (let j = 0; j < a.length; j += stride) { const gx = Math.floor(a[j + 1] / cell), gy = Math.floor(a[j + 2] / cell); let s = 0, c = 0;
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const v = sum.get(key(gx + dx, gy + dy)); if (v) { s += v[0]; c += v[1]; } }
+    out[j + at] = s / c; }
+  return out; }
+// (the chosen mouth, drawn into the body's colour picture as it is redrawn: o its pixels)
+function drawMouth(o) {
+  const M = tex.mouth, opts = (MOUTHS.find(m => m[0] === mouthNow) || [])[2]; if (!M) return;
+  // (its crease lit smooth under a new mouth, as it was under the smile)
+  if (M.verts && hairBase) { const A = hairBase.body.geometry.attributes.normal, V = M.verts, v = new THREE.Vector3();
+    for (let j = 0, m = 0; j < V.length; j += 2, m += 3) { v.fromArray(M.normals, m); if (opts) v.lerp(M.ring, Math.min(1, (1 - V[j + 1]) / .3)).normalize(); v.toArray(A.array, V[j] * 3); }
+    A.needsUpdate = true; }
+  if (!opts) return;
+  const T = M.texels, skin = tex.colours[PARTS.skin] || tex.skin, dark = { r: .25, g: .1, b: .08 }, inside = { r: .45, g: .13, b: .14 },
+    teeth = { r: .97, g: .96, b: .93 }, pink = { r: .93, g: .45, b: .5 }, lips = { r: .85, g: .38, b: .42 }, edge = .01;
+  const cov = d => Math.max(0, Math.min(1, d / edge + .5)), put = (i, c, k, a) => { if (a <= 0) return;
+    o[i] = o[i] * (1 - a) + Math.min(255, c.r * 255 * k) * a; o[i + 1] = o[i + 1] * (1 - a) + Math.min(255, c.g * 255 * k) * a; o[i + 2] = o[i + 2] * (1 - a) + Math.min(255, c.b * 255 * k) * a; };
+  const { my, mw } = M;
+  for (let j = 0; j < T.length; j += 4) { const p = T[j], X = T[j + 1], Y = T[j + 2], k = T[j + 3], i = p * 4;
+    // (the old smile painted over in the skin, softly out to the oval's edge)
+    put(i, skin, k, Math.min(1, (1 - Math.hypot(X / M.rx, (Y - my) / M.ry)) / .25));
+    if (opts.line !== undefined) { // (a line: straight, or for Trist bent down at its ends)
+      const hw = .62 * mw, u = Math.min(1, Math.abs(X) / hw), yc = my + .02 + opts.line * .08 * (1 - u * u) - opts.line * .03;
+      put(i, dark, 1, cov(.017 * (1 - .4 * u * u) - Math.hypot(Y - yc, Math.max(0, Math.abs(X) - hw)))); }
+    if (opts.open) { // (an open smile: a flat top, a round foot; the dark inside, teeth along the top for Grin, a tongue for Tunge)
+      const hw = (opts.open === 'grin' ? .85 : .65) * mw, deep = opts.open === 'grin' ? .2 : .15, u = X / hw, top = my + .05 - .03 * u * u, foot = top - deep * Math.sqrt(Math.max(0, 1 - u * u));
+      const d = Math.min(top - Y, Y - foot, (1 - Math.abs(u)) * hw * .5);
+      put(i, inside, 1, cov(d));
+      if (opts.open === 'grin') put(i, teeth, 1, cov(d) * cov(Y - (top - .055)));
+      put(i, dark, 1, cov(.014 - Math.abs(d)) * (Math.abs(u) < 1.05 ? 1 : 0));
+      // (the tongue over the lower lip, hanging out below it, with its own outline and a groove down its middle)
+      if (opts.open === 'tongue') { const fy = my + .05 - .15, te = Math.hypot(X / (.55 * hw), (Y - fy) / .1) - 1;
+        if (Y < top - .04) { put(i, pink, 1, cov(-te * .07)); put(i, dark, 1, cov(.012 - Math.abs(te * .07))); put(i, dark, .9, .5 * cov(.006 - Math.abs(X)) * cov(-te * .07 - .02) * cov(fy + .05 - Y)); } } }
+    if (opts.o) { const e = Math.hypot(X / .085, (Y - my + .02) / .11) - 1; put(i, inside, 1, cov(-e * .09)); put(i, dark, 1, cov(.014 - Math.abs(e * .09))); }
+    if (opts.kiss) { const up = Math.hypot(X / .1, (Y - my - .005) / .045) - 1, lo = Math.hypot(X / .105, (Y - my + .065) / .055) - 1, e = Math.min(up, lo);
+      put(i, lips, 1, cov(-e * .05)); put(i, dark, 1, cov(.009 - Math.abs(e * .05)) * .8); put(i, dark, 1, cov(.007 - Math.abs(Y - my + .03)) * cov((.08 - Math.abs(X)))); } } }
 // (a shut eye's hollow lit smooth - see setupBrows - and an open one as it was)
 function shutNormals(S, opts) { if (!S.verts || !hairBase) return; const N = hairBase.body.geometry.attributes.normal, A = N.array, V = S.verts, v = new THREE.Vector3();
   for (let j = 0, m = 0; j < V.length; j += 3, m += 3) { const i = V[j], E = S.eyes[V[j + 1]], shut = opts.shut && (!opts.one || E.side > 0);
@@ -502,7 +576,7 @@ function redrawBody() {
     if (!c) { o[i] = s[i]; o[i + 1] = s[i + 1]; o[i + 2] = s[i + 2]; o[i + 3] = 255; continue; }
     const k = (.3 * s[i] + .59 * s[i + 1] + .11 * s[i + 2]) / tex.mid[tex.label[p]];
     o[i] = Math.min(255, c.r * 255 * k); o[i + 1] = Math.min(255, c.g * 255 * k); o[i + 2] = Math.min(255, c.b * 255 * k); o[i + 3] = 255; }
-  drawEyes(o); drawBrows(o); tex.ctx.putImageData(out, 0, 0); tex.texture.needsUpdate = true; smoothUnder(); }
+  drawEyes(o); drawMouth(o); drawBrows(o); tex.ctx.putImageData(out, 0, 0); tex.texture.needsUpdate = true; smoothUnder(); }
 // (the vest is shaped on the body too, its edge a little ridge the light still draws in skin colour: where it is covered
 // the body there is lit as if smooth - each point's way out the average of all within a hundredth and a half of its height)
 function smoothUnder() {
@@ -525,7 +599,8 @@ function smoothUnder() {
       now.set(done.get(at), i * 3); }
     hairBase.smooth = { was, now, near }; }
   const { was, now, near } = hairBase.smooth, on = (tex.covered[PARTS.shirt] ? 1 << PARTS.shirt : 0) | (tex.covered[PARTS.pants] ? 1 << PARTS.pants : 0);
-  for (let i = 0; i < near.length; i++) { const from = near[i] & on ? now : was; N.array[i * 3] = from[i * 3]; N.array[i * 3 + 1] = from[i * 3 + 1]; N.array[i * 3 + 2] = from[i * 3 + 2]; }
+  // (only its own points: the face's - a shut eye, a new mouth - are lit smooth by theirs)
+  for (let i = 0; i < near.length; i++) { if (!near[i]) continue; const from = near[i] & on ? now : was; N.array[i * 3] = from[i * 3]; N.array[i * 3 + 1] = from[i * 3 + 1]; N.array[i * 3 + 2] = from[i * 3 + 2]; }
   N.needsUpdate = true; }
 
 let anim = 'staa', spin = false;
@@ -769,7 +844,7 @@ async function loadHair(name, list = hairTexs, colourPart = 'hair', extra = {}) 
   // (cap: no lighter than that over the middle - the glasses' frames had white smears inside, by the glass)
   if (opts.cap) list.at(-1).cap = opts.cap;
   body.parent.add(hair); hair.bind(body.skeleton, body.bindMatrix); if (picked[colourPart]) recolourHair(picked[colourPart], list); return hair; }
-var styleLists = () => ({ hair: [HAIRS, hairNow, setHair], eyes: [EYES, eyesNow, setEyes], brows: [BROWS, browsNow, setBrows],
+var styleLists = () => ({ hair: [HAIRS, hairNow, setHair], eyes: [EYES, eyesNow, setEyes], brows: [BROWS, browsNow, setBrows], mouth: [MOUTHS, mouthNow, setMouth],
   ...Object.fromEntries(Object.entries(GARMENTS).map(([part, G]) => [part, [G.items, G.now, n => setGarment(part, n)]])) });
 async function setHair(name) {
   hairNow = name; renderStyles();
@@ -1515,7 +1590,7 @@ loadFbx().then(ok => { document.getElementById('tag').textContent = ok ? '3D-for
 const clock = new THREE.Clock();
 // (the face's parts - the eyes so far - are shown close up: the camera glides in front of the face, and out again to the
 // whole figure when another tab is chosen; dragging and pinching still work in between)
-const FACE = ['eyes', 'brows']; let farZ = 8, closeUp = false, goal = null;
+const FACE = ['eyes', 'brows', 'mouth']; let farZ = 8, closeUp = false, goal = null;
 function lookFor(part) { const near = FACE.includes(part) && hairBase;
   if (near) { const at = hairBase.body.skeleton.bones[hairBase.head].getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(0, .15, 0));
     controls.minDistance = .5; goal = { target: at, camera: at.clone().add(new THREE.Vector3(0, .04, 1.5)) }; }
