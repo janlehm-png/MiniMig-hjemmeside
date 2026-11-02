@@ -237,8 +237,8 @@ disc.rotation.x = -Math.PI / 2; disc.position.y = .001; scene.add(disc);
 // ---- colours: the figure's painted texture, recoloured (below) ----
 // (the parts, each with the app's icon for its tab, in ikoner/; the fixed colours are gone - the sliders alone)
 const CHOICES = [['skin', 'Hud', 'hud'], ['hair', 'Hår', 'haar'], ['eyes', 'Øjne', 'oejne'], ['brows', 'Bryn', 'bryn'], ['nose', 'Næse', 'naese'], ['mouth', 'Mund', 'mund'], ['pynt', 'Pynt', 'kinder'], ['shirt', 'Trøje', 'troeje'], ['pants', 'Bukser', 'bukser'], ['dress', 'Kjole', 'kjoler'],
-  ['shoe', 'Sko', 'sko'], ['hat', 'Hat', 'hat'], ['glasses', 'Briller', 'briller'], ['name', 'Navn', 'navn']];
-const picked = {}, START = { skin: '#EDB98A', hair: '#4A2C1D', eyes: '#7A4220', brows: '#4A2C1D', mouth: '#C0505A', pynt: '#FF5A6E', nose: '#EDB98A', shirt: '#FF7A2F', pants: '#2C3E8C', dress: '#3D8BFF', shoe: '#3D8BFF', hat: '#3D8BFF', glasses: '#3D8BFF' }; let partNow = 'shirt';
+  ['socks', 'Strømper', 'stroemper'], ['shoe', 'Sko', 'sko'], ['hat', 'Hat', 'hat'], ['glasses', 'Briller', 'briller'], ['name', 'Navn', 'navn']];
+const picked = {}, START = { skin: '#EDB98A', hair: '#4A2C1D', eyes: '#7A4220', brows: '#4A2C1D', mouth: '#C0505A', pynt: '#FF5A6E', nose: '#EDB98A', shirt: '#FF7A2F', pants: '#2C3E8C', dress: '#3D8BFF', socks: '#3D8BFF', shoe: '#3D8BFF', hat: '#3D8BFF', glasses: '#3D8BFF' }; let partNow = 'shirt';
 const apply = (part, c) => { picked[part] = c; recolour(part, c); if (part === 'shirt' || part === 'dress') chestName(); };
 const iconButton = (src, label) => { const b = document.createElement('button'), i = new Image(); i.src = src; i.alt = ''; i.onerror = () => i.remove();
   const s = document.createElement('span'); s.textContent = label; b.append(i, s); return b; };
@@ -895,6 +895,17 @@ function setupHairTexture(img, list = hairTexs) {
     mask[p] = 1; if (own) { sum += .3 * src[i] + .59 * src[i + 1] + .11 * src[i + 2]; n++; } }
   const t = new THREE.CanvasTexture(canvas); t.colorSpace = THREE.SRGBColorSpace;
   list.push({ ctx, src, mask, mid: n ? sum / n : 80, texture: t, w, h }); return t; }
+// (socks painted in their colour, knitted - fine ribs up and down - and the football socks' stripe across, a little
+// below the top, in a contrast colour: white, or navy on light socks. The picture goes from the floor (bottom) to the
+// socks' top)
+function paintSocks(only) { if (typeof GARMENTS === 'undefined') return; const hex = picked.socks || START.socks, n = parseInt(hex.slice(1), 16), sock = [n >> 16 & 255, n >> 8 & 255, n & 255];
+  const hsl = {}; new THREE.Color().setStyle(hex, THREE.SRGBColorSpace).getHSL(hsl, THREE.SRGBColorSpace); const band = hsl.l > .7 ? [44, 62, 140] : [255, 255, 255];
+  for (const m of only ? [only] : Object.values(GARMENTS.socks.meshes)) { if (!m) continue; const map = m.material.map, cv = map.image, g = cv.getContext('2d'), W = cv.width, H = cv.height, o = m.userData.sock;
+    const im = g.createImageData(W, H), d = im.data, s = o.stripe ? o.stripe.map(f => f / o.top * H) : null;
+    for (let y = 0; y < H; y++) { const b = s ? Math.min(1, Math.max(0, Math.min(y + .5 - s[0], s[1] - y - .5) + .5)) : 0; // (the stripe's edges soft over one row)
+      for (let x = 0; x < W; x++) { const k = (x % 4 < 2 ? .9 : 1) * (1 + (Math.random() - .5) * .04), i = (y * W + x) * 4;
+        for (let c = 0; c < 3; c++) d[i + c] = Math.min(255, (sock[c] * (1 - b) + band[c] * b) * k); d[i + 3] = 255; } }
+    g.putImageData(im, 0, 0); map.needsUpdate = true; } }
 function recolourHair(hexColour, list = hairTexs) {
   const n = parseInt(hexColour.slice(1), 16), c = [(n >> 16 & 255), (n >> 8 & 255), (n & 255)];
   for (const hairTex of list) {
@@ -904,6 +915,7 @@ function recolourHair(hexColour, list = hairTexs) {
     const k0 = (.3 * s[i] + .59 * s[i + 1] + .11 * s[i + 2]) / hairTex.mid, k = Math.min(hairTex.cap ?? Infinity, hairTex.flat ? 1 + (k0 - 1) * hairTex.flat : k0); for (let j = 0; j < 3; j++) o[i + j] = Math.min(255, c[j] * k); }
   hairTex.ctx.putImageData(out, 0, 0); hairTex.texture.needsUpdate = true; } }
 function recolour(part, hexColour) {
+  if (part === 'socks') return paintSocks();
   if (part === 'hair') recolourHair(hexColour); if (typeof GARMENTS !== 'undefined' && GARMENTS[part]) recolourHair(hexColour, GARMENTS[part].texs);
   // (the picked colour read straight from its #rrggbb code: a THREE.Color would hold it in linear light, too dark here)
   if (!tex) return; const n = parseInt(hexColour.slice(1), 16); tex.colours[PARTS[part]] = { r: (n >> 16 & 255) / 255, g: (n >> 8 & 255) / 255, b: (n & 255) / 255 };
@@ -1374,6 +1386,9 @@ const GARMENTS = {
   pants: { items: [['', 'Undershorts'], ['bukser-lange', 'Lange bukser', { made: true, hem: .06, loose: .004 }], ['bukser-shorts', 'Shorts', { made: true, hem: .3, cuff: .03 }],
     ['bukser-cowboy', 'Cowboyshorts', { made: true, hem: .24, cuff: .035, cloth: 'denim' }], ['bukser-fodbold', 'Fodboldbukser', { made: true, hem: .295, loose: .004, loops: false, cloth: 'smooth' }]], texs: [], waist: true },
   dress: { items: [['', 'Ingen kjole'], ['kjole-sommer', 'Sommerkjole'], ['kjole-prinsesse', 'Prinsessekjole', { hang: .5, armsOut: 12 }], ['kjole-havfrue', 'Havfruekjole', { skirt: false, margin: .012, reach: 8, tail: true, snug: .2, waist: .15 }]], texs: [], skirt: true, noArms: true },
+  // (socks made from the body too: low ones for sneakers, football socks with a stripe at the top, and knee socks)
+  socks: { items: [['', 'Ingen strømper'], ['stroemper-ankel', 'Ankelstrømper', { made: true, top: .045, cloth: 'knit' }],
+    ['stroemper-fodbold', 'Fodboldstrømper', { made: true, top: .2, stripe: [.012, .026], cloth: 'knit' }], ['stroemper-hoeje', 'Knæstrømper', { made: true, top: .24, cloth: 'knit' }]], texs: [] },
   shoe: { items: [['', 'Bare fødder'], ['sko-sneakers', 'Sneakers', { sole: .02 }], ['sko-gummi', 'Gummistøvler', { pale: .9, paleTop: .015 }], ['sko-ballet', 'Balletsko', { paleFrom: .06, flat: .35, solid: .03 }]], texs: [] },
   // (hats were made on a bald head: on top of hair they are raised - lift, in eyes' distances - or, a cap, made wider)
   hat: { items: [['', 'Ingen hat'], ['hat-kasket', 'Kasket', { grow: 1.12, lift: .1, cap: true }], ['hat-krone', 'Krone', { grow: 1.05, rest: .12 }], ['hat-kanin', 'Kaninører', { grow: 1.12, lift: .3, wrap: .03, ears: .45, thin: .35, scalp: true, flat: .3 }],
@@ -1460,7 +1475,7 @@ function makeCloth(name, part, opts) {
   // after those had been on, the shorts had a hole there and only their hem and waistband showed)
   const G = GARMENTS[part], body = hairBase.body, geo = body.geometry, { pts, inv, H } = hairBase.whole, K = clothMarks();
   const bsi = geo.attributes.skinIndex, bsw = geo.attributes.skinWeight, bones = body.skeleton.bones, corners = geo.attributes.position.count;
-  const pants = part === 'pants', hipY = hairBase.hipY, top = hipY + .06 * H, crotch = hipY - .06 * H, side = p => Math.abs(p[0] - K.mid), clamp = v => Math.min(1, Math.max(0, v));
+  const pants = part === 'pants', socks = part === 'socks', hipY = hairBase.hipY, top = hipY + .06 * H, crotch = hipY - .06 * H, side = p => Math.abs(p[0] - K.mid), clamp = v => Math.min(1, Math.max(0, v));
   const arms = new Set(bones.flatMap((b, j) => /Arm|Hand/.test(b.name) ? [j] : [])), armPt = new Uint8Array(pts.length / 6);
   for (let j = 0; j < armPt.length; j++) { let a = 0; for (let c = 0; c < 4; c++) if (arms.has(bsi.getComponent(j, c))) a += bsw.getComponent(j, c); armPt[j] = a > .5; }
   // (its edges: f is under 0 inside; fold: the cloth turned up there, how far; bare: how far in from it the body stays -
@@ -1469,7 +1484,10 @@ function makeCloth(name, part, opts) {
   // (and how far out from the body it lies at each point)
   // (level: below it the garment is put out sideways only, so its bottom edge stays straight)
   let edges, out, level = Infinity, tuckIn = null;
-  if (pants) { const hem = opts.hem * H;
+  // (socks: the feet and legs up to their top - opts.top, in fractions of the height - close on the skin; stripe: a band
+  // in the contrast colour that far below the top, [from, to])
+  if (socks) { const top = opts.top * H; edges = [{ f: p => p[1] - top, bare: .008 * H }]; out = () => .0035 * H; }
+  else if (pants) { const hem = opts.hem * H;
     edges = [{ f: p => hem - p[1], fold: (opts.cuff || 0) * H, bare: .012 * H }, { f: p => p[1] - top, bare: .003 * H }];
     // (loose: the legs that much further out all the way down, from just under the crotch - long trousers sat like tights)
     out = p => { const s = clamp((crotch - p[1]) / (crotch - hem)); return (.006 + (opts.flare || 0) * s * s + (opts.loose || 0) * clamp((crotch - p[1]) / (.06 * H))) * H; }; }
@@ -1512,7 +1530,7 @@ function makeCloth(name, part, opts) {
   // garment does not come apart where the body's colour picture has a seam)
   const ways = new Map(), spot = j => `${pts[j * 6]},${pts[j * 6 + 1]},${pts[j * 6 + 2]}`, tris = [], P3 = j => [pts[j * 6], pts[j * 6 + 1], pts[j * 6 + 2]];
   for (let c = 0; c < corners; c += 3) { const v = [c, c + 1, c + 2];
-    if (edges.some(e => v.every(j => e.f(P3(j)) > 0)) || pants && v.some(j => armPt[j])) continue; tris.push(v);
+    if (edges.some(e => v.every(j => e.f(P3(j)) > 0)) || (pants || socks) && v.some(j => armPt[j])) continue; tris.push(v);
     for (const j of v) { const k = spot(j), n = ways.get(k) || [0, 0, 0]; for (let e = 0; e < 3; e++) n[e] += pts[j * 6 + 3 + e]; ways.set(k, n); } }
   // (a corner: where it is, its way out, and the bones it follows; one of the body's, or one between two on a triangle's
   // side where an edge cuts it - the triangles cut there, so the edges are straight)
@@ -1575,6 +1593,8 @@ function makeCloth(name, part, opts) {
   list.forEach((c, i) => { n.fromArray(dir, i * 3); w.fromArray(wp, i * 3); U.set([(w.x + w.z) * 3, w.y * 3], i * 2);
     // (shades: a pocket, and the trimmed edges)
     const rim = hood && opts.hood ? hood(c.p) : 0, shade = (pocket && opts.pocket && pocket(c.p) ? .8 : 1) * (rim > 0 && rim < .25 ? .6 : 1) *(edges.some(e => e.trim && -e.f(c.p) < .018 * H) ? .55 : 1); C.set([shade, shade, shade], i * 3);
+    // (socks: their picture once from the floor (0) to their top (1), so the stripe lies level round the leg)
+    if (socks) U[i * 2 + 1] = c.p[1] / (opts.top * H);
     w.applyMatrix4(inv); P.set([w.x, w.y, w.z], i * 3); n.transformDirection(inv); N.set([n.x, n.y, n.z], i * 3);
     Object.entries(c.w).sort((p, q) => q[1] - p[1]).slice(0, 4).forEach(([b, v], k) => { si[i * 4 + k] = +b; sw[i * 4 + k] = v; }); });
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(P, 3)); g.setAttribute('normal', new THREE.BufferAttribute(N, 3));
@@ -1583,18 +1603,22 @@ function makeCloth(name, part, opts) {
   // smooth, sweatshirt and sports cloth, the unevenness alone)
   const cv = document.createElement('canvas'); cv.width = cv.height = 256; const cx = cv.getContext('2d'), im = cx.createImageData(256, 256), kind = opts.cloth || 'twill', streak = new Float32Array(256).map(() => (Math.random() - .5) * 16);
   for (let y = 0; y < 256; y++) for (let x = 0; x < 256; x++) { const o = (y * 256 + x) * 4, r = (Math.random() - .5) * 14;
-    const k = kind === 'denim' ? ((x + y) % 4 < 2 ? -14 : 4) + streak[x] + r : kind === 'smooth' ? r * .6 : ((x + y) % 6 < 2 ? -9 : 0) + r;
-    im.data.set(kind === 'denim' ? [38 + k * .4, 62 + k * .6, 150 + k, 255] : [44 + k * .4, 72 + k * .6, 170 + k, 255], o); }
+    // (knit, for socks: fine ribs up and down, nearly white - their colour is laid on by paintSocks)
+    const k = kind === 'denim' ? ((x + y) % 4 < 2 ? -14 : 4) + streak[x] + r : kind === 'smooth' ? r * .6 : kind === 'knit' ? (x % 4 < 2 ? -12 : 0) + r * .5 : ((x + y) % 6 < 2 ? -9 : 0) + r;
+    im.data.set(kind === 'knit' ? [240 + k, 240 + k, 240 + k, 255] : kind === 'denim' ? [38 + k * .4, 62 + k * .6, 150 + k, 255] : [44 + k * .4, 72 + k * .6, 170 + k, 255], o); }
   cx.putImageData(im, 0, 0);
   let si2 = si, sw2 = sw; if (pants) [si2, sw2] = waistband(g, wp, si, sw, top, H, inv, opts.loops ?? true, cv, { pts, armPt, button: opts.loops ?? true });
   g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(si2, 4)); g.setAttribute('skinWeight', new THREE.Float32BufferAttribute(sw2, 4));
-  const map = setupHairTexture(cv, G.texs); map.wrapS = map.wrapT = THREE.RepeatWrapping;
+  // (socks: a picture of their own, painted in their colours by paintSocks - once up the leg, round and round it)
+  const map = socks ? new THREE.CanvasTexture(cv) : setupHairTexture(cv, G.texs); map.wrapS = THREE.RepeatWrapping; map.wrapT = socks ? THREE.ClampToEdgeWrapping : THREE.RepeatWrapping;
+  if (socks) map.colorSpace = THREE.SRGBColorSpace;
   const cloth = new THREE.SkinnedMesh(g, new THREE.MeshStandardMaterial({ map, roughness: .85, metalness: 0, side: THREE.DoubleSide, vertexColors: true }));
   cloth.castShadow = true; cloth.name = name; cloth.frustumCulled = false; cloth.normalizeSkinWeights(); cloth.userData.orig = g.attributes.position.array.slice();
   cloth.position.copy(body.position); cloth.quaternion.copy(body.quaternion); cloth.scale.copy(body.scale);
   body.parent.add(cloth); cloth.bind(body.skeleton, body.bindMatrix); if (picked[part]) recolourHair(picked[part], G.texs);
+  if (socks) { cloth.userData.sock = opts; paintSocks(cloth); }
   // (the body under it hidden, all but near its edges)
-  const covered = new Uint8Array(pts.length / 6); for (let j = 0; j < covered.length; j++) covered[j] = !(pants && armPt[j]) && edges.every(e => e.f(P3(j)) < -e.bare) ? 1 : 0;
+  const covered = new Uint8Array(pts.length / 6); for (let j = 0; j < covered.length; j++) covered[j] = !((pants || socks) && armPt[j]) && edges.every(e => e.f(P3(j)) < -e.bare) ? 1 : 0;
   cloth.userData.covered = covered; cloth.userData.made = true; cloth.userData.tucked = T; return cloth; }
 async function loadCloth(name, part) {
   const G = GARMENTS[part];
@@ -2019,7 +2043,7 @@ const figureNow = () => ({ picked: { ...picked }, hair: hairNow, eyes: eyesNow, 
   wear: Object.fromEntries(Object.entries(GARMENTS).map(([p, G]) => [p, G.now])), name: nameNow, badge: badgeNow });
 // (a part's own colour back: the figure's painted one, the hair's and the garments' as made)
 const unpaint = list => { for (const t of list) { const im = t.ctx.createImageData(t.w, t.h); im.data.set(t.src); t.ctx.putImageData(im, 0, 0); t.texture.needsUpdate = true; } };
-function unpick(part) { delete picked[part]; if (part === 'hair') unpaint(hairTexs); if (GARMENTS[part]) unpaint(GARMENTS[part].texs);
+function unpick(part) { delete picked[part]; if (part === 'socks') paintSocks(); if (part === 'hair') unpaint(hairTexs); if (GARMENTS[part]) unpaint(GARMENTS[part].texs);
   if (tex && PARTS[part]) { delete tex.colours[PARTS[part]]; if (part === 'hair' && !picked.brows) delete tex.colours[PARTS.brows]; if (part === 'brows' && picked.hair) tex.colours[PARTS.brows] = tex.colours[PARTS.hair]; } }
 let dressingUp = 0;
 async function wearFigure(f) { const ask = ++dressingUp;
@@ -2030,7 +2054,7 @@ async function wearFigure(f) { const ask = ++dressingUp;
   nameInput.value = nameNow; showBadges(); redrawBody(); showSwatches();
   if (f.hair !== hairNow) await setHair(f.hair); if (ask !== dressingUp) return;
   // (a dress last: it takes off the top and trousers)
-  for (const p of ['shirt', 'pants', 'shoe', 'hat', 'glasses', 'dress']) { if (p === 'dress' && !f.wear.dress) continue; await setGarment(p, f.wear[p] || ''); if (ask !== dressingUp) return; }
+  for (const p of ['shirt', 'pants', 'socks', 'shoe', 'hat', 'glasses', 'dress']) { if (p === 'dress' && !f.wear.dress) continue; await setGarment(p, f.wear[p] || ''); if (ask !== dressingUp) return; }
   chestName(); renderStyles(); }
 // (a picture of the figure as it stands now: the whole of it on the app's sun, or a profile picture - the head and
 // shoulders, square. Made with a camera of its own in front of it, so wherever it has been turned it is seen from the front)
