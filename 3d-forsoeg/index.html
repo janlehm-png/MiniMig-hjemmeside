@@ -329,7 +329,11 @@ function setupEyeShapes(place, inside) {
       if (iris) { ix.push(X); iy.push(Y); for (let m = 0; m < 3; m++) rgb[m] += s[p * 4 + m] / 255; } }
     if (ox.length < 20 || ix.length < 10) return;
     const x0 = pct(ox, .02), x1 = pct(ox, .98), y0 = pct(oy, .02), y1 = pct(oy, .98), i0 = pct(ix, .03), i1 = pct(ix, .97), r = (i1 - i0) / 2;
-    eyes.push({ side, cx: (x0 + x1) / 2, cy: (y0 + y1) / 2, ew: (x1 - x0) / 2, eh: (y1 - y0) / 2, ix: (i0 + i1) / 2, iy: pct(iy, .03) + r, r,
+    // (and the upper lid: how high the opening reaches, in 24 strips across the eye - the lashes start on it)
+    const cx = (x0 + x1) / 2, ew = (x1 - x0) / 2, top = new Float32Array(24).fill(-9);
+    for (const [p, [X, Y]] of place) { if (Math.sign(X) !== side || Math.abs(Y) > .4 || !(white(p) || tex.label[p] === PARTS.eyes)) continue;
+      const b = Math.floor(((X - cx) / ew + 1) / 2 * 24); if (b >= 0 && b < 24 && Y > top[b]) top[b] = Y; }
+    eyes.push({ side, cx, cy: (y0 + y1) / 2, ew, eh: (y1 - y0) / 2, ix: (i0 + i1) / 2, iy: pct(iy, .03) + r, r, top,
       colour: { r: rgb[0] / ix.length, g: rgb[1] / ix.length, b: rgb[2] / ix.length } }); }
   // (the zone's texels, and for each: its eye, the skin's light round it, and whether it is in the eye's opening - the
   // white and the whole iris, and the iris's dark rim below the upper lid)
@@ -351,7 +355,7 @@ function setupEyeShapes(place, inside) {
     out.push(p, X, Y, e, c ? ks / c : 1, open ? 1 : 0); }
   // (for Store: each eye's zone as a little picture seen from the front, which texel lies at each spot - its holes, between
   // texels further apart than its squares, filled from their neighbours)
-  for (const E of eyes) { E.cell = E.ew / 30; E.gx = E.cx - 1.8 * E.ew; E.gy = E.cy - 1.8 * E.eh; E.gw = Math.ceil(3.6 * E.ew / E.cell); E.gh = Math.ceil(3.6 * E.eh / E.cell); E.grid = new Int32Array(E.gw * E.gh).fill(-1); }
+  for (const E of eyes) { E.cell = E.ew / 22; E.gx = E.cx - 1.8 * E.ew; E.gy = E.cy - 1.8 * E.eh; E.gw = Math.ceil(3.6 * E.ew / E.cell); E.gh = Math.ceil(3.6 * E.eh / E.cell); E.grid = new Int32Array(E.gw * E.gh).fill(-1); }
   for (let j = 0; j < out.length; j += 6) { if (!inside.has(out[j])) continue; const E = eyes[out[j + 3]], gx = Math.floor((out[j + 1] - E.gx) / E.cell), gy = Math.floor((out[j + 2] - E.gy) / E.cell);
     if (gx >= 0 && gy >= 0 && gx < E.gw && gy < E.gh) E.grid[gy * E.gw + gx] = j / 6; }
   for (const E of eyes) for (let r = 0; r < 6; r++) { const g = E.grid.slice();
@@ -372,16 +376,24 @@ function drawEyes(o) {
       // (inside, everything a quarter bigger; from 1.375 out to 1.7 squeezed back, so it meets the face round it)
       const f = rr < 1.375 ? rr / opts.big : 1.1 + (rr - 1.375) * .6 / .325, sx = E.cx + dx * f / rr, sy = E.cy + dy * f / rr;
       // (the four squares round that spot, blended by how near it is to each: taken from one alone, its edges were jagged)
-      const fx = (sx - E.gx) / E.cell - .5, fy = (sy - E.gy) / E.cell - .5, gx = Math.floor(fx), gy = Math.floor(fy), c = [0, 0, 0]; let wt = 0;
+      // (outside the iris - the eye's black outline against the white and the skin - each square sorted as dark or light and
+      // the two blended sharply, at half and half: blown up, the soft outline was ragged)
+      const fx = (sx - E.gx) / E.cell - .5, fy = (sy - E.gy) / E.cell - .5, gx = Math.floor(fx), gy = Math.floor(fy), c = [0, 0, 0], cd = [0, 0, 0], cl = [0, 0, 0];
+      let wt = 0, wd = 0, wl = 0; const rim = Math.hypot(sx - E.ix, sy - E.iy) > 1.1 * E.r;
       for (const [ax, ay] of [[0, 0], [1, 0], [0, 1], [1, 1]]) { const X2 = gx + ax, Y2 = gy + ay; if (X2 < 0 || Y2 < 0 || X2 >= E.gw || Y2 >= E.gh) continue;
         const z = E.grid[Y2 * E.gw + X2]; if (z < 0) continue; const wq = (ax ? fx - gx : 1 - fx + gx) * (ay ? fy - gy : 1 - fy + gy);
-        for (let m = 0; m < 3; m++) c[m] += copy[z * 3 + m] * wq; wt += wq; }
-      if (wt > 0) for (let m = 0; m < 3; m++) o[i + m] = c[m] / wt; continue; }
+        const isDark = .3 * copy[z * 3] + .59 * copy[z * 3 + 1] + .11 * copy[z * 3 + 2] < 110;
+        for (let m = 0; m < 3; m++) { c[m] += copy[z * 3 + m] * wq; (isDark ? cd : cl)[m] += copy[z * 3 + m] * wq; } wt += wq; if (isDark) wd += wq; else wl += wq; }
+      if (!(wt > 0)) continue;
+      if (rim && wd > 0 && wl > 0) { const a = Math.max(0, Math.min(1, (wd / wt - .5) / .12 + .5)); for (let m = 0; m < 3; m++) o[i + m] = cd[m] / wd * a + cl[m] / wl * (1 - a); }
+      else for (let m = 0; m < 3; m++) o[i + m] = c[m] / wt; continue; }
     if (opts.shut && (!opts.one || E.side > 0)) {
       const rr = Math.hypot(dx / (E.ew * 1.2), dy / (E.eh * 1.45)); if (rr < 1.25) put(i, skin, k, Math.min(1, (1.25 - rr) / .2));
       const yc = opts.shut === 'up' ? -.3 * E.eh + .75 * E.eh * (1 - u * u) : .1 * E.eh - .55 * E.eh * (1 - u * u);
       put(i, dark, 1, cov(.024 * (1 - .4 * u * u) - Math.hypot(dy - yc, Math.max(0, Math.abs(dx) - E.ew)))); continue; }
-    if (opts.lashes) for (const f of [.4, .66, .9]) { const bx = E.cx + Math.sign(E.cx) * f * E.ew, by = E.cy + .92 * E.eh * Math.sqrt(1 - f * f), a = .35 + .75 * f;
+    // (each lash from the upper lid's black line - just above the white's top there - outwards and up)
+    if (opts.lashes) for (const f of [.45, .7, .92]) { const lid = E.top[Math.min(23, Math.floor((Math.sign(E.cx) * f + 1) / 2 * 24))]; if (lid < -1) continue;
+      const bx = E.cx + Math.sign(E.cx) * f * E.ew, by = lid + .025, a = .35 + .75 * f;
       const [d, t] = seg(X, Y, bx, by, bx + Math.sign(E.cx) * Math.sin(a) * .11, by + Math.cos(a) * .11); put(i, dark, 1, cov(.017 * (1 - .65 * t) - d)); }
     if (opts.iris && open) { const ux = (X - E.ix) / E.r, uy = (Y - E.iy) / E.r, rr = Math.hypot(ux, uy); if (rr > 1.3) continue;
       put(i, white, 1, cov((1.25 - rr) * E.r));
