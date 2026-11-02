@@ -95,9 +95,9 @@ disc.rotation.x = -Math.PI / 2; disc.position.y = .001; scene.add(disc);
 
 // ---- colours: the figure's painted texture, recoloured (below) ----
 // (the parts, each with the app's icon for its tab, in ikoner/; the fixed colours are gone - the sliders alone)
-const CHOICES = [['skin', 'Hud', 'hud'], ['hair', 'Hår', 'haar'], ['eyes', 'Øjne', 'oejne'], ['shirt', 'Trøje', 'troeje'], ['pants', 'Bukser', 'bukser'], ['dress', 'Kjole', 'kjoler'],
+const CHOICES = [['skin', 'Hud', 'hud'], ['hair', 'Hår', 'haar'], ['eyes', 'Øjne', 'oejne'], ['brows', 'Bryn', 'bryn'], ['shirt', 'Trøje', 'troeje'], ['pants', 'Bukser', 'bukser'], ['dress', 'Kjole', 'kjoler'],
   ['shoe', 'Sko', 'sko'], ['hat', 'Hat', 'hat'], ['glasses', 'Briller', 'briller']];
-const picked = {}, START = { skin: '#EDB98A', hair: '#4A2C1D', eyes: '#7A4220', shirt: '#FF7A2F', pants: '#2C3E8C', dress: '#3D8BFF', shoe: '#3D8BFF', hat: '#3D8BFF', glasses: '#3D8BFF' }; let partNow = 'shirt';
+const picked = {}, START = { skin: '#EDB98A', hair: '#4A2C1D', eyes: '#7A4220', brows: '#4A2C1D', shirt: '#FF7A2F', pants: '#2C3E8C', dress: '#3D8BFF', shoe: '#3D8BFF', hat: '#3D8BFF', glasses: '#3D8BFF' }; let partNow = 'shirt';
 const apply = (part, c) => { picked[part] = c; recolour(part, c); };
 const iconButton = (src, label) => { const b = document.createElement('button'), i = new Image(); i.src = src; i.alt = ''; i.onerror = () => i.remove();
   const s = document.createElement('span'); s.textContent = label; b.append(i, s); return b; };
@@ -126,7 +126,7 @@ showSwatches();
 // into skin (light peach), shirt (strong orange), trousers (blue) and hair (dark brown); the shoes (red, white), eye
 // whites and the rest stay as they are. A new colour for a part is then laid on its pixels, lit as they were (each
 // pixel's brightness against the part's middle brightness), so folds and shading stay.
-const PARTS = { skin: 1, shirt: 2, pants: 3, hair: 4, eyes: 5 };
+const PARTS = { skin: 1, shirt: 2, pants: 3, hair: 4, eyes: 5, brows: 6 };
 let tex = null; // { canvas, ctx, src: original pixels, label, mid: middle brightness per part, colours: current per part }
 function partOf(r, g, b) {
   const mx = Math.max(r, g, b), mn = Math.min(r, g, b), v = mx / 255, s = mx ? (mx - mn) / mx : 0;
@@ -214,12 +214,84 @@ function irisesByPlace(place) {
   for (let p = 0; p < w * h; p++) { if (!may[p] || seen[p]) continue; const patch = [p]; let touch = 0; seen[p] = 1;
     for (let j = 0; j < patch.length; j++) { const q = patch[j], x = q % w;
       for (const r of [x + 1 < w ? q + 1 : -1, x ? q - 1 : -1, q + w < w * h ? q + w : -1, q - w]) { if (r < 0) continue; if (white(r)) touch++; if (may[r] && !seen[r]) { seen[r] = 1; patch.push(r); } } }
-    if (touch && patch.length < 6000) for (const q of patch) if (Math.max(s[q * 4], s[q * 4 + 1], s[q * 4 + 2]) > 95 && !nearSkin(q)) tex.label[q] = PARTS.eyes; } }
+    // (the rest of the eye - its dark brown was sorted as hair - stays as it is: it took the hair's colour, blond eyes)
+    if (touch && patch.length < 6000) for (const q of patch) if (Math.max(s[q * 4], s[q * 4 + 1], s[q * 4 + 2]) > 95 && !nearSkin(q)) tex.label[q] = PARTS.eyes; else if (tex.label[q] === PARTS.hair) tex.label[q] = 0; } }
 // (the soft edge of the eye's outline, where it meets the skin, is brown too: it stays, or the outline gets a coloured rim)
 function nearSkin(q) { const w = tex.w, x = q % w, y = (q - x) / w, s = tex.src;
   for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) { const X = x + dx, Y = y + dy; if (X < 0 || Y < 0 || X >= w || Y >= tex.h) continue;
     const p = Y * w + X; if (tex.label[p] === PARTS.skin && s[p * 4] > 200 && s[p * 4 + 2] < 200) return true; }
   return false; }
+// ---- the brows: the figure's own (Naturlige), or drawn anew in their place ----
+// (painted in the colour picture, in pieces scattered over it: each texel of the face is given its place seen from the
+// front - in eyes' distances from between the eyes - so a brow drawn there lies right across the pieces. The old brows
+// are measured there - how high and thick at each spot along them - and the new ones made from that: thinner, thicker,
+// higher, tilted; the old ones painted over in the skin round them)
+const BROWS = [['bryn-naturlige', 'Naturlige'], ['bryn-tynde', 'Tynde', { thick: .5 }], ['bryn-tykke', 'Tykke', { thick: 1.45 }],
+  ['bryn-hoeje', 'Høje', { lift: .14 }], ['bryn-sure', 'Sure', { tilt: -1, thick: 1.15 }], ['bryn-triste', 'Triste', { tilt: 1 }], ['bryn-ingen', 'Ingen', { none: true }]];
+let browsNow = 'bryn-naturlige';
+function setBrows(name) { browsNow = name; redrawBody(); renderStyles(); }
+function setupBrows(body) {
+  const geo = body.geometry, P = geo.attributes.position.array, U = geo.attributes.uv.array, n = geo.attributes.position.count, w = tex.w, h = tex.h, s = tex.src;
+  geo.computeBoundingBox(); const bb = geo.boundingBox, topY = bb.max.y - (bb.max.y - bb.min.y) * .15, midX = (bb.min.x + bb.max.x) / 2;
+  const at = (i, a) => [a[i * (a === U ? 2 : 3)], a[i * (a === U ? 2 : 3) + 1], a === U ? 0 : a[i * 3 + 2]], px = i => [U[i * 2] * w, (1 - U[i * 2 + 1]) * h];
+  // (the eye whites, as in measureHead: white triangles in the head)
+  const eyes = [[0, 0, 0, 0], [0, 0, 0, 0]];
+  for (let k = 0; k < n; k += 3) { const c = [0, 1, 2].map(j => px(k + j)).reduce((a, b) => [a[0] + b[0] / 3, a[1] + b[1] / 3], [0, 0]);
+    const i = (Math.min(h - 1, Math.floor(c[1])) * w + Math.min(w - 1, Math.floor(c[0]))) * 4, mx = Math.max(s[i], s[i + 1], s[i + 2]), mn = Math.min(s[i], s[i + 1], s[i + 2]);
+    if (mx < 200 || mx - mn > 40) continue; const y = (P[k * 3 + 1] + P[k * 3 + 4] + P[k * 3 + 7]) / 3; if (y < topY) continue;
+    const x = (P[k * 3] + P[k * 3 + 3] + P[k * 3 + 6]) / 3, z = (P[k * 3 + 2] + P[k * 3 + 5] + P[k * 3 + 8]) / 3, e = eyes[x < midX ? 0 : 1]; e[0] += x; e[1] += y; e[2] += z; e[3]++; }
+  if (!eyes[0][3] || !eyes[1][3]) return; const [L, R] = eyes.map(e => e.slice(0, 3).map(v => v / e[3]));
+  const apart = Math.hypot(L[0] - R[0], L[1] - R[1], L[2] - R[2]), cx = (L[0] + R[0]) / 2, cy = (L[1] + R[1]) / 2, cz = (L[2] + R[2]) / 2;
+  // (each texel of the face's front - above the cheeks, facing forward - with its place seen from the front)
+  const place = new Map();
+  for (let k = 0; k < n; k += 3) { const a = at(k, P), b = at(k + 1, P), c = at(k + 2, P);
+    const e1 = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], e2 = [c[0] - a[0], c[1] - a[1], c[2] - a[2]], nz = e1[0] * e2[1] - e1[1] * e2[0], nl = Math.hypot(e1[1] * e2[2] - e1[2] * e2[1], e1[2] * e2[0] - e1[0] * e2[2], nz);
+    const X = [a, b, c].map(v => (v[0] - cx) / apart), Y = [a, b, c].map(v => (v[1] - cy) / apart);
+    if (!(nz > .15 * nl) || (a[2] + b[2] + c[2]) / 3 < cz - .8 * apart || Math.max(...X.map(Math.abs)) > 1.7 || Math.min(...Y) < -.4 || Math.max(...Y) > 1.5) continue;
+    const q = [px(k), px(k + 1), px(k + 2)], d = (q[1][1] - q[2][1]) * (q[0][0] - q[2][0]) + (q[2][0] - q[1][0]) * (q[0][1] - q[2][1]); if (!d) continue;
+    for (let y = Math.floor(Math.min(q[0][1], q[1][1], q[2][1])); y <= Math.ceil(Math.max(q[0][1], q[1][1], q[2][1])); y++)
+      for (let x = Math.floor(Math.min(q[0][0], q[1][0], q[2][0])); x <= Math.ceil(Math.max(q[0][0], q[1][0], q[2][0])); x++) {
+        if (x < 0 || y < 0 || x >= w || y >= h) continue; const fx = x + .5, fy = y + .5;
+        const l0 = ((q[1][1] - q[2][1]) * (fx - q[2][0]) + (q[2][0] - q[1][0]) * (fy - q[2][1])) / d, l1 = ((q[2][1] - q[0][1]) * (fx - q[2][0]) + (q[0][0] - q[2][0]) * (fy - q[2][1])) / d, l2 = 1 - l0 - l1;
+        if (l0 < -.02 || l1 < -.02 || l2 < -.02) continue; place.set(y * w + x, [l0 * X[0] + l1 * X[1] + l2 * X[2], l0 * Y[0] + l1 * Y[1] + l2 * Y[2]]); } }
+  // (and the texels round the pieces' edges, 3 deep, the place of their neighbour: the screen blends them in)
+  for (let r = 0; r < 3; r++) { const add = [];
+    for (const p of place.keys()) for (const o of [1, -1, w, -w]) if (p + o >= 0 && p + o < w * h && !place.has(p + o)) add.push([p + o, place.get(p)]);
+    for (const [p, v] of add) if (!place.has(p)) place.set(p, v); }
+  // (the old brows: the hair's brown above the eyes - from now on a part of their own - and how they lie, side by side
+  // folded together: in 24 strips across, from between the eyes outwards, how high their middle is and how thick)
+  const N = 24, top = new Float32Array(N).fill(-9), low = new Float32Array(N).fill(9), zone = new Set();
+  let sum = 0, cnt = 0; const rgb = [0, 0, 0];
+  for (const [p, [X, Y]] of place) if (tex.label[p] === PARTS.hair && Y > .25) { tex.label[p] = PARTS.brows; const i = p * 4; sum += .3 * s[i] + .59 * s[i + 1] + .11 * s[i + 2]; cnt++;
+    for (let m = 0; m < 3; m++) rgb[m] += s[i + m] / 255;
+    const b = Math.floor(Math.abs(X) / 1.7 * N); top[b] = Math.max(top[b], Y); low[b] = Math.min(low[b], Y);
+    for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++) zone.add(p + dy * w + dx); }
+  if (!cnt) return; tex.mid[PARTS.brows] = sum / cnt;
+  const bins = [...Array(N).keys()].filter(b => top[b] > low[b]), x0 = bins[0] / N * 1.7, x1 = (bins.at(-1) + 1) / N * 1.7;
+  const mid = b => (top[b] + low[b]) / 2, thick = b => top[b] - low[b], along = (f, ax) => { const t = Math.max(0, Math.min(N - 1, ax / 1.7 * N - .5)), a = Math.floor(t), b = Math.min(N - 1, a + 1);
+    const fa = top[a] > low[a] ? f(a) : f(bins.reduce((m, c) => Math.abs(c - a) < Math.abs(m - a) ? c : m)), fb = top[b] > low[b] ? f(b) : fa; return fa + (fb - fa) * (t - a); };
+  // (the skin's light at each painted-over texel: the skin round it, its brightness against the skin's middle)
+  const keep = [];
+  for (const [p, [X, Y]] of place) { if (Y < .1 || Math.abs(X) > 1.7) continue; let k = 0;
+    if (zone.has(p)) { let ks = 0, c = 0; const x = p % w, y = (p - x) / w;
+      for (let dy = -14; dy <= 14; dy += 2) for (let dx = -14; dx <= 14; dx += 2) { const X2 = x + dx, Y2 = y + dy; if (X2 < 0 || Y2 < 0 || X2 >= w || Y2 >= h) continue; const q = Y2 * w + X2;
+        if (tex.label[q] === PARTS.skin && !zone.has(q)) { const i = q * 4; ks += (.3 * s[i] + .59 * s[i + 1] + .11 * s[i + 2]) / tex.mid[PARTS.skin]; c++; } }
+      k = c ? ks / c : 1; }
+    keep.push(p, X, Y, k); }
+  tex.brows = { texels: new Float32Array(keep), x0, x1, colour: { r: rgb[0] / cnt, g: rgb[1] / cnt, b: rgb[2] / cnt }, mid: ax => along(mid, ax), thick: ax => along(thick, ax) }; }
+// (the chosen brows, drawn into the body's colour picture as it is redrawn: o its pixels)
+function drawBrows(o) {
+  const B = tex.brows, opts = (BROWS.find(b => b[0] === browsNow) || [])[2]; if (!B || !opts) return;
+  const skin = tex.colours[PARTS.skin] || tex.skin, brow = tex.colours[PARTS.brows] || B.colour, T = B.texels, len = B.x1 - B.x0, edge = .025;
+  for (let j = 0; j < T.length; j += 4) { const p = T[j], X = T[j + 1], Y = T[j + 2], k = T[j + 3], i = p * 4;
+    if (k) { o[i] = Math.min(255, skin.r * 255 * k); o[i + 1] = Math.min(255, skin.g * 255 * k); o[i + 2] = Math.min(255, skin.b * 255 * k); }
+    if (opts.none) continue; const ax = Math.abs(X), t = (ax - B.x0) / len;
+    // (its middle line: the old one, raised, and tilted about its middle - Sure lower between the eyes, Triste higher)
+    const c = B.mid(Math.min(B.x1, Math.max(B.x0, ax))) + (opts.lift || 0) + (opts.tilt || 0) * .22 * (.5 - Math.min(1, Math.max(0, t)));
+    // (as thick as the old one at that spot, times thick - rounded at its ends)
+    const half = B.thick(Math.min(B.x1, Math.max(B.x0, ax))) / 2 * (opts.thick || 1), out = Math.max(0, B.x0 - ax, ax - B.x1);
+    const d = Math.hypot(Y - c, out), a = Math.max(0, Math.min(1, (half - d) / edge + .5)); if (!a) continue;
+    for (const [m, ch] of [[0, 'r'], [1, 'g'], [2, 'b']]) o[i + m] = o[i + m] * (1 - a) + brow[ch] * 255 * (tex.colours[PARTS.brows] ? .9 : 1) * a; } }
 // the hair, a part of its own with its own colour picture: all of it gets the hair colour, lit as it was (against the
 // middle brightness of its brown; the hair uses no other part of the picture, and its darkest strands and the edges
 // round its pieces must change too, or they show as specks)
@@ -247,6 +319,8 @@ function recolour(part, hexColour) {
   if (part === 'hair') recolourHair(hexColour); if (typeof GARMENTS !== 'undefined' && GARMENTS[part]) recolourHair(hexColour, GARMENTS[part].texs);
   // (the picked colour read straight from its #rrggbb code: a THREE.Color would hold it in linear light, too dark here)
   if (!tex) return; const n = parseInt(hexColour.slice(1), 16); tex.colours[PARTS[part]] = { r: (n >> 16 & 255) / 255, g: (n >> 8 & 255) / 255, b: (n & 255) / 255 };
+  // (the brows follow the hair's colour until they are given their own)
+  if (part === 'hair' && !picked.brows) tex.colours[PARTS.brows] = tex.colours[PARTS.hair];
   redrawBody(); }
 // (under a dress the vest and shorts are painted in the skin's colour: they would show at the neckline, under the arms
 // and through a tight skirt - and under trousers the shorts, under a top the vest: they came out at the waistband and the
@@ -263,7 +337,7 @@ function redrawBody() {
     if (!c) { o[i] = s[i]; o[i + 1] = s[i + 1]; o[i + 2] = s[i + 2]; o[i + 3] = 255; continue; }
     const k = (.3 * s[i] + .59 * s[i + 1] + .11 * s[i + 2]) / tex.mid[tex.label[p]];
     o[i] = Math.min(255, c.r * 255 * k); o[i + 1] = Math.min(255, c.g * 255 * k); o[i + 2] = Math.min(255, c.b * 255 * k); o[i + 3] = 255; }
-  tex.ctx.putImageData(out, 0, 0); tex.texture.needsUpdate = true; smoothUnder(); }
+  drawBrows(o); tex.ctx.putImageData(out, 0, 0); tex.texture.needsUpdate = true; smoothUnder(); }
 // (the vest is shaped on the body too, its edge a little ridge the light still draws in skin colour: where it is covered
 // the body there is lit as if smooth - each point's way out the average of all within a hundredth and a half of its height)
 function smoothUnder() {
@@ -530,7 +604,7 @@ async function loadHair(name, list = hairTexs, colourPart = 'hair', extra = {}) 
   // (cap: no lighter than that over the middle - the glasses' frames had white smears inside, by the glass)
   if (opts.cap) list.at(-1).cap = opts.cap;
   body.parent.add(hair); hair.bind(body.skeleton, body.bindMatrix); if (picked[colourPart]) recolourHair(picked[colourPart], list); return hair; }
-var styleLists = () => ({ hair: [HAIRS, hairNow, setHair],
+var styleLists = () => ({ hair: [HAIRS, hairNow, setHair], brows: [BROWS, browsNow, setBrows],
   ...Object.fromEntries(Object.entries(GARMENTS).map(([part, G]) => [part, [G.items, G.now, n => setGarment(part, n)]])) });
 async function setHair(name) {
   hairNow = name; renderStyles();
@@ -1254,7 +1328,7 @@ async function loadFbx() { if (!(await exists('figur.fbx' + FIGUR_V))) return fa
   whitesByPlace(fbx);
   const box = new THREE.Box3().setFromObject(fbx), size = box.getSize(new THREE.Vector3()), k = 2.15 / size.y;
   fbx.scale.setScalar(k); fbx.position.y = -box.min.y * k; holder.add(fbx); glb = fbx;
-  measureHead(fbx); await setHair(hairNow);
+  measureHead(fbx); if (hairBase) setupBrows(hairBase.body); await setHair(hairNow);
   mixer = new THREE.AnimationMixer(fbx); if (fbx.animations[0]) glbActions.vink = mixer.clipAction(fbx.animations[0]);
   // (each movement preferably as figur-<name>.json: only the movement, taken out of Mixamo's file - a few hundred KB
   // where the .fbx, the whole figure again, is 19 MB)
@@ -1276,7 +1350,7 @@ loadFbx().then(ok => { document.getElementById('tag').textContent = ok ? '3D-for
 const clock = new THREE.Clock();
 // (the face's parts - the eyes so far - are shown close up: the camera glides in front of the face, and out again to the
 // whole figure when another tab is chosen; dragging and pinching still work in between)
-const FACE = ['eyes']; let farZ = 8, closeUp = false, goal = null;
+const FACE = ['eyes', 'brows']; let farZ = 8, closeUp = false, goal = null;
 function lookFor(part) { const near = FACE.includes(part) && hairBase;
   if (near) { const at = hairBase.body.skeleton.bones[hairBase.head].getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(0, .15, 0));
     controls.minDistance = .5; goal = { target: at, camera: at.clone().add(new THREE.Vector3(0, .04, 1.5)) }; }
