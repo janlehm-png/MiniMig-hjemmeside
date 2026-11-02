@@ -2270,14 +2270,18 @@ function makeItem(kind) {
 // the thumb laid over them. Returns where the fist holds - the hole through it - and the line across it, from the little
 // finger to the index finger)
 const fv = new THREE.Vector3(), fn = new THREE.Vector3(), fa = new THREE.Vector3(), fq = new THREE.Quaternion(), fr = new THREE.Quaternion();
-// (curl: how far the fingers close - less round something thick, the ice cream's cone, the hole then further from the palm)
-function fist(curl = 1) { const P = n => bone(n).getWorldPosition(new THREE.Vector3());
+// (curl: how far the fingers close - less round something thick, the ice cream's cone, the hole then further from the palm;
+// lift: the wrist tipped up that far, the thumb's side raised - holding the balloon, the wand, the ice cream, the flower)
+function fist(curl = 1, lift = 0) { const P = n => bone(n).getWorldPosition(new THREE.Vector3());
   // (first the wrist turned, so the thumb's side faces forwards - with the palm backwards, as the movements hold it, a
   // stick through the fist went sideways into the body)
   { const arm = P('LeftHand').sub(P('LeftForeArm')).normalize(), a0 = P('LeftHandIndex1').sub(P('LeftHandPinky1')), want = new THREE.Vector3(0, 0, 1).applyQuaternion(glb.getWorldQuaternion(fq));
     a0.addScaledVector(arm, -a0.dot(arm)).normalize(); want.addScaledVector(arm, -want.dot(arm)).normalize();
     const ang = Math.atan2(fv.crossVectors(a0, want).dot(arm), a0.dot(want)), h = bone('LeftHand');
-    h.getWorldQuaternion(fq); h.quaternion.multiply(fr.setFromAxisAngle(arm.clone().applyQuaternion(fq.invert()), Math.max(-1.8, Math.min(1.8, ang)))); glb.updateMatrixWorld(true); }
+    h.getWorldQuaternion(fq); h.quaternion.multiply(fr.setFromAxisAngle(arm.clone().applyQuaternion(fq.invert()), Math.max(-1.8, Math.min(1.8, ang)))); glb.updateMatrixWorld(true);
+    // (then tipped up: turned about the line square to the hand's across-line and straight up, so that line rises)
+    if (lift) { const a = P('LeftHandIndex1').sub(P('LeftHandPinky1')).normalize(), ax = a.clone().cross(iUp); if (ax.lengthSq() > 1e-6) {
+      h.getWorldQuaternion(fq); h.quaternion.multiply(fr.setFromAxisAngle(ax.normalize().applyQuaternion(fq.invert()), lift)); glb.updateMatrixWorld(true); } } }
   const m1 = P('LeftHandMiddle1'), dir = P('LeftHandMiddle2').sub(m1).normalize(), across = P('LeftHandIndex1').sub(P('LeftHandPinky1'));
   const w = across.length(); across.normalize();
   // (the palm's side: square to the fingers and the line across, on the thumb's side)
@@ -2307,7 +2311,7 @@ function holdItem(t) { if (!item || !glb) return; const g = item.group; glb.getW
   if (item.kind === 'bold') { const h = bone('LeftHand'), m = bone('LeftHandMiddle1'); h.getWorldPosition(iv); iv.lerp(m.getWorldPosition(iw), .7); g.position.copy(iv); g.quaternion.copy(iq); return; }
   // (the ice cream's cone held round its waffle, the fingers outside it: the hand less closed, the cone held low down -
   // in a full fist the hand went into the cone)
-  const grip = fist(item.kind === 'is' ? .55 : 1); iv.copy(grip.at); g.position.copy(iv);
+  const grip = fist(item.kind === 'is' ? .55 : 1, ['ballon', 'tryllestav', 'is', 'blomst'].includes(item.kind) ? .45 : 0); iv.copy(grip.at); g.position.copy(iv);
   // (a stick - the wand, the flower, the ice cream's cone - through the fist from the little finger's side to the
   // thumb's, its top out at the thumb, tipped up a little; the teddy hangs from it, upright)
   // (the end towards the figure's front - the hole's line has no sense of its own; the ice cream nearly upright)
