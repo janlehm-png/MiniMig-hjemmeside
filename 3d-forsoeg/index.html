@@ -290,8 +290,7 @@ function setupBrows(body) {
         const d2 = ((P[q * 3] - x) ** 2 + (P[q * 3 + 1] - y) ** 2 + (P[q * 3 + 2] - z) ** 2) / (r * r); if (d2 > 1) continue; const wq = 1 - d2;
         for (let m = 0; m < 3; m++) v[m] += N[q * 3 + m] * wq; }
       const l = Math.hypot(...v) || 1; Mo.smooth.set(v.map(c => c / l), j / 2 * 3); }
-    Mo.verts = new Float32Array(list); Mo.normals = Float32Array.from(list.filter((_, j) => j % 2 === 0).flatMap(i => [N[i * 3], N[i * 3 + 1], N[i * 3 + 2]]));
-    Mo.pos = Float32Array.from(list.filter((_, j) => j % 2 === 0).flatMap(i => [P[i * 3], P[i * 3 + 1], P[i * 3 + 2]])); Object.assign(Mo, { cx, cy, apart, body }); }
+    Mo.verts = new Float32Array(list); Mo.normals = Float32Array.from(list.filter((_, j) => j % 2 === 0).flatMap(i => [N[i * 3], N[i * 3 + 1], N[i * 3 + 2]])); }
   // (the old brows: the hair's brown above the eyes - from now on a part of their own - and how they lie, side by side
   // folded together: in 24 strips across, from between the eyes outwards, how high their middle is and how thick)
   const N = 24, top = new Float32Array(N).fill(-9), low = new Float32Array(N).fill(9), zone = new Set();
@@ -722,34 +721,6 @@ function shapeNose() { const Z = tex && tex.nose; if (!Z) return; const opts = (
     Z.ball = new THREE.SkinnedMesh(g, new THREE.MeshStandardMaterial({ color: 0xE3212B, roughness: .28, metalness: 0 })); Z.ball.castShadow = true;
     Z.body.parent.add(Z.ball); Z.ball.bind(Z.body.skeleton, Z.body.bindMatrix); }
   if (Z.ball) Z.ball.visible = !!opts.clown; }
-// (the mouth given depth - painted on, it was flat seen from the side: the face pressed in inside an open mouth, the
-// lips swelling a little out, Kys's pucker pushed forward; and for Tunge a real tongue, a rounded pad held by the head
-// as the clown's ball is, out over the lower lip. Run last in redrawBody, after the nose)
-function shapeMouth() { const M = tex && tex.mouth; if (!M || !M.pos) return; const opts = (MOUTHS.find(m => m[0] === mouthNow) || [])[2] || {};
-  const A = M.body.geometry.attributes.position, V = M.verts, ap = M.apart, my = M.my, cl = v => Math.max(0, Math.min(1, v));
-  if (!M.inNose) M.inNose = new Set(tex.nose ? tex.nose.idx : []);
-  for (let j = 0, m = 0; j < V.length; j += 2, m += 3) { const i = V[j], X = (M.pos[m] - M.cx) / ap, Y = (M.pos[m + 1] - M.cy) / ap; let dz = 0;
-    if (opts.hw) { const u = X / opts.hw, s = Math.sqrt(Math.max(0, 1 - u * u)), c = my + opts.mid[0] + opts.mid[1] * u * u, top = c + opts.open[0] * s, bot = c - opts.open[1] * Math.pow(s, 1.3);
-      const up = top + opts.lip[0] * Math.pow(s, opts.round || .45), lo = bot - opts.lip[1] * Math.pow(s, (opts.round || .45) + .05);
-      if (opts.open[1] > 0 && Y < top && Y > bot) dz -= .09 * cl(Math.min(top - Y, Y - bot) / .03) * cl((1 - Math.abs(u)) / .15);
-      if (Y >= top && Y < up) dz += .018 * Math.sin(Math.PI * cl((Y - top) / (up - top))) * s;
-      if (Y <= bot && Y > lo) dz += .028 * Math.sin(Math.PI * cl((bot - Y) / (bot - lo))) * s; }
-    if (opts.o) { const sc = opts.o, cy = my - .03, x = X / sc, y = cy + (Y - cy) / sc, ei = Math.hypot(x / .1, (y - cy) / .09), eo = Math.hypot(x / .148, (y - cy + .008) / (y > cy ? .13 : .145));
-      if (ei < 1) dz -= .09 * cl((1 - ei) / .25); else if (eo < 1) dz += .025 * Math.sin(Math.PI * cl((ei - 1) / ((ei / eo - 1) || 1))); }
-    if (opts.kiss) { const sc = opts.kiss, r = Math.hypot(X / (.085 * sc), (Y - my + .03) / (.075 * sc)); if (r < 1) dz += .07 * Math.sqrt(1 - r * r); }
-    // (points the nose shares were just set by shapeNose, from its own copy: added onto, not put back)
-    if (M.inNose.has(i)) A.array[i * 3 + 2] += dz * ap;
-    else { A.array[i * 3] = M.pos[m]; A.array[i * 3 + 1] = M.pos[m + 1]; A.array[i * 3 + 2] = M.pos[m + 2] + dz * ap; } }
-  A.needsUpdate = true;
-  // (the tongue: made the first time - an oval pad, rounded on top, a little flattened - its root inside the mouth)
-  if (opts.out && !M.tongue && hairBase) { const g = new THREE.SphereGeometry(1, 40, 28), cnt = g.attributes.position.count, ty = my + opts.mid[0] - opts.open[1] - .035;
-    let zs = -Infinity; for (let m = 0; m < M.pos.length; m += 3) if (Math.abs(M.pos[m] - M.cx) < .05 * ap && Math.abs((M.pos[m + 1] - M.cy) / ap - ty) < .04) zs = Math.max(zs, M.pos[m + 2]);
-    g.scale(.15 * ap, .13 * ap, .06 * ap); g.rotateX(.5); g.translate(M.cx, M.cy + ty * ap, zs + .01 * ap);
-    g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(new Uint16Array(cnt * 4).map((_, k) => k % 4 ? 0 : hairBase.head), 4));
-    g.setAttribute('skinWeight', new THREE.Float32BufferAttribute(new Float32Array(cnt * 4).map((_, k) => k % 4 ? 0 : 1), 4));
-    M.tongue = new THREE.SkinnedMesh(g, new THREE.MeshStandardMaterial({ color: 0xE0707A, roughness: .45, metalness: 0 })); M.tongue.castShadow = true;
-    M.body.parent.add(M.tongue); M.tongue.bind(M.body.skeleton, M.body.bindMatrix); }
-  if (M.tongue) M.tongue.visible = !!opts.out; }
 // (Dyrenæse: a dark oval on the nose's tip, lit as a dome - lightest at its top, with a small shine)
 function drawNose(o) { const Z = tex.nose, P = tex.pynt, opts = (NOSES.find(m => m[0] === noseNow) || [])[2]; if (!Z || !P || !opts || !opts.animal) return;
   const T = P.texels, cy0 = Z.tipY - .015, rx = .135, ry = .092, darkC = { r: .2, g: .11, b: .09 }, lightC = { r: .55, g: .38, b: .34 };
@@ -807,7 +778,7 @@ function redrawBody() {
     if (!c) { o[i] = s[i]; o[i + 1] = s[i + 1]; o[i + 2] = s[i + 2]; o[i + 3] = 255; continue; }
     const k = (.3 * s[i] + .59 * s[i + 1] + .11 * s[i + 2]) / tex.mid[tex.label[p]];
     o[i] = Math.min(255, c.r * 255 * k); o[i + 1] = Math.min(255, c.g * 255 * k); o[i + 2] = Math.min(255, c.b * 255 * k); o[i + 3] = 255; }
-  drawEyes(o); drawMouth(o); drawPynt(o); drawNose(o); drawBrows(o); tex.ctx.putImageData(out, 0, 0); tex.texture.needsUpdate = true; smoothUnder(); shapeNose(); shapeMouth(); }
+  drawEyes(o); drawMouth(o); drawPynt(o); drawNose(o); drawBrows(o); tex.ctx.putImageData(out, 0, 0); tex.texture.needsUpdate = true; smoothUnder(); shapeNose(); }
 // (the vest is shaped on the body too, its edge a little ridge the light still draws in skin colour: where it is covered
 // the body there is lit as if smooth - each point's way out the average of all within a hundredth and a half of its height)
 function smoothUnder() {
