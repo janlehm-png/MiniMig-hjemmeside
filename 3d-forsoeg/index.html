@@ -681,7 +681,7 @@ function drawPynt(o) { const P = tex.pynt; if (!P || !pyntNow.length) return;
 // scaled across (x), up and down (y) and outwards (z), the more the nearer the middle of the nose, so it melts into the
 // face round it. Dyrenæse: a dark, shiny animal's nose painted on its tip. Klovn: a shiny red ball on its tip, held by
 // the head as the hair is)
-const NOSES = [['naese-naturlig', 'Naturlig'], ['naese-lille', 'Lille', { s: [.7, .8, .6] }], ['naese-bred', 'Bred', { s: [1.55, 1, 1.08] }],
+const NOSES = [['naese-naturlig', 'Naturlig'], ['naese-lille', 'Lille', { s: [.8, .85, .8] }], ['naese-bred', 'Bred', { s: [1.55, 1, 1.08] }],
   // (Spids an ordinary pointed nose - at 1.8 outwards it was a Pinocchio's)
   ['naese-lang', 'Spids', { s: [.88, 1.06, 1.3], down: .01 }], ['naese-dyr', 'Dyrenæse', { animal: true }], ['naese-klovn', 'Klovn', { clown: true }]];
 let noseNow = 'naese-naturlig';
@@ -704,10 +704,12 @@ function setupNose(body, P, n, cx, cy, cz, apart) {
 function shapeNose() { const Z = tex && tex.nose; if (!Z) return; const opts = (NOSES.find(m => m[0] === noseNow) || [])[2] || {}, S = opts.s || [1, 1, 1];
   const geo = Z.body.geometry, A = geo.attributes.position, Nm = geo.attributes.normal, v = new THREE.Vector3();
   for (let j = 0; j < Z.idx.length; j++) { const i = Z.idx[j], w = Z.w[j];
-    for (let m = 0; m < 3; m++) { const s = 1 + (S[m] - 1) * w; A.array[i * 3 + m] = Z.anchor[m] + (Z.pos[j * 3 + m] - Z.anchor[m]) * s; }
+    // (outwards only what stands in front of the cheeks: scaled towards them, the points behind were pushed forward and
+    // Lille's nose sank into a flat face)
+    for (let m = 0; m < 3; m++) { const s = m === 2 && Z.pos[j * 3 + 2] < Z.anchor[2] ? 1 : 1 + (S[m] - 1) * w; A.array[i * 3 + m] = Z.anchor[m] + (Z.pos[j * 3 + m] - Z.anchor[m]) * s; }
     A.array[i * 3 + 1] -= (opts.down || 0) * Z.apart * w;
     // (its way out turned as the scaling turns it - divided by the scale - so the light still fits the new shape)
-    v.set(Z.nrm[j * 3] / (1 + (S[0] - 1) * w), Z.nrm[j * 3 + 1] / (1 + (S[1] - 1) * w), Z.nrm[j * 3 + 2] / (1 + (S[2] - 1) * w)).normalize().toArray(Nm.array, i * 3); }
+    v.set(Z.nrm[j * 3] / (1 + (S[0] - 1) * w), Z.nrm[j * 3 + 1] / (1 + (S[1] - 1) * w), Z.nrm[j * 3 + 2] / (Z.pos[j * 3 + 2] < Z.anchor[2] ? 1 : 1 + (S[2] - 1) * w)).normalize().toArray(Nm.array, i * 3); }
   A.needsUpdate = true; Nm.needsUpdate = true;
   // (the clown's ball: made the first time, bound to the head bone alone)
   if (opts.clown && !Z.ball) { const r = .2 * Z.apart, g = new THREE.SphereGeometry(r, 40, 28), cnt = g.attributes.position.count;
