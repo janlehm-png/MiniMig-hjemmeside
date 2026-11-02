@@ -95,14 +95,14 @@ disc.rotation.x = -Math.PI / 2; disc.position.y = .001; scene.add(disc);
 
 // ---- colours: the figure's painted texture, recoloured (below) ----
 // (the parts, each with the app's icon for its tab, in ikoner/; the fixed colours are gone - the sliders alone)
-const CHOICES = [['skin', 'Hud', 'hud'], ['hair', 'Hår', 'haar'], ['eyes', 'Øjne', 'oejne'], ['brows', 'Bryn', 'bryn'], ['mouth', 'Mund', 'mund'], ['shirt', 'Trøje', 'troeje'], ['pants', 'Bukser', 'bukser'], ['dress', 'Kjole', 'kjoler'],
+const CHOICES = [['skin', 'Hud', 'hud'], ['hair', 'Hår', 'haar'], ['eyes', 'Øjne', 'oejne'], ['brows', 'Bryn', 'bryn'], ['mouth', 'Mund', 'mund'], ['pynt', 'Pynt', 'kinder'], ['shirt', 'Trøje', 'troeje'], ['pants', 'Bukser', 'bukser'], ['dress', 'Kjole', 'kjoler'],
   ['shoe', 'Sko', 'sko'], ['hat', 'Hat', 'hat'], ['glasses', 'Briller', 'briller']];
-const picked = {}, START = { skin: '#EDB98A', hair: '#4A2C1D', eyes: '#7A4220', brows: '#4A2C1D', mouth: '#C0505A', shirt: '#FF7A2F', pants: '#2C3E8C', dress: '#3D8BFF', shoe: '#3D8BFF', hat: '#3D8BFF', glasses: '#3D8BFF' }; let partNow = 'shirt';
+const picked = {}, START = { skin: '#EDB98A', hair: '#4A2C1D', eyes: '#7A4220', brows: '#4A2C1D', mouth: '#C0505A', pynt: '#FF5A6E', shirt: '#FF7A2F', pants: '#2C3E8C', dress: '#3D8BFF', shoe: '#3D8BFF', hat: '#3D8BFF', glasses: '#3D8BFF' }; let partNow = 'shirt';
 const apply = (part, c) => { picked[part] = c; recolour(part, c); };
 const iconButton = (src, label) => { const b = document.createElement('button'), i = new Image(); i.src = src; i.alt = ''; i.onerror = () => i.remove();
   const s = document.createElement('span'); s.textContent = label; b.append(i, s); return b; };
-// (the mouth has no colour of its own, as in the app: no sliders under it)
-function showSwatches() { slidersFrom(picked[partNow] || START[partNow]); document.getElementById('sliders').style.display = partNow === 'mouth' ? 'none' : '';
+// (the mouth and Pynt have no colour of their own, as in the app: no sliders under them)
+function showSwatches() { slidersFrom(picked[partNow] || START[partNow]); document.getElementById('sliders').style.display = partNow === 'mouth' || partNow === 'pynt' ? 'none' : '';
   document.querySelectorAll('#parts button').forEach(b => b.classList.toggle('on', b.dataset.part === partNow));
   renderStyles(); }
 // (the styles as buttons above the colours: hairstyles while Hår is chosen, tops while Trøje is; none before the figure -
@@ -110,7 +110,9 @@ function showSwatches() { slidersFrom(picked[partNow] || START[partNow]); docume
 function renderStyles() { const box = document.getElementById('styles'), list = typeof styleLists === 'undefined' ? null : styleLists()[partNow];
   box.innerHTML = ''; box.hidden = !list || !hairBase;
   if (box.hidden) return; const [items, now, set] = list;
-  for (const [n, label] of items) { const b = iconButton(`ikoner/valg-${n || 'ingen-' + partNow}.png`, label); b.classList.toggle('on', n === now); b.onclick = () => set(n); box.append(b); } }
+  // (now: the chosen one - or, for Pynt, the list of all chosen, Ingen lit when it is empty)
+  for (const [n, label] of items) { const b = iconButton(`ikoner/valg-${n || 'ingen-' + partNow}.png`, label);
+    b.classList.toggle('on', Array.isArray(now) ? (n.endsWith('-ingen') ? !now.length : now.includes(n)) : n === now); b.onclick = () => set(n); box.append(b); } }
 // the sliders: colour (hue), strength (saturation) and light, set from the part's colour now; moving one colours it
 const S = { h: document.getElementById('s-h'), s: document.getElementById('s-s'), l: document.getElementById('s-l') };
 function slidersFrom(hexColour) { const hsl = {}; new THREE.Color().setStyle(hexColour, THREE.SRGBColorSpace).getHSL(hsl, THREE.SRGBColorSpace);
@@ -266,7 +268,7 @@ function setupBrows(body) {
   for (let r = 0; r < 3; r++) { const add = [];
     for (const p of place.keys()) for (const o of [1, -1, w, -w]) if (p + o >= 0 && p + o < w * h && !place.has(p + o)) add.push([p + o, place.get(p)]);
     for (const [p, v] of add) if (!place.has(p)) place.set(p, v); }
-  setupEyeShapes(place, inside); setupMouth(place);
+  setupEyeShapes(place, inside); setupMouth(place); setupPynt(place);
   // (the eye sits in a hollow, whose shade showed through a shut eye: there the points are lit as if the face went
   // smoothly across - their way out turned towards the average of the ring round the eye, the more the further in)
   const S = tex.eyeShapes; if (S) { const N = geo.attributes.normal.array, list = [], ring = S.eyes.map(() => [0, 0, 0]);
@@ -608,6 +610,74 @@ function drawMouth(o) {
           const gloss = .5 * Math.exp(-(((ux + .25) / .22) ** 2 + ((uy - .32) / .2) ** 2)); c = mix(c, { r: 1, g: .93, b: .93 }, gloss);
           put(i, c, k, a);
           put(i, seamC, 1, .9 * cl(1 - Math.hypot(ux / 1.6, uy / .7) / .14) + .6 * cov(.0035 - Math.abs(Y - cy)) * cl((.5 - Math.abs(ux)) / .2) * cl((Math.abs(ux) - .1) / .05)); } } } } }
+// ---- Pynt: things painted on the face, as the app's Pynt tab - several at once ----
+// (drawn exactly as the app draws them (drawCheeks in www/index.html), in the app's own picture's pixels, onto a little
+// picture of the face seen from the front; each texel of the face then takes its colour from there. The app's figure
+// has its eyes at y 150 and 35 pixels either side of the middle, x 256; here they are a little under half the eyes'
+// distance either side: one app pixel is PX of the eyes' distance)
+const PYNT = [['pynt-ingen', 'Ingen'], ['pynt-roede', 'Røde kinder'], ['pynt-fregner', 'Fregner'], ['pynt-hjerter', 'Hjerter'], ['pynt-stjerne', 'Stjerne'],
+  ['pynt-glimmer', 'Glimmer'], ['pynt-regnbue', 'Regnbue'], ['pynt-plaster', 'Plaster'], ['pynt-plet', 'Skønhedsplet']];
+// (things on the same spot can't be worn together: choosing one takes the other off - as in the app)
+const PYNT_CLASH = { hjerter: ['stjerne', 'regnbue', 'plaster'], stjerne: ['hjerter', 'plaster'], regnbue: ['hjerter'], plaster: ['hjerter', 'stjerne', 'plet'], plet: ['plaster'] };
+// (PX a little more than the app's own proportion, .0136: there the things looked small on the round 3D face)
+let pyntNow = []; const PX = .016;
+function setPynt(name) { const k = name.slice(5);
+  pyntNow = k === 'ingen' ? [] : pyntNow.includes(k) ? pyntNow.filter(x => x !== k) : pyntNow.filter(x => !(PYNT_CLASH[k] || []).includes(x)).concat(k);
+  redrawBody(); renderStyles(); }
+function setupPynt(place) { const w = tex.w, h = tex.h, face = new Map();
+  for (const [p, [X, Y]] of place) if (Math.abs(X) < 1.3 && Y > -1 && Y < .8) face.set(p, [X, Y]);
+  for (let r = 0; r < 6; r++) { const add = [];
+    for (const [p, v] of face) for (const o of [1, -1, w, -w]) if (p + o >= 0 && p + o < w * h && !face.has(p + o) && !place.has(p + o)) add.push([p + o, v]);
+    for (const [p, v] of add) if (!face.has(p)) face.set(p, v); }
+  const out = new Float32Array(face.size * 3); let j = 0; for (const [p, [X, Y]] of face) { out[j++] = p; out[j++] = X; out[j++] = Y; }
+  tex.pynt = { texels: out }; }
+// (the app's drawing, in its pixels: list the chosen things, skin the skin's colour 0..255)
+function drawCheeks(ctx, list, skin) {
+  const has = k => list.includes(k), CHEEKS = [[221, 178], [291, 178]];
+  if (has('roede')) for (const [x, y] of CHEEKS) {
+    const g = ctx.createRadialGradient(x, y, 0, x, y, 13);
+    g.addColorStop(0, 'rgba(255,90,110,.55)'); g.addColorStop(1, 'rgba(255,90,110,0)'); // (a little stronger than the app's .42)
+    ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(x, y, 13, 9, 0, 0, Math.PI * 2); ctx.fill(); }
+  if (has('fregner')) {
+    ctx.fillStyle = `rgba(${skin.map(c => Math.round(c * .55)).join(',')},.55)`;
+    const dots = [[-8, -3], [-3, -6], [2, -2], [6, -5], [-5, 2], [1, 3], [7, 1], [-1, -9]];
+    for (const [x, y] of CHEEKS) for (const [dx, dy] of dots) { ctx.beginPath(); ctx.arc(x + dx * (x < 256 ? 1 : -1), y + dy, .95, 0, Math.PI * 2); ctx.fill(); }
+    for (const [dx, dy] of [[-4, -1], [0, -3], [4, -1]]) { ctx.beginPath(); ctx.arc(256 + dx, 168 + dy, .85, 0, Math.PI * 2); ctx.fill(); } }
+  const heart = (x, y, r) => { ctx.beginPath(); ctx.moveTo(x, y + r * .9);
+    ctx.bezierCurveTo(x - r * 1.6, y - r * .2, x - r * .7, y - r * 1.4, x, y - r * .45);
+    ctx.bezierCurveTo(x + r * .7, y - r * 1.4, x + r * 1.6, y - r * .2, x, y + r * .9); ctx.fill(); };
+  const star = (x, y, R, r, col) => { ctx.fillStyle = col; ctx.beginPath();
+    for (let k = 0; k < 10; k++) { const rr = k % 2 ? r : R, a = -Math.PI / 2 + k * Math.PI / 5; ctx.lineTo(x + rr * Math.cos(a), y + rr * Math.sin(a)); } ctx.fill(); };
+  ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.18)'; ctx.shadowBlur = 1;
+  if (has('hjerter')) { ctx.fillStyle = '#FF4F8B'; for (const [x, y] of CHEEKS) heart(x, y, 5); }
+  if (has('stjerne')) star(CHEEKS[1][0], CHEEKS[1][1], 6.5, 2.6, '#FFC233');
+  if (has('regnbue')) { const x = 229, y = 175;
+    ['#FF5A5A', '#FFA43B', '#FFD93B', '#5BD16E', '#4EA8FF', '#9B6BFF'].forEach((col, k) => {
+      ctx.strokeStyle = col; ctx.lineWidth = 1.3; ctx.beginPath(); ctx.arc(x, y + 4, 7.5 - k * 1.15, Math.PI, 0); ctx.stroke(); }); }
+  if (has('plet')) { ctx.fillStyle = 'rgba(70,40,30,.85)'; ctx.beginPath(); ctx.arc(271, 178, 1.7, 0, Math.PI * 2); ctx.fill(); }
+  if (has('glimmer'))
+    [[213, 131, 4.5, '#FFD43B'], [299, 129, 3.8, '#FFFFFF'], [294, 181, 3.2, '#FFD43B'], [218, 183, 3, '#FFFFFF'], [301, 155, 2.6, '#FF9EC4']]
+      .forEach(([x, y, R, col]) => star(x, y, R * 1.5, R * .5, col)); // (half as big again as the app's: faint on the 3D face)
+  ctx.restore();
+  if (has('plaster')) { ctx.save(); ctx.translate(285, 178); ctx.rotate(-.45);
+    ctx.fillStyle = '#F3C38F'; ctx.strokeStyle = '#C98D55'; ctx.lineWidth = .8; ctx.beginPath(); ctx.roundRect(-10, -4, 20, 8, 4); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#E5AE77'; ctx.fillRect(-4, -4, 8, 8);
+    ctx.fillStyle = '#C98D55'; for (const [dx, dy] of [[-2, -2], [2, 2], [2, -2], [-2, 2]]) { ctx.beginPath(); ctx.arc(dx, dy, .7, 0, Math.PI * 2); ctx.fill(); }
+    ctx.restore(); } }
+// (the chosen things laid on the body's colour picture as it is redrawn: o its pixels. The app's picture from x 176 to
+// 336 and y 100 to 240, four times over)
+function drawPynt(o) { const P = tex.pynt; if (!P || !pyntNow.length) return;
+  const S = 4, x0 = 176, y0 = 100, W = 160 * S, H = 140 * S, c = document.createElement('canvas'); c.width = W; c.height = H;
+  const g = c.getContext('2d'), sk = tex.colours[PARTS.skin] || tex.skin; g.scale(S, S); g.translate(-x0, -y0);
+  drawCheeks(g, pyntNow, [sk.r * 255, sk.g * 255, sk.b * 255]);
+  const d = g.getImageData(0, 0, W, H).data, T = P.texels;
+  for (let j = 0; j < T.length; j += 3) { const fx = (256 + T[j + 1] / PX - x0) * S - .5, fy = (150 - T[j + 2] / PX - y0) * S - .5;
+    if (fx < 0 || fy < 0 || fx >= W - 1 || fy >= H - 1) continue; const ix = Math.floor(fx), iy = Math.floor(fy), ax = fx - ix, ay = fy - iy, rgba = [0, 0, 0, 0];
+    // (each colour weighed by its cover too - a see-through pixel's colour is black and would darken the edges)
+    for (const [dx, dy, wq] of [[0, 0, (1 - ax) * (1 - ay)], [1, 0, ax * (1 - ay)], [0, 1, (1 - ax) * ay], [1, 1, ax * ay]]) { const q = ((iy + dy) * W + ix + dx) * 4, al = d[q + 3] / 255;
+      for (let m = 0; m < 3; m++) rgba[m] += d[q + m] * al * wq; rgba[3] += al * wq; }
+    const a = rgba[3]; if (a < .004) continue; const i = T[j] * 4;
+    for (let m = 0; m < 3; m++) o[i + m] = o[i + m] * (1 - a) + rgba[m]; } }
 // (a shut eye's hollow lit smooth - see setupBrows - and an open one as it was)
 function shutNormals(S, opts) { if (!S.verts || !hairBase) return; const N = hairBase.body.geometry.attributes.normal, A = N.array, V = S.verts, v = new THREE.Vector3();
   for (let j = 0, m = 0; j < V.length; j += 3, m += 3) { const i = V[j], E = S.eyes[V[j + 1]], shut = opts.shut && (!opts.one || E.side > 0);
@@ -658,7 +728,7 @@ function redrawBody() {
     if (!c) { o[i] = s[i]; o[i + 1] = s[i + 1]; o[i + 2] = s[i + 2]; o[i + 3] = 255; continue; }
     const k = (.3 * s[i] + .59 * s[i + 1] + .11 * s[i + 2]) / tex.mid[tex.label[p]];
     o[i] = Math.min(255, c.r * 255 * k); o[i + 1] = Math.min(255, c.g * 255 * k); o[i + 2] = Math.min(255, c.b * 255 * k); o[i + 3] = 255; }
-  drawEyes(o); drawMouth(o); drawBrows(o); tex.ctx.putImageData(out, 0, 0); tex.texture.needsUpdate = true; smoothUnder(); }
+  drawEyes(o); drawMouth(o); drawPynt(o); drawBrows(o); tex.ctx.putImageData(out, 0, 0); tex.texture.needsUpdate = true; smoothUnder(); }
 // (the vest is shaped on the body too, its edge a little ridge the light still draws in skin colour: where it is covered
 // the body there is lit as if smooth - each point's way out the average of all within a hundredth and a half of its height)
 function smoothUnder() {
@@ -926,7 +996,7 @@ async function loadHair(name, list = hairTexs, colourPart = 'hair', extra = {}) 
   // (cap: no lighter than that over the middle - the glasses' frames had white smears inside, by the glass)
   if (opts.cap) list.at(-1).cap = opts.cap;
   body.parent.add(hair); hair.bind(body.skeleton, body.bindMatrix); if (picked[colourPart]) recolourHair(picked[colourPart], list); return hair; }
-var styleLists = () => ({ hair: [HAIRS, hairNow, setHair], eyes: [EYES, eyesNow, setEyes], brows: [BROWS, browsNow, setBrows], mouth: [MOUTHS, mouthNow, setMouth],
+var styleLists = () => ({ hair: [HAIRS, hairNow, setHair], eyes: [EYES, eyesNow, setEyes], brows: [BROWS, browsNow, setBrows], mouth: [MOUTHS, mouthNow, setMouth], pynt: [PYNT, pyntNow.map(k => 'pynt-' + k), setPynt],
   ...Object.fromEntries(Object.entries(GARMENTS).map(([part, G]) => [part, [G.items, G.now, n => setGarment(part, n)]])) });
 async function setHair(name) {
   hairNow = name; renderStyles();
@@ -1672,7 +1742,7 @@ loadFbx().then(ok => { document.getElementById('tag').textContent = ok ? '3D-for
 const clock = new THREE.Clock();
 // (the face's parts - the eyes so far - are shown close up: the camera glides in front of the face, and out again to the
 // whole figure when another tab is chosen; dragging and pinching still work in between)
-const FACE = ['eyes', 'brows', 'mouth']; let farZ = 8, closeUp = false, goal = null;
+const FACE = ['eyes', 'brows', 'mouth', 'pynt']; let farZ = 8, closeUp = false, goal = null;
 function lookFor(part) { const near = FACE.includes(part) && hairBase;
   if (near) { const at = hairBase.body.skeleton.bones[hairBase.head].getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(0, .15, 0));
     controls.minDistance = .5; goal = { target: at, camera: at.clone().add(new THREE.Vector3(0, .04, 1.5)) }; }
