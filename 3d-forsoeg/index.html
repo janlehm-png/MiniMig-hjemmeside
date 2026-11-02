@@ -119,7 +119,7 @@ function paintTracks() { const h = S.h.value, s = S.s.value, l = S.l.value;
   S.l.style.background = `linear-gradient(90deg, hsl(${h},${s}%,5%), hsl(${h},${s}%,50%), hsl(${h},${s}%,95%))`; }
 for (const el of Object.values(S)) el.addEventListener('input', () => { paintTracks();
   const c = '#' + new THREE.Color().setHSL(S.h.value / 360, S.s.value / 100, S.l.value / 100, THREE.SRGBColorSpace).getHexString(THREE.SRGBColorSpace); apply(partNow, c); });
-for (const [part, name, icon] of CHOICES) { const b = iconButton(`ikoner/${icon}.png`, name); b.dataset.part = part; b.onclick = () => { partNow = part; showSwatches(); }; document.getElementById('parts').append(b); }
+for (const [part, name, icon] of CHOICES) { const b = iconButton(`ikoner/${icon}.png`, name); b.dataset.part = part; b.onclick = () => { partNow = part; showSwatches(); lookFor(part); }; document.getElementById('parts').append(b); }
 showSwatches();
 
 // The AI figure's colours are painted into one picture (its texture). Each pixel of it is sorted once by its colour
@@ -1274,12 +1274,22 @@ loadFbx().then(ok => { document.getElementById('tag').textContent = ok ? '3D-for
 
 // ---- render loop ----
 const clock = new THREE.Clock();
+// (the face's parts - the eyes so far - are shown close up: the camera glides in front of the face, and out again to the
+// whole figure when another tab is chosen; dragging and pinching still work in between)
+const FACE = ['eyes']; let farZ = 8, closeUp = false, goal = null;
+function lookFor(part) { const near = FACE.includes(part) && hairBase;
+  if (near) { const at = hairBase.body.skeleton.bones[hairBase.head].getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(0, .15, 0));
+    controls.minDistance = .5; goal = { target: at, camera: at.clone().add(new THREE.Vector3(0, .04, 1.5)) }; }
+  else if (closeUp) goal = { target: new THREE.Vector3(0, 1.05, 0), camera: new THREE.Vector3(0, 1.25, farZ), far: true };
+  closeUp = !!near; }
+function glide() { if (!goal) return; controls.target.lerp(goal.target, .12); camera.position.lerp(goal.camera, .12);
+  if (camera.position.distanceTo(goal.camera) < .01) { controls.target.copy(goal.target); camera.position.copy(goal.camera); if (goal.far) controls.minDistance = 2.5; goal = null; } }
 // (the picture moved up by half the button bar's height, so the figure stands clear of the bar however tall it is)
 function resize() { const w = innerWidth, h = innerHeight, bar = document.querySelector('.bar').offsetHeight; renderer.setSize(w, h, false); camera.aspect = w / h;
-  camera.position.z = w < h ? 8 : 7; camera.setViewOffset(w, h, 0, bar * .4, w, h); /* (room above for the head in a hop) */ camera.updateProjectionMatrix(); }
+  farZ = w < h ? 8 : 7; if (!closeUp) camera.position.z = farZ; camera.setViewOffset(w, h, 0, bar * .4, w, h); /* (room above for the head in a hop) */ camera.updateProjectionMatrix(); }
 addEventListener('resize', resize); resize(); new ResizeObserver(resize).observe(document.querySelector('.bar'));
 renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElapsedTime();
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
-  if (mixer) mixer.update(dt); armsOut(); controls.update(); renderer.render(scene, camera); });</script>
+  if (mixer) mixer.update(dt); armsOut(); glide(); controls.update(); renderer.render(scene, camera); });</script>
 </body>
 </html>
