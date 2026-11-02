@@ -290,7 +290,8 @@ function setupBrows(body) {
         const d2 = ((P[q * 3] - x) ** 2 + (P[q * 3 + 1] - y) ** 2 + (P[q * 3 + 2] - z) ** 2) / (r * r); if (d2 > 1) continue; const wq = 1 - d2;
         for (let m = 0; m < 3; m++) v[m] += N[q * 3 + m] * wq; }
       const l = Math.hypot(...v) || 1; Mo.smooth.set(v.map(c => c / l), j / 2 * 3); }
-    Mo.verts = new Float32Array(list); Mo.normals = Float32Array.from(list.filter((_, j) => j % 2 === 0).flatMap(i => [N[i * 3], N[i * 3 + 1], N[i * 3 + 2]])); }
+    Mo.verts = new Float32Array(list); Mo.normals = Float32Array.from(list.filter((_, j) => j % 2 === 0).flatMap(i => [N[i * 3], N[i * 3 + 1], N[i * 3 + 2]]));
+    Mo.pos = Float32Array.from(list.filter((_, j) => j % 2 === 0).flatMap(i => [P[i * 3], P[i * 3 + 1], P[i * 3 + 2]])); Object.assign(Mo, { cx, cy, apart, body }); }
   // (the old brows: the hair's brown above the eyes - from now on a part of their own - and how they lie, side by side
   // folded together: in 24 strips across, from between the eyes outwards, how high their middle is and how thick)
   const N = 24, top = new Float32Array(N).fill(-9), low = new Float32Array(N).fill(9), zone = new Set();
@@ -481,7 +482,7 @@ function drawEyes(o) {
 // (Neutral was dropped by the user, 2026-11-02)
 const MOUTHS = [['mund-smil', 'Smil'],
 // (all about as big as each other - the user found Grin much the biggest)
-  ['mund-grin', 'Grin', { mid: [-.02, .09], hw: .32, open: [.025, .19], lip: [.024, .03], teeth: .065, tongue: .055, crease: true }],
+  ['mund-grin', 'Grin', { mid: [-.02, .09], hw: .32, open: [.025, .19], lip: [.024, .03], teeth: .065, tongue: .055, crease: true, bulge: [.034, .046] }],
   ['mund-tunge', 'Tunge', { mid: [0, .06], hw: .32, open: [.022, .13], lip: [.026, .032], teeth: .05, out: true, crease: true }],
   ['mund-o', 'Åh', { o: 1.2 }], ['mund-kys', 'Kys', { kiss: 1.25 }],
   ['mund-trist', 'Trist', { mid: [.035, -.07], hw: .3, open: [0, 0], lip: [.044, .056], round: .3 }]];
@@ -778,7 +779,23 @@ function redrawBody() {
     if (!c) { o[i] = s[i]; o[i + 1] = s[i + 1]; o[i + 2] = s[i + 2]; o[i + 3] = 255; continue; }
     const k = (.3 * s[i] + .59 * s[i + 1] + .11 * s[i + 2]) / tex.mid[tex.label[p]];
     o[i] = Math.min(255, c.r * 255 * k); o[i + 1] = Math.min(255, c.g * 255 * k); o[i + 2] = Math.min(255, c.b * 255 * k); o[i + 3] = 255; }
-  drawEyes(o); drawMouth(o); drawPynt(o); drawNose(o); drawBrows(o); tex.ctx.putImageData(out, 0, 0); tex.texture.needsUpdate = true; smoothUnder(); shapeNose(); }
+  drawEyes(o); drawMouth(o); drawPynt(o); drawNose(o); drawBrows(o); tex.ctx.putImageData(out, 0, 0); tex.texture.needsUpdate = true; smoothUnder(); shapeNose(); bulgeLips(); }
+// (the lips standing out a little in the face, for the mouths that ask for it (bulge: how far the upper and the lower
+// lip come out, in eyes' distances) - only the lips: each point moved straight out by a soft hump over the lip's
+// middle line that fades smoothly into the skin round it, so no edge shows from the side. Nothing else of the face is
+// moved, and the nose's points are left alone. Painted flat, the mouth showed no lips seen from the side)
+function bulgeLips() { const M = tex && tex.mouth; if (!M || !M.pos) return; const opts = (MOUTHS.find(m => m[0] === mouthNow) || [])[2] || {};
+  if (!M.inNose) M.inNose = new Set(tex.nose ? tex.nose.idx : []);
+  const A = M.body.geometry.attributes.position, V = M.verts, ap = M.apart, b = opts.bulge;
+  for (let j = 0, m = 0; j < V.length; j += 2, m += 3) { const i = V[j]; if (M.inNose.has(i)) continue; let dz = 0;
+    if (b && opts.hw) { const X = (M.pos[m] - M.cx) / ap, Y = (M.pos[m + 1] - M.cy) / ap, u = X / opts.hw, s = Math.sqrt(Math.max(0, 1 - u * u)), rd = opts.round || .45;
+      const c = M.my + opts.mid[0] + opts.mid[1] * u * u, top = c + opts.open[0] * s, bot = c - opts.open[1] * Math.pow(s, 1.3);
+      const up = top + opts.lip[0] * Math.pow(s, rd), lo = bot - opts.lip[1] * Math.pow(s, rd + .05);
+      // (a hump over each lip's middle, as wide as the lip and a little more, fading out along the mouth to its corners)
+      const hump = (mid, half) => Math.exp(-(((Y - mid) / (half * 1.3 + .012)) ** 2)), along = Math.pow(Math.max(0, 1 - Math.abs(u) ** 2), .8);
+      dz = (b[0] * hump((top + up) / 2, (up - top) / 2) + b[1] * hump((bot + lo) / 2, (bot - lo) / 2)) * along; }
+    A.array[i * 3] = M.pos[m]; A.array[i * 3 + 1] = M.pos[m + 1]; A.array[i * 3 + 2] = M.pos[m + 2] + dz * ap; }
+  A.needsUpdate = true; }
 // (the vest is shaped on the body too, its edge a little ridge the light still draws in skin colour: where it is covered
 // the body there is lit as if smooth - each point's way out the average of all within a hundredth and a half of its height)
 function smoothUnder() {
