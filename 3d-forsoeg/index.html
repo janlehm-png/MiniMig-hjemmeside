@@ -257,11 +257,13 @@ function setupBrows(body) {
         if (x < 0 || y < 0 || x >= w || y >= h) continue; const fx = x + .5, fy = y + .5;
         const l0 = ((q[1][1] - q[2][1]) * (fx - q[2][0]) + (q[2][0] - q[1][0]) * (fy - q[2][1])) / d, l1 = ((q[2][1] - q[0][1]) * (fx - q[2][0]) + (q[0][0] - q[2][0]) * (fy - q[2][1])) / d, l2 = 1 - l0 - l1;
         if (l0 < -.02 || l1 < -.02 || l2 < -.02) continue; place.set(y * w + x, [l0 * X[0] + l1 * X[1] + l2 * X[2], l0 * Y[0] + l1 * Y[1] + l2 * Y[2]]); } }
-  // (and the texels round the pieces' edges, 3 deep, the place of their neighbour: the screen blends them in)
+  // (and the texels round the pieces' edges, 3 deep, the place of their neighbour: the screen blends them in - but not
+  // drawn from: their colour is the picture's margin, which made white flecks in a bigger eye's iris)
+  const inside = new Set(place.keys());
   for (let r = 0; r < 3; r++) { const add = [];
     for (const p of place.keys()) for (const o of [1, -1, w, -w]) if (p + o >= 0 && p + o < w * h && !place.has(p + o)) add.push([p + o, place.get(p)]);
     for (const [p, v] of add) if (!place.has(p)) place.set(p, v); }
-  setupEyeShapes(place);
+  setupEyeShapes(place, inside);
   // (the eye sits in a hollow, whose shade showed through a shut eye: there the points are lit as if the face went
   // smoothly across - their way out turned towards the average of the ring round the eye, the more the further in)
   const S = tex.eyeShapes; if (S) { const N = geo.attributes.normal.array, list = [], ring = S.eyes.map(() => [0, 0, 0]);
@@ -314,7 +316,7 @@ const EYES = [['oejne-naturlige', 'Naturlige'], ['oejne-store', 'Store', { big: 
   ['oejne-stjerne', 'Stjerner', { iris: 'star' }], ['oejne-hjerte', 'Hjerter', { iris: 'heart' }]];
 let eyesNow = 'oejne-naturlige';
 function setEyes(name) { eyesNow = name; redrawBody(); renderStyles(); }
-function setupEyeShapes(place) {
+function setupEyeShapes(place, inside) {
   const s = tex.src, w = tex.w, h = tex.h, white = p => s[p * 4] > 200 && s[p * 4 + 1] > 200 && s[p * 4 + 2] > 200;
   const dark = p => Math.max(s[p * 4], s[p * 4 + 1], s[p * 4 + 2]) < 100, pct = (a, f) => { a.sort((x, y) => x - y); return a[Math.floor(f * (a.length - 1))]; };
   const eyes = [];
@@ -347,7 +349,7 @@ function setupEyeShapes(place) {
   // (for Store: each eye's zone as a little picture seen from the front, which texel lies at each spot - its holes, between
   // texels further apart than its squares, filled from their neighbours)
   for (const E of eyes) { E.cell = E.ew / 30; E.gx = E.cx - 1.8 * E.ew; E.gy = E.cy - 1.8 * E.eh; E.gw = Math.ceil(3.6 * E.ew / E.cell); E.gh = Math.ceil(3.6 * E.eh / E.cell); E.grid = new Int32Array(E.gw * E.gh).fill(-1); }
-  for (let j = 0; j < out.length; j += 6) { if (!place.has(out[j])) continue; const E = eyes[out[j + 3]], gx = Math.floor((out[j + 1] - E.gx) / E.cell), gy = Math.floor((out[j + 2] - E.gy) / E.cell);
+  for (let j = 0; j < out.length; j += 6) { if (!inside.has(out[j])) continue; const E = eyes[out[j + 3]], gx = Math.floor((out[j + 1] - E.gx) / E.cell), gy = Math.floor((out[j + 2] - E.gy) / E.cell);
     if (gx >= 0 && gy >= 0 && gx < E.gw && gy < E.gh) E.grid[gy * E.gw + gx] = j / 6; }
   for (const E of eyes) for (let r = 0; r < 4; r++) { const g = E.grid.slice();
     for (let q = 0; q < g.length; q++) if (g[q] < 0) for (const o of [1, -1, E.gw, -E.gw]) if (q + o >= 0 && q + o < g.length && g[q + o] >= 0) { E.grid[q] = g[q + o]; break; } }
@@ -366,8 +368,12 @@ function drawEyes(o) {
     if (opts.big) { const rr = Math.hypot(dx / E.ew, dy / E.eh); if (!rr || rr > 1.7) continue;
       // (inside, everything a quarter bigger; from 1.375 out to 1.7 squeezed back, so it meets the face round it)
       const f = rr < 1.375 ? rr / opts.big : 1.1 + (rr - 1.375) * .6 / .325, sx = E.cx + dx * f / rr, sy = E.cy + dy * f / rr;
-      const gx = Math.floor((sx - E.gx) / E.cell), gy = Math.floor((sy - E.gy) / E.cell), z = gx >= 0 && gy >= 0 && gx < E.gw && gy < E.gh ? E.grid[gy * E.gw + gx] : -1;
-      if (z >= 0) o.set(copy.subarray(z * 3, z * 3 + 3), i); continue; }
+      // (the four squares round that spot, blended by how near it is to each: taken from one alone, its edges were jagged)
+      const fx = (sx - E.gx) / E.cell - .5, fy = (sy - E.gy) / E.cell - .5, gx = Math.floor(fx), gy = Math.floor(fy), c = [0, 0, 0]; let wt = 0;
+      for (const [ax, ay] of [[0, 0], [1, 0], [0, 1], [1, 1]]) { const X2 = gx + ax, Y2 = gy + ay; if (X2 < 0 || Y2 < 0 || X2 >= E.gw || Y2 >= E.gh) continue;
+        const z = E.grid[Y2 * E.gw + X2]; if (z < 0) continue; const wq = (ax ? fx - gx : 1 - fx + gx) * (ay ? fy - gy : 1 - fy + gy);
+        for (let m = 0; m < 3; m++) c[m] += copy[z * 3 + m] * wq; wt += wq; }
+      if (wt > 0) for (let m = 0; m < 3; m++) o[i + m] = c[m] / wt; continue; }
     if (opts.shut && (!opts.one || E.side > 0)) {
       const rr = Math.hypot(dx / (E.ew * 1.2), dy / (E.eh * 1.45)); if (rr < 1.25) put(i, skin, k, Math.min(1, (1.25 - rr) / .2));
       const yc = opts.shut === 'up' ? -.3 * E.eh + .75 * E.eh * (1 - u * u) : .1 * E.eh - .55 * E.eh * (1 - u * u);
