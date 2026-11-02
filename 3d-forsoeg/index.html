@@ -2166,9 +2166,10 @@ document.getElementById('keepChoice').addEventListener('click', e => { const c =
   document.getElementById('keepChoice').hidden = true;
   const b = document.getElementById('keepBtn'); b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop');
   toast(keepFig(c.dataset.pic, picCache[c.dataset.pic]) ? '⭐ Gemt!' : 'Kunne ikke gemme'); });
-// (a new MiniMig from the start: every tab back to its first choice, standing in underwear - a boy with short hair in
-// the white vest and blue shorts, a girl with plaits in pink underwear, as in the app)
-const newFig = kind => ({ picked: kind === 'pige' ? { shirt: '#FF6FB1', pants: '#FF6FB1' } : { pants: '#3D8BFF' }, hair: kind === 'pige' ? 'haar-fletninger' : 'haar-kort',
+// (a new MiniMig from the start: every tab back to its first choice - natural nose, eyes and brows, the smile - in the
+// all-white vest and shorts and nothing else, no name, every colour the figure's own; a boy with short hair or a girl
+// with plaits. The user dropped the app's pink and blue underwear)
+const newFig = kind => ({ picked: {}, hair: kind === 'pige' ? 'haar-fletninger' : 'haar-kort',
   eyes: 'oejne-naturlige', brows: 'bryn-naturlige', mouth: 'mund-smil', nose: 'naese-naturlig', pynt: [], wear: Object.fromEntries(Object.keys(GARMENTS).map(p => [p, ''])), name: '', badge: 'ingen', item: '' });
 const sameFig = (a, b) => !!a && !!b && JSON.stringify(a) === JSON.stringify(b);
 document.getElementById('newBtn').addEventListener('click', () => { document.getElementById('newChoice').hidden = false; });
