@@ -526,7 +526,9 @@ function drawMouth(o) {
   // (the colours: lips a soft pink, a third the skin's own; the mouth's inside a deep red; teeth off-white; the tongue pink)
   const mix = (a, b, t) => ({ r: a.r * (1 - t) + b.r * t, g: a.g * (1 - t) + b.g * t, b: a.b * (1 - t) + b.b * t });
   // (as the user's reference: lips discreet, close to the skin; inside a deep warm red, the tongue a lighter pink-red)
-  const lipC = mix(skin, { r: .74, g: .29, b: .34 }, .5), seamC = { r: .36, g: .12, b: .12 }, insideC = { r: .48, g: .13, b: .13 },
+  // (lips nearly the skin's own colour, a little deeper and warmer - between the figure's own smile and red lips; Kys
+  // keeps its pinker lips)
+  const kissLip = mix(skin, { r: .74, g: .29, b: .34 }, .5), lipC = mix(mix(skin, { r: .62, g: .3, b: .27 }, .3), skin, .15), seamC = { r: .36, g: .12, b: .12 }, insideC = { r: .48, g: .13, b: .13 },
     teethC = { r: .98, g: .97, b: .94 }, tongueC = { r: .9, g: .42, b: .44 }, kissC = mix(skin, { r: .78, g: .3, b: .36 }, .8);
   const cov = d => Math.max(0, Math.min(1, d / edge + .5)), cl = v => Math.max(0, Math.min(1, v)), put = (i, c, k, a) => { if (a <= 0) return;
     o[i] = o[i] * (1 - a) + Math.min(255, c.r * 255 * k) * a; o[i + 1] = o[i + 1] * (1 - a) + Math.min(255, c.g * 255 * k) * a; o[i + 2] = o[i + 2] * (1 - a) + Math.min(255, c.b * 255 * k) * a; };
@@ -539,7 +541,8 @@ function drawMouth(o) {
   // then up - the upper lip the other way about - and round the mouth it turns away at the corners. Lit from above and
   // in front, its colour runs from a deep red in shade through the lip colour to a light pink, and the lower lip has a
   // soft gloss. lower: 0 the upper lip, 1 the lower - Åh's round lip passes from one to the other, without a line)
-  const lipShade = mix(lipC, { r: .4, g: .09, b: .12 }, .68), lipLight = mix(lipC, { r: 1, g: .84, b: .84 }, .6);
+  const lipShade = mix(lipC, { r: .42, g: .2, b: .16 }, .5), lipLight = mix(lipC, { r: 1, g: .9, b: .85 }, .45),
+    kissShade = mix(kissLip, { r: .4, g: .09, b: .12 }, .68), kissLight = mix(kissLip, { r: 1, g: .84, b: .84 }, .6);
   const lipColour = (t, l, u) => { const nz = Math.sin(Math.PI * t), ny = -Math.cos(Math.PI * t) * (1 - l) + Math.cos(Math.PI * t) * l;
     const d = cl((.28 + .46 * nz + .36 * ny - .08 * u) * (1 - .3 * cl((Math.abs(u) - .65) / .35)));
     let c = d < .5 ? mix(lipShade, lipC, d / .5) : mix(lipC, lipLight, (d - .5) / .5 * .7);
@@ -598,10 +601,10 @@ function drawMouth(o) {
       if (r < 1.25) { under(i, k, (r - 1) * ry, ux * .8);
         const a = cl((1 - r) * ry / .012 + .5);
         if (a > 0) { const nz = Math.sqrt(Math.max(0, 1 - r * r)), d = cl(.3 + .55 * nz + .25 * uy * (1 - nz) - .06 * ux);
-          let c = d < .5 ? mix(lipShade, kissC, d / .5) : mix(kissC, lipLight, (d - .5) / .5 * .75);
+          let c = d < .5 ? mix(kissShade, kissC, d / .5) : mix(kissC, kissLight, (d - .5) / .5 * .75);
           // (the creases: darker lines running out from the middle, fading out before the rim)
           const ang = Math.atan2(uy, ux), cr = cl(1 - Math.abs(Math.sin(ang * 4.5)) / .22) * cl((r - .18) / .12) * cl((.85 - r) / .15);
-          c = mix(c, lipShade, .5 * cr);
+          c = mix(c, kissShade, .5 * cr);
           const gloss = .5 * Math.exp(-(((ux + .25) / .22) ** 2 + ((uy - .32) / .2) ** 2)); c = mix(c, { r: 1, g: .93, b: .93 }, gloss);
           put(i, c, k, a);
           put(i, seamC, 1, .9 * cl(1 - Math.hypot(ux / 1.6, uy / .7) / .14) + .6 * cov(.0035 - Math.abs(Y - cy)) * cl((.5 - Math.abs(ux)) / .2) * cl((Math.abs(ux) - .1) / .05)); } } } } }
