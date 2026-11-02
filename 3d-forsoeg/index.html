@@ -31,6 +31,13 @@
   .parts button img { width: 40px; height: 40px; object-fit: contain; }
   #styles button img { width: 52px; height: 52px; border-radius: 10px; }
   .parts[hidden] { display: none; }
+  /* the name tab: the name written in a box, the badges as round buttons under it (as in the app) */
+  .namebox { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .namebox[hidden] { display: none; }
+  #nameInput { font: 700 20px/1 system-ui, sans-serif; color: var(--ink); text-align: center; width: min(260px, 80vw); padding: 10px 14px; border: 2px solid var(--line); border-radius: 16px; background: var(--tile); }
+  #nameInput:focus { outline: none; border-color: var(--accent); }
+  .badges { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+  .bar .badges button { width: 46px; height: 46px; padding: 0; border-radius: 50%; font-size: 22px; line-height: 1; }
   /* the colours: three sliders (colour, strength, light) for the part chosen - no fixed colours */
   .sliders[hidden] { display: none; }
   .sliders { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 14px; font-size: 12px; font-weight: 700; }
@@ -53,6 +60,8 @@
   <button data-anim="dans" class="pose"><img src="ikoner/stilling-dans.png" alt=""><span>Dans</span></button>
   <button id="spin" class="pose"><img src="ikoner/stilling-drej.png" alt=""><span>Drej rundt</span></button>
   <div class="colors"><div class="parts" id="parts"></div><div class="parts" id="styles" hidden></div>
+    <div class="namebox" id="nameBox" hidden><input id="nameInput" type="text" maxlength="10" autocomplete="off" placeholder="Skriv dit navn" aria-label="Navn på trøjen">
+      <div class="badges" id="badges"></div></div>
     <div class="sliders" id="sliders">
       <label>Farve <input type="range" id="s-h" min="0" max="360" step="1"></label>
       <label>Styrke <input type="range" id="s-s" min="0" max="100" step="1"></label>
@@ -96,13 +105,14 @@ disc.rotation.x = -Math.PI / 2; disc.position.y = .001; scene.add(disc);
 // ---- colours: the figure's painted texture, recoloured (below) ----
 // (the parts, each with the app's icon for its tab, in ikoner/; the fixed colours are gone - the sliders alone)
 const CHOICES = [['skin', 'Hud', 'hud'], ['hair', 'Hår', 'haar'], ['eyes', 'Øjne', 'oejne'], ['brows', 'Bryn', 'bryn'], ['nose', 'Næse', 'naese'], ['mouth', 'Mund', 'mund'], ['pynt', 'Pynt', 'kinder'], ['shirt', 'Trøje', 'troeje'], ['pants', 'Bukser', 'bukser'], ['dress', 'Kjole', 'kjoler'],
-  ['shoe', 'Sko', 'sko'], ['hat', 'Hat', 'hat'], ['glasses', 'Briller', 'briller']];
+  ['shoe', 'Sko', 'sko'], ['hat', 'Hat', 'hat'], ['glasses', 'Briller', 'briller'], ['name', 'Navn', 'navn']];
 const picked = {}, START = { skin: '#EDB98A', hair: '#4A2C1D', eyes: '#7A4220', brows: '#4A2C1D', mouth: '#C0505A', pynt: '#FF5A6E', nose: '#EDB98A', shirt: '#FF7A2F', pants: '#2C3E8C', dress: '#3D8BFF', shoe: '#3D8BFF', hat: '#3D8BFF', glasses: '#3D8BFF' }; let partNow = 'shirt';
-const apply = (part, c) => { picked[part] = c; recolour(part, c); };
+const apply = (part, c) => { picked[part] = c; recolour(part, c); if (part === 'shirt' || part === 'dress') chestName(); };
 const iconButton = (src, label) => { const b = document.createElement('button'), i = new Image(); i.src = src; i.alt = ''; i.onerror = () => i.remove();
   const s = document.createElement('span'); s.textContent = label; b.append(i, s); return b; };
 // (the nose, the mouth and Pynt have no colour of their own, as in the app: no sliders under them)
-function showSwatches() { slidersFrom(picked[partNow] || START[partNow]); document.getElementById('sliders').style.display = ['nose', 'mouth', 'pynt'].includes(partNow) ? 'none' : '';
+function showSwatches() { slidersFrom(picked[partNow] || START[partNow]); document.getElementById('sliders').style.display = ['nose', 'mouth', 'pynt', 'name'].includes(partNow) ? 'none' : '';
+  document.getElementById('nameBox').hidden = partNow !== 'name';
   document.querySelectorAll('#parts button').forEach(b => b.classList.toggle('on', b.dataset.part === partNow));
   renderStyles(); }
 // (the styles as buttons above the colours: hairstyles while Hår is chosen, tops while Trøje is; none before the figure -
@@ -1258,7 +1268,7 @@ async function setGarment(part, name) { const G = GARMENTS[part], ask = ++dressi
   const shirt = !!(GARMENTS.dress.now || GARMENTS.shirt.now), pants = !!(GARMENTS.dress.now || GARMENTS.pants.now);
   if (tex && (!!tex.covered[PARTS.shirt] !== shirt || !!tex.covered[PARTS.pants] !== pants)) { tex.covered = { [PARTS.shirt]: shirt, [PARTS.pants]: pants }; redrawBody(); }
   for (const g of Object.values(GARMENTS)) for (const [n, m] of Object.entries(g.meshes)) if (m) m.visible = n === g.shown;
-  hideBody(); layer(); hatHair(); }
+  hideBody(); layer(); hatHair(); chestName(); }
 // (a top over trousers: its lower part let out over them, wherever they come further out - drawn up by the navel the
 // trousers came out through the T-shirt's hem. Each time from the top's own shape, kept in orig)
 function layer() { const top = GARMENTS.shirt.meshes[GARMENTS.shirt.shown], under = GARMENTS.pants.meshes[GARMENTS.pants.shown]; if (!top) return;
@@ -1783,6 +1793,54 @@ function rimOf(wp, idx) { const spot = spotOf(wp), edges = new Map(), rim = new 
   for (let t = 0; t < idx.length; t += 3) for (let k = 0; k < 3; k++) { const a = spot(idx[t + k]), b = spot(idx[t + (k + 1) % 3]), e = a < b ? a + '|' + b : b + '|' + a; edges.set(e, (edges.get(e) || 0) + 1); }
   for (const [e, c] of edges) if (c === 1) for (const s of e.split('|')) rim.add(s);
   return rim; }
+// ---- the name on the chest (Navn), as in the app: a name of up to ten letters and a badge above it ----
+// (printed on a thin piece of the body's own chest front, laid just outside whatever is worn there - the vest, a top or a
+// dress - and moving with the body; written into a picture of its own, lettered dark on a light top and white on a dark)
+const BADGES = [['ingen', ''], ['stjerne', '⭐'], ['hjerte', '❤️'], ['regnbue', '🌈'], ['enhjoerning', '🦄'],
+  ['fodbold', '⚽'], ['raket', '🚀'], ['hund', '🐶'], ['blomst', '🌸']];
+let nameNow = 'Ida', badgeNow = 'stjerne', namePrint = null;
+function chestName() { if (!hairBase) return;
+  if (namePrint) { namePrint.parent.remove(namePrint); namePrint.geometry.dispose(); namePrint.material.map.dispose(); namePrint.material.dispose(); namePrint = null; }
+  const name = nameNow.trim().slice(0, 10), badge = (BADGES.find(b => b[0] === badgeNow) || ['', ''])[1]; if (!name && !badge) return;
+  const body = hairBase.body, geo = body.geometry, { pts, inv, H } = hairBase.whole, K = clothMarks(), M = inv.clone().invert(), v = new THREE.Vector3();
+  // (on a dress lower down: the dresses have no shoulders, and the badge sat on their top edge)
+  const dress = GARMENTS.dress.meshes[GARMENTS.dress.shown], bsi = geo.attributes.skinIndex, bsw = geo.attributes.skinWeight, cy = K.neckY - (dress ? .16 : .115) * H, hw = .08 * H, hh = .055 * H;
+  // (what is worn over the chest: its front there, in the body's own place, as dots to stand just outside)
+  const worn = dress || GARMENTS.shirt.meshes[GARMENTS.shirt.shown], front = [];
+  if (worn) { const Q = worn.geometry.attributes.position; for (let i = 0; i < Q.count; i++) { v.fromBufferAttribute(Q, i).applyMatrix4(M);
+    if (v.z > K.cz && Math.abs(v.x - K.mid) < hw * 1.4 && Math.abs(v.y - cy) < hh * 1.4) front.push(v.x, v.y, v.z); } }
+  const r = .015 * H, outAt = (x, y, z) => { let f = z + .003 * H; for (let k = 0; k < front.length; k += 3) if (Math.abs(front[k] - x) < r && Math.abs(front[k + 1] - y) < r) f = Math.max(f, front[k + 2] + .003 * H); return f; };
+  // (the body's triangles facing forwards in the box round the chest)
+  const P = [], U = [], SI = [], SW = [];
+  for (let c = 0; c < geo.attributes.position.count; c += 3) { const js = [c, c + 1, c + 2];
+    if (js.some(j => pts[j * 6 + 5] < .3 || pts[j * 6 + 2] < K.cz) || js.every(j => Math.abs(pts[j * 6] - K.mid) > hw || Math.abs(pts[j * 6 + 1] - cy) > hh)) continue;
+    for (const j of js) { const x = pts[j * 6], y = pts[j * 6 + 1]; v.set(x, y, outAt(x, y, pts[j * 6 + 2])).applyMatrix4(inv); P.push(v.x, v.y, v.z);
+      U.push((x - K.mid) / (2 * hw) + .5, (y - cy) / (2 * hh) + .5);
+      for (let k = 0; k < 4; k++) { SI.push(bsi.getComponent(j, k)); SW.push(bsw.getComponent(j, k)); } } }
+  if (!P.length) return;
+  // (the picture: the badge over the name - the name alone in the middle, smaller as it gets longer, as in the app)
+  const cv = document.createElement('canvas'); cv.width = 512; cv.height = Math.round(512 * hh / hw); const g = cv.getContext('2d'), mx = cv.width / 2, my = cv.height / 2;
+  const col = new THREE.Color().setStyle(picked[dress ? 'dress' : 'shirt'] || (worn ? START[dress ? 'dress' : 'shirt'] : '#FFFFFF'), THREE.SRGBColorSpace), light = .299 * col.r + .587 * col.g + .114 * col.b > .62;
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+  if (badge) { g.font = `${name ? 90 : 150}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`; g.fillText(badge, mx, name ? my - 72 : my); }
+  if (name) { let size = 120; const font = s => `700 ${s}px ui-rounded, "Arial Rounded MT Bold", system-ui, sans-serif`; g.font = font(size);
+    // (a long name kept to the chest's front: wider, its first letters went round the side out of sight)
+    while (g.measureText(name).width > 390 && size > 40) g.font = font(--size);
+    g.shadowColor = light ? 'rgba(255,255,255,.35)' : 'rgba(0,0,0,.25)'; g.shadowOffsetY = 4; g.shadowBlur = 6;
+    g.fillStyle = light ? '#2B2153' : '#FFFFFF'; g.fillText(name, mx, badge ? my + 48 : my); }
+  const map = new THREE.CanvasTexture(cv); map.colorSpace = THREE.SRGBColorSpace; map.flipY = true; map.anisotropy = 4;
+  const ng = new THREE.BufferGeometry(); ng.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); ng.setAttribute('uv', new THREE.Float32BufferAttribute(U, 2));
+  ng.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(SI, 4)); ng.setAttribute('skinWeight', new THREE.Float32BufferAttribute(SW, 4)); ng.computeVertexNormals();
+  namePrint = new THREE.SkinnedMesh(ng, new THREE.MeshStandardMaterial({ map, transparent: true, depthWrite: false, roughness: .8, metalness: 0, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
+  namePrint.frustumCulled = false; namePrint.position.copy(body.position); namePrint.quaternion.copy(body.quaternion); namePrint.scale.copy(body.scale);
+  body.parent.add(namePrint); namePrint.bind(body.skeleton, body.bindMatrix); }
+// (the tab: a box to write the name in and the badges under it, in place of styles and colours)
+const nameInput = document.getElementById('nameInput'); nameInput.value = nameNow;
+nameInput.addEventListener('input', () => { nameNow = nameInput.value; chestName(); });
+for (const [b, e] of BADGES) { const btn = document.createElement('button'); btn.className = 'badge'; btn.dataset.badge = b; btn.textContent = e || '✕'; btn.setAttribute('aria-label', b);
+  btn.onclick = () => { badgeNow = b; chestName(); showBadges(); }; document.getElementById('badges').append(btn); }
+function showBadges() { document.querySelectorAll('#badges button').forEach(b => b.classList.toggle('on', b.dataset.badge === badgeNow)); }
+showBadges();
 function hideBody() { if (!hairBase) return; const geo = hairBase.body.geometry, n = geo.attributes.position.count, hide = new Uint8Array(n);
   for (const G of Object.values(GARMENTS)) { const c = G.meshes[G.shown]?.userData.covered; if (c) for (let j = 0; j < n; j++) if (c[j]) hide[j] = 1; }
   const keep = []; for (let t = 0; t < n; t += 3) if (!(hide[t] && hide[t + 1] && hide[t + 2])) keep.push(t, t + 1, t + 2);
@@ -1798,7 +1856,7 @@ async function loadFbx() { if (!(await exists('figur.fbx' + FIGUR_V))) return fa
   whitesByPlace(fbx);
   const box = new THREE.Box3().setFromObject(fbx), size = box.getSize(new THREE.Vector3()), k = 2.15 / size.y;
   fbx.scale.setScalar(k); fbx.position.y = -box.min.y * k; holder.add(fbx); glb = fbx;
-  measureHead(fbx); if (hairBase) setupBrows(hairBase.body); await setHair(hairNow);
+  measureHead(fbx); if (hairBase) setupBrows(hairBase.body); await setHair(hairNow); chestName();
   mixer = new THREE.AnimationMixer(fbx); if (fbx.animations[0]) glbActions.vink = mixer.clipAction(fbx.animations[0]);
   // (each movement preferably as figur-<name>.json: only the movement, taken out of Mixamo's file - a few hundred KB
   // where the .fbx, the whole figure again, is 19 MB)
