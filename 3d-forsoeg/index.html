@@ -237,8 +237,8 @@ disc.rotation.x = -Math.PI / 2; disc.position.y = .001; scene.add(disc);
 // ---- colours: the figure's painted texture, recoloured (below) ----
 // (the parts, each with the app's icon for its tab, in ikoner/; the fixed colours are gone - the sliders alone)
 const CHOICES = [['skin', 'Hud', 'hud'], ['hair', 'Hår', 'haar'], ['eyes', 'Øjne', 'oejne'], ['brows', 'Bryn', 'bryn'], ['nose', 'Næse', 'naese'], ['mouth', 'Mund', 'mund'], ['pynt', 'Pynt', 'kinder'], ['shirt', 'Trøje', 'troeje'], ['pants', 'Bukser', 'bukser'], ['dress', 'Kjole', 'kjoler'],
-  ['socks', 'Strømper', 'stroemper'], ['shoe', 'Sko', 'sko'], ['hat', 'Hat', 'hat'], ['glasses', 'Briller', 'briller'], ['name', 'Navn', 'navn']];
-const picked = {}, START = { skin: '#EDB98A', hair: '#4A2C1D', eyes: '#7A4220', brows: '#4A2C1D', mouth: '#C0505A', pynt: '#FF5A6E', nose: '#EDB98A', shirt: '#FF7A2F', pants: '#2C3E8C', dress: '#3D8BFF', socks: '#3D8BFF', shoe: '#3D8BFF', hat: '#3D8BFF', glasses: '#3D8BFF' }; let partNow = 'shirt';
+  ['socks', 'Strømper', 'stroemper'], ['shoe', 'Sko', 'sko'], ['hat', 'Hat', 'hat'], ['glasses', 'Briller', 'briller'], ['item', 'Ting', 'ting'], ['name', 'Navn', 'navn']];
+const picked = {}, START = { skin: '#EDB98A', hair: '#4A2C1D', eyes: '#7A4220', brows: '#4A2C1D', mouth: '#C0505A', pynt: '#FF5A6E', nose: '#EDB98A', shirt: '#FF7A2F', pants: '#2C3E8C', dress: '#3D8BFF', socks: '#3D8BFF', item: '#E8384F', shoe: '#3D8BFF', hat: '#3D8BFF', glasses: '#3D8BFF' }; let partNow = 'shirt';
 const apply = (part, c) => { picked[part] = c; recolour(part, c); if (part === 'shirt' || part === 'dress') chestName(); };
 const iconButton = (src, label) => { const b = document.createElement('button'), i = new Image(); i.src = src; i.alt = ''; i.onerror = () => i.remove();
   const s = document.createElement('span'); s.textContent = label; b.append(i, s); return b; };
@@ -915,7 +915,7 @@ function recolourHair(hexColour, list = hairTexs) {
     const k0 = (.3 * s[i] + .59 * s[i + 1] + .11 * s[i + 2]) / hairTex.mid, k = Math.min(hairTex.cap ?? Infinity, hairTex.flat ? 1 + (k0 - 1) * hairTex.flat : k0); for (let j = 0; j < 3; j++) o[i + j] = Math.min(255, c[j] * k); }
   hairTex.ctx.putImageData(out, 0, 0); hairTex.texture.needsUpdate = true; } }
 function recolour(part, hexColour) {
-  if (part === 'socks') return paintSocks();
+  if (part === 'socks') return paintSocks(); if (part === 'item') return paintItem();
   if (part === 'hair') recolourHair(hexColour); if (typeof GARMENTS !== 'undefined' && GARMENTS[part]) recolourHair(hexColour, GARMENTS[part].texs);
   // (the picked colour read straight from its #rrggbb code: a THREE.Color would hold it in linear light, too dark here)
   if (!tex) return; const n = parseInt(hexColour.slice(1), 16); tex.colours[PARTS[part]] = { r: (n >> 16 & 255) / 255, g: (n >> 8 & 255) / 255, b: (n & 255) / 255 };
@@ -1228,7 +1228,7 @@ async function loadHair(name, list = hairTexs, colourPart = 'hair', extra = {}) 
   // (cap: no lighter than that over the middle - the glasses' frames had white smears inside, by the glass)
   if (opts.cap) list.at(-1).cap = opts.cap;
   body.parent.add(hair); hair.bind(body.skeleton, body.bindMatrix); if (picked[colourPart]) recolourHair(picked[colourPart], list); return hair; }
-var styleLists = () => ({ hair: [HAIRS, hairNow, setHair], eyes: [EYES, eyesNow, setEyes], brows: [BROWS, browsNow, setBrows], mouth: [MOUTHS, mouthNow, setMouth], pynt: [PYNT, pyntNow.map(k => 'pynt-' + k), setPynt], nose: [NOSES, noseNow, setNose],
+var styleLists = () => ({ hair: [HAIRS, hairNow, setHair], eyes: [EYES, eyesNow, setEyes], brows: [BROWS, browsNow, setBrows], mouth: [MOUTHS, mouthNow, setMouth], pynt: [PYNT, pyntNow.map(k => 'pynt-' + k), setPynt], nose: [NOSES, noseNow, setNose], item: [ITEMS, itemNow, setItem],
   ...Object.fromEntries(Object.entries(GARMENTS).map(([part, G]) => [part, [G.items, G.now, n => setGarment(part, n)]])) });
 async function setHair(name) {
   hairNow = name; renderStyles();
@@ -2067,10 +2067,10 @@ showBadges();
 // saved out of the page (the camera, behind a grown-up's sum) ----
 // (a figure: its choices - the colours picked, the hair, the face, what it wears, the name)
 const figureNow = () => ({ picked: { ...picked }, hair: hairNow, eyes: eyesNow, brows: browsNow, mouth: mouthNow, nose: noseNow, pynt: [...pyntNow],
-  wear: Object.fromEntries(Object.entries(GARMENTS).map(([p, G]) => [p, G.now])), name: nameNow, badge: badgeNow });
+  wear: Object.fromEntries(Object.entries(GARMENTS).map(([p, G]) => [p, G.now])), name: nameNow, badge: badgeNow, item: itemNow });
 // (a part's own colour back: the figure's painted one, the hair's and the garments' as made)
 const unpaint = list => { for (const t of list) { const im = t.ctx.createImageData(t.w, t.h); im.data.set(t.src); t.ctx.putImageData(im, 0, 0); t.texture.needsUpdate = true; } };
-function unpick(part) { delete picked[part]; if (part === 'socks') paintSocks(); if (part === 'hair') unpaint(hairTexs); if (GARMENTS[part]) unpaint(GARMENTS[part].texs);
+function unpick(part) { delete picked[part]; if (part === 'socks') paintSocks(); if (part === 'item') paintItem(); if (part === 'hair') unpaint(hairTexs); if (GARMENTS[part]) unpaint(GARMENTS[part].texs);
   if (tex && PARTS[part]) { delete tex.colours[PARTS[part]]; if (part === 'hair' && !picked.brows) delete tex.colours[PARTS.brows]; if (part === 'brows' && picked.hair) tex.colours[PARTS.brows] = tex.colours[PARTS.hair]; } }
 let dressingUp = 0;
 async function wearFigure(f) { const ask = ++dressingUp;
@@ -2078,7 +2078,7 @@ async function wearFigure(f) { const ask = ++dressingUp;
   for (const [part] of CHOICES) if (part !== 'hair') { if (f.picked[part]) { picked[part] = f.picked[part]; recolour(part, f.picked[part]); } else unpick(part); }
   if (f.picked.hair) { picked.hair = f.picked.hair; recolour('hair', f.picked.hair); } else unpick('hair');
   eyesNow = f.eyes; browsNow = f.brows; mouthNow = f.mouth; noseNow = f.nose; pyntNow = [...f.pynt]; nameNow = f.name; badgeNow = f.badge;
-  nameInput.value = nameNow; showBadges(); redrawBody(); showSwatches();
+  nameInput.value = nameNow; showBadges(); redrawBody(); showSwatches(); setItem(f.item || '');
   if (f.hair !== hairNow) await setHair(f.hair); if (ask !== dressingUp) return;
   // (a dress last: it takes off the top and trousers)
   for (const p of ['shirt', 'pants', 'socks', 'shoe', 'hat', 'glasses', 'dress']) { if (p === 'dress' && !f.wear.dress) continue; await setGarment(p, f.wear[p] || ''); if (ask !== dressingUp) return; }
@@ -2168,7 +2168,7 @@ document.getElementById('keepChoice').addEventListener('click', e => { const c =
 // (a new MiniMig from the start: every tab back to its first choice, standing in underwear - a boy with short hair in
 // the white vest and blue shorts, a girl with plaits in pink underwear, as in the app)
 const newFig = kind => ({ picked: kind === 'pige' ? { shirt: '#FF6FB1', pants: '#FF6FB1' } : { pants: '#3D8BFF' }, hair: kind === 'pige' ? 'haar-fletninger' : 'haar-kort',
-  eyes: 'oejne-naturlige', brows: 'bryn-naturlige', mouth: 'mund-smil', nose: 'naese-naturlig', pynt: [], wear: Object.fromEntries(Object.keys(GARMENTS).map(p => [p, ''])), name: '', badge: 'ingen' });
+  eyes: 'oejne-naturlige', brows: 'bryn-naturlige', mouth: 'mund-smil', nose: 'naese-naturlig', pynt: [], wear: Object.fromEntries(Object.keys(GARMENTS).map(p => [p, ''])), name: '', badge: 'ingen', item: '' });
 const sameFig = (a, b) => !!a && !!b && JSON.stringify(a) === JSON.stringify(b);
 document.getElementById('newBtn').addEventListener('click', () => { document.getElementById('newChoice').hidden = false; });
 document.getElementById('newChoice').addEventListener('click', async e => { const b = e.target.closest('[data-new]'); if (!b || !hairBase) return;
@@ -2189,6 +2189,97 @@ document.getElementById('gallery').addEventListener('click', e => { const load =
     l.splice(+del.dataset.del, 1); storeFigs(l); renderGallery(); } });
 for (const s of document.querySelectorAll('.sheet')) s.addEventListener('click', e => { if (e.target === s || e.target.closest('[data-close]')) s.hidden = true; });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') for (const s of document.querySelectorAll('.sheet')) s.hidden = true; });
+// ---- Ting, as in the app: a thing held in the hand - balloon, teddy, wand, ice cream, flower, ball, umbrella - a
+// football on the ground by the foot, or a hula hoop round the waist. Built of simple round shapes, like the app's
+// pictures; the grey parts there (the balloon, the teddy's heart, the scoop, the petals, the ball, the hoop, the
+// umbrella) take the colour picked, each its own colour until then ----
+const ITEMS = [['', 'Ingen'], ['ting-ballon', 'Ballon'], ['ting-bamse', 'Bamse'], ['ting-tryllestav', 'Tryllestav'], ['ting-is', 'Is'], ['ting-blomst', 'Blomst'],
+  ['ting-bold', 'Bold'], ['ting-fodbold', 'Fodbold'], ['ting-hulahop', 'Hulahopring'], ['ting-paraply', 'Paraply']];
+let itemNow = '', item = null; const items = {};
+function setItem(name) { itemNow = name; if (name && !items[name]) items[name] = makeItem(name.slice(5));
+  for (const [n, it] of Object.entries(items)) it.group.visible = n === itemNow; item = items[itemNow] || null; paintItem(); renderStyles(); }
+// (the colourable parts: each a material with its own colour, own, until a colour is picked)
+function paintItem() { if (!item) return; for (const m of item.paint) m.color.setStyle(picked.item || m.userData.own, THREE.SRGBColorSpace); if (item.repaint) item.repaint(); }
+function makeItem(kind) {
+  const g = new THREE.Group(), paint = [], it = { kind, group: g, paint };
+  const mat = (c, rough = .35, own) => { const m = new THREE.MeshStandardMaterial({ color: c, roughness: rough, metalness: 0 }); if (own) { m.userData.own = own; paint.push(m); } return m; };
+  const add = (geo, m, x = 0, y = 0, z = 0, sx = 1, sy = sx, sz = sx, parent = g) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.scale.set(sx, sy, sz); o.castShadow = true; parent.add(o); return o; };
+  const ball = (r, d = 32) => new THREE.SphereGeometry(r, d, Math.round(d * .75)), stick = (r, l, d = 12) => new THREE.CylinderGeometry(r, r, l, d);
+  const brown = mat('#6B3E22', .5), gold = mat('#FFC233', .3), green = mat('#4CAF50', .45), black = mat('#1C1A22', .3);
+  // (a five-pointed star, puffed: a flat star shape with rounded thickness)
+  const star = (ro, ri, depth) => { const s = new THREE.Shape(); for (let k = 0; k < 10; k++) { const r = k % 2 ? ri : ro, a = Math.PI / 2 + k * Math.PI / 5; k ? s.lineTo(r * Math.cos(a), r * Math.sin(a)) : s.moveTo(r * Math.cos(a), r * Math.sin(a)); }
+    const geo = new THREE.ExtrudeGeometry(s, { depth, bevelEnabled: true, bevelThickness: depth * .6, bevelSize: depth * .5, bevelSegments: 4 }); geo.translate(0, 0, -depth / 2); return geo; };
+  const heart = (w, depth) => { const s = new THREE.Shape(); s.moveTo(0, -w * .55); s.bezierCurveTo(w * .55, -w * .1, w * .6, w * .45, 0, w * .25); s.bezierCurveTo(-w * .6, w * .45, -w * .55, -w * .1, 0, -w * .55);
+    const geo = new THREE.ExtrudeGeometry(s, { depth, bevelEnabled: true, bevelThickness: depth * .7, bevelSize: depth * .6, bevelSegments: 4 }); geo.translate(0, 0, -depth / 2); return geo; };
+  if (kind === 'ballon') { // (the balloon floats above the hand on its string - placed each frame, see holdItem)
+    const up = new THREE.Group(); g.add(up); it.float = up; add(ball(.16), mat('#E8384F', .25, '#E8384F'), 0, 0, 0, 1, 1.15, 1, up);
+    add(new THREE.ConeGeometry(.022, .035, 12), paint[0], 0, -.19, 0, 1, 1, 1, up);
+    it.string = add(stick(.0025, 1, 6), mat('#8E86B5', .6)); }
+  if (kind === 'bamse') { const fur = mat('#9B6A45', .7), pale = mat('#E2C29C', .7); // (held by its arm, hanging at the side)
+    const b = new THREE.Group(); g.add(b); b.position.set(0, -.17, .05);
+    add(ball(.085), fur, 0, .09, 0, 1, 1.1, .9, b); add(ball(.072), fur, 0, .23, 0, 1, .95, .95, b);
+    for (const s of [-1, 1]) { add(ball(.026), fur, s * .055, .29, 0, 1, 1, .6, b); add(ball(.016), pale, s * .055, .29, .012, 1, 1, .4, b);
+      add(ball(.03), fur, s * .075, .12, .03, 1, 1.3, 1, b); add(ball(.036), fur, s * .05, .02, .045, 1, .9, 1.2, b); add(ball(.02), pale, s * .05, .02, .085, 1, 1, .3, b);
+      add(ball(.009), black, s * .026, .245, .062, 1, 1, .6, b); }
+    add(ball(.03), pale, 0, .205, .058, 1.2, .9, .8, b); add(ball(.011), black, 0, .215, .085, 1.2, .9, .8, b);
+    add(heart(.075, .02), mat('#E8384F', .3, '#E8384F'), 0, .1, .085, 1, 1, 1, b); }
+  if (kind === 'tryllestav') { add(stick(.008, .26), brown, 0, .06, 0); add(ball(.016), gold, 0, -.075, 0); add(stick(.013, .015), gold, 0, .19, 0);
+    add(star(.07, .032, .022), mat('#FFC233', .3, '#FFC233'), 0, .26, 0);
+    for (const [x, y, s] of [[.08, .33, .016], [.095, .27, .011]]) add(star(s, s * .4, .004), mat('#FFFFFF', .2), x, y, 0); }
+  if (kind === 'is') { // (the cone with its waffle pattern drawn on, the scoop on top and a cherry)
+    const cv = document.createElement('canvas'); cv.width = cv.height = 128; const c = cv.getContext('2d'); c.fillStyle = '#E9A85A'; c.fillRect(0, 0, 128, 128);
+    c.strokeStyle = '#B9732F'; c.lineWidth = 5; for (let k = -128; k < 256; k += 26) { c.beginPath(); c.moveTo(k, 0); c.lineTo(k + 128, 128); c.stroke(); c.beginPath(); c.moveTo(k, 128); c.lineTo(k + 128, 0); c.stroke(); }
+    const wt = new THREE.CanvasTexture(cv); wt.colorSpace = THREE.SRGBColorSpace; wt.wrapS = wt.wrapT = THREE.RepeatWrapping; wt.repeat.set(3, 2);
+    const cone = add(new THREE.ConeGeometry(.052, .17, 24, 1, true), new THREE.MeshStandardMaterial({ map: wt, roughness: .7, side: THREE.DoubleSide }), 0, -.02, 0); cone.rotation.x = Math.PI;
+    const cream = mat('#FF9EC4', .45, '#FF9EC4'); add(ball(.062), cream, 0, .1, 0, 1, .9, 1); add(new THREE.TorusGeometry(.052, .016, 10, 24), cream, 0, .075, 0).rotation.x = Math.PI / 2;
+    add(ball(.019), mat('#D7192B', .25), 0, .167, 0); add(stick(.0025, .035, 6), brown, .008, .19, 0).rotation.z = -.4; }
+  if (kind === 'blomst') { add(stick(.006, .3), green, 0, .07, 0); for (const s of [-1, 1]) { const l = add(ball(.03), green, s * .03, .03 + (s > 0 ? .05 : 0), 0, 1.1, .4, .6); l.rotation.z = s * -.5; }
+    const petal = mat('#FFFFFF', .4, '#FFFFFF'); for (let k = 0; k < 5; k++) { const a = k / 5 * Math.PI * 2 + Math.PI / 2; add(ball(.033), petal, Math.cos(a) * .042, .25 + Math.sin(a) * .042, 0, 1, 1, .55); }
+    add(ball(.027), mat('#FFC933', .4), 0, .25, .012, 1, 1, .7); }
+  // (a ball's picture, drawn point by point round it: colour(direction) gives each spot's colour)
+  const ballPicture = colour => { const cv = document.createElement('canvas'); cv.width = 512; cv.height = 256; const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
+    const draw = () => { const c = cv.getContext('2d'), im = c.createImageData(512, 256), d = new THREE.Vector3();
+      for (let y = 0; y < 256; y++) for (let x = 0; x < 512; x++) { const th = (y + .5) / 256 * Math.PI, ph = (x + .5) / 512 * Math.PI * 2; d.set(-Math.cos(ph) * Math.sin(th), Math.cos(th), Math.sin(ph) * Math.sin(th));
+        im.data.set([...colour(d), 255], (y * 512 + x) * 4); } c.putImageData(im, 0, 0); t.needsUpdate = true; };
+    draw(); return [t, draw]; };
+  const rgb = hex => { const n = parseInt(hex.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }, soft = (v, e) => Math.min(1, Math.max(0, v / e + .5));
+  if (kind === 'bold') { // (in the colour with two white stripes round it, as the app's)
+    const a = new THREE.Vector3(.5, .8, .3).normalize();
+    const [t, draw] = ballPicture(d => { const w = soft(.12 - Math.abs(Math.abs(d.dot(a)) - .4), .02), c = rgb(picked.item || '#3D8BFF'); return c.map(v => v * (1 - w) + 250 * w); });
+    const b = new THREE.Group(); g.add(b); b.position.set(0, -.07, .06); add(ball(.1, 48), new THREE.MeshStandardMaterial({ map: t, roughness: .3 }), 0, 0, 0, 1, 1, 1, b); it.repaint = draw; }
+  if (kind === 'fodbold') { // (white with black patches round the twelve corners of an icosahedron - a football's)
+    const ico = new THREE.IcosahedronGeometry(1, 0), I = ico.attributes.position, corners = []; for (let j = 0; j < I.count; j++) corners.push(new THREE.Vector3().fromBufferAttribute(I, j).normalize());
+    const [t] = ballPicture(d => { const k = soft(Math.max(...corners.map(c => d.dot(c))) - .955, .006); return [235 - 215 * k, 235 - 215 * k, 238 - 215 * k]; });
+    add(ball(.11, 48), new THREE.MeshStandardMaterial({ map: t, roughness: .35 })); it.ground = .11; }
+  if (kind === 'hulahop') { // (a ring round the waist, turning - in stripes of the colour and white)
+    const cv = document.createElement('canvas'); cv.width = 256; cv.height = 4; const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace;
+    const ring = add(new THREE.TorusGeometry(.4, .018, 10, 120), new THREE.MeshStandardMaterial({ map: t, roughness: .3 })); ring.rotation.x = Math.PI / 2; it.ring = ring;
+    it.repaint = () => { const c = cv.getContext('2d'); for (let k = 0; k < 16; k++) { c.fillStyle = k % 2 ? '#FFFFFF' : picked.item || '#FF6FB1'; c.fillRect(k * 16, 0, 16, 4); } t.needsUpdate = true; }; }
+  if (kind === 'paraply') { // (the canopy over the head, the shaft from the hand to it - placed each frame)
+    const top = new THREE.Group(); g.add(top); it.canopy = top;
+    const cloth = mat('#E8384F', .45, '#E8384F'); cloth.side = THREE.DoubleSide; add(new THREE.SphereGeometry(.45, 40, 10, 0, Math.PI * 2, 0, 1.05), cloth, 0, 0, 0, 1, .7, 1, top);
+    add(ball(.014), brown, 0, .315, 0, 1, 1, 1, top); for (let k = 0; k < 10; k++) { const a = k / 10 * Math.PI * 2; add(ball(.011), brown, Math.cos(a) * .392, .7 * .45 * Math.cos(1.05), Math.sin(a) * .392, 1, 1, 1, top); }
+    it.shaft = add(stick(.008, 1, 8), brown); const hook = add(new THREE.TorusGeometry(.03, .008, 8, 16, Math.PI), brown, .03, -.06, 0); hook.rotation.z = Math.PI; it.hook = hook; }
+  // (things in the hand bigger - at their own sizes they were small beside the child, smaller than in the app)
+  g.scale.setScalar({ bamse: 1.6, tryllestav: 1.9, is: 1.8, blomst: 1.9, bold: 1.35 }[kind] || 1);
+  g.visible = false; scene.add(g); return it; }
+// (each frame: the thing put where it is held - in the left hand, or by the right foot, or round the waist - turned as
+// the figure is)
+const iv = new THREE.Vector3(), iw = new THREE.Vector3(), iq = new THREE.Quaternion(), iUp = new THREE.Vector3(0, 1, 0), iBones = {};
+const bone = n => iBones[n] ??= (() => { let b = null; glb.traverse(o => { if (o.isBone && o.name.endsWith(n) && !b) b = o; }); return b; })();
+function holdItem(t) { if (!item || !glb) return; const g = item.group; glb.getWorldQuaternion(iq);
+  if (item.ground) { const f = bone('RightFoot'); f.getWorldPosition(iv); g.position.copy(iw.set(-.05, 0, .2).applyQuaternion(iq)).add(iv); g.position.y = item.ground; g.quaternion.copy(iq); return; }
+  if (item.ring) { bone('Hips').getWorldPosition(iv); g.position.copy(iv); g.position.y += .05; g.quaternion.copy(iq); item.ring.rotation.set(Math.PI / 2 + .12 * Math.sin(t * 5), .12 * Math.cos(t * 5), 0); return; }
+  // (the palm: between the wrist and the middle finger's first joint)
+  const h = bone('LeftHand'), m = bone('LeftHandMiddle1'); h.getWorldPosition(iv); if (m) iv.lerp(m.getWorldPosition(iw), .7); g.position.copy(iv); g.quaternion.copy(iq);
+  if (item.float) { // (the balloon a little above and out from the head, swaying; the string from the hand to it)
+    const top = iw.set(.15 + .08 * Math.sin(t * .9), 0, .05 * Math.cos(t * .7)).applyQuaternion(iq); top.y = 2.05 - iv.y; item.float.position.copy(top.clone().applyQuaternion(iq.clone().invert()));
+    const knot = top.clone(); knot.y -= .2; const len = knot.length(); item.string.position.copy(knot).multiplyScalar(.5).applyQuaternion(iq.clone().invert());
+    item.string.scale.set(1, len, 1); item.string.quaternion.setFromUnitVectors(iUp, knot.clone().normalize().applyQuaternion(iq.clone().invert())); }
+  if (item.canopy) { // (the canopy over the head, the shaft from the hand up to it)
+    const head = bone('HeadTop_End') || bone('Head'); head.getWorldPosition(iw); iw.y += .08; const d = iw.sub(iv), local = d.clone().applyQuaternion(iq.clone().invert()), dir = local.clone().normalize();
+    item.canopy.position.copy(local); item.canopy.quaternion.setFromUnitVectors(iUp, dir); item.shaft.position.copy(local).multiplyScalar(.5); item.shaft.scale.set(1, local.length(), 1); item.shaft.quaternion.setFromUnitVectors(iUp, dir);
+    item.hook.position.copy(dir).multiplyScalar(-.05); item.hook.quaternion.setFromUnitVectors(iUp, dir); item.hook.rotateZ(Math.PI); } }
 function hideBody() { if (!hairBase) return; const geo = hairBase.body.geometry, n = geo.attributes.position.count, hide = new Uint8Array(n);
   for (const G of Object.values(GARMENTS)) { const c = G.meshes[G.shown]?.userData.covered; if (c) for (let j = 0; j < n; j++) if (c[j]) hide[j] = 1; }
   const keep = []; for (let t = 0; t < n; t += 3) if (!(hide[t] && hide[t + 1] && hide[t + 2])) keep.push(t, t + 1, t + 2);
@@ -2240,6 +2331,6 @@ function resize() { const w = innerWidth, h = innerHeight, bar = document.queryS
 addEventListener('resize', resize); resize(); new ResizeObserver(resize).observe(document.querySelector('.bar'));
 renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElapsedTime();
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
-  if (mixer) mixer.update(dt); armsOut(); glide(); controls.update(); renderer.render(scene, camera); });</script>
+  if (mixer) mixer.update(dt); armsOut(); holdItem(t); glide(); controls.update(); renderer.render(scene, camera); });</script>
 </body>
 </html>
