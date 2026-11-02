@@ -478,10 +478,11 @@ function drawEyes(o) {
 // (round: how bluntly the lips end at the corners - the smaller, the rounder)
 // (Neutral was dropped by the user, 2026-11-02)
 const MOUTHS = [['mund-smil', 'Smil'],
-  ['mund-grin', 'Grin', { mid: [-.02, .1], hw: .38, open: [.025, .22], lip: [.024, .03], teeth: .072, tongue: .06, crease: true }],
-  ['mund-tunge', 'Tunge', { mid: [0, .05], hw: .28, open: [.02, .1], lip: [.026, .032], teeth: .04, out: true, crease: true }],
-  ['mund-o', 'Åh', { o: true }], ['mund-kys', 'Kys', { kiss: true }],
-  ['mund-trist', 'Trist', { mid: [.035, -.06], hw: .25, open: [0, 0], lip: [.042, .052], round: .3 }]];
+// (all about as big as each other - the user found Grin much the biggest)
+  ['mund-grin', 'Grin', { mid: [-.02, .09], hw: .32, open: [.025, .19], lip: [.024, .03], teeth: .065, tongue: .055, crease: true }],
+  ['mund-tunge', 'Tunge', { mid: [0, .06], hw: .32, open: [.022, .13], lip: [.026, .032], teeth: .05, out: true, crease: true }],
+  ['mund-o', 'Åh', { o: 1.2 }], ['mund-kys', 'Kys', { kiss: 1.25 }],
+  ['mund-trist', 'Trist', { mid: [.035, -.07], hw: .3, open: [0, 0], lip: [.044, .056], round: .3 }]];
 let mouthNow = 'mund-smil';
 function setMouth(name) { mouthNow = name; redrawBody(); renderStyles(); }
 function setupMouth(place) {
@@ -536,7 +537,8 @@ function drawMouth(o) {
   // up and catches the light, darker where it turns under)
   // (lower: 0 the upper lip's shading, 1 the lower's - Åh's round lip passes from one to the other, without a line)
   const lip = (i, k, dIn, dOut, t, lower, u) => { const a = cov(dIn) * cl(dOut / .016 + .5); if (a <= 0) return; t = cl(t);
-    const lo = .86 + .2 * Math.sin(Math.PI * Math.min(1, t * 1.3)) + .26 * Math.exp(-(((t - .35) / .15) ** 2)) * Math.exp(-((u / .45) ** 2)) - .16 * cl((t - .7) / .3),
+    // (its light broad and soft - narrow, it ran along the lip as a line)
+    const lo = .88 + .16 * Math.sin(Math.PI * Math.min(1, t * 1.2)) + .14 * Math.exp(-(((t - .4) / .3) ** 2)) * Math.exp(-((u / .5) ** 2)) - .12 * cl((t - .6) / .4) ** 2,
       hi = .74 + .2 * t + .1 * Math.sin(Math.PI * t), l = +lower;
     put(i, lipC, k * (lo * l + hi * (1 - l)), a); };
   // (a soft shade on the skin just under the lower lip, where it turns in)
@@ -574,18 +576,19 @@ function drawMouth(o) {
       if (opts.crease) { const cx2 = opts.hw + .035, cy2 = my + opts.mid[0] + opts.mid[1] - .01, dc = Math.hypot(Math.abs(X) - cx2 + .04, Y - cy2), ang = Math.atan2(Y - cy2, Math.abs(X) - cx2 + .04);
         put(i, skin, k * .8, .6 * cl(1 - Math.abs(dc - .045) / .006) * cl((ang + .9) / .3) * cl((.9 - ang) / .3) * cl((Math.abs(X) - cx2 + .02) / .02)); } }
     // (Åh: a round open mouth, its lips all round - fuller below - the inside dark with the tongue's tip at its foot)
-    if (opts.o) { const cy = my - .03, ei = Math.hypot(X / .1, (Y - cy) / .09), eo = Math.hypot(X / .148, (Y - cy + .008) / (Y > cy ? .13 : .145));
+    // (Åh and Kys drawn at their size times opts.o / opts.kiss, about their middle)
+    if (opts.o) { const cy = my - .03, sc = opts.o, x = X / sc, y = cy + (Y - cy) / sc, ei = Math.hypot(x / .1, (y - cy) / .09), eo = Math.hypot(x / .148, (y - cy + .008) / (y > cy ? .13 : .145));
       // (how far across the lip: 0 at the opening, 1 at its outer edge - ei / eo is the outer edge's size against the inner's)
-      under(i, k, (eo - 1) * .12, X / .12);
-      lip(i, k, (ei - 1) * .08, (1 - eo) * .1, (ei - 1) / ((ei / eo - 1) || 1), cl((cy + .03 - Y) / .06), X / .1);
-      put(i, insideC, .6 + .45 * cl((cy + .09 - Y) / .18), cov((1 - ei) * .08));
-      const te = Math.hypot(X / .08, (Y - cy + .095) / .05); put(i, tongueC, .75 + .3 * (1 - te), cov((1 - ei) * .08) * cov((1 - te) * .05));
-      put(i, seamC, 1, .4 * cov(.004 - Math.abs((1 - ei) * .08))); }
+      under(i, k, (eo - 1) * .12 * sc, x / .12);
+      lip(i, k, (ei - 1) * .08 * sc, (1 - eo) * .1 * sc, (ei - 1) / ((ei / eo - 1) || 1), cl((cy + .03 - y) / .06), x / .1);
+      put(i, insideC, .6 + .45 * cl((cy + .09 - y) / .18), cov((1 - ei) * .08 * sc));
+      const te = Math.hypot(x / .08, (y - cy + .095) / .05); put(i, tongueC, .75 + .3 * (1 - te), cov((1 - ei) * .08 * sc) * cov((1 - te) * .05 * sc));
+      put(i, seamC, 1, .4 * cov(.004 - Math.abs((1 - ei) * .08 * sc))); }
     // (Kys: pursed lips pushed forward - narrow, nearly round, the bow in the upper one, a short seam in the middle, lit
     // most where they stick out and with little creases running out from the middle, as lips gathered for a kiss)
-    if (opts.kiss) { const sy = my - .025, ux = X / .11, s = Math.sqrt(Math.max(0, 1 - ux * ux)), up = sy + .07 * Math.pow(s, .4) * (1 - .25 * Math.exp(-((X / .03) ** 2))), lo = sy - .082 * Math.pow(s, .45);
+    if (opts.kiss) { const sc = opts.kiss, sy = my - .025, ux = X / (.11 * sc), s = Math.sqrt(Math.max(0, 1 - ux * ux)), up = sy + .07 * sc * Math.pow(s, .4) * (1 - .25 * Math.exp(-((X / (.03 * sc)) ** 2))), lo = sy - .082 * sc * Math.pow(s, .45);
       if (Math.abs(ux) < 1.05) { under(i, k, lo - Y, ux); lip(i, k, Y - sy, up - Y, (Y - sy) / (up - sy || 1), false, ux); lip(i, k, sy - Y, Y - lo, (sy - Y) / (sy - lo || 1), true, ux * 1.6);
-        const inLip = cov(Math.min(Y - lo, up - Y)), r = Math.hypot(X, (Y - sy) * 1.2), ang = Math.atan2(Y - sy, X);
+        const inLip = cov(Math.min(Y - lo, up - Y)), r = Math.hypot(X, (Y - sy) * 1.2) / sc, ang = Math.atan2(Y - sy, X);
         put(i, { r: 1, g: .92, b: .92 }, 1, .18 * inLip * Math.exp(-((r / .04) ** 2)));
         put(i, kissC, k, .35 * inLip); put(i, lipC, k * .68, .75 * inLip * cl((r - .025) / .015) * cl(1 - Math.abs(Math.sin(ang * 5)) / .18) * cl(Math.min(up - Y, Y - lo) / .015));
         put(i, seamC, 1, .85 * cov(.005 * s - Math.abs(Y - sy)) * cl((.45 - Math.abs(ux)) / .15)); } } } }
