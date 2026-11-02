@@ -686,7 +686,8 @@ function drawPynt(o) { const P = tex.pynt; if (!P || !pyntNow.length) return;
 // face round it. Dyrenæse: a dark, shiny animal's nose painted on its tip. Klovn: a shiny red ball on its tip, held by
 // the head as the hair is)
 const NOSES = [['naese-naturlig', 'Naturlig'], ['naese-lille', 'Lille', { s: [.7, .8, .6] }], ['naese-bred', 'Bred', { s: [1.55, 1, 1.08] }],
-  ['naese-lang', 'Spids', { s: [.82, 1.15, 1.8], down: .02 }], ['naese-dyr', 'Dyrenæse', { animal: true }], ['naese-klovn', 'Klovn', { clown: true }]];
+  // (Spids an ordinary pointed nose - at 1.8 outwards it was a Pinocchio's)
+  ['naese-lang', 'Spids', { s: [.88, 1.06, 1.3], down: .01 }], ['naese-dyr', 'Dyrenæse', { animal: true }], ['naese-klovn', 'Klovn', { clown: true }]];
 let noseNow = 'naese-naturlig';
 function setNose(name) { noseNow = name; redrawBody(); renderStyles(); }
 function setupNose(body, P, n, cx, cy, cz, apart) {
