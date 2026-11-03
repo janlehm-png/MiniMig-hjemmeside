@@ -2809,8 +2809,12 @@ function kickBall(dt) { const b = kick.ball; if (!b) return; const k = kicks[ani
 // smaller. Levels, chosen in the box under the game's tabs: how the figure runs - Sjovt løb, Løb, Løb stærkt - how quick
 // the balls come and how often, each a little quicker with every star up to its top)
 const GAME = { jump: 'loebehop', trip: 'snubl', cheer: 'jubel', jumpFor: 1.05, high: .9, r: .224 };
-const LEVELS = [['niveau-let', 'Let', { run: 'loeb', speed: 1.2, top: 1.8, gap: 3.2 }], ['niveau-mellem', 'Mellem', { run: 'loeb-b', speed: 1.6, top: 2.5, gap: 2.5 }],
-  ['niveau-svaer', 'Svær', { run: 'loeb-a', speed: 2.2, top: 3.2, gap: 1.8 }]];
+// (five levels since 03-11-2026 - the user: a very easy one for the youngest, a very hard one for the eldest)
+// (air: how long a jump lasts; hit: how near the middle of the ball the feet must be to touch it. A slow ball takes long
+// to roll under the figure - it landed on it before it was through: the easy levels jump longer and count the ball smaller)
+const LEVELS = [['niveau-meget-let', 'Meget let', { run: 'loeb', speed: .9, top: 1.3, gap: 3.8, air: 1.35, hit: .1 }], ['niveau-let', 'Let', { run: 'loeb', speed: 1.2, top: 1.8, gap: 3.2, air: 1.2, hit: .14 }],
+  ['niveau-mellem', 'Mellem', { run: 'loeb-b', speed: 1.6, top: 2.5, gap: 2.5, air: 1.05, hit: .22 }], ['niveau-svaer', 'Svær', { run: 'loeb-a', speed: 2.2, top: 3.2, gap: 1.8, air: 1.05, hit: .22 }],
+  ['niveau-meget-svaer', 'Meget svær', { run: 'loeb-a', speed: 2.8, top: 3.8, gap: 1.5, air: 1, hit: .22 }]];
 // Three ways to play (the user, 03-11-2026): from the side, the balls rolling in from the right; from behind, the figure
 // running into the picture with its back to the one playing and the balls coming from the far ground; from the front,
 // the figure running towards the one playing and the balls coming in at the bottom of the picture, rolling away to it.
@@ -2868,20 +2872,22 @@ function gameTick(dt) { confettiTick(dt); if (!game.on || !glb) return; const r 
   // (the jump: up and down in a smooth arc over the ball, the run again when it lands)
   // (the fifth star mostly comes in the air: the cheer then waits for the landing - before, the landing put the run back
   // in the middle of the cheer, the figure running on the spot facing out, no balls, as if waiting for a tap)
-  let lift = 0; if (game.jumpT >= 0) { game.jumpT += dt; const s = game.jumpT / GAME.jumpFor; if (s >= 1) { game.jumpT = -1; if (game.cheerWait) startCheer(); else runAnim(L.run); } else lift = GAME.high * 4 * s * (1 - s); }
+  let lift = 0; if (game.jumpT >= 0) { game.jumpT += dt; const s = game.jumpT / L.air; if (s >= 1) { game.jumpT = -1; if (game.cheerWait) startCheer(); else runAnim(L.run); } else lift = GAME.high * Math.sqrt(Math.sin(Math.PI * s)); }
+  // (the arc: quickly up, a float at the top, quickly down - a late tap still clears the ball)
   glb.position.y += lift;
   if (game.busy && (game.busy -= dt) <= 0) { game.busy = 0; runAnim(L.run); }
   if (game.cheer && (game.cheer -= dt) <= 0) { game.cheer = 0; runAnim(L.run); game.next = Math.min(game.next, .6); }
   // (a new ball now and then - never while it cheers - a little sooner and quicker with more stars)
   const speed = Math.min(L.top, L.speed + game.stars * .04) * M.k, from = M.from(halfW, cx, cz) - (game.mode === 'side' ? M.x : 0);
-  if (!game.cheer && (game.next -= dt) <= 0) { const b = game.pool.find(p => !p.group.visible); if (b) { game.next = L.gap + Math.random() * 1.4 - Math.min(L.gap * .3, game.stars * .03);
+  if (!game.cheer && (game.next -= dt) <= 0) { const b = game.pool.find(p => !p.group.visible); if (b) { // (never so close that the figure is still in the air from the last ball - every ball can be cleared)
+    game.next = Math.max(L.air + .4, L.gap + Math.random() * 1.4 - Math.min(L.gap * .3, game.stars * .03));
     Object.assign(b, { u: from, v: -speed, vy: 0, hit: false, done: false }); b.group.position.y = r; M.put(b.group.position, b.u); b.group.visible = true; game.balls.push(b); } }
   for (const b of [...game.balls]) { const p = b.group.position; b.u += b.v * dt; M.roll(b.group, -b.v * dt / r);
     if (b.hit) { b.vy -= 9.8 * dt; p.y += b.vy * dt; if (p.y < r) { p.y = r; b.vy *= -.45; } }
     M.put(p, b.u);
     // (it clears the ball when the feet are over it as it passes - forgiving: the ball counts a little smaller than it is)
     // (no stumbling over a ball while it cheers - it cannot jump then: such a ball just rolls by)
-    if (!b.done && Math.abs(b.u) < .22 && lift < .34 && !game.cheer) { b.hit = b.done = true; b.v = 1.4; b.vy = 2.6; game.jumpT = -1; game.busy = 1.1; runAnim(GAME.trip, true); }
+    if (!b.done && Math.abs(b.u) < L.hit && lift < .34 && !game.cheer) { b.hit = b.done = true; b.v = 1.4; b.vy = 2.6; game.jumpT = -1; game.busy = 1.1; runAnim(GAME.trip, true); }
     if (!b.done && b.u < -.32) { b.done = true; if (game.cheer) continue; game.stars++; showStars(true);
       if (game.stars % 5 === 0) { celebrate(); if (game.jumpT >= 0) game.cheerWait = true; else startCheer(); } }
     if (b.u < M.gone || b.u > from + .5) { b.group.visible = false; game.balls.splice(game.balls.indexOf(b), 1); } } }
