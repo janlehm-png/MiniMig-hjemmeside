@@ -3034,7 +3034,9 @@ function startCheer() { game.cheerWait = false; game.cheer = 2.2; runAnim(GAME.c
 function showStars(pop) { starsEl.textContent = '⭐ ' + game.stars; if (pop) { starsEl.classList.remove('pop'); void starsEl.offsetWidth; starsEl.classList.add('pop'); } }
 function gameTick(dt) { confettiTick(dt); if (!game.on || !glb) return; const r = GAME.r, M = MODES[game.mode], L = levelNow();
   // (the figure facing the balls - turned to look out at the one playing when it cheers, and back, smoothly)
-  game.rotY ??= M.face; game.rotY += ((game.cheer ? M.cheer : M.face) - game.rotY) * Math.min(1, dt * 8); glb.rotation.y = game.rotY;
+  // (on the skateboard, pushing off: facing down the road, the board under it pointing the same way)
+  const faceNow = game.mode === 'skate' && sk.push ? Math.PI : game.cheer ? M.cheer : M.face;
+  game.rotY ??= M.face; game.rotY += (faceNow - game.rotY) * Math.min(1, dt * 8); glb.rotation.y = game.rotY;
   // (a wide picture - a phone held upright gives one - from nearer: the figure was small in it)
   const [cx, cy, cz, tx, ty, tz] = M.cam(camera.aspect > .85), halfW = Math.tan(camera.fov * Math.PI / 360) * Math.hypot(cx - tx, cz - tz) * camera.aspect;
   camera.position.set(cx, cy, cz); controls.target.set(tx, ty, tz); camera.lookAt(controls.target);
@@ -3079,7 +3081,7 @@ function gameTick(dt) { confettiTick(dt); if (!game.on || !glb) return; const r 
 // stars float in the lanes. A star caught or a thing got round: a star in the corner. A thing hit: a wobble and a
 // bonk, slowed a moment - no losing. Five levels as in the hop games: quicker, and the things closer together. Board,
 // road, things and the pose are all made by the page (no skating movement from Mixamo - one could be tried later)
-const SKATE = { ride: 'skate-3', lane: .75, deck: .12, from: 18, levels: { 'niveau-meget-let': [3, 2.7], 'niveau-let': [4, 2.2], 'niveau-mellem': [5.2, 1.75], 'niveau-svaer': [6.5, 1.4], 'niveau-meget-svaer': [8, 1.15] } };
+const SKATE = { push: 'skate-4', lane: .75, deck: .12, from: 18, levels: { 'niveau-meget-let': [3, 2.7], 'niveau-let': [4, 2.2], 'niveau-mellem': [5.2, 1.75], 'niveau-svaer': [6.5, 1.4], 'niveau-meget-svaer': [8, 1.15] } };
 const skateLevel = () => { const [speed, gap] = SKATE.levels[game.level] || [4, 2.2]; return { speed, gap }; };
 const sk = { rig: null, board: null, road: null, roadTex: null, live: [], pools: {}, lane: 0, x: 0, lean: 0, slow: 0, wobble: 0, next: 0 };
 const skMat = (c, r = .6, e) => new THREE.MeshStandardMaterial({ color: c, roughness: r, ...(e ? { emissive: new THREE.Color(e), emissiveIntensity: .35 } : {}) });
@@ -3118,8 +3120,12 @@ function skateRow() { const easy = ['niveau-meget-let', 'niveau-let'].includes(g
     for (let k = 0; k < n; k++) put(skateThing('stjerne'), lane * SKATE.lane, SKATE.from + (k - (n - 1) / 2) * 1.1); } }
 function skateStart() { skateBuild(); Object.assign(sk, { lane: 0, x: 0, lean: 0, slow: 0, wobble: 0, next: 1.2 }); for (const it of sk.live) it.group.visible = false; sk.live = [];
   holder.add(sk.rig); sk.rig.position.set(0, 0, 0); sk.rig.rotation.set(0, 0, 0); sk.rig.add(glb); scene.add(sk.road);
-  // (Mixamo's skateboarding, if it is there - the user fetched it, 03-11-2026; else the standing with the page's own pose)
-  sk.clip = null; loadMove(SKATE.ride).then(a => { sk.clip = a ? SKATE.ride : null; if (game.on) runAnim(sk.clip || 'staa'); }); }
+  // (riding: the standing with the page's own pose, arms out - Mixamo's riding stood with a foot each side of our board,
+  // the user said, 03-11-2026; it was made for a board pointing the way the figure faces. Its push off, Skateboarding
+  // (4), is made so too: so in a push the figure faces down the road, its left foot on the board, the right pushing,
+  // and turns across the board when it rides off - at the start, and after hitting a thing)
+  sk.push = false; sk.poseW = 1; Promise.all(['staa', SKATE.push].map(loadMove)).then(() => { if (game.on) { runAnim('staa'); startPush(); } }); }
+function startPush() { const a = glbActions[SKATE.push]; if (!a || !game.on || game.mode !== 'skate') return; sk.push = true; sk.needPush = false; runAnim(SKATE.push, true); }
 function skateStop() { if (!sk.rig?.parent) return; holder.add(glb); holder.remove(sk.rig); scene.remove(sk.road); for (const it of sk.live) it.group.visible = false; sk.live = []; }
 function steer(dir) { if (!game.on || game.mode !== 'skate') return; const lane = Math.max(-1, Math.min(1, sk.lane + dir)); if (lane === sk.lane) return; sk.lane = lane; game.hint = 0; sfx('swish'); }
 // (the skater's pose, laid over the standing still each frame - turned about the figure's own axes as it stands now:
@@ -3127,16 +3133,27 @@ function steer(dir) { if (!game.on || game.mode !== 'skate') return; const lane 
 const skAxes = { fwd: new THREE.Vector3(), right: new THREE.Vector3(), up: new THREE.Vector3(), q: new THREE.Quaternion() }, skQ = new THREE.Quaternion(), skP = new THREE.Quaternion();
 function turnBone(name, axis, angle) { const b = bone(name); if (!b) return; keepJoint(b); b.parent.getWorldQuaternion(skP); skQ.setFromAxisAngle(axis, angle); b.quaternion.premultiply(skP.clone().invert().multiply(skQ).multiply(skP)); }
 function skatePose() { glb.updateMatrixWorld(true); glb.getWorldQuaternion(skAxes.q); const { fwd, right, up, q } = skAxes; fwd.set(0, 0, 1).applyQuaternion(q); right.set(-1, 0, 0).applyQuaternion(q); up.set(0, 1, 0).applyQuaternion(q);
-  if (!sk.clip) skateOwnPose(fwd, right, up);
-  // (down onto the deck: the lower foot on it; the board under the middle of the feet)
-  const feet = ['LeftFoot', 'RightFoot', 'LeftToeBase', 'RightToeBase'].map(n => bone(n)).filter(Boolean).map(b => sk.rig.worldToLocal(b.getWorldPosition(new THREE.Vector3())));
+  if (sk.poseW > .01) skateOwnPose(fwd, right, up, sk.poseW);
+  const at = n => sk.rig.worldToLocal(bone(n).getWorldPosition(new THREE.Vector3()));
+  // (pushing: the left foot on the deck, the board under it and reaching back - the right foot pushes on the road)
+  if (sk.push) { const toe = at('LeftToeBase'), foot = at('LeftFoot'), back = fwd.clone(); back.y = 0; back.normalize();
+    glb.position.y += SKATE.deck + .02 - Math.min(toe.y, foot.y); sk.board.position.x = foot.x - back.x * .2; sk.board.position.z = foot.z - back.z * .2; return; }
+  // (riding: down onto the deck, the lower foot on it; the board under the middle of the feet)
+  const feet = ['LeftFoot', 'RightFoot', 'LeftToeBase', 'RightToeBase'].map(at);
   glb.position.y += SKATE.deck + .02 - Math.min(...feet.map(p => p.y)); sk.board.position.x = (feet[0].x + feet[1].x) / 2; sk.board.position.z = (feet[0].z + feet[1].z) / 2; }
-function skateOwnPose(fwd, right, up) {
-  for (const [n, s] of [['LeftUpLeg', 1], ['RightUpLeg', -1]]) { turnBone(n, fwd, s * .3); turnBone(n, right, .5); }
-  glb.updateMatrixWorld(true); for (const n of ['LeftLeg', 'RightLeg']) turnBone(n, right, -.85); glb.updateMatrixWorld(true); for (const n of ['LeftFoot', 'RightFoot']) turnBone(n, right, .38);
-  for (const [n, s] of [['LeftArm', 1], ['RightArm', -1]]) turnBone(n, fwd, s * 1.05); glb.updateMatrixWorld(true); for (const [n, s] of [['LeftForeArm', 1], ['RightForeArm', -1]]) turnBone(n, fwd, s * .25);
-  turnBone('Spine', right, -.12); turnBone('Spine2', up, .35); glb.updateMatrixWorld(true); turnBone('Neck', up, .4); glb.updateMatrixWorld(true); turnBone('Head', up, .45); glb.updateMatrixWorld(true); }
-function skateTick(dt) { const L = skateLevel(); sk.slow = Math.max(0, sk.slow - dt); sk.wobble = Math.max(0, sk.wobble - dt); const v = L.speed * (sk.slow > 0 ? .45 : 1);
+// (w: how much of the pose - it grows in as the figure turns across the board after a push)
+function skateOwnPose(fwd, right, up, w = 1) {
+  for (const [n, s] of [['LeftUpLeg', 1], ['RightUpLeg', -1]]) { turnBone(n, fwd, s * .3 * w); turnBone(n, right, .5 * w); }
+  glb.updateMatrixWorld(true); for (const n of ['LeftLeg', 'RightLeg']) turnBone(n, right, -.85 * w); glb.updateMatrixWorld(true); for (const n of ['LeftFoot', 'RightFoot']) turnBone(n, right, .38 * w);
+  for (const [n, s] of [['LeftArm', 1], ['RightArm', -1]]) turnBone(n, fwd, s * 1.05 * w); glb.updateMatrixWorld(true); for (const [n, s] of [['LeftForeArm', 1], ['RightForeArm', -1]]) turnBone(n, fwd, s * .25 * w);
+  turnBone('Spine', right, -.12 * w); turnBone('Spine2', up, .35 * w); glb.updateMatrixWorld(true); turnBone('Neck', up, .4 * w); glb.updateMatrixWorld(true); turnBone('Head', up, .45 * w); glb.updateMatrixWorld(true); }
+function skateTick(dt) { const L = skateLevel(); sk.slow = Math.max(0, sk.slow - dt); sk.wobble = Math.max(0, sk.wobble - dt);
+  // (the push: through - then riding off, the pose growing in as it turns; after a hit, a push again once the wobble is over)
+  const pa = glbActions[SKATE.push]; if (sk.push && (!pa?.isRunning() || pa.time >= pa.getClip().duration - .06)) { sk.push = false; runAnim('staa'); }
+  if (sk.needPush && sk.wobble <= 0 && !sk.push) startPush();
+  sk.poseW += ((sk.push ? 0 : 1) - sk.poseW) * Math.min(1, dt * (sk.push ? 12 : 4));
+  // (slower while pushing off, faster with each push)
+  const v = L.speed * (sk.slow > 0 ? .45 : 1) * (sk.push && pa ? .45 + .55 * pa.time / pa.getClip().duration : 1);
   // (the lane: glided over, leaning into the turn; a wobble after hitting a thing)
   const dx = sk.lane * SKATE.lane - sk.x; sk.x += dx * Math.min(1, dt * 9); sk.lean += (-dx * .45 - sk.lean) * Math.min(1, dt * 10);
   sk.rig.position.x = sk.x; sk.rig.rotation.z = sk.lean + (sk.wobble > 0 ? Math.sin(sk.wobble * 30) * .14 * sk.wobble : 0);
@@ -3147,7 +3164,7 @@ function skateTick(dt) { const L = skateLevel(); sk.slow = Math.max(0, sk.slow -
     if (it.hit && !star) { g.rotation.x -= dt * 6; g.position.y = Math.max(0, g.position.y + (it.vy -= 9.8 * dt) * dt); }
     g.position.z = -it.u;
     const near = Math.abs(sk.x - it.x) < it.half + .18 && Math.abs(it.u) < it.len / 2 + .22;
-    if (!it.done && near) { it.done = true; if (star) { g.visible = false; addStars(1); sfx('ding'); } else { it.hit = true; it.vy = 2.5; sk.slow = 1; sk.wobble = 1; sfx('bonk'); } }
+    if (!it.done && near) { it.done = true; if (star) { g.visible = false; addStars(1); sfx('ding'); } else { it.hit = true; it.vy = 2.5; sk.slow = 1; sk.wobble = 1; sk.needPush = true; sfx('bonk'); } }
     if (!it.done && !star && it.u < -(it.len / 2 + .3)) { it.done = true; addStars(1); }
     // (put away just past the figure - a star left in another lane came on up to the camera, big as the picture)
     if (it.u < -(it.len / 2 + 1) || !g.visible) { g.visible = false; sk.live.splice(sk.live.indexOf(it), 1); } } }
