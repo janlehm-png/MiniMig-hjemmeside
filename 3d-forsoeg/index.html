@@ -237,13 +237,13 @@ disc.rotation.x = -Math.PI / 2; disc.position.y = .001; scene.add(disc);
 // ---- colours: the figure's painted texture, recoloured (below) ----
 // (the parts, each with the app's icon for its tab, in ikoner/; the fixed colours are gone - the sliders alone)
 const CHOICES = [['skin', 'Hud', 'hud'], ['hair', 'Hår', 'haar'], ['eyes', 'Øjne', 'oejne'], ['brows', 'Bryn', 'bryn'], ['nose', 'Næse', 'naese'], ['mouth', 'Mund', 'mund'], ['ears', 'Ører', 'oerer'], ['pynt', 'Pynt', 'kinder'], ['shirt', 'Trøje', 'troeje'], ['pants', 'Bukser', 'bukser'], ['dress', 'Kjole', 'kjoler'],
-  ['socks', 'Strømper', 'stroemper'], ['shoe', 'Sko', 'sko'], ['hat', 'Hat', 'hat'], ['glasses', 'Briller', 'briller'], ['item', 'Ting', 'ting'], ['name', 'Navn', 'navn']];
+  ['socks', 'Strømper', 'stroemper'], ['shoe', 'Sko', 'sko'], ['hat', 'Hat', 'hat'], ['glasses', 'Briller', 'briller'], ['item', 'Ting', 'ting'], ['name', 'Navn', 'navn'], ['bg', 'Baggrund', 'baggrund']];
 const picked = {}, START = { skin: '#EDB98A', hair: '#4A2C1D', eyes: '#7A4220', brows: '#4A2C1D', mouth: '#C0505A', pynt: '#FF5A6E', nose: '#EDB98A', shirt: '#FF7A2F', pants: '#2C3E8C', dress: '#3D8BFF', socks: '#3D8BFF', item: '#E8384F', shoe: '#3D8BFF', hat: '#3D8BFF', glasses: '#3D8BFF' }; let partNow = 'shirt';
 const apply = (part, c) => { picked[part] = c; recolour(part, c); if (part === 'shirt' || part === 'dress') chestName(); };
 const iconButton = (src, label) => { const b = document.createElement('button'), i = new Image(); i.src = src; i.alt = ''; i.onerror = () => i.remove();
   const s = document.createElement('span'); s.textContent = label; b.append(i, s); return b; };
 // (the nose, the mouth and Pynt have no colour of their own, as in the app: no sliders under them)
-function showSwatches() { slidersFrom(picked[partNow] || START[partNow]); document.getElementById('sliders').style.display = ['nose', 'mouth', 'pynt', 'name', 'ears'].includes(partNow) ? 'none' : '';
+function showSwatches() { slidersFrom(picked[partNow] || START[partNow]); document.getElementById('sliders').style.display = ['nose', 'mouth', 'pynt', 'name', 'ears', 'bg'].includes(partNow) ? 'none' : '';
   document.getElementById('nameBox').hidden = partNow !== 'name';
   document.querySelectorAll('#parts button').forEach(b => b.classList.toggle('on', b.dataset.part === partNow));
   renderStyles(); }
@@ -1323,7 +1323,7 @@ async function loadHair(name, list = hairTexs, colourPart = 'hair', extra = {}) 
   // (cap: no lighter than that over the middle - the glasses' frames had white smears inside, by the glass)
   if (opts.cap) list.at(-1).cap = opts.cap;
   body.parent.add(hair); hair.bind(body.skeleton, body.bindMatrix); scalpCap(hair, g, W, earLines, apart, eyeY); if (picked[colourPart]) recolourHair(picked[colourPart], list); return hair; }
-var styleLists = () => ({ hair: [HAIRS, hairNow, setHair], eyes: [EYES, eyesNow, setEyes], brows: [BROWS, browsNow, setBrows], mouth: [MOUTHS, mouthNow, setMouth], pynt: [PYNT, pyntNow.map(k => 'pynt-' + k), setPynt], nose: [NOSES, noseNow, setNose], item: [ITEMS, itemNow, setItem], ears: [EARS, earsNow, setEars, [EARRINGS, earringsNow, setEarrings, 'oerering']],
+var styleLists = () => ({ hair: [HAIRS, hairNow, setHair], eyes: [EYES, eyesNow, setEyes], brows: [BROWS, browsNow, setBrows], mouth: [MOUTHS, mouthNow, setMouth], pynt: [PYNT, pyntNow.map(k => 'pynt-' + k), setPynt], nose: [NOSES, noseNow, setNose], item: [ITEMS, itemNow, setItem], bg: [BGS, bgNow, setBg], ears: [EARS, earsNow, setEars, [EARRINGS, earringsNow, setEarrings, 'oerering']],
   ...Object.fromEntries(Object.entries(GARMENTS).map(([part, G]) => [part, [G.items, G.now, n => setGarment(part, n)]])) });
 async function setHair(name) {
   hairNow = name; renderStyles();
@@ -2164,7 +2164,7 @@ showBadges();
 // saved out of the page (the camera, behind a grown-up's sum) ----
 // (a figure: its choices - the colours picked, the hair, the face, what it wears, the name)
 const figureNow = () => ({ picked: { ...picked }, hair: hairNow, eyes: eyesNow, brows: browsNow, mouth: mouthNow, nose: noseNow, pynt: [...pyntNow],
-  wear: Object.fromEntries(Object.entries(GARMENTS).map(([p, G]) => [p, G.now])), name: nameNow, badge: badgeNow, item: itemNow, ears: earsNow, earrings: earringsNow });
+  wear: Object.fromEntries(Object.entries(GARMENTS).map(([p, G]) => [p, G.now])), name: nameNow, badge: badgeNow, item: itemNow, ears: earsNow, earrings: earringsNow, bg: bgNow });
 // (a part's own colour back: the figure's painted one, the hair's and the garments' as made)
 const unpaint = list => { for (const t of list) { const im = t.ctx.createImageData(t.w, t.h); im.data.set(t.src); t.ctx.putImageData(im, 0, 0); t.texture.needsUpdate = true; } };
 function unpick(part) { delete picked[part]; if (part === 'socks') paintSocks(); if (part === 'item') paintItem(); if (part === 'hair') unpaint(hairTexs); if (GARMENTS[part]) unpaint(GARMENTS[part].texs);
@@ -2175,7 +2175,7 @@ async function wearFigure(f) { const ask = ++dressingUp;
   for (const [part] of CHOICES) if (part !== 'hair') { if (f.picked[part]) { picked[part] = f.picked[part]; recolour(part, f.picked[part]); } else unpick(part); }
   if (f.picked.hair) { picked.hair = f.picked.hair; recolour('hair', f.picked.hair); } else unpick('hair');
   eyesNow = f.eyes; browsNow = f.brows; mouthNow = f.mouth; noseNow = f.nose; pyntNow = [...f.pynt]; nameNow = f.name; badgeNow = f.badge;
-  nameInput.value = nameNow; showBadges(); redrawBody(); showSwatches(); setItem(f.item || ''); earringsNow = f.earrings || ''; setEars(f.ears || 'oerer-naturlig');
+  nameInput.value = nameNow; showBadges(); redrawBody(); showSwatches(); setItem(f.item || ''); earringsNow = f.earrings || ''; setEars(f.ears || 'oerer-naturlig'); setBg(f.bg || 'bg-sol');
   if (f.hair !== hairNow) await setHair(f.hair); if (ask !== dressingUp) return;
   // (a dress last: it takes off the top and trousers)
   for (const p of ['shirt', 'pants', 'socks', 'shoe', 'hat', 'glasses', 'dress']) { if (p === 'dress' && !f.wear.dress) continue; await setGarment(p, f.wear[p] || ''); if (ask !== dressingUp) return; }
@@ -2193,6 +2193,9 @@ function figurePicture(kind, size = 1) {
   const c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d');
   const gr = g.createRadialGradient(W * .5, H * .42, 0, W * .5, H * .42, Math.hypot(W * .5, H * .58)); // (the app's sun)
   gr.addColorStop(0, '#FFF3C2'); gr.addColorStop(.38, '#FFF3C2'); gr.addColorStop(1, '#FFD54A'); g.fillStyle = gr; g.fillRect(0, 0, W, H);
+  // (or the scene chosen, filling the picture - the profile picture from a little above its middle)
+  const im = bgImgs[bgNow.slice(3)]; if (bgNow !== 'bg-sol' && im?.complete && im.naturalWidth) { const k = Math.max(W / im.naturalWidth, H / im.naturalHeight), w = im.naturalWidth * k, h = im.naturalHeight * k;
+    g.drawImage(im, (W - w) / 2, (H - h) * (prof ? .4 : .5), w, h); }
   g.drawImage(renderer.domElement, 0, 0, W, H);
   renderer.setPixelRatio(ratio); renderer.setSize(old.x, old.y, false); return c; }
 // (the pictures drawn for the choice sheet are used again, so the share menu opens right after the tap - a phone only
@@ -2266,7 +2269,7 @@ document.getElementById('keepChoice').addEventListener('click', e => { const c =
 // all-white vest and shorts and nothing else, no name, every colour the figure's own; a boy with short hair or a girl
 // with plaits. The user dropped the app's pink and blue underwear)
 const newFig = kind => ({ picked: {}, hair: kind === 'pige' ? 'haar-fletninger' : 'haar-kort',
-  eyes: 'oejne-naturlige', brows: 'bryn-naturlige', mouth: 'mund-smil', nose: 'naese-naturlig', pynt: [], wear: Object.fromEntries(Object.keys(GARMENTS).map(p => [p, ''])), name: '', badge: 'ingen', item: '', ears: 'oerer-naturlig', earrings: '' });
+  eyes: 'oejne-naturlige', brows: 'bryn-naturlige', mouth: 'mund-smil', nose: 'naese-naturlig', pynt: [], wear: Object.fromEntries(Object.keys(GARMENTS).map(p => [p, ''])), name: '', badge: 'ingen', item: '', ears: 'oerer-naturlig', earrings: '', bg: 'bg-sol' });
 const sameFig = (a, b) => !!a && !!b && JSON.stringify(a) === JSON.stringify(b);
 document.getElementById('newBtn').addEventListener('click', () => { document.getElementById('newChoice').hidden = false; });
 document.getElementById('newChoice').addEventListener('click', async e => { const b = e.target.closest('[data-new]'); if (!b || !hairBase) return;
@@ -2287,6 +2290,15 @@ document.getElementById('gallery').addEventListener('click', e => { const load =
     l.splice(+del.dataset.del, 1); storeFigs(l); renderGallery(); } });
 for (const s of document.querySelectorAll('.sheet')) s.addEventListener('click', e => { if (e.target === s || e.target.closest('[data-close]')) s.hidden = true; });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') for (const s of document.querySelectorAll('.sheet')) s.hidden = true; });
+// ---- Baggrund, as in the app: the app's own scenes behind the figure - or the sun, the page's own yellow ----
+// (the picture behind the see-through 3D, filling the screen, its ground a little below the middle; the yellow disc under
+// the figure only on the sun - in a scene the figure stands on its ground, the shadow kept)
+const BGS = [['bg-sol', 'Sol'], ['bg-have', 'Have'], ['bg-strand', 'Strand'], ['bg-skov', 'Skov'], ['bg-slot', 'Slot'], ['bg-ridderborg', 'Ridderborg'], ['bg-havbund', 'Havbund'],
+  ['bg-slikland', 'Slikland'], ['bg-vinter', 'Vinter'], ['bg-rummet', 'Rummet'], ['bg-fodboldbane', 'Fodboldbane'], ['bg-gymnastiksal', 'Gymnastiksal'], ['bg-dansesal', 'Dansesal']];
+let bgNow = 'bg-sol'; const bgImgs = {};
+function setBg(name) { bgNow = BGS.some(b => b[0] === name) ? name : 'bg-sol'; const k = bgNow.slice(3);
+  if (k !== 'sol' && !bgImgs[k]) { bgImgs[k] = new Image(); bgImgs[k].src = `baggrund/${k}.jpg`; }
+  document.body.style.background = k === 'sol' ? '' : `#FFF8E1 url("baggrund/${k}.jpg") center 62% / cover no-repeat`; disc.visible = k === 'sol'; renderStyles(); }
 // ---- Ører, as in the app: the ears' shape - natural, small, big, sticking out, elf ears - and earrings at the lobes ----
 // (the ears are the body's own: each its points beyond the skull at the side of the head - a third of an eye's distance
 // behind the eyes to a half below them, further out than the skull there - moved about the ear's root, more the further
