@@ -55,6 +55,9 @@
   .namebox { display: flex; flex-direction: column; align-items: center; gap: 8px; }
   .namebox[hidden] { display: none; }
   .namerow { display: flex; align-items: center; gap: 8px; }
+  @media (prefers-reduced-motion: no-preference) { #nameInput.nudge { animation: nudgeX .45s ease; } }
+  #nameInput.nudge { border-color: var(--accent); }
+  @keyframes nudgeX { 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
   .panel .rec-btn { border-radius: 999px; padding: 10px 16px; font-size: 15px; }
   .panel .rec-btn.rec { background: #E8384F; border-color: #E8384F; color: #fff; }
   .panel .rec-del { width: 42px; height: 42px; padding: 0; border-radius: 50%; font-size: 18px; }
@@ -196,7 +199,7 @@
   </div>
   <div class="box">
     <div class="choices" id="styles" hidden></div><div class="choices" id="styles2" hidden></div>
-    <div class="namebox" id="nameBox" hidden><div class="namerow"><input id="nameInput" type="text" maxlength="10" autocomplete="off" placeholder="Skriv dit navn" aria-label="Navn på trøjen"><button id="sayBtn" aria-label="Sig navnet">🔊</button></div>
+    <div class="namebox" id="nameBox" hidden><div class="namerow"><input id="nameInput" name="mm-troeje-tekst" type="text" maxlength="10" autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false" enterkeyhint="done" data-1p-ignore data-lpignore="true" placeholder="Skriv dit navn" aria-label="Navn på trøjen"><button id="sayBtn" aria-label="Sig navnet">🔊</button></div>
       <div class="namerow"><button id="recBtn" class="rec-btn">🎤 <span>Indtal selv</span></button><button id="recDel" class="rec-del" aria-label="Slet din egen stemme" hidden>🗑</button></div>
       <p class="rec-note" id="recNote"></p>
       <div class="badges" id="badges"></div></div>
@@ -2282,7 +2285,10 @@ async function playOwn(url) { try { playing?.stop?.(); playing?.pause?.(); } cat
   try { const ctx = soundOut(); await ctx.resume(); const buf = await ctx.decodeAudioData(await (await fetch(url)).arrayBuffer()), src = ctx.createBufferSource();
     src.buffer = buf; src.connect(ctx.destination); src.start(); playing = src; }
   catch (e) { try { playing = new Audio(url); playing.play().catch(() => {}); } catch (e2) {} } }
-recBtn.onclick = async () => { soundOut()?.resume(); if (recorder) { recorder.stop(); return; } const n = nameInput.value.trim(); if (!n) { nameInput.focus(); return; }
+// (no name yet: a word and a nudge at the box, not the cursor in it - that opened the iPad's own bar for filling in
+// passwords, cards and addresses over the page; the user, 03-11-2026)
+recBtn.onclick = async () => { soundOut()?.resume(); if (recorder) { recorder.stop(); return; } const n = nameInput.value.trim();
+  if (!n) { showRec('Skriv dit navn først ✏️'); nameInput.classList.remove('nudge'); void nameInput.offsetWidth; nameInput.classList.add('nudge'); return; }
   try { const stream = await navigator.mediaDevices.getUserMedia({ audio: true }), type = ['audio/mp4', 'audio/webm', ''].find(t => !t || MediaRecorder.isTypeSupported(t));
     const r = recorder = new MediaRecorder(stream, type ? { mimeType: type } : undefined), parts = []; r.ondataavailable = e => e.data.size && parts.push(e.data);
     r.onstop = () => { stream.getTracks().forEach(t => t.stop()); clearTimeout(r.timer); recorder = null; recBtn.classList.remove('rec'); recBtn.firstChild.textContent = '🎤 ';
