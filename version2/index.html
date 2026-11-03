@@ -2266,7 +2266,7 @@ let sayTimer = 0, sayOpen = false, playing = null;
 const VOICE_KEY = 'minimig3d.stemmer', voices = (() => { try { return JSON.parse(localStorage.getItem(VOICE_KEY)) || {}; } catch (e) { return {}; } })();
 const voiceFor = n => voices[n.trim().toLowerCase()];
 function sayName() { const n = nameInput.value.trim(); if (!n) return; const own = voiceFor(n);
-  if (own) { try { playing?.pause(); playing = new Audio(own); playing.play().catch(() => {}); } catch (e) {} return; }
+  if (own) { playOwn(own); return; }
   if (!window.speechSynthesis) return; speechSynthesis.cancel();
   const da = speechSynthesis.getVoices().filter(v => /^da/i.test(v.lang)), v = da.find(v => /premium|enhanced|forbedret|neural|natural/i.test(v.name)) || da.find(v => !v.localService) || da[0];
   const u = new SpeechSynthesisUtterance(`Hej! Jeg hedder ${n}.`); u.lang = 'da-DK'; if (v) u.voice = v; u.rate = .92; u.pitch = 1.4; speechSynthesis.speak(u); }
@@ -2274,11 +2274,21 @@ function sayName() { const n = nameInput.value.trim(); if (!n) return; const own
 // only, for the name written)
 const recBtn = document.getElementById('recBtn'), recDel = document.getElementById('recDel'), recNote = document.getElementById('recNote'); let recorder = null;
 function showRec(note) { const has = !!voiceFor(nameInput.value || ''); recDel.hidden = !has; recNote.textContent = note || (has ? 'Din egen stemme siger navnet' : ''); }
-recBtn.onclick = async () => { if (recorder) { recorder.stop(); return; } const n = nameInput.value.trim(); if (!n) { nameInput.focus(); return; }
+// (the own voice played through the page's sound - opened by the tap on the microphone - so it can be heard by itself
+// right after the recording: an iPad will not start a plain sound that no tap started, and the recording stops by
+// itself after four seconds; the user, 03-11-2026)
+const soundOut = () => { try { return game.audio ??= new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return null; } };
+async function playOwn(url) { try { playing?.stop?.(); playing?.pause?.(); } catch (e) {}
+  try { const ctx = soundOut(); await ctx.resume(); const buf = await ctx.decodeAudioData(await (await fetch(url)).arrayBuffer()), src = ctx.createBufferSource();
+    src.buffer = buf; src.connect(ctx.destination); src.start(); playing = src; }
+  catch (e) { try { playing = new Audio(url); playing.play().catch(() => {}); } catch (e2) {} } }
+recBtn.onclick = async () => { soundOut()?.resume(); if (recorder) { recorder.stop(); return; } const n = nameInput.value.trim(); if (!n) { nameInput.focus(); return; }
   try { const stream = await navigator.mediaDevices.getUserMedia({ audio: true }), type = ['audio/mp4', 'audio/webm', ''].find(t => !t || MediaRecorder.isTypeSupported(t));
     const r = recorder = new MediaRecorder(stream, type ? { mimeType: type } : undefined), parts = []; r.ondataavailable = e => e.data.size && parts.push(e.data);
     r.onstop = () => { stream.getTracks().forEach(t => t.stop()); clearTimeout(r.timer); recorder = null; recBtn.classList.remove('rec'); recBtn.firstChild.textContent = '🎤 ';
-      const fr = new FileReader(); fr.onload = () => { voices[n.toLowerCase()] = fr.result; try { localStorage.setItem(VOICE_KEY, JSON.stringify(voices)); } catch (e) {} showRec(); sayName(); };
+      const fr = new FileReader(); fr.onload = () => { voices[n.toLowerCase()] = fr.result; try { localStorage.setItem(VOICE_KEY, JSON.stringify(voices)); } catch (e) {} showRec();
+        // (a moment's pause first: just after the microphone an iPad still plays quietly, as on a phone call)
+        setTimeout(sayName, 350); };
       fr.readAsDataURL(new Blob(parts, { type: parts[0]?.type || type || 'audio/mp4' })); };
     r.start(); r.timer = setTimeout(() => r.state === 'recording' && r.stop(), 4000); recBtn.classList.add('rec'); recBtn.firstChild.textContent = '⏹ '; showRec('Sig: Hej, jeg hedder ' + n + ' …');
   } catch (e) { recorder = null; showRec('Mikrofonen kunne ikke bruges'); } };
