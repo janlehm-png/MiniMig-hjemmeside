@@ -3134,11 +3134,12 @@ function skateThing(kind) { const pool = sk.pools[kind] ??= [], free = pool.find
 // (a row of things far down the road: one thing - or a bar over two lanes - and, mostly, stars in a free lane; the
 // easiest levels only cones and crates)
 function skateRow() { const easy = ['niveau-meget-let', 'niveau-let'].includes(game.level), r = Math.random(), used = new Set();
-  const put = (it, x, u) => { Object.assign(it, { x, u, hit: false, done: false }); it.group.position.set(x, 0, -u); it.group.rotation.set(0, 0, 0); it.group.visible = true; sk.live.push(it); };
+  const put = (it, x, u) => { Object.assign(it, { x, u, hit: false, done: false, mine: false }); it.group.position.set(x, 0, -u); it.group.rotation.set(0, 0, 0); it.group.visible = true; sk.live.push(it); };
   if (!easy && r < .2) { const left = Math.random() < .5; put(skateThing('bom'), (left ? -.5 : .5) * SKATE.lane, SKATE.from); used.add(left ? -1 : 1); used.add(0); }
   else { const lane = Math.floor(Math.random() * 3) - 1, kind = easy ? (Math.random() < .55 ? 'kegle' : 'kasse') : r < .45 ? 'kegle' : r < .72 ? 'kasse' : 'rail'; put(skateThing(kind), lane * SKATE.lane, SKATE.from); used.add(lane); }
-  if (Math.random() < (easy ? .9 : .7)) { const free = [-1, 0, 1].filter(l => !used.has(l)), lane = free[Math.floor(Math.random() * free.length)], n = 1 + Math.floor(Math.random() * 3);
-    for (let k = 0; k < n; k++) put(skateThing('stjerne'), lane * SKATE.lane, SKATE.from + (k - (n - 1) / 2) * 1.1); } }
+  // (the stars never in the lane the figure rides in now - one has to steer to them, not just stand)
+  if (Math.random() < (easy ? .9 : .7)) { const free = [-1, 0, 1].filter(l => !used.has(l) && l !== sk.lane); if (free.length) { const lane = free[Math.floor(Math.random() * free.length)], n = 1 + Math.floor(Math.random() * 3);
+    for (let k = 0; k < n; k++) put(skateThing('stjerne'), lane * SKATE.lane, SKATE.from + (k - (n - 1) / 2) * 1.1); } } }
 function skateStart() { skateBuild(); Object.assign(sk, { lane: 0, x: 0, lean: 0, slow: 0, wobble: 0, next: 1.2 }); for (const it of sk.live) it.group.visible = false; sk.live = [];
   holder.add(sk.rig); sk.rig.position.set(0, 0, 0); sk.rig.rotation.set(0, 0, 0); sk.rig.add(glb); scene.add(sk.road);
   // (riding: the standing with the page's own pose, arms out - Mixamo's riding stood with a foot each side of our board,
@@ -3185,8 +3186,11 @@ function skateTick(dt) { const L = skateLevel(); sk.slow = Math.max(0, sk.slow -
     if (it.hit && !star) { g.rotation.x -= dt * 6; g.position.y = Math.max(0, g.position.y + (it.vy -= 9.8 * dt) * dt); }
     g.position.z = -it.u;
     const near = Math.abs(sk.x - it.x) < it.half + .18 && Math.abs(it.u) < it.len / 2 + .22;
+    // (a thing gives a star only when it was coming straight at the figure and it moved out of the way - standing still
+    // in one lane while things went by in the others gave stars for nothing, the user said 03-11-2026)
+    if (!star && it.u < 7 && it.u > it.len / 2 && Math.abs(sk.lane * SKATE.lane - it.x) < it.half + .18) it.mine = true;
     if (!it.done && near) { it.done = true; if (star) { g.visible = false; addStars(1); sfx('ding'); } else { it.hit = true; it.vy = 2.5; sk.slow = 1; sk.wobble = 1; sk.needPush = true; sfx('bonk'); } }
-    if (!it.done && !star && it.u < -(it.len / 2 + .3)) { it.done = true; addStars(1); }
+    if (!it.done && !star && it.u < -(it.len / 2 + .3)) { it.done = true; if (it.mine) addStars(1); }
     // (put away just past the figure - a star left in another lane came on up to the camera, big as the picture)
     if (it.u < -(it.len / 2 + 1) || !g.visible) { g.visible = false; sk.live.splice(sk.live.indexOf(it), 1); } } }
 // (stars to the corner; every fifth the confetti - the skater rides on)
@@ -3239,15 +3243,33 @@ function islandBuild() { if (il.world) return; const w = il.world = new THREE.Gr
   // (the chest: wood with gold bands, its lid on a hinge at the back, a golden lock while it is shut)
   const ch = il.chest = new THREE.Group(); ch.position.set(2.4, 0, -1.6); ch.rotation.y = -.5; w.add(ch);
   ilMesh(new THREE.BoxGeometry(.9, .5, .6), ilM('#9C5B2A', .7), 0, .25, 0, ch); for (const x of [-.32, .32]) ilMesh(new THREE.BoxGeometry(.07, .52, .62), ilM('#FFC233', .3), x, .25, 0, ch);
-  const lid = il.lid = new THREE.Group(); lid.position.set(0, .5, -.3); ch.add(lid); const top = ilMesh(new THREE.CylinderGeometry(.3, .3, .9, 20, 1, false, 0, Math.PI), ilM('#B06A30', .7), 0, 0, .3, lid); top.rotation.z = Math.PI / 2;
+  // (the lid seen from inside when open: dark wood, both sides drawn - it was see-through, the user said)
+  const lid = il.lid = new THREE.Group(); lid.position.set(0, .5, -.3); ch.add(lid); const lidM = ilM('#B06A30', .7); lidM.side = THREE.DoubleSide;
+  const top = ilMesh(new THREE.CylinderGeometry(.3, .3, .9, 20, 1, false, 0, Math.PI), lidM, 0, 0, .3, lid); top.rotation.z = Math.PI / 2;
+  const under = ilMesh(new THREE.PlaneGeometry(.9, .6), ilM('#6E3E18', .8), 0, .002, .3, lid); under.rotation.x = Math.PI / 2;
   for (const x of [-.32, .32]) { const b = ilMesh(new THREE.CylinderGeometry(.31, .31, .07, 20, 1, false, 0, Math.PI), ilM('#FFC233', .3), x, 0, .3, lid); b.rotation.z = Math.PI / 2; }
+  // (the treasure in it, seen when the lid is up: a heap of gold coins and a few jewels - it was empty, the user said)
+  const goldM = ilM('#FFC233', .25, '#8A6200'); ilMesh(new THREE.BoxGeometry(.8, .02, .5), goldM, 0, .51, 0, ch, false);
+  for (let k = 0; k < 26; k++) { const a = k * 2.4, r = .05 + (k % 7) * .045; const c = ilMesh(new THREE.CylinderGeometry(.055, .055, .015, 14), goldM, Math.cos(a) * r * 1.3, .52 + (k % 3) * .02 + (r < .2 ? .03 : 0), Math.sin(a) * r * .75, ch, false); c.rotation.set((k % 5) * .3, 0, (k % 4) * .25); }
+  for (const [x, z, col] of [[-.2, .08, '#E8384F'], [.15, -.1, '#3D8BFF'], [.25, .12, '#4FD06B']]) ilMesh(new THREE.OctahedronGeometry(.05), ilM(col, .15, col), x, .58, z, ch, false);
   il.lock = ilMesh(new THREE.BoxGeometry(.16, .18, .06), ilM('#FFC233', .3, '#7A5200'), 0, .42, .32, ch);
   il.gold = []; for (let k = 0; k < 14; k++) { const c = ilMesh(new THREE.CylinderGeometry(.06, .06, .015, 14), ilM('#FFC233', .25, '#8A6200'), 0, .4, 0, ch, false); c.visible = false; il.gold.push(c); }
   // (a glow on the ground round the chest once it may be opened)
   il.glow = ilMesh(new THREE.RingGeometry(.65, .85, 32), new THREE.MeshBasicMaterial({ color: '#FFE07A', transparent: true, opacity: .7 }), 0, .02, 0, ch, false); il.glow.rotation.x = -Math.PI / 2; il.glow.visible = false;
   il.rig = new THREE.Group(); }
 // (a shell: a flattened fluted cone, pale pink, with a little sparkle ring under it so it can be found)
-function shell() { const g = new THREE.Group(); const s = ilMesh(new THREE.ConeGeometry(.17, .1, 10), ilM('#FFC2D6', .45, '#7A3050'), 0, .06, 0, g); s.scale.set(1, 1, .8); s.rotation.x = .25;
+// (a fan-shaped scallop with a wavy edge, ribs and two little ears at the hinge, lying tilted up a little towards the
+// camera - the first was a grey blob, the user said)
+let shellGeo = null; const shellRibs = [];
+function shell() { const g = new THREE.Group();
+  if (!shellGeo) { const sh = new THREE.Shape(), R = .2, n = 7, a0 = -1.15, a1 = 1.15; sh.moveTo(0, 0);
+    for (let k = 0; k <= n * 6; k++) { const a = a0 + (a1 - a0) * k / (n * 6), r = R * (1 + .07 * Math.abs(Math.sin(k / 6 * Math.PI))); sh.lineTo(Math.sin(a) * r, Math.cos(a) * r); } sh.lineTo(0, 0);
+    shellGeo = new THREE.ExtrudeGeometry(sh, { depth: .025, bevelEnabled: true, bevelThickness: .015, bevelSize: .012, bevelSegments: 3, curveSegments: 6 });
+    for (let k = 0; k < 7; k++) { const a = a0 + (a1 - a0) * (k + .5) / 7; shellRibs.push(a); } }
+  const body = new THREE.Group(); body.rotation.x = -.55; body.position.set(0, .07, .04); g.add(body);
+  ilMesh(shellGeo, ilM('#FF8FB8', .4, '#A0304F'), 0, -.1, 0, body);
+  for (const a of shellRibs) { const rib = ilMesh(new THREE.BoxGeometry(.012, .19, .01), ilM('#FFC9DD', .4, '#80506A'), Math.sin(a) * .1, -.1 + Math.cos(a) * .1, .045, body, false); rib.rotation.z = -a; }
+  for (const s of [-1, 1]) ilMesh(new THREE.BoxGeometry(.06, .04, .03), ilM('#FF8FB8', .4, '#A0304F'), s * .04, -.1, .015, body, false);
   const ring = ilMesh(new THREE.RingGeometry(.22, .3, 24), new THREE.MeshBasicMaterial({ color: '#FFFFFF', transparent: true, opacity: .75 }), 0, .02, 0, g, false); ring.rotation.x = -Math.PI / 2; g.userData.ring = ring; g.scale.setScalar(1.6); il.world.add(g); return g; }
 // (shells laid out where the figure can walk: on the island, not too near the middle nor each other)
 function islandShells() { for (const s of il.shells) il.world.remove(s); il.shells = []; il.found = 0; il.need = ISLAND.shells[game.level] || 3;
@@ -3260,7 +3282,7 @@ function showQuest() { const q = document.getElementById('quest'); q.hidden = !g
   q.innerHTML = il.found < il.need ? '<span class="q-bird">🦜</span>' + Array.from({ length: il.need }, (_, k) => `<span class="q-shell${k < il.found ? ' got' : ''}">🐚</span>`).join('') : '<span class="q-bird">🦜</span><span class="q-chest">🔓</span><span class="q-arrow">✨</span>'; }
 function islandStart() { islandBuild(); scene.add(il.world); holder.add(il.rig); il.rig.position.set(0, 0, 1.5); il.rig.rotation.set(0, 0, 0); il.rig.add(glb);
   Object.assign(il, { face: 0, target: null, walking: false }); game.rotY = 0; il.snap = true; floor.visible = false;
-  disc.visible = false; for (const el of [bgNear, bgFar, bgNear2]) el.hidden = true; stage.classList.add('island');
+  disc.visible = false; for (const el of [bgNear, bgFar, bgNear2]) el.hidden = true; stage.classList.add('island'); ilShadow(true);
   // (the walk: Mixamo's walking if fetched, figur-gaa.json - else the calm run, slowed a little)
   loadMove('staa').then(() => { if (game.on) runAnim('staa'); }); loadMove('gaa').then(a => { il.walk = a ? 'gaa' : 'loeb-b'; if (!a) loadMove('loeb-b'); });
   // (Mixamo's own, fetched by the user 03-11-2026: bending down for a shell, lifting the lid, looking about when it
@@ -3277,7 +3299,10 @@ function ilStand() { il.phase = ''; il.idle = 0; runAnim('staa'); }
 const ilFront = () => new THREE.Vector3(0, 0, 1).applyAxisAngle(new THREE.Vector3(0, 1, 0), il.chest.rotation.y).multiplyScalar(.9).add(il.chest.position);
 function ilFound() { il.found++; addStars(1); sfx('ding'); showQuest(); if (il.found >= il.need) { il.lock.visible = false; il.glow.visible = true; sfx('boing'); } }
 function islandStop() { if (!il.world?.parent) return; scene.remove(il.world); holder.add(glb); holder.remove(il.rig); stage.classList.remove('island'); document.getElementById('quest').hidden = true;
-  const a = glbActions[il.walk]; if (a) a.timeScale = 1; il.target = null; il.walking = false; floor.visible = true; setBg(bgNow); }
+  const a = glbActions[il.walk]; if (a) a.timeScale = 1; il.target = null; il.walking = false; floor.visible = true; ilShadow(false); setBg(bgNow); }
+// (on the island the shadows reach wider - palms and the chest beside the figure - back to the figure alone after)
+function ilShadow(on) { const c = key.shadow.camera; if (on) { il.sh0 ??= { left: c.left, right: c.right, top: c.top, bottom: c.bottom, far: c.far }; Object.assign(c, { left: -5, right: 5, top: 5, bottom: -5, far: 20 }); }
+  else if (il.sh0) Object.assign(c, il.sh0); c.updateProjectionMatrix(); if (!on) { key.position.set(2.5, 5, 4); key.target.position.set(0, 0, 0); key.target.updateMatrixWorld(); } }
 const ilRay = new THREE.Raycaster(), ilAt = new THREE.Vector2(), ilPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), ilHit = new THREE.Vector3();
 function islandTap(e) { const r = renderer.domElement.getBoundingClientRect(); ilAt.set((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1); ilRay.setFromCamera(ilAt, camera);
   if (!ilRay.ray.intersectPlane(ilPlane, ilHit)) return; const d = Math.hypot(ilHit.x, ilHit.z), max = ISLAND.r - .5; if (d > max + 1.5) return; // (the sea: nothing)
@@ -3296,9 +3321,12 @@ function islandTick(dt) { const t = performance.now() / 1000, p = il.rig.positio
   const wide = camera.aspect > .85; il.cam.set(p.x, wide ? 5.5 : 7.5, p.z + (wide ? 7.5 : 9.5)); il.look.set(p.x, .3, p.z - 1.2);
   if (il.snap) { il.snap = false; il.camNow.copy(il.cam); il.lookNow.copy(il.look); } else { il.camNow.lerp(il.cam, Math.min(1, dt * 3)); il.lookNow.lerp(il.look, Math.min(1, dt * 3)); }
   camera.position.copy(il.camNow); controls.target.copy(il.lookNow); camera.lookAt(controls.target);
+  // (the sun's shadows made round the figure wherever it walks - they were cut off away from the middle, the user said)
+  key.position.set(p.x + 2.5, 5, p.z + 4); key.target.position.set(p.x, 0, p.z); key.target.updateMatrixWorld();
   // (the sea's gentle rise and fall; the parrot bobbing its head; the shells' rings pulsing)
   il.sea.position.y = -.12 + Math.sin(t * 1.3) * .015; il.parrotHead.position.y = .47 + Math.abs(Math.sin(t * 2.5)) * .03; il.parrot.rotation.y = Math.sin(t * .7) * .4;
-  for (const s of il.shells) { s.rotation.y += dt; const k = (Math.sin(t * 3 + s.userData.t) + 1) / 2; s.userData.ring.scale.setScalar(.9 + .25 * k); s.userData.ring.material.opacity = .4 + .4 * k;
+  // (the shells face the camera, rocking a little - turning round they were seen edge on)
+  for (const s of il.shells) { s.rotation.y = Math.sin(t * 1.5 + s.userData.t) * .35; const k = (Math.sin(t * 3 + s.userData.t) + 1) / 2; s.userData.ring.scale.setScalar(.9 + .25 * k); s.userData.ring.material.opacity = .4 + .4 * k;
     // (a shell reached: the figure stops, turns to it and bends down for it - it is gone, with the ding and the star,
     // when the hand is at the ground; without the bending clip it is taken at once, walking on)
     if (s.visible && !il.phase && Math.hypot(s.position.x - p.x, s.position.z - p.z) < .7) {
