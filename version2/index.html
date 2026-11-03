@@ -55,6 +55,11 @@
   .namebox { display: flex; flex-direction: column; align-items: center; gap: 8px; }
   .namebox[hidden] { display: none; }
   .namerow { display: flex; align-items: center; gap: 8px; }
+  .panel .rec-btn { border-radius: 999px; padding: 10px 16px; font-size: 15px; }
+  .panel .rec-btn.rec { background: #E8384F; border-color: #E8384F; color: #fff; }
+  .panel .rec-del { width: 42px; height: 42px; padding: 0; border-radius: 50%; font-size: 18px; }
+  .rec-del[hidden] { display: none; }
+  .rec-note { margin: 0; min-height: 1.2em; font-size: 13px; font-weight: 600; color: #6B6191; text-align: center; }
   .panel #sayBtn { width: 46px; height: 46px; padding: 0; border-radius: 50%; font-size: 22px; line-height: 1; }
   #nameInput { font: 700 20px/1 system-ui, sans-serif; color: var(--ink); text-align: center; width: min(260px, 80vw); padding: 10px 14px; border: 2px solid var(--line); border-radius: 16px; background: var(--tile); }
   #nameInput:focus { outline: none; border-color: var(--accent); }
@@ -94,6 +99,11 @@
   @media (prefers-reduced-motion: no-preference) { .tap-hint { animation: nudge 1s ease-in-out infinite alternate; } }
   @keyframes nudge { to { transform: translateX(-50%) translateY(-6px); } }
   .top[hidden] { display: none; }
+  /* (a long press on an iPad must not mark things blue or open the menu to save or copy a picture - the children hold
+     their finger on the figure and the buttons; only the name box may still be written and marked in) */
+  .main, .main * { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+  .main input { -webkit-user-select: text; user-select: text; }
+  .main img { -webkit-user-drag: none; }
   #confetti { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 3; }
   @media (prefers-reduced-motion: no-preference) { .pop { animation: pop .5s ease; } }
   @keyframes pop { 40% { transform: scale(1.35) rotate(-12deg); } 100% { transform: none; } }
@@ -187,6 +197,8 @@
   <div class="box">
     <div class="choices" id="styles" hidden></div><div class="choices" id="styles2" hidden></div>
     <div class="namebox" id="nameBox" hidden><div class="namerow"><input id="nameInput" type="text" maxlength="10" autocomplete="off" placeholder="Skriv dit navn" aria-label="Navn på trøjen"><button id="sayBtn" aria-label="Sig navnet">🔊</button></div>
+      <div class="namerow"><button id="recBtn" class="rec-btn">🎤 <span>Indtal selv</span></button><button id="recDel" class="rec-del" aria-label="Slet din egen stemme" hidden>🗑</button></div>
+      <p class="rec-note" id="recNote"></p>
       <div class="badges" id="badges"></div></div>
     <div class="sliders" id="sliders">
       <label>Farve <input type="range" id="s-h" min="0" max="360" step="1"></label>
@@ -2245,12 +2257,40 @@ function footballPrints() { if (!hairBase) return; const { H } = hairBase.whole,
     g.fillStyle = light ? '#2B2153' : '#FFFFFF'; g.fillText('10', w / 2, h / 2 + h * .04); })); }
 // (the tab: a box to write the name in and the badges under it, in place of styles and colours)
 const nameInput = document.getElementById('nameInput'); nameInput.value = nameNow;
-nameInput.addEventListener('input', () => { nameNow = nameInput.value; chestName(); clearTimeout(sayTimer); sayTimer = setTimeout(sayName, 1100); });
-// (the name said aloud a moment after one stops writing - "Hej, jeg hedder Ida" - in a Danish voice if the device has
-// one; Enter or the speaker button says it at once. An iPad speaks only after a tap: the first tap in the box opens for it)
-let sayTimer = 0, sayOpen = false;
-function sayName() { const n = nameInput.value.trim(); if (!n || !window.speechSynthesis) return; speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(`Hej, jeg hedder ${n}`), v = speechSynthesis.getVoices().find(v => /^da/i.test(v.lang)); u.lang = 'da-DK'; if (v) u.voice = v; u.rate = .95; u.pitch = 1.15; speechSynthesis.speak(u); }
+nameInput.addEventListener('input', () => { nameNow = nameInput.value; chestName(); showRec(); clearTimeout(sayTimer); sayTimer = setTimeout(sayName, 1100); });
+// (the name said aloud a moment after one stops writing - "Hej, jeg hedder Ida" - Enter, the speaker button or a tap on
+// the figure's shirt says it at once. A child's own voice, recorded in the name box, is played for that name; else the
+// device's Danish voice, a little higher - the best one it has: an enhanced one, if downloaded on the iPad. An iPad
+// speaks only after a tap: the first tap in the box opens for it)
+let sayTimer = 0, sayOpen = false, playing = null;
+const VOICE_KEY = 'minimig3d.stemmer', voices = (() => { try { return JSON.parse(localStorage.getItem(VOICE_KEY)) || {}; } catch (e) { return {}; } })();
+const voiceFor = n => voices[n.trim().toLowerCase()];
+function sayName() { const n = nameInput.value.trim(); if (!n) return; const own = voiceFor(n);
+  if (own) { try { playing?.pause(); playing = new Audio(own); playing.play().catch(() => {}); } catch (e) {} return; }
+  if (!window.speechSynthesis) return; speechSynthesis.cancel();
+  const da = speechSynthesis.getVoices().filter(v => /^da/i.test(v.lang)), v = da.find(v => /premium|enhanced|forbedret|neural|natural/i.test(v.name)) || da.find(v => !v.localService) || da[0];
+  const u = new SpeechSynthesisUtterance(`Hej! Jeg hedder ${n}.`); u.lang = 'da-DK'; if (v) u.voice = v; u.rate = .92; u.pitch = 1.4; speechSynthesis.speak(u); }
+// (recording one's own voice: a tap on the microphone, up to four seconds, a tap again stops it; kept in this browser
+// only, for the name written)
+const recBtn = document.getElementById('recBtn'), recDel = document.getElementById('recDel'), recNote = document.getElementById('recNote'); let recorder = null;
+function showRec(note) { const has = !!voiceFor(nameInput.value || ''); recDel.hidden = !has; recNote.textContent = note || (has ? 'Din egen stemme siger navnet' : ''); }
+recBtn.onclick = async () => { if (recorder) { recorder.stop(); return; } const n = nameInput.value.trim(); if (!n) { nameInput.focus(); return; }
+  try { const stream = await navigator.mediaDevices.getUserMedia({ audio: true }), type = ['audio/mp4', 'audio/webm', ''].find(t => !t || MediaRecorder.isTypeSupported(t));
+    const r = recorder = new MediaRecorder(stream, type ? { mimeType: type } : undefined), parts = []; r.ondataavailable = e => e.data.size && parts.push(e.data);
+    r.onstop = () => { stream.getTracks().forEach(t => t.stop()); clearTimeout(r.timer); recorder = null; recBtn.classList.remove('rec'); recBtn.firstChild.textContent = '🎤 ';
+      const fr = new FileReader(); fr.onload = () => { voices[n.toLowerCase()] = fr.result; try { localStorage.setItem(VOICE_KEY, JSON.stringify(voices)); } catch (e) {} showRec(); sayName(); };
+      fr.readAsDataURL(new Blob(parts, { type: parts[0]?.type || type || 'audio/mp4' })); };
+    r.start(); r.timer = setTimeout(() => r.state === 'recording' && r.stop(), 4000); recBtn.classList.add('rec'); recBtn.firstChild.textContent = '⏹ '; showRec('Sig: Hej, jeg hedder ' + n + ' …');
+  } catch (e) { recorder = null; showRec('Mikrofonen kunne ikke bruges'); } };
+recDel.onclick = () => { delete voices[(nameInput.value || '').trim().toLowerCase()]; try { localStorage.setItem(VOICE_KEY, JSON.stringify(voices)); } catch (e) {} showRec(); };
+// (a tap - not a drag to turn it - on the figure's shirt says the name)
+const tapRay = new THREE.Raycaster(), tapAt = new THREE.Vector2(); let tapStart = null;
+renderer.domElement.addEventListener('pointerdown', e => { tapStart = { x: e.clientX, y: e.clientY, t: performance.now() }; });
+renderer.domElement.addEventListener('pointerup', e => { const s = tapStart; tapStart = null; if (!s || game.on || !nameInput.value.trim() || Math.hypot(e.clientX - s.x, e.clientY - s.y) > 10 || performance.now() - s.t > 450) return;
+  const rect = renderer.domElement.getBoundingClientRect(); tapAt.set((e.clientX - rect.left) / rect.width * 2 - 1, -(e.clientY - rect.top) / rect.height * 2 + 1); tapRay.setFromCamera(tapAt, camera);
+  const hit = tapRay.intersectObject(holder, true).find(h => h.object.isMesh && h.object.visible && h.object.material?.visible !== false); if (!hit) return;
+  const y = holder.worldToLocal(hit.point.clone()).y - (glb?.position.y || 0); if (y > 1.0 && y < 1.72) sayName(); });
+showRec();
 nameInput.addEventListener('focus', () => { if (window.speechSynthesis && !sayOpen) { sayOpen = true; speechSynthesis.speak(new SpeechSynthesisUtterance('')); } });
 nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') { clearTimeout(sayTimer); sayName(); nameInput.blur(); } });
 document.getElementById('sayBtn').onclick = () => { clearTimeout(sayTimer); sayName(); };
@@ -2274,7 +2314,7 @@ async function wearFigure(f) { const ask = ++dressingUp;
   for (const [part] of CHOICES) if (part !== 'hair') { if (f.picked[part]) { picked[part] = f.picked[part]; recolour(part, f.picked[part]); } else unpick(part); }
   if (f.picked.hair) { picked.hair = f.picked.hair; recolour('hair', f.picked.hair); } else unpick('hair');
   eyesNow = f.eyes; browsNow = f.brows; mouthNow = f.mouth; noseNow = f.nose; pyntNow = [...f.pynt]; nameNow = f.name; badgeNow = f.badge;
-  nameInput.value = nameNow; showBadges(); redrawBody(); showSwatches(); setItem(f.item || ''); earringsNow = f.earrings || ''; setEars(f.ears || 'oerer-naturlig'); setBg(f.bg || 'bg-sol');
+  nameInput.value = nameNow; showRec(); showBadges(); redrawBody(); showSwatches(); setItem(f.item || ''); earringsNow = f.earrings || ''; setEars(f.ears || 'oerer-naturlig'); setBg(f.bg || 'bg-sol');
   if (f.hair !== hairNow) await setHair(f.hair); if (ask !== dressingUp) return;
   // (a dress last: it takes off the top and trousers)
   for (const p of ['shirt', 'pants', 'socks', 'shoe', 'hat', 'glasses', 'dress']) { if (p === 'dress' && !f.wear.dress) continue; await setGarment(p, f.wear[p] || ''); if (ask !== dressingUp) return; }
@@ -2751,7 +2791,7 @@ function beachBall() { if (!beachMat) { const cv = document.createElement('canva
 // (a new level or another way to play: the game starts over in it)
 function setLevel(id) { game.level = id; renderStyles(); stopGame(true); startGame(game.mode); }
 const hud = document.getElementById('hud'), starsEl = document.getElementById('stars'), hintEl = document.getElementById('tapHint');
-function startGame(mode = game.mode) { if (game.on || !glb) return; game.mode = mode; const M = MODES[mode]; game.on = true; Object.assign(game, { stars: 0, jumpT: -1, busy: 0, cheer: 0, next: 1.5, hint: 4 });
+function startGame(mode = game.mode) { if (game.on || !glb) return; game.mode = mode; const M = MODES[mode]; game.on = true; Object.assign(game, { stars: 0, jumpT: -1, busy: 0, cheer: 0, cheerWait: false, rotY: M.face, next: 1.5, hint: 4 });
   if (!game.again) game.saved = { cam: camera.position.clone(), target: controls.target.clone(), anim, bg: bgNow, spin }; game.again = false; spin = false; document.getElementById('spin').classList.remove('on');
   goal = null; closeUp = false; controls.enabled = false; controls.maxDistance = 14; holder.position.x = M.x;
   // (the plain sun has no ground to run on: the football field then, until the game stops)
@@ -2772,19 +2812,22 @@ function runAnim(id, once) { const a = glbActions[id]; if (!a) return; anim = id
   a.reset(); a.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat, Infinity); a.clampWhenFinished = !!once; a.fadeIn(.15).play(); }
 function jump() { if (!game.audio) try { game.audio = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { game.audio = null; } game.audio?.resume?.();
   if (!game.on || game.jumpT >= 0 || game.busy || game.cheer || !glbActions[GAME.jump]) return; game.jumpT = 0; game.hint = 0; runAnim(GAME.jump, true); }
+function startCheer() { game.cheerWait = false; game.cheer = 2.4; runAnim(GAME.cheer); }
 function showStars(pop) { starsEl.textContent = '⭐ ' + game.stars; if (pop) { starsEl.classList.remove('pop'); void starsEl.offsetWidth; starsEl.classList.add('pop'); } }
 function gameTick(dt) { confettiTick(dt); if (!game.on || !glb) return; const r = GAME.r, M = MODES[game.mode], L = levelNow();
-  // (the figure facing the balls - turned to look out at the one playing when it cheers)
-  glb.rotation.y = game.cheer ? M.cheer : M.face;
+  // (the figure facing the balls - turned to look out at the one playing when it cheers, and back, smoothly)
+  game.rotY ??= M.face; game.rotY += ((game.cheer ? M.cheer : M.face) - game.rotY) * Math.min(1, dt * 8); glb.rotation.y = game.rotY;
   // (a wide picture - a phone held upright gives one - from nearer: the figure was small in it)
   const [cx, cy, cz, tx, ty, tz] = M.cam(camera.aspect > .85), halfW = Math.tan(camera.fov * Math.PI / 360) * Math.hypot(cx - tx, cz - tz) * camera.aspect;
   camera.position.set(cx, cy, cz); controls.target.set(tx, ty, tz); camera.lookAt(controls.target);
   if (game.hint > 0 && (game.hint -= dt) <= 0) hintEl.hidden = true; else if (game.hint <= 0) hintEl.hidden = true;
   // (the jump: up and down in a smooth arc over the ball, the run again when it lands)
-  let lift = 0; if (game.jumpT >= 0) { game.jumpT += dt; const s = game.jumpT / GAME.jumpFor; if (s >= 1) { game.jumpT = -1; runAnim(L.run); } else lift = GAME.high * 4 * s * (1 - s); }
+  // (the fifth star mostly comes in the air: the cheer then waits for the landing - before, the landing put the run back
+  // in the middle of the cheer, the figure running on the spot facing out, no balls, as if waiting for a tap)
+  let lift = 0; if (game.jumpT >= 0) { game.jumpT += dt; const s = game.jumpT / GAME.jumpFor; if (s >= 1) { game.jumpT = -1; if (game.cheerWait) startCheer(); else runAnim(L.run); } else lift = GAME.high * 4 * s * (1 - s); }
   glb.position.y += lift;
   if (game.busy && (game.busy -= dt) <= 0) { game.busy = 0; runAnim(L.run); }
-  if (game.cheer && (game.cheer -= dt) <= 0) { game.cheer = 0; runAnim(L.run); }
+  if (game.cheer && (game.cheer -= dt) <= 0) { game.cheer = 0; runAnim(L.run); game.next = Math.min(game.next, .6); }
   // (a new ball now and then - never while it cheers - a little sooner and quicker with more stars)
   const speed = Math.min(L.top, L.speed + game.stars * .04) * M.k, from = M.from(halfW, cx, cz) - (game.mode === 'side' ? M.x : 0);
   if (!game.cheer && (game.next -= dt) <= 0) { const b = game.pool.find(p => !p.group.visible); if (b) { game.next = L.gap + Math.random() * 1.4 - Math.min(L.gap * .3, game.stars * .03);
@@ -2793,12 +2836,16 @@ function gameTick(dt) { confettiTick(dt); if (!game.on || !glb) return; const r 
     if (b.hit) { b.vy -= 9.8 * dt; p.y += b.vy * dt; if (p.y < r) { p.y = r; b.vy *= -.45; } }
     M.put(p, b.u);
     // (it clears the ball when the feet are over it as it passes - forgiving: the ball counts a little smaller than it is)
-    if (!b.done && Math.abs(b.u) < .22 && lift < .34) { b.hit = b.done = true; b.v = 1.4; b.vy = 2.6; game.jumpT = -1; game.busy = 1.1; runAnim(GAME.trip, true); }
-    if (!b.done && b.u < -.32) { b.done = true; game.stars++; showStars(true); if (game.stars % 5 === 0) { game.cheer = 2.8; runAnim(GAME.cheer); celebrate(); } }
+    // (no stumbling over a ball while it cheers - it cannot jump then: such a ball just rolls by)
+    if (!b.done && Math.abs(b.u) < .22 && lift < .34 && !game.cheer) { b.hit = b.done = true; b.v = 1.4; b.vy = 2.6; game.jumpT = -1; game.busy = 1.1; runAnim(GAME.trip, true); }
+    if (!b.done && b.u < -.32) { b.done = true; if (game.cheer) continue; game.stars++; showStars(true);
+      if (game.stars % 5 === 0) { celebrate(); if (game.jumpT >= 0) game.cheerWait = true; else startCheer(); } }
     if (b.u < M.gone || b.u > from + .5) { b.group.visible = false; game.balls.splice(game.balls.indexOf(b), 1); } } }
 document.getElementById('stage').addEventListener('pointerdown', e => { if (game.on && !e.target.closest('button')) { e.preventDefault(); jump(); } });
 addEventListener('keydown', e => { if (game.on && e.code === 'Space' && !/INPUT/.test(e.target.tagName)) { e.preventDefault(); jump(); } });
 document.getElementById('gameExit').onclick = () => stopGame();
+// (no menu from a long press anywhere but in the name box)
+document.querySelector('.main').addEventListener('contextmenu', e => { if (e.target.tagName !== 'INPUT') e.preventDefault(); });
 // (the game's tab starts it and shows its levels in the box, as a movement's tab shows its kinds)
 document.querySelectorAll('[data-game]').forEach(b => b.onclick = () => { partNow = 'game-hop'; showSwatches(); stopGame(true); startGame(b.dataset.game); });
 function gameList() { try { return [LEVELS, game.level, setLevel]; } catch (e) { return null; } }
@@ -2843,8 +2890,11 @@ const stage = document.getElementById('stage');
 function resize() { const w = stage.clientWidth, h = stage.clientHeight; renderer.setSize(w, h, false); camera.aspect = w / h;
   farZ = w < h * .8 ? 6.6 : 7; if (!closeUp) camera.position.z = farZ; camera.updateProjectionMatrix(); bgShown = ''; }
 addEventListener('resize', resize); resize(); new ResizeObserver(resize).observe(stage);
+// (the game and the kick's ball each in a guard: an error in one of them must never stop the picture - three.js asks for
+// the next frame only after this one, so one error froze the figure for good)
 renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElapsedTime();
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
-  if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0); gameTick(dt); kickBall(dt); armsOut(); holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); });</script>
+  if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
+  try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } armsOut(); holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); });</script>
 </body>
 </html>
