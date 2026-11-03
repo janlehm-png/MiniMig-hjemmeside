@@ -162,6 +162,19 @@
   #myDance .md-play.stop { background: #E8384F; }
   #myDance .md-play[disabled] { background: #C9C2E0; }
   .md-clear { font-size: 1.2rem; padding: 8px 14px; border-radius: 16px; }
+  /* the dances kept: a name to write, then a card each - its first movements and its name; tap to dance it again */
+  .md-name { display: flex; gap: 8px; }
+  .md-name[hidden] { display: none; }
+  .md-name input { flex: 1; min-width: 0; font: 700 1rem/1.2 system-ui, sans-serif; padding: 10px 12px; border-radius: 12px; border: 2px solid #7A4DFF; }
+  #myDance .md-ok { font: 800 1rem/1.2 system-ui, sans-serif; padding: 8px 16px; border-radius: 12px; border: 0; background: #2FB872; color: #fff; }
+  .md-saved { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+  .md-saved:empty { display: none; }
+  .md-saved button { position: relative; min-width: 0; padding: 6px; display: grid; gap: 4px; justify-items: center; border-radius: 12px; font: 700 .8rem/1.2 system-ui, sans-serif; }
+  .md-saved .strip { display: flex; gap: 2px; }
+  .md-saved .strip img { width: 30px; height: 30px; border-radius: 6px; object-fit: cover; }
+  .md-saved .name { max-width: 100%; overflow-wrap: break-word; text-align: center; }
+  .md-saved .del { position: absolute; top: -7px; right: -7px; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: #E8384F; color: #fff; font-size: .7rem; }
+  .md-saved .del.armed { width: auto; padding: 0 7px; border-radius: 11px; }
   .player-list { display: grid; gap: 10px; }
   .player-row { display: flex; align-items: center; gap: 8px; padding: 8px; border: 2px solid var(--line); border-radius: 16px; background: #FFF8E1; }
   .player-row img, .player-row .face-none { width: 56px; height: 56px; border-radius: 12px; object-fit: cover; flex: none; font-size: 2rem; }
@@ -305,7 +318,9 @@
     <!-- Min dans: up to five movements in a row, danced one after the other (the user, 03-11-2026) -->
     <div class="mydance" id="myDance" hidden>
       <div class="md-row" id="mdRow"></div>
-      <div class="md-go"><button id="mdPlay" class="md-play">▶ Dans!</button><button id="mdClear" class="md-clear" aria-label="Start forfra">🗑</button></div>
+      <div class="md-go"><button id="mdPlay" class="md-play">▶ Dans!</button><button id="mdSave" class="md-clear" aria-label="Gem dansen">💾</button><button id="mdClear" class="md-clear" aria-label="Start forfra">🗑</button></div>
+      <div class="md-name" id="mdName" hidden><input id="mdNameInput" name="mm-dans-navn" type="text" maxlength="16" autocomplete="off" autocorrect="off" autocapitalize="sentences" spellcheck="false" enterkeyhint="done" data-1p-ignore data-lpignore="true" placeholder="Navn på dansen" aria-label="Navn på dansen"><button id="mdNameOk" class="md-ok">Gem ✓</button></div>
+      <div class="md-saved" id="mdSaved"></div>
       <div class="choices" id="mdPick"></div>
     </div>
     <!-- (the app's fixed colours as round buttons - back beside the sliders, the user wanted, 03-11-2026) -->
@@ -1327,9 +1342,27 @@ async function mdNext() { const list = mdList(); if (!md.on || !list.length) ret
 // (each moment: the next movement when this one is done; another movement or a game chosen ends the dance)
 function myDanceTick(dt) { if (!md.on || !md.cur) return; if (anim !== md.cur || game.on) { mdStop(); return; } if ((md.left -= dt) <= 0) mdNext(); }
 document.getElementById('myDanceTab').onclick = () => { partNow = 'move-mindans'; showSwatches(); lookFor(''); document.querySelectorAll('[data-anim]').forEach(x => x.classList.remove('on'));
-  document.getElementById('myDanceTab').classList.add('on'); showMyDance(); };
+  document.getElementById('myDanceTab').classList.add('on'); showMyDance(); showSavedDances(); };
 document.getElementById('mdPlay').onclick = () => md.on ? mdStop(true) : mdStart();
 document.getElementById('mdClear').onclick = () => { mdList().length = 0; savePlayers(); if (md.on) mdStop(true); showMyDance(); };
+// (the dances kept, under the player - the user, 03-11-2026: »gemme dansen med et navn under brugeren«. 💾 asks for a name
+// - Dans 1, 2 … if none is written; the same name again replaces it. A card each: tap to dance it again, ✕ twice to delete)
+const mdSaved = () => { try { return playerNow().dances ??= []; } catch (e) { return md.saved ??= []; } };
+function showSavedDances() { const box = document.getElementById('mdSaved'); box.innerHTML = '';
+  mdSaved().forEach((d, i) => { const b = document.createElement('button');
+    b.innerHTML = `<span class="strip">${d.list.slice(0, 3).map(id => `<img src="ikoner/valg-${id}.png" alt="">`).join('')}</span><span class="name">${esc(d.name)}</span><span class="del" aria-label="Slet dansen">✕</span>`;
+    b.onclick = e => { const del = e.target.closest('.del');
+      if (del) { if (!del.classList.contains('armed')) { del.classList.add('armed'); del.textContent = 'Slet?'; setTimeout(() => { del.classList.remove('armed'); del.textContent = '✕'; }, 2500); return; }
+        mdSaved().splice(i, 1); savePlayers(); showSavedDances(); return; }
+      const list = mdList(); list.length = 0; list.push(...d.list); savePlayers(); if (md.on) mdStop(); mdStart(); };
+    box.append(b); }); }
+document.getElementById('mdSave').onclick = () => { if (!mdList().length) { toast('Vælg nogle bevægelser først'); return; }
+  const box = document.getElementById('mdName'), input = document.getElementById('mdNameInput'); box.hidden = !box.hidden; if (!box.hidden) { input.value = ''; input.focus(); } };
+function mdSaveNow() { const input = document.getElementById('mdNameInput'), list = mdList(); if (!list.length) return; const all = mdSaved();
+  const name = input.value.trim() || `Dans ${all.length + 1}`, same = all.findIndex(d => d.name.toLowerCase() === name.toLowerCase()), d = { name, list: [...list] };
+  if (same >= 0) all[same] = d; else all.push(d); savePlayers(); input.blur(); document.getElementById('mdName').hidden = true; showSavedDances(); toast(`💾 ${name} er gemt`); }
+document.getElementById('mdNameOk').onclick = mdSaveNow;
+document.getElementById('mdNameInput').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); mdSaveNow(); } });
 
 // ---- the figure ----
 let glb = null, mixer = null; const glbActions = {};
