@@ -1011,7 +1011,7 @@ const exists = async u => { try { return (await fetch(u, { method: 'HEAD' })).ok
 // (Bob taken out 01-11-2026 - the user chose to go on without it; haar-bob.json/.jpg are kept, put back
 // ['haar-bob', 'Bob'] after Kort to have it again; Skaldet - no hair - taken out the same day, put back ['', 'Skaldet']
 // first to have it again)
-const HAIRS = [['haar-kort', 'Kort'], ['haar-kroeller', 'Krøller'], ['haar-strit', 'Strit'], ['haar-fletninger', 'Fletninger', { braids: true }], ['haar-fletning', 'Fletning']];
+const HAIRS = [['haar-kort', 'Kort', { snug: .55, ears: true }], ['haar-kroeller', 'Krøller'], ['haar-strit', 'Strit'], ['haar-fletninger', 'Fletninger', { braids: true }], ['haar-fletning', 'Fletning']];
 let hairNow = 'haar-kort', hairBase = null; const hairMeshes = {};
 // the figure's eye whites and head bone, measured once as it stands when loaded (in its T-pose, before it moves)
 function measureHead(fbx) {
@@ -1179,6 +1179,27 @@ function glassesParts(g, img, eyes, opts) {
   return lens.length; }
 // (hats and glasses are put on the same way: made on a bald head, set by the eyes, held by the head - with their own
 // colour list and part, and made a little bigger where they must sit over the hair)
+// (short hair closer to the head and clear of the ears - the user. snug: how much of the hair's thickness over the skull
+// is kept, each point drawn in towards the head's middle; ears: the hair over each ear lifted to just above it, so the
+// ear shows, the hair in front of it - by the cheek - left as it is)
+function hugHead(W, n, opts, a, eyeY, eyes) {
+  const { pts } = hairBase.whole, mx = (eyes[0].x + eyes[1].x) / 2, ez = (eyes[0].z + eyes[1].z) / 2, c = new THREE.Vector3(mx, eyeY + .25 * a, ez - .95 * a), v = new THREE.Vector3();
+  if (opts.snug) { // (the skull's size in each direction from the middle: the furthest of the body's head points there, in bins round it)
+    const NU = 48, NV = 24, R = new Float32Array(NU * NV), bin = d => { const u = Math.floor((Math.atan2(d.x, d.z) / Math.PI + 1) / 2 * NU) % NU, w = Math.min(NV - 1, Math.floor(Math.acos(Math.max(-1, Math.min(1, d.y))) / Math.PI * NV)); return w * NU + u; };
+    for (let j = 0; j < pts.length; j += 6) { const y = pts[j + 1]; if (y < eyeY - 1.1 * a || Math.abs(pts[j] - mx) > 1.3 * a) continue; v.set(pts[j], y, pts[j + 2]).sub(c); const r = v.length(), k = bin(v.normalize()); if (r > R[k]) R[k] = r; }
+    // (empty bins - under the jaw - from their neighbours, then each evened out with its neighbours)
+    for (let it = 0; it < 4; it++) for (let k = 0; k < R.length; k++) if (!R[k]) R[k] = Math.max(R[(k + 1) % R.length], R[(k + R.length - 1) % R.length]);
+    const S = R.map((_, k) => { const w = Math.floor(k / NU), u = k % NU; let s = 0, m = 0; for (let dw = -1; dw <= 1; dw++) for (let du = -1; du <= 1; du++) { const ww = w + dw; if (ww < 0 || ww >= NV) continue; s += R[ww * NU + (u + du + NU) % NU]; m++; } return s / m; });
+    for (let i = 0; i < n; i++) { v.fromArray(W, i * 3).sub(c); const r = v.length(), d = v.clone().normalize(), skull = S[bin(d)] + .015 * a; if (r <= skull) continue;
+      v.copy(d).multiplyScalar(skull + (r - skull) * opts.snug).add(c); W.set([v.x, v.y, v.z], i * 3); } }
+  if (opts.ears && earData) { const M = earData.M, A = hairBase.body.geometry.attributes.position;
+    for (const s of [-1, 1]) { const E = earData.sides[s]; let top = -Infinity, front = -Infinity, back = Infinity;
+      for (let k = 0; k < E.idx.length; k++) { if (E.w[k] < .3) continue; v.set(E.pos[k * 3], E.pos[k * 3 + 1], E.pos[k * 3 + 2]).applyMatrix4(M); top = Math.max(top, v.y); front = Math.max(front, v.z); back = Math.min(back, v.z); }
+      if (!isFinite(top)) continue; const lift = top + .07 * a, sm = t => { t = Math.min(1, Math.max(0, t)); return t * t * (3 - 2 * t); };
+      for (let i = 0; i < n; i++) { const x = W[i * 3], y = W[i * 3 + 1], z = W[i * 3 + 2]; if ((x - mx) * s < .6 * a || y >= lift) continue;
+        // (fully over the ear's length front to back, fading out a little beyond it; and only on the side of the head)
+        const f = sm((z - (back - .18 * a)) / (.15 * a)) * sm(((front + .06 * a) - z) / (.12 * a)) * sm(((x - mx) * s - .6 * a) / (.2 * a)); if (!f) continue;
+        W[i * 3 + 1] = y + (lift - .25 * (lift - y) * .3 - y) * f; } } } }
 async function loadHair(name, list = hairTexs, colourPart = 'hair', extra = {}) {
   const opts = HAIRS.find(h => h[0] === name)?.[2] || extra;
   if (!hairBase || !(await exists(`${name}.json${FIGUR_V}`))) return null;
@@ -1213,6 +1234,7 @@ async function loadHair(name, list = hairTexs, colourPart = 'hair', extra = {}) 
   // (braids: each is turned as one straight piece about where it starts, just under the ear, until it points down and
   // forward to rest on the front of the chest - a straight line, clear of the shoulder)
   const bend = opts.braids ? braidsForward(W, n, apart, eyeY, (mine[0].z + mine[1].z) / 2) : null;
+  if (opts.snug || opts.ears) hugHead(W, n, opts, apart, eyeY, mine);
   for (let i = 0; i < n; i++) { p.fromArray(W, i * 3); const w = weight[i];
     p.addScaledVector(shift[p.x < 0 ? 0 : 1], Math.min(1, 6 * (1 - w)));
     a.copy(p).applyMatrix4(hairBase.headBack); b.copy(p).applyMatrix4(hairBase.chestBack); a.lerp(b, 1 - w); pos.setXYZ(i, a.x, a.y, a.z);
@@ -2424,7 +2446,7 @@ async function loadFbx() { if (!(await exists('figur.fbx' + FIGUR_V))) return fa
   whitesByPlace(fbx);
   const box = new THREE.Box3().setFromObject(fbx), size = box.getSize(new THREE.Vector3()), k = 2.15 / size.y;
   fbx.scale.setScalar(k); fbx.position.y = -box.min.y * k; holder.add(fbx); glb = fbx;
-  measureHead(fbx); if (hairBase) setupBrows(hairBase.body); await setHair(hairNow); chestName(); setupEars();
+  measureHead(fbx); if (hairBase) setupBrows(hairBase.body); setupEars(); await setHair(hairNow); chestName();
   mixer = new THREE.AnimationMixer(fbx); if (fbx.animations[0]) glbActions.vink = mixer.clipAction(fbx.animations[0]);
   // (each movement preferably as figur-<name>.json: only the movement, taken out of Mixamo's file - a few hundred KB
   // where the .fbx, the whole figure again, is 19 MB)
