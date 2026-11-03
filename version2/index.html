@@ -54,6 +54,8 @@
   /* the name tab: the name written in a box, the badges as round buttons under it (as in the app) */
   .namebox { display: flex; flex-direction: column; align-items: center; gap: 8px; }
   .namebox[hidden] { display: none; }
+  .namerow { display: flex; align-items: center; gap: 8px; }
+  .panel #sayBtn { width: 46px; height: 46px; padding: 0; border-radius: 50%; font-size: 22px; line-height: 1; }
   #nameInput { font: 700 20px/1 system-ui, sans-serif; color: var(--ink); text-align: center; width: min(260px, 80vw); padding: 10px 14px; border: 2px solid var(--line); border-radius: 16px; background: var(--tile); }
   #nameInput:focus { outline: none; border-color: var(--accent); }
   .badges { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
@@ -178,11 +180,13 @@
   </div>
   <!-- the games, after the movements (the first: Hop over bolden, 03-11-2026) -->
   <div class="tabgroup" id="games">
-    <button data-game="hop"><img src="ikoner/spil-hop.png" alt=""><span>Hop over bolden</span></button>
+    <button data-game="side"><img src="ikoner/spil-hop.png" alt=""><span>Hop fra siden</span></button>
+    <button data-game="back"><img src="ikoner/spil-hop-bag.png" alt=""><span>Hop bagfra</span></button>
+    <button data-game="front"><img src="ikoner/spil-hop-for.png" alt=""><span>Hop forfra</span></button>
   </div>
   <div class="box">
     <div class="choices" id="styles" hidden></div><div class="choices" id="styles2" hidden></div>
-    <div class="namebox" id="nameBox" hidden><input id="nameInput" type="text" maxlength="10" autocomplete="off" placeholder="Skriv dit navn" aria-label="Navn på trøjen">
+    <div class="namebox" id="nameBox" hidden><div class="namerow"><input id="nameInput" type="text" maxlength="10" autocomplete="off" placeholder="Skriv dit navn" aria-label="Navn på trøjen"><button id="sayBtn" aria-label="Sig navnet">🔊</button></div>
       <div class="badges" id="badges"></div></div>
     <div class="sliders" id="sliders">
       <label>Farve <input type="range" id="s-h" min="0" max="360" step="1"></label>
@@ -2241,7 +2245,15 @@ function footballPrints() { if (!hairBase) return; const { H } = hairBase.whole,
     g.fillStyle = light ? '#2B2153' : '#FFFFFF'; g.fillText('10', w / 2, h / 2 + h * .04); })); }
 // (the tab: a box to write the name in and the badges under it, in place of styles and colours)
 const nameInput = document.getElementById('nameInput'); nameInput.value = nameNow;
-nameInput.addEventListener('input', () => { nameNow = nameInput.value; chestName(); });
+nameInput.addEventListener('input', () => { nameNow = nameInput.value; chestName(); clearTimeout(sayTimer); sayTimer = setTimeout(sayName, 1100); });
+// (the name said aloud a moment after one stops writing - "Hej, jeg hedder Ida" - in a Danish voice if the device has
+// one; Enter or the speaker button says it at once. An iPad speaks only after a tap: the first tap in the box opens for it)
+let sayTimer = 0, sayOpen = false;
+function sayName() { const n = nameInput.value.trim(); if (!n || !window.speechSynthesis) return; speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(`Hej, jeg hedder ${n}`), v = speechSynthesis.getVoices().find(v => /^da/i.test(v.lang)); u.lang = 'da-DK'; if (v) u.voice = v; u.rate = .95; u.pitch = 1.15; speechSynthesis.speak(u); }
+nameInput.addEventListener('focus', () => { if (window.speechSynthesis && !sayOpen) { sayOpen = true; speechSynthesis.speak(new SpeechSynthesisUtterance('')); } });
+nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') { clearTimeout(sayTimer); sayName(); nameInput.blur(); } });
+document.getElementById('sayBtn').onclick = () => { clearTimeout(sayTimer); sayName(); };
 for (const [b, e] of BADGES) { const btn = document.createElement('button'); btn.className = 'badge'; btn.dataset.badge = b; btn.textContent = e || '✕'; btn.setAttribute('aria-label', b);
   btn.onclick = () => { badgeNow = b; chestName(); showBadges(); }; document.getElementById('badges').append(btn); }
 function showBadges() { document.querySelectorAll('#badges button').forEach(b => b.classList.toggle('on', b.dataset.badge === badgeNow)); }
@@ -2399,7 +2411,11 @@ function bgZoom() { if (bgNow === 'bg-sol') return; const im = bgImgs[bgNow.slic
   let h = (fy - hy) / .7, w = h * im.naturalWidth / im.naturalHeight, x = fx - w / 2;
   // (in the game the figure stands off to the left: the picture then as wide as the whole figure's half, the ground still
   // under its feet)
-  if (game.on) { if (w < W * 1.05) { h *= W * 1.05 / w; w = W * 1.05; } x = (W - w) / 2; }
+  if (game.on) { if (w < W * 1.05) { h *= W * 1.05 / w; w = W * 1.05; } x = (W - w) / 2;
+    // (seen from behind or in front, the balls come from far off: the picture's skyline - about half way down it - then
+    // where the far ground is, or they seemed to come flying through the air)
+    if (game.mode !== 'side') { const [, sky] = toPx(bgHead.set(camera.position.x, camera.position.y, camera.position.z - 1000).project(camera));
+      if (fy - sky > 0) { h = Math.max(h, (fy - sky) / (.85 - .5)); w = h * im.naturalWidth / im.naturalHeight; x = (W - w) / 2; } } }
   h = Math.round(h); w = Math.round(w); x = Math.round(x); const y = Math.round(fy - .85 * h), s = `${w} ${h} ${x} ${y}`;
   if (s === bgShown) return; bgShown = s; bgNear.style.width = w + 'px'; bgNear.style.height = h + 'px'; bgNear.style.left = x + 'px'; bgNear.style.top = y + 'px'; }
 // ---- Ører, as in the app: the ears' shape - natural, small, big, sticking out, elf ears - and earrings at the lobes ----
@@ -2705,32 +2721,49 @@ function kickBall(dt) { const b = kick.ball; if (!b) return; const k = kicks[ani
 // the space bar) jumps - Mixamo's Running Jump with a lift on top, high enough to clear a ball. Cleared: a star. Hit:
 // it stumbles and runs on - no losing, it is for 3-6 year olds. Every fifth star it cheers. Slow at first, a little
 // quicker with each star. Runs in the figure's own clothes, hair and thing in the hand
-// (the balls: big beach balls, about twice the football - the user, 03-11-2026 - so the jump is higher and a little
-// longer. Levels, chosen in the box under the game's tab: how quick the balls roll and how often they come, each a
-// little quicker with every star up to its top)
-const GAME = { run: 'loeb-b', jump: 'loebehop', trip: 'snubl', cheer: 'jubel', x: -.25, camX: .55, camY: 1.55, dist: 10, jumpFor: 1.05, high: 1.05, r: .28 };
-const LEVELS = [['niveau-let', 'Let', { speed: 1.2, top: 1.8, gap: 3.2 }], ['niveau-mellem', 'Mellem', { speed: 1.6, top: 2.5, gap: 2.5 }], ['niveau-svaer', 'Svær', { speed: 2.2, top: 3.2, gap: 1.8 }]];
-const game = { on: false, level: 'niveau-let', stars: 0, balls: [], pool: [], jumpT: -1, busy: 0, cheer: 0, next: 0, hint: 0, saved: null };
+// (the balls: beach balls, a good deal bigger than the football - the user, 03-11-2026, first twice it, then a fifth
+// smaller. Levels, chosen in the box under the game's tabs: how the figure runs - Sjovt løb, Løb, Løb stærkt - how quick
+// the balls come and how often, each a little quicker with every star up to its top)
+const GAME = { jump: 'loebehop', trip: 'snubl', cheer: 'jubel', jumpFor: 1.05, high: .9, r: .224 };
+const LEVELS = [['niveau-let', 'Let', { run: 'loeb', speed: 1.2, top: 1.8, gap: 3.2 }], ['niveau-mellem', 'Mellem', { run: 'loeb-b', speed: 1.6, top: 2.5, gap: 2.5 }],
+  ['niveau-svaer', 'Svær', { run: 'loeb-a', speed: 2.2, top: 3.2, gap: 1.8 }]];
+// Three ways to play (the user, 03-11-2026): from the side, the balls rolling in from the right; from behind, the figure
+// running into the picture with its back to the one playing and the balls coming from the far ground; from the front,
+// the figure running towards the one playing and the balls coming in at the bottom of the picture, rolling away to it.
+// Each ball goes along its own line to the figure: u is how far it has left (below 0: past it). x: where the figure
+// stands; face: which way it looks; cam(wide): from where it is seen; from: how far off a ball starts; k: how much
+// quicker the balls go than the level says (the far ground is far); gone: where a ball past it is put away
+const MODES = {
+  side: { x: -.25, face: Math.PI / 2, cheer: .3, cam: w => [.55, 1.6, w ? 7.5 : 10, .55, 1.55, 0], from: (halfW, camX) => camX + halfW + .4 + .25, k: 1, gone: -2.6,
+    put: (p, u) => p.set(-.25 + u, p.y, 0), roll: (g, d) => { g.rotation.z += d; } },
+  back: { x: 0, face: Math.PI, cheer: 0, cam: w => [.9, 1.9, w ? 6 : 8, 0, .9, -4], from: () => 13, k: 2, gone: -2,
+    put: (p, u) => p.set(0, p.y, -u), roll: (g, d) => { g.rotation.x += d; } },
+  front: { x: 0, face: 0, cheer: 0, cam: w => [.8, 1.6, w ? 6 : 7.6, 0, 1, 0], from: (halfW, camX, camZ) => camZ - .9, k: 1.3, gone: -8,
+    put: (p, u) => p.set(0, p.y, u), roll: (g, d) => { g.rotation.x -= d; } } };
+const game = { on: false, mode: 'side', level: 'niveau-let', stars: 0, balls: [], pool: [], jumpT: -1, busy: 0, cheer: 0, next: 0, hint: 0, saved: null, again: false };
+const levelNow = () => LEVELS.find(l => l[0] === game.level)[2];
 // (a beach ball: segments in four bright colours and white, a white cap at each end - drawn once for all four balls)
 let beachMat = null;
 function beachBall() { if (!beachMat) { const cv = document.createElement('canvas'); cv.width = 512; cv.height = 256; const c = cv.getContext('2d'), cols = ['#E8384F', '#FFFFFF', '#3D8BFF', '#FFFFFF', '#FFC233', '#FFFFFF', '#2FB872', '#FFFFFF'];
     cols.forEach((col, i) => { c.fillStyle = col; c.fillRect(i * 64, 0, 64, 256); }); c.fillStyle = '#FFFFFF'; c.fillRect(0, 0, 512, 22); c.fillRect(0, 234, 512, 22);
     const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; beachMat = new THREE.MeshStandardMaterial({ map: t, roughness: .3 }); }
   const g = new THREE.Group(), m = new THREE.Mesh(new THREE.SphereGeometry(GAME.r, 40, 28), beachMat); m.castShadow = true; m.rotation.x = Math.PI / 2; g.add(m); g.visible = false; scene.add(g); return { group: g }; }
-function setLevel(id) { game.level = id; renderStyles(); if (game.on) { stopGame(true); startGame(); } else startGame(); }
+// (a new level or another way to play: the game starts over in it)
+function setLevel(id) { game.level = id; renderStyles(); stopGame(true); startGame(game.mode); }
 const hud = document.getElementById('hud'), starsEl = document.getElementById('stars'), hintEl = document.getElementById('tapHint');
-function startGame() { if (game.on || !glb) return; const restart = !!game.saved && holder.position.x === GAME.x; game.on = true; Object.assign(game, { stars: 0, jumpT: -1, busy: 0, cheer: 0, next: 1.5, hint: 4 });
-  if (!restart) game.saved = { cam: camera.position.clone(), target: controls.target.clone(), anim, bg: bgNow, spin }; spin = false; document.getElementById('spin').classList.remove('on');
-  goal = null; closeUp = false; controls.enabled = false; controls.maxDistance = 12; holder.position.x = GAME.x;
+function startGame(mode = game.mode) { if (game.on || !glb) return; game.mode = mode; const M = MODES[mode]; game.on = true; Object.assign(game, { stars: 0, jumpT: -1, busy: 0, cheer: 0, next: 1.5, hint: 4 });
+  if (!game.again) game.saved = { cam: camera.position.clone(), target: controls.target.clone(), anim, bg: bgNow, spin }; game.again = false; spin = false; document.getElementById('spin').classList.remove('on');
+  goal = null; closeUp = false; controls.enabled = false; controls.maxDistance = 14; holder.position.x = M.x;
   // (the plain sun has no ground to run on: the football field then, until the game stops)
   if (bgNow === 'bg-sol') setBg('bg-fodboldbane');
-  // (four balls made once and used again - each is a drawn picture, too slow to make for every ball)
-  while (game.pool.length < 4) game.pool.push(beachBall());
-  Promise.all([GAME.run, GAME.jump, GAME.trip, GAME.cheer].map(loadMove)).then(() => { if (game.on) runAnim(GAME.run); });
-  hud.hidden = false; hintEl.hidden = false; document.querySelector('.top').hidden = true; document.getElementById('stage').classList.add('playing'); showStars(); document.querySelectorAll('[data-game]').forEach(b => b.classList.add('on')); }
-// (again: only stopped to start at another level - the figure's own setting not put back yet)
+  // (five balls made once and used again)
+  while (game.pool.length < 5) game.pool.push(beachBall());
+  const run = levelNow().run; Promise.all([run, GAME.jump, GAME.trip, GAME.cheer].map(loadMove)).then(() => { if (game.on) runAnim(run); });
+  hud.hidden = false; hintEl.hidden = false; document.querySelector('.top').hidden = true; document.getElementById('stage').classList.add('playing'); showStars();
+  document.querySelectorAll('[data-game]').forEach(b => b.classList.toggle('on', b.dataset.game === mode)); }
+// (again: only stopped to start once more - at another level or in another way - the figure's own setting not put back)
 function stopGame(again) { if (!game.on) return; game.on = false; for (const b of game.pool) b.group.visible = false; game.balls = []; confetti.length = 0;
-  if (again) { game.on = false; return; } holder.position.x = 0;
+  if (again) { game.again = true; return; } holder.position.x = 0;
   hud.hidden = true; hintEl.hidden = true; document.querySelector('.top').hidden = false; document.getElementById('stage').classList.remove('playing'); document.querySelectorAll('[data-game]').forEach(b => b.classList.remove('on'));
   if (game.saved.bg !== bgNow) setBg(game.saved.bg); camera.position.copy(game.saved.cam); controls.target.copy(game.saved.target); controls.enabled = true; controls.maxDistance = 10;
   if (game.saved.spin) document.getElementById('spin').click(); playMove(game.saved.anim); }
@@ -2740,33 +2773,34 @@ function runAnim(id, once) { const a = glbActions[id]; if (!a) return; anim = id
 function jump() { if (!game.audio) try { game.audio = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { game.audio = null; } game.audio?.resume?.();
   if (!game.on || game.jumpT >= 0 || game.busy || game.cheer || !glbActions[GAME.jump]) return; game.jumpT = 0; game.hint = 0; runAnim(GAME.jump, true); }
 function showStars(pop) { starsEl.textContent = '⭐ ' + game.stars; if (pop) { starsEl.classList.remove('pop'); void starsEl.offsetWidth; starsEl.classList.add('pop'); } }
-function gameTick(dt) { confettiTick(dt); if (!game.on || !glb) return; const r = GAME.r, figX = GAME.x, L = LEVELS.find(l => l[0] === game.level)[2];
-  // (seen from the side, the figure facing the balls - turned to look out at the one playing when it cheers)
-  glb.rotation.y = game.cheer ? .3 : Math.PI / 2;
+function gameTick(dt) { confettiTick(dt); if (!game.on || !glb) return; const r = GAME.r, M = MODES[game.mode], L = levelNow();
+  // (the figure facing the balls - turned to look out at the one playing when it cheers)
+  glb.rotation.y = game.cheer ? M.cheer : M.face;
   // (a wide picture - a phone held upright gives one - from nearer: the figure was small in it)
-  const dist = camera.aspect > .85 ? 7.5 : GAME.dist, halfW = Math.tan(camera.fov * Math.PI / 360) * dist * camera.aspect, right = GAME.camX + halfW + .4, left = GAME.camX - halfW - .5;
-  camera.position.set(GAME.camX, GAME.camY + .05, dist); controls.target.set(GAME.camX, GAME.camY, 0); camera.lookAt(controls.target);
+  const [cx, cy, cz, tx, ty, tz] = M.cam(camera.aspect > .85), halfW = Math.tan(camera.fov * Math.PI / 360) * Math.hypot(cx - tx, cz - tz) * camera.aspect;
+  camera.position.set(cx, cy, cz); controls.target.set(tx, ty, tz); camera.lookAt(controls.target);
   if (game.hint > 0 && (game.hint -= dt) <= 0) hintEl.hidden = true; else if (game.hint <= 0) hintEl.hidden = true;
   // (the jump: up and down in a smooth arc over the ball, the run again when it lands)
-  let lift = 0; if (game.jumpT >= 0) { game.jumpT += dt; const s = game.jumpT / GAME.jumpFor; if (s >= 1) { game.jumpT = -1; runAnim(GAME.run); } else lift = GAME.high * 4 * s * (1 - s); }
+  let lift = 0; if (game.jumpT >= 0) { game.jumpT += dt; const s = game.jumpT / GAME.jumpFor; if (s >= 1) { game.jumpT = -1; runAnim(L.run); } else lift = GAME.high * 4 * s * (1 - s); }
   glb.position.y += lift;
-  if (game.busy && (game.busy -= dt) <= 0) { game.busy = 0; runAnim(GAME.run); }
-  if (game.cheer && (game.cheer -= dt) <= 0) { game.cheer = 0; runAnim(GAME.run); }
+  if (game.busy && (game.busy -= dt) <= 0) { game.busy = 0; runAnim(L.run); }
+  if (game.cheer && (game.cheer -= dt) <= 0) { game.cheer = 0; runAnim(L.run); }
   // (a new ball now and then - never while it cheers - a little sooner and quicker with more stars)
-  const speed = Math.min(L.top, L.speed + game.stars * .04);
+  const speed = Math.min(L.top, L.speed + game.stars * .04) * M.k, from = M.from(halfW, cx, cz) - (game.mode === 'side' ? M.x : 0);
   if (!game.cheer && (game.next -= dt) <= 0) { const b = game.pool.find(p => !p.group.visible); if (b) { game.next = L.gap + Math.random() * 1.4 - Math.min(L.gap * .3, game.stars * .03);
-    Object.assign(b, { vx: -speed, vy: 0, hit: false, done: false }); b.group.position.set(right, r, 0); b.group.visible = true; game.balls.push(b); } }
-  for (const b of [...game.balls]) { const p = b.group.position; p.x += b.vx * dt; b.group.rotation.z -= b.vx * dt / r;
+    Object.assign(b, { u: from, v: -speed, vy: 0, hit: false, done: false }); b.group.position.y = r; M.put(b.group.position, b.u); b.group.visible = true; game.balls.push(b); } }
+  for (const b of [...game.balls]) { const p = b.group.position; b.u += b.v * dt; M.roll(b.group, -b.v * dt / r);
     if (b.hit) { b.vy -= 9.8 * dt; p.y += b.vy * dt; if (p.y < r) { p.y = r; b.vy *= -.45; } }
+    M.put(p, b.u);
     // (it clears the ball when the feet are over it as it passes - forgiving: the ball counts a little smaller than it is)
-    if (!b.done && Math.abs(p.x - figX) < .24 && lift < .42) { b.hit = b.done = true; b.vx = 1.4; b.vy = 2.6; game.jumpT = -1; game.busy = 1.1; runAnim(GAME.trip, true); }
-    if (!b.done && p.x < figX - .35) { b.done = true; game.stars++; showStars(true); if (game.stars % 5 === 0) { game.cheer = 2.8; runAnim(GAME.cheer); celebrate(); } }
-    if (p.x < left || p.x > right + .5) { b.group.visible = false; game.balls.splice(game.balls.indexOf(b), 1); } } }
+    if (!b.done && Math.abs(b.u) < .22 && lift < .34) { b.hit = b.done = true; b.v = 1.4; b.vy = 2.6; game.jumpT = -1; game.busy = 1.1; runAnim(GAME.trip, true); }
+    if (!b.done && b.u < -.32) { b.done = true; game.stars++; showStars(true); if (game.stars % 5 === 0) { game.cheer = 2.8; runAnim(GAME.cheer); celebrate(); } }
+    if (b.u < M.gone || b.u > from + .5) { b.group.visible = false; game.balls.splice(game.balls.indexOf(b), 1); } } }
 document.getElementById('stage').addEventListener('pointerdown', e => { if (game.on && !e.target.closest('button')) { e.preventDefault(); jump(); } });
 addEventListener('keydown', e => { if (game.on && e.code === 'Space' && !/INPUT/.test(e.target.tagName)) { e.preventDefault(); jump(); } });
 document.getElementById('gameExit').onclick = () => stopGame();
 // (the game's tab starts it and shows its levels in the box, as a movement's tab shows its kinds)
-document.querySelectorAll('[data-game]').forEach(b => b.onclick = () => { partNow = 'game-' + b.dataset.game; showSwatches(); startGame(); });
+document.querySelectorAll('[data-game]').forEach(b => b.onclick = () => { partNow = 'game-hop'; showSwatches(); stopGame(true); startGame(b.dataset.game); });
 function gameList() { try { return [LEVELS, game.level, setLevel]; } catch (e) { return null; } }
 // Every fifth star: confetti shot up from two cannons at the bottom corners of the picture, with little stars among it,
 // and a short ta-da (only once the child has tapped: a page may not sound before that)
