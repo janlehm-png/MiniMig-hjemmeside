@@ -135,6 +135,18 @@
   .hud-face img, .hud-face .face-none { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; display: grid; border: 3px solid var(--tile); box-shadow: 0 2px 10px rgba(58, 46, 92, .2); }
   .hud-face .face-none { font-size: 1.4rem; }
   .players-btn { justify-self: center; }
+  /* the star shop (the user, 03-11-2026): a special thing shows a lock and its price in stars until the child buys it */
+  .choices button.locked { position: relative; }
+  .choices button.locked img { filter: saturate(.35) brightness(.92); }
+  .choices .price { position: absolute; top: 2px; right: 2px; padding: 2px 6px; border-radius: 10px; background: #FFC233; color: #3A2E5C;
+    font: 800 .72rem/1.2 system-ui, sans-serif; box-shadow: 0 1px 4px rgba(58, 46, 92, .25); }
+  .choices .price.own { background: #2FB872; color: #fff; }
+  .shop button { position: relative; }
+  .buy-pic { display: grid; place-items: center; }
+  .buy-pic img { width: 150px; height: 150px; border-radius: 18px; object-fit: cover; background: #FFF8E1; }
+  .buy-price { text-align: center; font: 800 2.2rem/1.1 system-ui, sans-serif; }
+  .buy-yes { justify-self: center; font: 800 1.3rem/1.2 system-ui, sans-serif; padding: 12px 30px; border-radius: 16px; background: #2FB872; color: #fff; border: 0; }
+  .buy-yes[disabled] { background: #C9C2E0; }
   .player-list { display: grid; gap: 10px; }
   .player-row { display: flex; align-items: center; gap: 8px; padding: 8px; border: 2px solid var(--line); border-radius: 16px; background: #FFF8E1; }
   .player-row img, .player-row .face-none { width: 56px; height: 56px; border-radius: 12px; object-fit: cover; flex: none; font-size: 2rem; }
@@ -329,8 +341,21 @@
     <div class="star-total" id="starTotal">⭐ 0</div>
     <p class="note" id="starNote"></p>
     <table class="star-table" id="starTable"></table>
-    <p class="note">🏆 = din rekord i det spil på det niveau. Snart kan du bruge dine stjerner til at låse nye ting op.</p>
+    <p class="note">🏆 = din rekord i det spil på det niveau.</p>
+    <h3>🔒 Stjernebutik</h3>
+    <div class="choices shop" id="shopList"></div>
+    <p class="note">Tryk på en ting med 🔒 for at købe den for dine stjerner. Hvert barn køber for sig selv.</p>
     <button class="share-off players-btn" id="playersBtn">👪 Spillere – for voksne</button>
+  </div>
+</div>
+<!-- the star shop: a locked thing's picture, its price, a big green button to buy it with the child's stars -->
+<div class="sheet" id="buySheet" hidden>
+  <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="buyTitle">
+    <div class="sheet-head"><h2 id="buyTitle">Køb</h2><button class="sheet-x" data-close aria-label="Luk">✕</button></div>
+    <div class="buy-pic"><img id="buyImg" alt=""></div>
+    <div class="buy-price" id="buyPrice"></div>
+    <p class="note" id="buyNote" style="text-align:center"></p>
+    <button class="buy-yes" id="buyYes">Køb ✓</button>
   </div>
 </div>
 <!-- who plays: with two players or more, a game asks first - each child taps their own picture -->
@@ -467,8 +492,30 @@ function renderStyles() { const all = typeof styleLists === 'undefined' ? null :
   box.innerHTML = ''; box.hidden = !list || !hairBase;
   if (box.hidden) continue; const [items, now, set] = list;
   // (now: the chosen one - or, for Pynt, the list of all chosen, Ingen lit when it is empty)
-  for (const [n, label] of items) { const b = iconButton(`ikoner/valg-${n || 'ingen-' + none}.png`, label);
-    b.classList.toggle('on', Array.isArray(now) ? (n.endsWith('-ingen') ? !now.length : now.includes(n)) : n === now); b.onclick = () => set(n); box.append(b); } } }
+  for (const [n, label] of items) { const b = iconButton(`ikoner/valg-${n || 'ingen-' + none}.png`, label), locked = !owns(n);
+    if (locked) { b.classList.add('locked'); b.append(Object.assign(document.createElement('span'), { className: 'price', textContent: '🔒 ⭐' + SHOP[n] })); }
+    b.classList.toggle('on', Array.isArray(now) ? (n.endsWith('-ingen') ? !now.length : now.includes(n)) : n === now); b.onclick = () => locked ? askBuy(n) : set(n); box.append(b); } } }
+// ---- the star shop (the user, 03-11-2026: "Særlige ting låses"): the most special things cost stars, the rest stays free.
+// Each child buys with their own stars and owns what they bought (score.owned); a thing worn already, or on a saved
+// figure, stays on - only choosing it again asks for the stars ----
+const SHOP = { 'hat-krone': 20, 'kjole-prinsesse': 30, 'kjole-havfrue': 30, 'sko-hoej': 15, 'briller-hjerte': 10, 'briller-stjerne': 10,
+  'ting-tryllestav': 15, 'bg-slot': 15, 'bg-slikland': 20, 'bg-rummet': 20 };
+function owns(n) { if (!SHOP[n]) return true; try { return !!playerNow().score.owned?.includes(n); } catch (e) { return true; } }
+// (the tab a shop thing belongs to: its name and how to put it on)
+function shopThing(n) { for (const l of Object.values(styleLists())) { const it = Array.isArray(l?.[0]) && l[0].find(i => i[0] === n); if (it) return { label: it[1], set: l[2] }; } return { label: '', set: null }; }
+// (tapping a locked thing: with two players or more, who buys first; then its picture, the price and the stars the child
+// has - the green button buys it when there are enough, with confetti, and puts it on; not enough: how many are missing)
+let buying = null;
+function askBuy(n, who) { if (who) setPlayer(who); else if (players.list.length > 1) { document.getElementById('whoTitle').textContent = 'Hvem køber?'; askWho(() => askBuy(n, players.now)); return; }
+  const s = playerNow().score, have = s.total - s.spent, price = SHOP[n]; buying = n;
+  document.getElementById('buyImg').src = `ikoner/valg-${n}.png`; document.getElementById('buyTitle').textContent = shopThing(n).label;
+  document.getElementById('buyPrice').textContent = '⭐ ' + price; document.getElementById('buyYes').disabled = have < price;
+  document.getElementById('buyNote').textContent = have >= price ? `Du har ⭐ ${have}` : `Du har ⭐ ${have} – du mangler ⭐ ${price - have}. Spil et spil og saml flere!`;
+  document.getElementById('buySheet').hidden = false; }
+document.getElementById('buyYes').onclick = () => { const s = playerNow().score, price = SHOP[buying]; if (!buying || s.total - s.spent < price) return;
+  s.spent += price; (s.owned ??= []).push(buying); savePlayers(); document.getElementById('buySheet').hidden = true; celebrate();
+  const n = buying; buying = null; if (hairBase && !game.on) shopThing(n).set?.(n); renderStyles(); if (!document.getElementById('starSheet').hidden) showStarSheet(); };
+document.getElementById('whoSheet').addEventListener('click', () => setTimeout(() => { if (document.getElementById('whoSheet').hidden) document.getElementById('whoTitle').textContent = 'Hvem spiller?'; }, 0));
 // the sliders: colour (hue), strength (saturation) and light, set from the part's colour now; moving one colours it
 const S = { h: document.getElementById('s-h'), s: document.getElementById('s-s'), l: document.getElementById('s-l') };
 function slidersFrom(hexColour) { const hsl = {}; new THREE.Color().setStyle(hexColour, THREE.SRGBColorSpace).getHSL(hsl, THREE.SRGBColorSpace);
@@ -3423,6 +3470,11 @@ function showStarSheet(id = starShown || players.now) { starShown = id; const p 
   document.getElementById('starNote').textContent = s.games ? `Samlet i ${s.games} spil på denne enhed.` : 'Spil et af spillene for at samle stjerner.';
   document.getElementById('starTable').innerHTML = `<tr><th></th>${LEVELS.map(([id, name]) => `<th><img src="ikoner/valg-${id}.png" alt="${name}"></th>`).join('')}</tr>` +
     GAME_NAMES.map(([g, name]) => `<tr><td>${name}</td>${LEVELS.map(([id]) => { const b = s.best[g]?.[id]; return b ? `<td>🏆 ${b}</td>` : '<td class="none">–</td>'; }).join('')}</tr>`).join('');
+  // (the shop: every special thing, ✓ when this child owns it, the lock and the price when not - tapping one buys it)
+  const shop = document.getElementById('shopList'); shop.innerHTML = '';
+  for (const [n, price] of Object.entries(SHOP)) { const b = iconButton(`ikoner/valg-${n}.png`, shopThing(n).label), own = s.owned?.includes(n);
+    b.classList.toggle('locked', !own); b.append(Object.assign(document.createElement('span'), { className: 'price' + (own ? ' own' : ''), textContent: own ? '✓' : '🔒 ⭐' + price }));
+    b.onclick = () => { if (!own) askBuy(n, p.id); }; shop.append(b); }
   document.getElementById('starSheet').hidden = false; }
 const esc = t => String(t || '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 document.getElementById('starBtn').onclick = () => { starShown = null; showStarSheet(); };
