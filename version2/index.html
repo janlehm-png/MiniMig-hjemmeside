@@ -314,9 +314,10 @@
   </div>
   <!-- the games, after the movements (the first: Hop over bolden, 03-11-2026) -->
   <div class="tabgroup" id="games">
-    <button data-game="side"><img src="ikoner/spil-hop.png" alt=""><span>Hop fra siden</span></button>
-    <button data-game="back"><img src="ikoner/spil-hop-bag.png" alt=""><span>Hop bagfra</span></button>
-    <button data-game="front"><img src="ikoner/spil-hop-for.png" alt=""><span>Hop forfra</span></button>
+    <!-- (the three hop games named Hop og løb 1, 2, 3 - the user, 03-11-2026) -->
+    <button data-game="side"><img src="ikoner/spil-hop.png" alt=""><span>Hop og løb 1</span></button>
+    <button data-game="back"><img src="ikoner/spil-hop-bag.png" alt=""><span>Hop og løb 2</span></button>
+    <button data-game="front"><img src="ikoner/spil-hop-for.png" alt=""><span>Hop og løb 3</span></button>
     <button data-game="skate"><img src="ikoner/spil-skate.png" alt=""><span>Skate&shy;board</span></button>
     <button data-game="island"><img src="ikoner/spil-oe.png" alt=""><span>Skatte&shy;jagt</span></button>
     <button data-game="sea"><img src="ikoner/spil-hav.png" alt=""><span>Svømme&shy;verden</span></button>
@@ -3797,8 +3798,9 @@ function pkBuild() { if (pk.world) return; const w = pk.world = new THREE.Group(
   ilMesh(new THREE.SphereGeometry(.28, 20, 16), fur, 0, 0, 0, head); ilMesh(new THREE.SphereGeometry(.12, 14, 10), pale, 0, -.07, .22, head).scale.set(1, .8, .8);
   ilMesh(new THREE.SphereGeometry(.045, 10, 8), dark, 0, -.03, .32, head); for (const s of [-1, 1]) { ilMesh(new THREE.SphereGeometry(.035, 10, 8), dark, s * .1, .06, .24, head, false);
     ilMesh(new THREE.SphereGeometry(.1, 14, 10), fur, s * .2, .2, -.02, head); ilMesh(new THREE.SphereGeometry(.055, 10, 8), pale, s * .2, .2, .04, head, false); }
-  pk.arms = []; for (const s of [-1, 1]) { const arm = new THREE.Group(); arm.position.set(s * .32, .86, 0); arm.rotation.z = s * 1.05; k.add(arm);
-    ilMesh(new THREE.CylinderGeometry(.08, .09, .42, 12), fur, 0, .2, 0, arm); ilMesh(new THREE.SphereGeometry(.13, 14, 10), ilM('#FFC233', .5), 0, .45, 0, arm).scale.set(1, 1.1, .7); pk.arms.push(arm); }
+  pk.arms = []; for (const s of [-1, 1]) { const arm = new THREE.Group(); arm.position.set(s * .32, .86, 0); arm.rotation.z = -s * 1.0; k.add(arm);
+    // (long arms - the user, 03-11-2026: short ones looked as if it could never reach the ball)
+    ilMesh(new THREE.CylinderGeometry(.075, .09, .72, 12), fur, 0, .35, 0, arm); ilMesh(new THREE.SphereGeometry(.14, 14, 10), ilM('#FFC233', .5), 0, .76, 0, arm).scale.set(1, 1.1, .7); pk.arms.push(arm); }
   pk.rig = new THREE.Group(); }
 function pkStart() { pkBuild(); scene.add(pk.world); holder.add(pk.rig); pk.rig.add(glb); pk.rig.position.set(0, 0, 0); game.rotY = Math.PI;
   floor.visible = false; disc.visible = false; for (const el of [bgNear, bgFar, bgNear2]) el.hidden = true; stage.classList.add('pitch'); controls.maxDistance = 40;
@@ -3818,7 +3820,8 @@ function pkTap(e) { if (pk.phase !== 'aim' || !kicks.spark || !kicks['spark-hoej
   const id = pkKick(), a = glbActions[id]; pk.ball.group.position.copy(pkRest()); runAnim(id, true); a.time = Math.max(0, kicks[id].contact - .55); pk.phase = 'kick'; }
 function pkTick(dt) { const t = performance.now() / 1000, L = pkLevel(), kp = pk.keeper, b = pk.ball.group;
   // (the camera far enough back that the whole goal is in the picture, however narrow it is)
-  const tanH = Math.tan(camera.fov * Math.PI / 360), D = Math.max(10.5, (PK.halfW + 1) / (tanH * camera.aspect));
+  // (never nearer than 13 m from the goal: on a wide picture it came so close the figure hid the goal again)
+  const tanH = Math.tan(camera.fov * Math.PI / 360), D = Math.max(13, (PK.halfW + 1) / (tanH * camera.aspect));
   // (from above and a little to the side, the goal seen over the figure's head)
   camera.position.set(.9, 3.2, D + PK.goalZ); controls.target.set(0, .7, PK.goalZ + 1.8); camera.lookAt(controls.target);
   // (facing the goal - turned round to the one playing while it cheers a goal)
@@ -3842,7 +3845,7 @@ function pkTick(dt) { const t = performance.now() / 1000, L = pkLevel(), kp = pk
     if (pk.saved) { b.position.y = Math.max(kick.r, b.position.y - dt * 2.5); b.position.z = Math.min(PK.goalZ + 1.2, b.position.z + dt * 1.2); b.rotation.x += dt * 5; }
     else { pk.netBack.position.z = -1 - .35 * Math.exp(-pk.t * 3) * Math.abs(Math.cos(pk.t * 8)); b.position.z = Math.max(PK.goalZ - .85, b.position.z - dt * 1.5); b.position.y = Math.max(kick.r, b.position.y - dt * 2); }
     if (pk.t > 2.4) { pk.foot++; runAnim('staa'); pkReady(); } } }
-const GAME_NAMES = [['side', 'Hop fra siden'], ['back', 'Hop bagfra'], ['front', 'Hop forfra'], ['skate', 'Skateboard'], ['island', 'Skattejagt'], ['sea', 'Svømmeverden'], ['hide', 'Gemmeleg'], ['pk', 'Straffespark']];
+const GAME_NAMES = [['side', 'Hop og løb 1'], ['back', 'Hop og løb 2'], ['front', 'Hop og løb 3'], ['skate', 'Skateboard'], ['island', 'Skattejagt'], ['sea', 'Svømmeverden'], ['hide', 'Gemmeleg'], ['pk', 'Straffespark']];
 // (with two players or more: their pictures on top, the one shown marked - tapping another shows that child's stars)
 let starShown = null;
 function showStarSheet(id = starShown || players.now) { starShown = id; const p = players.list.find(q => q.id === id) || playerNow(), s = p.score, have = s.total - s.spent, many = players.list.length > 1;
@@ -3943,6 +3946,9 @@ for (const b of document.querySelectorAll('[data-sound-all]')) b.onclick = () =>
 document.addEventListener('visibilitychange', () => { try { if (document.hidden) game.audio?.suspend(); else if (musicPlaying()) game.audio?.resume(); } catch (e) {} });
 function musicPlaying() { return musicOn && ((isDance(anim) && sound.dance) || (game.on && sound.game) || (md.on && sound.dance)); }
 function musicTick() { musicBtn.hidden = !(isDance(anim) && sound.dance) && !(game.on && sound.game) && !(md.on && sound.dance); musicBtn.textContent = musicOn ? '🎵' : '🔇';
+  // (the music's volume shut at once when no music should play - on a computer the notes already on their way went on
+  // a moment after the dance stopped, the user said 03-11-2026 - and opened again when it should)
+  const gate = musicPlaying(); if (music.out && gate !== music.gate) { music.gate = gate; const c = music.out.context; music.out.gain.cancelScheduledValues(c.currentTime); music.out.gain.setTargetAtTime(gate ? .4 : 0, c.currentTime, gate ? .01 : .02); }
   // (the games - and Min dans, its movements of all lengths - a steady beat of their own, 112 to the minute, by the
   // sound's own clock)
   if (game.on || md.on) { const ctx = game.audio; if (!musicOn || !(game.on ? sound.game : sound.dance) || !ctx || ctx.state !== 'running') { music.at = 0; return; } const stepT = 60 / 112 / 4;
