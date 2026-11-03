@@ -53,6 +53,10 @@
     .tabgroup { flex-wrap: nowrap; flex: none; }
     .tabgroup button { width: 54px; flex: none; }
     .stage .top { display: none; }
+    /* (the movements in one row along the foot of the picture, pushed sideways if they do not all fit) */
+    .moves { flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; scrollbar-width: none; pointer-events: auto; gap: 4px; }
+    .moves button { flex: none; padding: 2px 4px 3px; font-size: 10px; }
+    .moves button img { width: 28px; height: 28px; }
   }
   /* the name tab: the name written in a box, the badges as round buttons under it (as in the app) */
   .namebox { display: flex; flex-direction: column; align-items: center; gap: 8px; }
@@ -143,6 +147,9 @@
   <button data-anim="vink" class="pose"><img src="ikoner/stilling-vink.png" alt=""><span>Vink</span></button>
   <button data-anim="hop" class="pose"><img src="ikoner/stilling-hop.png" alt=""><span>Hop</span></button>
   <button data-anim="dans" class="pose"><img src="ikoner/stilling-dans.png" alt=""><span>Dans</span></button>
+  <button data-anim="loeb" class="pose" hidden><img src="ikoner/stilling-loeb.png" alt=""><span>Løb</span></button>
+  <button data-anim="kolboette" class="pose" hidden><img src="ikoner/stilling-kolboette.png" alt=""><span>Kolbøtte</span></button>
+  <button data-anim="spark" class="pose" hidden><img src="ikoner/stilling-spark.png" alt=""><span>Spark</span></button>
   <button id="spin" class="pose"><img src="ikoner/stilling-drej.png" alt=""><span>Drej rundt</span></button>
 </div>
 </div>
@@ -2589,15 +2596,47 @@ async function loadFbx() { if (!(await exists('figur.fbx' + FIGUR_V))) return fa
   // (each kept on the spot: the hips may go up and down, not off to the side or away - it dances on the yellow disc)
   const onTheSpot = clip => { const t = clip.tracks.find(tr => tr.name === 'mixamorigHips.position'); if (!t) return clip;
     for (let i = 0; i < t.values.length; i += 3) { t.values[i] = t.values[0]; t.values[i + 2] = t.values[2]; } return clip; };
-  for (const name of ['vink', 'staa', 'hop', 'dans']) {
+  // (løb, kolbøtte and spark added 03-11-2026 from Mixamo: Goofy Running, Sprinting Forward Roll, Kick Soccerball;
+  // figur-loebehop.json and figur-snubl.json - Running Jump, Jogging Stumble - wait for the running game)
+  for (const name of ['vink', 'staa', 'hop', 'dans', 'loeb', 'kolboette', 'spark']) {
     if (await exists(`figur-${name}.json${FIGUR_V}`)) glbActions[name] = mixer.clipAction(onTheSpot(THREE.AnimationClip.parse(await (await fetch(`figur-${name}.json${FIGUR_V}`)).json())));
     else if (name !== 'vink' && await exists(`figur-${name}.fbx${FIGUR_V}`)) { const a = await load(`figur-${name}.fbx`); if (a.animations[0]) glbActions[name] = mixer.clipAction(a.animations[0]); } }
   // (no standing movement yet: it stands as in the first frame of the waving, not in the T-pose it was made in)
   if (!glbActions.staa && glbActions.vink) { const still = glbActions.vink.getClip().clone(); still.tracks.forEach(t => { t.times = t.times.slice(0, 1); t.values = t.values.slice(0, t.getValueSize()); }); still.duration = 0; glbActions.staa = mixer.clipAction(still); }
   for (const b of document.querySelectorAll('[data-anim]')) b.hidden = !glbActions[b.dataset.anim];
-  (glbActions[anim] || glbActions.staa)?.play();
   // (set on the floor as it stands in its movement - Mixamo moves the hips in its own units, the T-pose's box says little)
-  mixer.update(0); fbx.updateMatrixWorld(true); const now = new THREE.Box3().setFromObject(fbx, true); fbx.position.y -= now.min.y; holder.visible = true; return true; }
+  const sample = (name, t) => { mixer.stopAllAction(); const a = glbActions[name]; a.reset().play(); a.time = t; mixer.update(0); fbx.updateMatrixWorld(true); };
+  sample('staa', 0); fbx.position.y -= new THREE.Box3().setFromObject(fbx, true).min.y; fbx.updateMatrixWorld(true); kick.baseY = fbx.position.y;
+  if (glbActions.kolboette) roll.lift = rollLift(sample);
+  if (glbActions.spark) kickSetup(sample);
+  mixer.stopAllAction(); (glbActions[anim] || glbActions.staa)?.reset().play(); holder.visible = true; return true; }
+// Kolbøtte: Mixamo's roll keeps the hips at their height, so the head went down through the floor. Measured once at 30
+// moments how far the body then reaches under the floor; the figure is lifted by that much while it rolls
+const roll = { lift: null };
+function rollLift(sample) { const clip = glbActions.kolboette.getClip(), n = 30, lift = [];
+  for (let k = 0; k <= n; k++) { sample('kolboette', clip.duration * k / n); lift.push(Math.max(0, -new THREE.Box3().setFromObject(hairBase.body, true).min.y)); }
+  return t => { const f = Math.min(n, Math.max(0, t / clip.duration * n)), k = Math.floor(f); return lift[k] + (lift[Math.min(n, k + 1)] - lift[k]) * (f - k); }; }
+// Spark: a football rolls in from the side and lies in front of the kicking foot; the foot meets it and it flies off,
+// up and out towards the one looking. Mixamo's kick is only a short half second: a still standing start is put in front
+// of it (the ball rolling in then) and a moment after it (the ball flying), so it kicks every two and a half seconds
+const kick = { ball: null, contact: 0, rest: new THREE.Vector3(), baseY: 0, pre: .9, post: 1.1 }, kv = new THREE.Vector3();
+function kickSetup(sample) { const clip = glbActions.spark.getClip();
+  // (moved in place: the movement already holds these very lists)
+  for (const t of clip.tracks) for (let i = 0; i < t.times.length; i++) t.times[i] += kick.pre;
+  clip.duration += kick.pre + kick.post;
+  // (the kicking foot: the one that comes furthest forward; the contact its fastest moment forward)
+  const toes = ['mixamorigRightToeBase', 'mixamorigLeftToeBase'].map(n => bone(n)).filter(Boolean), n = 40, track = toes.map(() => []);
+  for (let k = 0; k <= n; k++) { sample('spark', kick.pre + (clip.duration - kick.pre - kick.post) * k / n); toes.forEach((b, i) => track[i].push(holder.worldToLocal(b.getWorldPosition(new THREE.Vector3())))); }
+  const foot = track.reduce((a, b) => Math.max(...b.map(p => p.z)) > Math.max(...a.map(p => p.z)) ? b : a);
+  let best = 1, speed = -1; for (let k = 1; k <= n; k++) { const v = foot[k].z - foot[k - 1].z; if (v > speed) { speed = v; best = k; } }
+  kick.contact = kick.pre + (clip.duration - kick.pre - kick.post) * best / n; kick.ball = makeItem('fodbold'); kick.ball.group.scale.setScalar(.75);
+  scene.remove(kick.ball.group); holder.add(kick.ball.group); kick.r = .158 * .75; kick.rest.set(foot[best].x, kick.r, foot[best].z + kick.r * .6); }
+function kickBall(dt) { const b = kick.ball; if (!b) return; const a = glbActions.spark, on = anim === 'spark' && a?.isRunning(); b.group.visible = on; if (!on) return;
+  const t = a.time, g = b.group, r = kick.r;
+  if (t < kick.contact) { // (rolling in from the right, slowing down, turning as it rolls)
+    const s = Math.max(0, 1 - t / (kick.contact * .85)), d = 2.2 * s * s; g.position.set(kick.rest.x + d, r, kick.rest.z); g.rotation.set(0, 0, d / r); }
+  else { const s = t - kick.contact; // (off up and out, towards the one looking and a little to the side, spinning)
+    g.position.set(kick.rest.x - 1.2 * s, r + 3.2 * s - 4.9 * s * s * .9, kick.rest.z + 4.5 * s); g.position.y = Math.max(r, g.position.y); g.rotation.x += dt * 14; } }
 loadFbx().then(ok => { document.getElementById('tag').textContent = ok ? 'Version 2 · træk for at dreje, knib for at zoome' : 'Figuren kunne ikke hentes'; });
 
 // ---- render loop ----
@@ -2620,6 +2659,6 @@ function resize() { const w = stage.clientWidth, h = stage.clientHeight, moves =
 addEventListener('resize', resize); resize(); new ResizeObserver(resize).observe(stage);
 renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElapsedTime();
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
-  if (mixer) mixer.update(dt); armsOut(); holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); });</script>
+  if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (anim === 'kolboette' && roll.lift ? roll.lift(glbActions.kolboette.time) : 0); kickBall(dt); armsOut(); holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); });</script>
 </body>
 </html>
