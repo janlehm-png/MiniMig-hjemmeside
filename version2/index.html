@@ -147,6 +147,21 @@
   .buy-price { text-align: center; font: 800 2.2rem/1.1 system-ui, sans-serif; }
   .buy-yes { justify-self: center; font: 800 1.3rem/1.2 system-ui, sans-serif; padding: 12px 30px; border-radius: 16px; background: #2FB872; color: #fff; border: 0; }
   .buy-yes[disabled] { background: #C9C2E0; }
+  /* Min dans: the row of five places, the one dancing now ringed in yellow; a ✕ on each to take it out */
+  .mydance { display: grid; gap: 10px; }
+  .mydance[hidden] { display: none; }
+  .md-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+  .md-row button { aspect-ratio: 1; min-width: 0; padding: 3px; position: relative; display: grid; place-items: center; border: 2px dashed #C9C2E0; border-radius: 12px;
+    background: #FFF8E1; color: #B7AFD3; font: 800 1.3rem/1 system-ui, sans-serif; }
+  .md-row button img { width: 100%; height: 100%; object-fit: cover; border-radius: 9px; }
+  .md-row button.full { border: 2px solid #7A4DFF; }
+  .md-row button.now { box-shadow: 0 0 0 4px #FFC233; }
+  .md-row .x { position: absolute; top: -7px; right: -7px; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: #E8384F; color: #fff; font-size: .7rem; }
+  .md-go { display: flex; gap: 10px; justify-content: center; }
+  #myDance .md-play { font: 800 1.2rem/1.2 system-ui, sans-serif; padding: 10px 30px; border-radius: 16px; border: 0; background: #2FB872; color: #fff; }
+  #myDance .md-play.stop { background: #E8384F; }
+  #myDance .md-play[disabled] { background: #C9C2E0; }
+  .md-clear { font-size: 1.2rem; padding: 8px 14px; border-radius: 16px; }
   .player-list { display: grid; gap: 10px; }
   .player-row { display: flex; align-items: center; gap: 8px; padding: 8px; border: 2px solid var(--line); border-radius: 16px; background: #FFF8E1; }
   .player-row img, .player-row .face-none { width: 56px; height: 56px; border-radius: 12px; object-fit: cover; flex: none; font-size: 2rem; }
@@ -271,6 +286,7 @@
     <button data-anim="kolboette"><img src="ikoner/stilling-kolboette.png" alt=""><span>Kolbøtte</span></button>
     <button data-anim="spark"><img src="ikoner/stilling-spark.png" alt=""><span>Spark</span></button>
     <button id="spin"><img src="ikoner/stilling-drej.png" alt=""><span>Drej rundt</span></button>
+    <button id="myDanceTab"><img src="ikoner/stilling-mindans.png" alt=""><span>Min dans</span></button>
   </div>
   <!-- the games, after the movements (the first: Hop over bolden, 03-11-2026) -->
   <div class="tabgroup" id="games">
@@ -286,6 +302,12 @@
       <div class="namerow"><button id="recBtn" class="rec-btn">🎤 <span>Indtal selv</span></button><button id="recDel" class="rec-del" aria-label="Slet din egen stemme" hidden>🗑</button></div>
       <p class="rec-note" id="recNote"></p>
       <div class="badges" id="badges"></div></div>
+    <!-- Min dans: up to five movements in a row, danced one after the other (the user, 03-11-2026) -->
+    <div class="mydance" id="myDance" hidden>
+      <div class="md-row" id="mdRow"></div>
+      <div class="md-go"><button id="mdPlay" class="md-play">▶ Dans!</button><button id="mdClear" class="md-clear" aria-label="Start forfra">🗑</button></div>
+      <div class="choices" id="mdPick"></div>
+    </div>
     <!-- (the app's fixed colours as round buttons - back beside the sliders, the user wanted, 03-11-2026) -->
     <div class="swatches" id="swatches"></div>
     <div class="sliders" id="sliders">
@@ -481,7 +503,7 @@ function showSwatches() { const move = /^(move|game)-/.test(partNow); if (!move)
   const sw = document.getElementById('swatches'), list = noColour ? [] : PALETTES[partNow] || PALETTES.cloth; sw.hidden = !list.length; sw.innerHTML = '';
   for (const c of list) { const b = document.createElement('button'); b.style.background = c; b.setAttribute('aria-label', c); b.classList.toggle('on', (picked[partNow] || START[partNow] || '').toLowerCase() === c.toLowerCase());
     b.onclick = () => { apply(partNow, c); slidersFrom(c); sw.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); }; sw.append(b); }
-  document.getElementById('nameBox').hidden = partNow !== 'name';
+  document.getElementById('nameBox').hidden = partNow !== 'name'; document.getElementById('myDance').hidden = partNow !== 'move-mindans';
   document.querySelectorAll('#parts [data-part]').forEach(b => b.classList.toggle('on', b.dataset.part === partNow));
   renderStyles(); }
 // (the styles as buttons above the colours: hairstyles while Hår is chosen, tops while Trøje is; none before the figure -
@@ -1273,13 +1295,41 @@ const holder = new THREE.Group(); holder.visible = false; scene.add(holder); let
 // (a movement's tab plays its kind chosen last and shows its kinds in the box)
 document.querySelectorAll('[data-anim]').forEach(b => b.onclick = () => { partNow = 'move-' + b.dataset.anim; showSwatches(); lookFor(''); playMove(moveNow[b.dataset.anim]); });
 // (choosing a movement ends the game, if one is going)
-async function playMove(id) { const g = Object.keys(MOVES).find(k => MOVES[k].some(m => m[0] === id)); if (!g) return; stopGame(); moveNow[g] = id; anim = id;
+async function playMove(id) { const g = Object.keys(MOVES).find(k => MOVES[k].some(m => m[0] === id)); if (!g) return; stopGame(); if (md.on) mdStop(); moveNow[g] = id; anim = id;
   // (a dance's music may start: the sound opened by this tap - an iPad plays nothing a tap did not open)
   if (g === 'dans' && musicOn) soundOut()?.resume();
-  document.querySelectorAll('[data-anim]').forEach(x => x.classList.toggle('on', x.dataset.anim === g)); renderStyles();
+  document.querySelectorAll('[data-anim]').forEach(x => x.classList.toggle('on', x.dataset.anim === g)); document.getElementById('myDanceTab').classList.remove('on'); renderStyles();
   if (!glb) return; const a = await loadMove(id); if (!a || anim !== id) return;
   Object.values(glbActions).forEach(x => x !== a && x.fadeOut(.3)); a.setLoop(THREE.LoopRepeat, Infinity); a.clampWhenFinished = false; a.timeScale = 1; a.reset().fadeIn(.3).play(); }
 document.getElementById('spin').onclick = e => { spin = !spin; e.currentTarget.classList.toggle('on', spin); };
+// ---- Min dans (the user, 03-11-2026: "Lav din egen dans"): the child taps up to five movements into a row - each shown
+// as it is added - and ▶ dances them one after the other, round and round, to the games' steady beat. A long dance is
+// cut to 6 seconds in the row. The row is each player's own, kept with their stars. No kicks: they need the ball ----
+const MD_MAX = 5, MD_LONG = 6, MD_PICK = [...MOVES.vink, ...MOVES.hop, ...MOVES.dans, ...MOVES.loeb, ...MOVES.jubel, ...MOVES.kolboette];
+const md = { on: false, k: -1, cur: null, left: 0, spare: [] };
+const mdList = () => { try { return playerNow().dance ??= []; } catch (e) { return md.spare; } };
+function showMyDance() { const list = mdList(), row = document.getElementById('mdRow'); row.innerHTML = '';
+  for (let i = 0; i < MD_MAX; i++) { const id = list[i], b = document.createElement('button');
+    if (id) { b.className = 'full' + (md.on && md.k === i ? ' now' : ''); b.innerHTML = `<img src="ikoner/valg-${id}.png" alt=""><span class="x">✕</span>`; b.setAttribute('aria-label', 'Tag ud');
+      b.onclick = () => { list.splice(i, 1); savePlayers(); if (md.on) mdStop(); showMyDance(); }; }
+    else { b.textContent = i + 1; b.disabled = true; } row.append(b); }
+  const play = document.getElementById('mdPlay'); play.disabled = !list.length; play.textContent = md.on ? '⏹ Stop' : '▶ Dans!'; play.classList.toggle('stop', md.on);
+  const pick = document.getElementById('mdPick'); if (!pick.childElementCount) for (const [id, label] of MD_PICK) { const b = iconButton(`ikoner/valg-${id}.png`, label); b.onclick = () => mdAdd(id); pick.append(b); } }
+// (a movement added: shown at once, unless the dance is going - then it joins it next time round)
+async function mdAdd(id) { const list = mdList(); if (list.length >= MD_MAX) { toast('Der er plads til 5 – tryk ✕ for at tage en ud'); return; }
+  list.push(id); savePlayers(); showMyDance(); const a = await loadMove(id); if (a && !md.on && !game.on && partNow === 'move-mindans') runAnim(id); }
+async function mdStart() { const list = mdList(); if (!list.length) return; stopGame(); if (musicOn) soundOut()?.resume(); md.on = true; md.k = -1; showMyDance();
+  await Promise.all(list.map(loadMove)); if (md.on) mdNext(); }
+function mdStop(stand) { md.on = false; md.cur = null; if (stand) runAnim('staa'); showMyDance(); }
+async function mdNext() { const list = mdList(); if (!md.on || !list.length) return mdStop(true); md.left = Infinity; md.k = (md.k + 1) % list.length; const id = list[md.k], a = await loadMove(id); if (!md.on) return; if (!a) return mdNext();
+  // (a short one - a wave, a hop - done over again until it has had 2.4 seconds, too quick to see otherwise)
+  md.cur = id; runAnim(id); const d = a.getClip().duration; md.left = (d > MD_LONG + 1 ? MD_LONG : d * Math.max(1, Math.ceil(2.4 / d))) - .2; if (partNow === 'move-mindans') showMyDance(); }
+// (each moment: the next movement when this one is done; another movement or a game chosen ends the dance)
+function myDanceTick(dt) { if (!md.on || !md.cur) return; if (anim !== md.cur || game.on) { mdStop(); return; } if ((md.left -= dt) <= 0) mdNext(); }
+document.getElementById('myDanceTab').onclick = () => { partNow = 'move-mindans'; showSwatches(); lookFor(''); document.querySelectorAll('[data-anim]').forEach(x => x.classList.remove('on'));
+  document.getElementById('myDanceTab').classList.add('on'); showMyDance(); };
+document.getElementById('mdPlay').onclick = () => md.on ? mdStop(true) : mdStart();
+document.getElementById('mdClear').onclick = () => { mdList().length = 0; savePlayers(); if (md.on) mdStop(true); showMyDance(); };
 
 // ---- the figure ----
 let glb = null, mixer = null; const glbActions = {};
@@ -3555,10 +3605,11 @@ for (const b of document.querySelectorAll('[data-sound]')) b.onclick = () => set
 for (const b of document.querySelectorAll('[data-sound-all]')) b.onclick = () => setSound(null, b.dataset.soundAll === '1');
 // (no sound from a page one cannot see - another tab or the app in the background)
 document.addEventListener('visibilitychange', () => { try { if (document.hidden) game.audio?.suspend(); else if (musicPlaying()) game.audio?.resume(); } catch (e) {} });
-function musicPlaying() { return musicOn && ((isDance(anim) && sound.dance) || (game.on && sound.game)); }
-function musicTick() { musicBtn.hidden = !(isDance(anim) && sound.dance) && !(game.on && sound.game); musicBtn.textContent = musicOn ? '🎵' : '🔇';
-  // (the games: a steady beat of their own, 112 to the minute, by the sound's own clock)
-  if (game.on) { const ctx = game.audio; if (!musicOn || !sound.game || !ctx || ctx.state !== 'running') { music.at = 0; return; } const stepT = 60 / 112 / 4;
+function musicPlaying() { return musicOn && ((isDance(anim) && sound.dance) || (game.on && sound.game) || (md.on && sound.dance)); }
+function musicTick() { musicBtn.hidden = !(isDance(anim) && sound.dance) && !(game.on && sound.game) && !(md.on && sound.dance); musicBtn.textContent = musicOn ? '🎵' : '🔇';
+  // (the games - and Min dans, its movements of all lengths - a steady beat of their own, 112 to the minute, by the
+  // sound's own clock)
+  if (game.on || md.on) { const ctx = game.audio; if (!musicOn || !(game.on ? sound.game : sound.dance) || !ctx || ctx.state !== 'running') { music.at = 0; return; } const stepT = 60 / 112 / 4;
     if (!music.at || music.at < ctx.currentTime - .2) { music.at = ctx.currentTime + .05; music.n = 0; }
     while (music.at < ctx.currentTime + .12) { playStep(ctx, music.at, music.n % 64, stepT, BEATS.pop, music.n); music.at += stepT; music.n++; } return; }
   music.at = 0;
@@ -3626,6 +3677,6 @@ addEventListener('resize', resize); resize(); new ResizeObserver(resize).observe
 renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElapsedTime();
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
-  try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } armsOut(); try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
+  try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } armsOut(); try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
 </body>
 </html>
