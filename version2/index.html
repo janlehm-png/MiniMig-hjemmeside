@@ -4,6 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>MiniMig version 2</title>
+<!-- (the same icon as version 1 on a home screen, under the name MiniMig 2 - the icons lie in the website's billeder/;
+     the user, 03-11-2026, sharing version 2 with testers) -->
+<link rel="icon" href="../billeder/ikon-180.png">
+<link rel="apple-touch-icon" href="../billeder/ikon-180.png">
+<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#FFD54A"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="MiniMig 2">
 <meta name="robots" content="noindex, nofollow"><!-- (a hidden try-out page: kept out of search engines) -->
 <!-- MiniMig version 2 (begyndt som 3D-forsøget, omdøbt 03-11-2026; på minimig.dk/version2): MiniMigs grundfigur (Meshy, skelet og bevægelser fra Mixamo), der kan drejes, vinke, hoppe og danse,
      skifte frisure og farves om. -->
@@ -105,6 +110,17 @@
   /* Hop over bolden: the stars top left, the cross top right, a hint at the foot of the picture at the start */
   .hud { position: absolute; top: 10px; left: 10px; right: 10px; display: flex; justify-content: space-between; align-items: center; pointer-events: none; z-index: 2; }
   .hud[hidden], .tap-hint[hidden] { display: none; }
+  .hud-left { display: flex; align-items: center; gap: 6px; }
+  .record { background: var(--tile); border-radius: 999px; padding: 4px 11px; font: 700 15px/1.2 system-ui, sans-serif; box-shadow: 0 2px 10px rgba(58, 46, 92, .15); }
+  .record.beaten { background: #FFC233; }
+  /* the stars kept: how many in all, and the best of each game at each level */
+  .star-total { text-align: center; font: 800 2.4rem/1.1 system-ui, sans-serif; }
+  .star-table { width: 100%; border-collapse: collapse; font: 700 .95rem/1.2 system-ui, sans-serif; }
+  .star-table th, .star-table td { padding: 6px 4px; text-align: center; }
+  .star-table th:first-child, .star-table td:first-child { text-align: left; }
+  .star-table th img { width: 30px; height: 30px; display: block; margin: 0 auto; }
+  .star-table tr + tr td { border-top: 1px solid var(--line); }
+  .star-table td.none { color: #B7AFD3; }
   .stars { background: var(--tile); border-radius: 999px; padding: 6px 16px; font: 800 24px/1.2 system-ui, sans-serif; box-shadow: 0 2px 10px rgba(58, 46, 92, .2); }
   .game-x { pointer-events: auto; width: 46px; height: 46px; border-radius: 50%; border: 0; background: var(--tile); color: var(--ink); font: 700 20px/1 system-ui, sans-serif; cursor: pointer; box-shadow: 0 2px 10px rgba(58, 46, 92, .2); }
   .tap-hint { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); white-space: nowrap; pointer-events: none; z-index: 2;
@@ -182,7 +198,7 @@
 <button class="info-btn" id="infoBtn" aria-label="Sådan gør du" aria-expanded="false" hidden>i</button>
 <div class="info-pop" id="infoPop" hidden>👆 Træk for at dreje figuren<br>🤏 Knib for at zoome<br>👕 Tryk på navnet på trøjen, så siger figuren det – med din egen indtalte stemme, hvis du har indtalt en</div>
 <!-- Hop over bolden: the stars won, and the cross that ends the game; a hint at the start -->
-<div class="hud" id="hud" hidden><span class="stars" id="stars">⭐ 0</span><button class="game-x" id="gameExit" aria-label="Stop spillet">✕</button></div>
+<div class="hud" id="hud" hidden><span class="hud-left"><span class="stars" id="stars">⭐ 0</span><span class="record" id="record" title="Din rekord">🏆 0</span></span><button class="game-x" id="gameExit" aria-label="Stop spillet">✕</button></div>
 <div class="tap-hint" id="tapHint" hidden>👆 Tryk for at hoppe</div>
 <!-- (the dances' music on and off - only while a dance runs) -->
 <button class="music-btn" id="musicBtn" aria-label="Musik til og fra" hidden>🎵</button>
@@ -199,6 +215,7 @@
     <button id="newBtn"><span class="emo" aria-hidden="true">✨</span><span>Ny figur</span></button>
     <button id="saveBtn"><span class="emo" aria-hidden="true">📷</span><span>Billede</span><span class="lock-badge" id="lockBadge" hidden aria-hidden="true">🔓</span></button>
     <button id="soundBtn"><span class="emo" aria-hidden="true">🔊</span><span>Lyd</span></button>
+    <button id="starBtn"><span class="emo" aria-hidden="true">🏆</span><span>Stjerner</span></button>
   </div>
   <!-- (the movements' group, put after the other three groups by the page) -->
   <div class="tabgroup" id="moves">
@@ -270,6 +287,16 @@
       <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
       <button data-k="del" aria-label="Slet">⌫</button><button data-k="0">0</button><button data-k="ok">OK</button>
     </div>
+  </div>
+</div>
+<!-- the stars kept: all of them, and the best of each game at each level (on this device) -->
+<div class="sheet" id="starSheet" hidden>
+  <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="starTitle">
+    <div class="sheet-head"><h2 id="starTitle">Dine stjerner</h2><button class="sheet-x" data-close aria-label="Luk">✕</button></div>
+    <div class="star-total" id="starTotal">⭐ 0</div>
+    <p class="note" id="starNote"></p>
+    <table class="star-table" id="starTable"></table>
+    <p class="note">🏆 = din rekord i det spil på det niveau. Snart kan du bruge dine stjerner til at låse nye ting op.</p>
   </div>
 </div>
 <!-- the sound, for grown-ups (behind the sum): which of MiniMig's sounds may play - the user, 03-11-2026 -->
@@ -1724,6 +1751,13 @@ function heelsTick() { const on = !!(GARMENTS.shoe.shown === 'sko-hoej' && glb &
       return { at: f.worldToLocal(heel.clone()), down: new THREE.Vector3(0, -1, 0).applyQuaternion(fq), len: Math.min(.12, Math.max(.03, heel.y - floorY)) }; }); }
   for (const [i, s] of ['Left', 'Right'].entries()) { const f = bone(s + 'Foot'), L = heels.local[i], p = heels.posts[i], heel = f.localToWorld(heels.a.copy(L.at)), down = heels.n.copy(L.down).applyQuaternion(f.getWorldQuaternion(heels.q));
     p.position.copy(heel).addScaledVector(down, L.len / 2); p.scale.set(1, L.len, 1); p.quaternion.setFromUnitVectors(heels.up, down.clone().negate()); } }
+// (the cheers leant far back - the head a quarter metre behind the feet, as if falling over, the user said: made for a
+// grown-up, not a child with a big head. The back straightened forwards each frame till the head is over the feet)
+const balance = { v: new THREE.Vector3(), r: new THREE.Vector3(), q: new THREE.Quaternion() };
+function balanceTick() { if (!glb || !MOVES.jubel.some(m => m[0] === anim)) return; glb.updateMatrixWorld(true);
+  const at = n => glb.worldToLocal(bone(n).getWorldPosition(new THREE.Vector3())), head = at('Head'), spine = at('Spine'), feet = at('LeftToeBase').add(at('RightToeBase')).multiplyScalar(.5);
+  const behind = feet.z - .04 - head.z; if (behind <= 0) return; glb.getWorldQuaternion(balance.q);
+  turnBone('Spine', balance.r.set(-1, 0, 0).applyQuaternion(balance.q), -Math.min(.45, Math.atan2(behind, head.y - spine.y))); glb.updateMatrixWorld(true); }
 function armsOut() { const deg = GARMENTS.dress.items.find(it => it[0] === GARMENTS.dress.shown)?.[2]?.armsOut; if (!deg || !hairBase) return;
   const sk = hairBase.body.skeleton, hips = sk.bones[hairBase.hips]; glb.updateMatrixWorld(true);
   const hx = hips.getWorldPosition(new THREE.Vector3()).applyMatrix4(glb.matrixWorld.clone().invert()).x;
@@ -2416,7 +2450,9 @@ async function wearFigure(f) { const ask = ++dressingUp;
   eyesNow = f.eyes; browsNow = f.brows; mouthNow = f.mouth; noseNow = f.nose; pyntNow = [...f.pynt]; nameNow = f.name; badgeNow = f.badge;
   nameInput.value = nameNow; showRec(); showBadges(); redrawBody(); showSwatches(); setItem(f.item || ''); earringsNow = f.earrings || ''; setEars(f.ears || 'oerer-naturlig'); setBg(f.bg || 'bg-sol');
   if (f.hair !== hairNow) await setHair(f.hair); if (ask !== dressingUp) return;
-  // (a dress last: it takes off the top and trousers)
+  // (a dress last: it takes off the top and trousers. No dress: taken off at once - a new MiniMig in just its underwear
+  // kept the dress on before, as only a top or trousers put on took it off; the user, 03-11-2026)
+  if (!f.wear.dress) { GARMENTS.dress.now = ''; GARMENTS.dress.before = null; }
   for (const p of ['shirt', 'pants', 'socks', 'shoe', 'hat', 'glasses', 'dress']) { if (p === 'dress' && !f.wear.dress) continue; await setGarment(p, f.wear[p] || ''); if (ask !== dressingUp) return; }
   chestName(); renderStyles(); }
 // (a picture of the figure as it stands now: the whole of it on the app's sun, or a profile picture - the head and
@@ -2960,7 +2996,7 @@ function goldBall() { if (!goldMat) { const cv = document.createElement('canvas'
 function startDive() { const a = glbActions[GAME.dive]; if (!a) return false; game.dive = true; game.hint = 0; runAnim(GAME.dive, true); a.time = GAME.diveFrom; sfx('boing'); sfx('boing', .12); return true; }
 function setLevel(id) { game.level = id; renderStyles(); stopGame(true); startGame(game.mode); }
 const hud = document.getElementById('hud'), starsEl = document.getElementById('stars'), hintEl = document.getElementById('tapHint');
-function startGame(mode = game.mode) { if (game.on || !glb) return; game.mode = mode; const M = MODES[mode]; game.on = true; Object.assign(game, { stars: 0, jumpT: -1, busy: 0, cheer: 0, cheerWait: false, rotY: M.face, next: 1.5, hint: 4 });
+function startGame(mode = game.mode) { if (game.on || !glb) return; game.mode = mode; const M = MODES[mode]; game.on = true; Object.assign(game, { stars: 0, jumpT: -1, busy: 0, cheer: 0, cheerWait: false, rotY: M.face, next: 1.5, hint: 4, record: false, counted: false });
   if (!game.again) game.saved = { cam: camera.position.clone(), target: controls.target.clone(), anim, bg: bgNow, spin }; game.again = false; spin = false; document.getElementById('spin').classList.remove('on');
   goal = null; closeUp = false; controls.enabled = false; controls.maxDistance = 14; holder.position.x = M.x;
   // (the plain sun has no ground to run on: the football field then, until the game stops)
@@ -2972,7 +3008,7 @@ function startGame(mode = game.mode) { if (game.on || !glb) return; game.mode = 
     game.bigPool ??= [goldBall(), goldBall()]; Object.assign(game, { dive: false, sinceBig: 0 });
     const run = levelNow().run; Promise.all([run, GAME.jump, GAME.trip, GAME.cheer, GAME.dive].map(loadMove)).then(() => { if (game.on) runAnim(run); }); }
   hintEl.textContent = mode === 'skate' ? '👈 Tryk i siden for at svinge 👉' : '👆 Tryk for at hoppe';
-  hud.hidden = false; hintEl.hidden = false; document.querySelector('.top').hidden = true; document.getElementById('stage').classList.add('playing'); showStars();
+  hud.hidden = false; hintEl.hidden = false; document.querySelector('.top').hidden = true; document.getElementById('stage').classList.add('playing'); showStars(); showRecord();
   document.querySelectorAll('[data-game]').forEach(b => b.classList.toggle('on', b.dataset.game === mode)); prepScene(); }
 // (again: only stopped to start once more - at another level or in another way - the figure's own setting not put back)
 function stopGame(again) { if (!game.on) return; game.on = false; for (const b of [...gamePool(), ...(game.bigPool || [])]) b.group.visible = false; game.dive = false; game.balls = []; confetti.length = 0; unprepScene(); skateStop();
@@ -3033,7 +3069,7 @@ function gameTick(dt) { confettiTick(dt); if (!game.on || !glb) return; const r 
     // (no stumbling over a ball while it cheers - it cannot jump then: such a ball just rolls by)
     const over = b.big ? game.dive && da.time > GAME.safe[0] && da.time < GAME.safe[1] : lift >= L.clear;
     if (!b.done && Math.abs(b.u) < (b.big ? .3 : L.hit) && !over && !game.cheer) { b.hit = b.done = true; b.spin = -b.v / br; b.v = 1.4; b.vy = 2.6; game.jumpT = -1; game.dive = false; game.busy = 1.1; runAnim(GAME.trip, true); sfx('bonk'); }
-    if (!b.done && b.u < (b.big ? -.45 : -.32)) { b.done = true; if (game.cheer) continue; const before = game.stars; game.stars += b.big ? 3 : 1; showStars(true);
+    if (!b.done && b.u < (b.big ? -.45 : -.32)) { b.done = true; if (game.cheer) continue; const before = game.stars; game.stars += b.big ? 3 : 1; showStars(true); scoreGain(b.big ? 3 : 1);
       if (Math.floor(game.stars / 5) > Math.floor(before / 5)) { celebrate(); if (game.jumpT >= 0 || game.dive) game.cheerWait = true; else startCheer(); } }
     if (b.u < M.gone || b.u > from + .5) { b.group.visible = false; game.balls.splice(game.balls.indexOf(b), 1); } } }
 // ---- Skateboard: the second game (the user, 03-11-2026) ----
@@ -3043,7 +3079,7 @@ function gameTick(dt) { confettiTick(dt); if (!game.on || !glb) return; const r 
 // stars float in the lanes. A star caught or a thing got round: a star in the corner. A thing hit: a wobble and a
 // bonk, slowed a moment - no losing. Five levels as in the hop games: quicker, and the things closer together. Board,
 // road, things and the pose are all made by the page (no skating movement from Mixamo - one could be tried later)
-const SKATE = { lane: .75, deck: .12, from: 18, levels: { 'niveau-meget-let': [3, 2.7], 'niveau-let': [4, 2.2], 'niveau-mellem': [5.2, 1.75], 'niveau-svaer': [6.5, 1.4], 'niveau-meget-svaer': [8, 1.15] } };
+const SKATE = { ride: 'skate-3', lane: .75, deck: .12, from: 18, levels: { 'niveau-meget-let': [3, 2.7], 'niveau-let': [4, 2.2], 'niveau-mellem': [5.2, 1.75], 'niveau-svaer': [6.5, 1.4], 'niveau-meget-svaer': [8, 1.15] } };
 const skateLevel = () => { const [speed, gap] = SKATE.levels[game.level] || [4, 2.2]; return { speed, gap }; };
 const sk = { rig: null, board: null, road: null, roadTex: null, live: [], pools: {}, lane: 0, x: 0, lean: 0, slow: 0, wobble: 0, next: 0 };
 const skMat = (c, r = .6, e) => new THREE.MeshStandardMaterial({ color: c, roughness: r, ...(e ? { emissive: new THREE.Color(e), emissiveIntensity: .35 } : {}) });
@@ -3055,9 +3091,10 @@ function skateBuild() { if (sk.rig) return; sk.rig = new THREE.Group();
     const truck = new THREE.Mesh(new THREE.BoxGeometry(.2, .04, .05), skMat('#A8A3BD', .3)); truck.position.set(0, SKATE.deck - .05, s * .25); b.add(truck);
     for (const w of [-1, 1]) { const wheel = new THREE.Mesh(new THREE.CylinderGeometry(.042, .042, .036, 18), skMat('#FFC233', .35)); wheel.rotation.z = Math.PI / 2; wheel.position.set(w * .11, .042, s * .25); b.add(wheel); } }
   b.traverse(o => { if (o.isMesh) o.castShadow = true; }); sk.rig.add(b);
-  // (the road: light asphalt, white edges and dashed lines between the three lanes; it runs by under the figure)
-  const cv = document.createElement('canvas'); cv.width = 256; cv.height = 256; const c = cv.getContext('2d'); c.fillStyle = '#BDB8CC'; c.fillRect(0, 0, 256, 256);
-  for (let i = 0; i < 500; i++) { c.fillStyle = `rgba(${Math.random() < .5 ? '255,255,255' : '60,50,90'},${(Math.random() * .12).toFixed(3)})`; c.fillRect(Math.random() * 256, Math.random() * 256, 2, 2); }
+  // (the road: dark asphalt - grey looked too light, the user said - with light grit, white edges and dashed lines
+  // between the three lanes; it runs by under the figure)
+  const cv = document.createElement('canvas'); cv.width = 256; cv.height = 256; const c = cv.getContext('2d'); c.fillStyle = '#34343A'; c.fillRect(0, 0, 256, 256);
+  for (let i = 0; i < 1400; i++) { c.fillStyle = `rgba(${Math.random() < .6 ? '200,200,205' : '10,10,14'},${(Math.random() * .22).toFixed(3)})`; c.fillRect(Math.random() * 256, Math.random() * 256, 1 + Math.random() * 2, 1 + Math.random() * 2); }
   const rw = SKATE.lane * 3 + .3; c.fillStyle = '#FFFFFF'; for (const s of [-1, 1]) c.fillRect((.5 + s * SKATE.lane / 2 / rw) * 256 - 3, 0, 6, 128); c.fillRect(0, 0, 7, 256); c.fillRect(249, 0, 7, 256);
   const t = sk.roadTex = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(1, 20); t.anisotropy = 4;
   sk.road = new THREE.Mesh(new THREE.PlaneGeometry(SKATE.lane * 3 + .3, 60), new THREE.MeshStandardMaterial({ map: t, roughness: .95 })); sk.road.rotation.x = -Math.PI / 2; sk.road.position.set(0, .004, -26); sk.road.receiveShadow = true; }
@@ -3080,7 +3117,9 @@ function skateRow() { const easy = ['niveau-meget-let', 'niveau-let'].includes(g
   if (Math.random() < (easy ? .9 : .7)) { const free = [-1, 0, 1].filter(l => !used.has(l)), lane = free[Math.floor(Math.random() * free.length)], n = 1 + Math.floor(Math.random() * 3);
     for (let k = 0; k < n; k++) put(skateThing('stjerne'), lane * SKATE.lane, SKATE.from + (k - (n - 1) / 2) * 1.1); } }
 function skateStart() { skateBuild(); Object.assign(sk, { lane: 0, x: 0, lean: 0, slow: 0, wobble: 0, next: 1.2 }); for (const it of sk.live) it.group.visible = false; sk.live = [];
-  holder.add(sk.rig); sk.rig.position.set(0, 0, 0); sk.rig.rotation.set(0, 0, 0); sk.rig.add(glb); scene.add(sk.road); loadMove('staa').then(() => { if (game.on) runAnim('staa'); }); }
+  holder.add(sk.rig); sk.rig.position.set(0, 0, 0); sk.rig.rotation.set(0, 0, 0); sk.rig.add(glb); scene.add(sk.road);
+  // (Mixamo's skateboarding, if it is there - the user fetched it, 03-11-2026; else the standing with the page's own pose)
+  sk.clip = null; loadMove(SKATE.ride).then(a => { sk.clip = a ? SKATE.ride : null; if (game.on) runAnim(sk.clip || 'staa'); }); }
 function skateStop() { if (!sk.rig?.parent) return; holder.add(glb); holder.remove(sk.rig); scene.remove(sk.road); for (const it of sk.live) it.group.visible = false; sk.live = []; }
 function steer(dir) { if (!game.on || game.mode !== 'skate') return; const lane = Math.max(-1, Math.min(1, sk.lane + dir)); if (lane === sk.lane) return; sk.lane = lane; game.hint = 0; sfx('swish'); }
 // (the skater's pose, laid over the standing still each frame - turned about the figure's own axes as it stands now:
@@ -3088,13 +3127,15 @@ function steer(dir) { if (!game.on || game.mode !== 'skate') return; const lane 
 const skAxes = { fwd: new THREE.Vector3(), right: new THREE.Vector3(), up: new THREE.Vector3(), q: new THREE.Quaternion() }, skQ = new THREE.Quaternion(), skP = new THREE.Quaternion();
 function turnBone(name, axis, angle) { const b = bone(name); if (!b) return; keepJoint(b); b.parent.getWorldQuaternion(skP); skQ.setFromAxisAngle(axis, angle); b.quaternion.premultiply(skP.clone().invert().multiply(skQ).multiply(skP)); }
 function skatePose() { glb.updateMatrixWorld(true); glb.getWorldQuaternion(skAxes.q); const { fwd, right, up, q } = skAxes; fwd.set(0, 0, 1).applyQuaternion(q); right.set(-1, 0, 0).applyQuaternion(q); up.set(0, 1, 0).applyQuaternion(q);
-  for (const [n, s] of [['LeftUpLeg', 1], ['RightUpLeg', -1]]) { turnBone(n, fwd, s * .3); turnBone(n, right, .5); }
-  glb.updateMatrixWorld(true); for (const n of ['LeftLeg', 'RightLeg']) turnBone(n, right, -.85); glb.updateMatrixWorld(true); for (const n of ['LeftFoot', 'RightFoot']) turnBone(n, right, .38);
-  for (const [n, s] of [['LeftArm', 1], ['RightArm', -1]]) turnBone(n, fwd, s * 1.05); glb.updateMatrixWorld(true); for (const [n, s] of [['LeftForeArm', 1], ['RightForeArm', -1]]) turnBone(n, fwd, s * .25);
-  turnBone('Spine', right, -.12); turnBone('Spine2', up, .35); glb.updateMatrixWorld(true); turnBone('Neck', up, .4); glb.updateMatrixWorld(true); turnBone('Head', up, .45); glb.updateMatrixWorld(true);
+  if (!sk.clip) skateOwnPose(fwd, right, up);
   // (down onto the deck: the lower foot on it; the board under the middle of the feet)
   const feet = ['LeftFoot', 'RightFoot', 'LeftToeBase', 'RightToeBase'].map(n => bone(n)).filter(Boolean).map(b => sk.rig.worldToLocal(b.getWorldPosition(new THREE.Vector3())));
   glb.position.y += SKATE.deck + .02 - Math.min(...feet.map(p => p.y)); sk.board.position.x = (feet[0].x + feet[1].x) / 2; sk.board.position.z = (feet[0].z + feet[1].z) / 2; }
+function skateOwnPose(fwd, right, up) {
+  for (const [n, s] of [['LeftUpLeg', 1], ['RightUpLeg', -1]]) { turnBone(n, fwd, s * .3); turnBone(n, right, .5); }
+  glb.updateMatrixWorld(true); for (const n of ['LeftLeg', 'RightLeg']) turnBone(n, right, -.85); glb.updateMatrixWorld(true); for (const n of ['LeftFoot', 'RightFoot']) turnBone(n, right, .38);
+  for (const [n, s] of [['LeftArm', 1], ['RightArm', -1]]) turnBone(n, fwd, s * 1.05); glb.updateMatrixWorld(true); for (const [n, s] of [['LeftForeArm', 1], ['RightForeArm', -1]]) turnBone(n, fwd, s * .25);
+  turnBone('Spine', right, -.12); turnBone('Spine2', up, .35); glb.updateMatrixWorld(true); turnBone('Neck', up, .4); glb.updateMatrixWorld(true); turnBone('Head', up, .45); glb.updateMatrixWorld(true); }
 function skateTick(dt) { const L = skateLevel(); sk.slow = Math.max(0, sk.slow - dt); sk.wobble = Math.max(0, sk.wobble - dt); const v = L.speed * (sk.slow > 0 ? .45 : 1);
   // (the lane: glided over, leaning into the turn; a wobble after hitting a thing)
   const dx = sk.lane * SKATE.lane - sk.x; sk.x += dx * Math.min(1, dt * 9); sk.lean += (-dx * .45 - sk.lean) * Math.min(1, dt * 10);
@@ -3111,7 +3152,26 @@ function skateTick(dt) { const L = skateLevel(); sk.slow = Math.max(0, sk.slow -
     // (put away just past the figure - a star left in another lane came on up to the camera, big as the picture)
     if (it.u < -(it.len / 2 + 1) || !g.visible) { g.visible = false; sk.live.splice(sk.live.indexOf(it), 1); } } }
 // (stars to the corner; every fifth the confetti - the skater rides on)
-function addStars(n) { const before = game.stars; game.stars += n; showStars(true); if (Math.floor(game.stars / 5) > Math.floor(before / 5)) celebrate(); }
+function addStars(n) { const before = game.stars; game.stars += n; showStars(true); scoreGain(n); if (Math.floor(game.stars / 5) > Math.floor(before / 5)) celebrate(); }
+// ---- the stars kept (the user, 03-11-2026): on this device only, the child's - one store for every figure, not each its
+// own. Every star won goes in at once (nothing lost if the game is left), all of them counted up - to be spent later on
+// things to unlock - and the best of each game at each level kept; beating it: "Ny rekord!" and more confetti, once a game.
+// Shown under 🏆 Stjerner. Kept in localStorage minimig3d.stjerner: { total, spent, best: { game: { level: n } }, games }
+const SCORE_KEY = 'minimig3d.stjerner', score = Object.assign({ total: 0, spent: 0, best: {}, games: 0 }, (() => { try { return JSON.parse(localStorage.getItem(SCORE_KEY)) || {}; } catch (e) { return {}; } })());
+const saveScore = () => { try { localStorage.setItem(SCORE_KEY, JSON.stringify(score)); } catch (e) {} };
+const bestNow = () => score.best[game.mode]?.[game.level] || 0;
+function scoreGain(n) { score.total += n; if (!game.counted) { game.counted = true; score.games++; } const best = bestNow(); if (game.stars > best) { (score.best[game.mode] ??= {})[game.level] = game.stars;
+    if (best > 0 && !game.record) { game.record = true; toast('🏆 Ny rekord!'); celebrate(); } }
+  saveScore(); showRecord(); }
+// (🏆 Stjerner: the stars to spend, and a table - a game a row, a level a column, with its icon)
+const GAME_NAMES = [['side', 'Hop fra siden'], ['back', 'Hop bagfra'], ['front', 'Hop forfra'], ['skate', 'Skateboard']];
+document.getElementById('starBtn').onclick = () => { const have = score.total - score.spent;
+  document.getElementById('starTotal').textContent = '⭐ ' + have;
+  document.getElementById('starNote').textContent = score.games ? `Samlet i ${score.games} spil på denne enhed.` : 'Spil et af spillene for at samle stjerner.';
+  document.getElementById('starTable').innerHTML = `<tr><th></th>${LEVELS.map(([id, name]) => `<th><img src="ikoner/valg-${id}.png" alt="${name}"></th>`).join('')}</tr>` +
+    GAME_NAMES.map(([g, name]) => `<tr><td>${name}</td>${LEVELS.map(([id]) => { const b = score.best[g]?.[id]; return b ? `<td>🏆 ${b}</td>` : '<td class="none">–</td>'; }).join('')}</tr>`).join('');
+  document.getElementById('starSheet').hidden = false; };
+function showRecord() { const el = document.getElementById('record'); el.textContent = '🏆 ' + bestNow(); el.classList.toggle('beaten', !!game.record); }
 document.getElementById('stage').addEventListener('pointerdown', e => { if (!game.on || e.target.closest('button')) return; e.preventDefault();
   if (game.mode === 'skate') { const r = e.currentTarget.getBoundingClientRect(); steer(e.clientX < r.left + r.width / 2 ? -1 : 1); } else jump(); });
 addEventListener('keydown', e => { if (!game.on || /INPUT/.test(e.target.tagName)) return;
@@ -3236,6 +3296,6 @@ addEventListener('resize', resize); resize(); new ResizeObserver(resize).observe
 renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElapsedTime();
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
-  try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } armsOut(); try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
+  try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } armsOut(); try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
 </body>
 </html>
