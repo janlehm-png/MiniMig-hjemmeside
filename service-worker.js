@@ -29,11 +29,24 @@ self.addEventListener('fetch', event => {
  // Version/retry query strings on game images resolve to this release's assets.
  url.search = ''; url.hash = '';
  if(url.pathname.endsWith('/')) url.pathname += 'index.html';
- if(!KNOWN.has(url.href)) return;
+ // The game's other files - clothes, hair, hats, movements; over 100 MB in all - are kept the first time they are used,
+ // in this release's cache, so what the child has played with also works without internet.
+ if(!KNOWN.has(url.href)) {
+  if(!url.pathname.includes('/bygogspil/') || event.request.mode === 'navigate') return;
+  event.respondWith((async () => {
+   const cache = await caches.open(CACHE);
+   const cached = await cache.match(url.href);
+   if(cached) return cached;
+   const response = await fetch(event.request);
+   if(response.ok && response.type === 'basic') await cache.put(url.href,response.clone()).catch(() => {});
+   return response;
+  })());
+  return;
+ }
  // The website's own pages (front page, Til forældre, Support, Privatliv) are fetched fresh whenever there is a
  // connection, so new texts show at once; the saved copy is only for when there is none. The game itself keeps
  // its saved release until pwa.js puts the new one in (when MiniMig is opened or put away, never during play).
- if(event.request.mode === 'navigate' && !url.pathname.includes('/proev/')) {
+ if(event.request.mode === 'navigate' && !url.pathname.includes('/bygogspil/')) {
   event.respondWith((async () => {
    const cache = await caches.open(CACHE);
    try {

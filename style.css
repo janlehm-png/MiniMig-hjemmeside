@@ -35,6 +35,11 @@ nav a:hover, nav a[aria-current] { color: var(--ink); }
 .badge small { display: block; font-weight: 600; font-size: .75rem; opacity: .8; }
 
 .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 34px 0; }
+/* (pictures from the game in a row - four across, two by two on a phone) */
+.shots { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 26px 0 0; }
+.shots figure { margin: 0; text-align: center; }
+.shots img { width: 100%; height: auto; border-radius: 18px; box-shadow: 0 4px 14px var(--shadow); display: block; }
+.shots figcaption { margin-top: 6px; font-weight: 800; font-size: .95rem; }
 .card { background: var(--card); border-radius: 20px; padding: 18px; box-shadow: 0 4px 14px var(--shadow); }
 .card .ico { font-size: 1.8rem; }
 .card h3 { margin: 6px 0 4px; font-size: 1.05rem; }
@@ -54,6 +59,7 @@ footer a { color: var(--muted); }
   .hero { grid-template-columns: 1fr; text-align: center; }
   .hero .pic { order: -1; } .hero .pic img { max-width: 320px; }
   .cards { grid-template-columns: 1fr; }
+  .shots { grid-template-columns: repeat(2, 1fr); }
   header.top { flex-direction: column; gap: 8px; padding-bottom: 6px; }
   nav a { margin: 0 9px; }
 }

@@ -8,7 +8,7 @@ Kør ./build-pwa.ps1 efter ændringer i HTML, CSS, JavaScript eller billeder, og
 precache-manifest.js i samme commit. GitHub Pages skal servere hele udgaven via HTTPS.
 Relative stier understøtter både minimig.dk og /MiniMig-hjemmeside/.
 
-Appikonet åbner proev/. Installationen kræver brugerens godkendelse.
+Appikonet åbner bygogspil/ (MiniMig 2 i 3D, fra 03-11-2026). /proev, /version2 og /3d-forsoeg sender videre; version 1 ligger skjult i version1/ uden installation og offline. Installationen kræver brugerens godkendelse.
 Ingen eksterne biblioteker, skrifttyper eller analysetjenester er tilføjet.
 
 ## Offline og opdateringer
@@ -22,7 +22,7 @@ baggrunden, kigges der efter en ny version. Lokal figurdata slettes ikke ved en 
 Cache-navne er afgrænset til denne apps adresse. Browseren kan rydde lagring;
 offline er derfor ikke en garanti for permanent opbevaring.
 
-opdater-proev.ps1 kalder build-pwa.ps1, så en ny import af spillet også får
+opdater-bygogspil.ps1 kalder build-pwa.ps1, så en ny import af spillet også får
 manifest, mobiljusteringer og PWA-betjening. Bygningen er idempotent.
 
 ## Test før offentlig udgivelse
