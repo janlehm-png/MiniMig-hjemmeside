@@ -116,7 +116,7 @@
   <button data-anim="hop" class="pose"><img src="ikoner/stilling-hop.png" alt=""><span>Hop</span></button>
   <button data-anim="dans" class="pose"><img src="ikoner/stilling-dans.png" alt=""><span>Dans</span></button>
   <button id="spin" class="pose"><img src="ikoner/stilling-drej.png" alt=""><span>Drej rundt</span></button>
-  <div class="colors"><div class="parts" id="parts"></div><div class="parts" id="styles" hidden></div>
+  <div class="colors"><div class="parts" id="parts"></div><div class="parts" id="styles" hidden></div><div class="parts" id="styles2" hidden></div>
     <div class="namebox" id="nameBox" hidden><input id="nameInput" type="text" maxlength="10" autocomplete="off" placeholder="Skriv dit navn" aria-label="Navn på trøjen">
       <div class="badges" id="badges"></div></div>
     <div class="sliders" id="sliders">
@@ -236,25 +236,27 @@ disc.rotation.x = -Math.PI / 2; disc.position.y = .001; scene.add(disc);
 
 // ---- colours: the figure's painted texture, recoloured (below) ----
 // (the parts, each with the app's icon for its tab, in ikoner/; the fixed colours are gone - the sliders alone)
-const CHOICES = [['skin', 'Hud', 'hud'], ['hair', 'Hår', 'haar'], ['eyes', 'Øjne', 'oejne'], ['brows', 'Bryn', 'bryn'], ['nose', 'Næse', 'naese'], ['mouth', 'Mund', 'mund'], ['pynt', 'Pynt', 'kinder'], ['shirt', 'Trøje', 'troeje'], ['pants', 'Bukser', 'bukser'], ['dress', 'Kjole', 'kjoler'],
+const CHOICES = [['skin', 'Hud', 'hud'], ['hair', 'Hår', 'haar'], ['eyes', 'Øjne', 'oejne'], ['brows', 'Bryn', 'bryn'], ['nose', 'Næse', 'naese'], ['mouth', 'Mund', 'mund'], ['ears', 'Ører', 'oerer'], ['pynt', 'Pynt', 'kinder'], ['shirt', 'Trøje', 'troeje'], ['pants', 'Bukser', 'bukser'], ['dress', 'Kjole', 'kjoler'],
   ['socks', 'Strømper', 'stroemper'], ['shoe', 'Sko', 'sko'], ['hat', 'Hat', 'hat'], ['glasses', 'Briller', 'briller'], ['item', 'Ting', 'ting'], ['name', 'Navn', 'navn']];
 const picked = {}, START = { skin: '#EDB98A', hair: '#4A2C1D', eyes: '#7A4220', brows: '#4A2C1D', mouth: '#C0505A', pynt: '#FF5A6E', nose: '#EDB98A', shirt: '#FF7A2F', pants: '#2C3E8C', dress: '#3D8BFF', socks: '#3D8BFF', item: '#E8384F', shoe: '#3D8BFF', hat: '#3D8BFF', glasses: '#3D8BFF' }; let partNow = 'shirt';
 const apply = (part, c) => { picked[part] = c; recolour(part, c); if (part === 'shirt' || part === 'dress') chestName(); };
 const iconButton = (src, label) => { const b = document.createElement('button'), i = new Image(); i.src = src; i.alt = ''; i.onerror = () => i.remove();
   const s = document.createElement('span'); s.textContent = label; b.append(i, s); return b; };
 // (the nose, the mouth and Pynt have no colour of their own, as in the app: no sliders under them)
-function showSwatches() { slidersFrom(picked[partNow] || START[partNow]); document.getElementById('sliders').style.display = ['nose', 'mouth', 'pynt', 'name'].includes(partNow) ? 'none' : '';
+function showSwatches() { slidersFrom(picked[partNow] || START[partNow]); document.getElementById('sliders').style.display = ['nose', 'mouth', 'pynt', 'name', 'ears'].includes(partNow) ? 'none' : '';
   document.getElementById('nameBox').hidden = partNow !== 'name';
   document.querySelectorAll('#parts button').forEach(b => b.classList.toggle('on', b.dataset.part === partNow));
   renderStyles(); }
 // (the styles as buttons above the colours: hairstyles while Hår is chosen, tops while Trøje is; none before the figure -
 // each with a little picture of the figure wearing it, ikoner/valg-<name>.png, made by the page itself: see LÆS-MIG)
-function renderStyles() { const box = document.getElementById('styles'), list = typeof styleLists === 'undefined' ? null : styleLists()[partNow];
+// (a second row in the same tab, as the app's earrings under the ears: a fourth entry, [items, now, set, ingen-name])
+function renderStyles() { const all = typeof styleLists === 'undefined' ? null : styleLists()[partNow], second = all?.[3];
+  for (const [id, list, none] of [['styles', all, partNow], ['styles2', second, second?.[3]]]) { const box = document.getElementById(id);
   box.innerHTML = ''; box.hidden = !list || !hairBase;
-  if (box.hidden) return; const [items, now, set] = list;
+  if (box.hidden) continue; const [items, now, set] = list;
   // (now: the chosen one - or, for Pynt, the list of all chosen, Ingen lit when it is empty)
-  for (const [n, label] of items) { const b = iconButton(`ikoner/valg-${n || 'ingen-' + partNow}.png`, label);
-    b.classList.toggle('on', Array.isArray(now) ? (n.endsWith('-ingen') ? !now.length : now.includes(n)) : n === now); b.onclick = () => set(n); box.append(b); } }
+  for (const [n, label] of items) { const b = iconButton(`ikoner/valg-${n || 'ingen-' + none}.png`, label);
+    b.classList.toggle('on', Array.isArray(now) ? (n.endsWith('-ingen') ? !now.length : now.includes(n)) : n === now); b.onclick = () => set(n); box.append(b); } } }
 // the sliders: colour (hue), strength (saturation) and light, set from the part's colour now; moving one colours it
 const S = { h: document.getElementById('s-h'), s: document.getElementById('s-s'), l: document.getElementById('s-l') };
 function slidersFrom(hexColour) { const hsl = {}; new THREE.Color().setStyle(hexColour, THREE.SRGBColorSpace).getHSL(hsl, THREE.SRGBColorSpace);
@@ -1229,7 +1231,7 @@ async function loadHair(name, list = hairTexs, colourPart = 'hair', extra = {}) 
   // (cap: no lighter than that over the middle - the glasses' frames had white smears inside, by the glass)
   if (opts.cap) list.at(-1).cap = opts.cap;
   body.parent.add(hair); hair.bind(body.skeleton, body.bindMatrix); if (picked[colourPart]) recolourHair(picked[colourPart], list); return hair; }
-var styleLists = () => ({ hair: [HAIRS, hairNow, setHair], eyes: [EYES, eyesNow, setEyes], brows: [BROWS, browsNow, setBrows], mouth: [MOUTHS, mouthNow, setMouth], pynt: [PYNT, pyntNow.map(k => 'pynt-' + k), setPynt], nose: [NOSES, noseNow, setNose], item: [ITEMS, itemNow, setItem],
+var styleLists = () => ({ hair: [HAIRS, hairNow, setHair], eyes: [EYES, eyesNow, setEyes], brows: [BROWS, browsNow, setBrows], mouth: [MOUTHS, mouthNow, setMouth], pynt: [PYNT, pyntNow.map(k => 'pynt-' + k), setPynt], nose: [NOSES, noseNow, setNose], item: [ITEMS, itemNow, setItem], ears: [EARS, earsNow, setEars, [EARRINGS, earringsNow, setEarrings, 'oerering']],
   ...Object.fromEntries(Object.entries(GARMENTS).map(([part, G]) => [part, [G.items, G.now, n => setGarment(part, n)]])) });
 async function setHair(name) {
   hairNow = name; renderStyles();
@@ -2068,7 +2070,7 @@ showBadges();
 // saved out of the page (the camera, behind a grown-up's sum) ----
 // (a figure: its choices - the colours picked, the hair, the face, what it wears, the name)
 const figureNow = () => ({ picked: { ...picked }, hair: hairNow, eyes: eyesNow, brows: browsNow, mouth: mouthNow, nose: noseNow, pynt: [...pyntNow],
-  wear: Object.fromEntries(Object.entries(GARMENTS).map(([p, G]) => [p, G.now])), name: nameNow, badge: badgeNow, item: itemNow });
+  wear: Object.fromEntries(Object.entries(GARMENTS).map(([p, G]) => [p, G.now])), name: nameNow, badge: badgeNow, item: itemNow, ears: earsNow, earrings: earringsNow });
 // (a part's own colour back: the figure's painted one, the hair's and the garments' as made)
 const unpaint = list => { for (const t of list) { const im = t.ctx.createImageData(t.w, t.h); im.data.set(t.src); t.ctx.putImageData(im, 0, 0); t.texture.needsUpdate = true; } };
 function unpick(part) { delete picked[part]; if (part === 'socks') paintSocks(); if (part === 'item') paintItem(); if (part === 'hair') unpaint(hairTexs); if (GARMENTS[part]) unpaint(GARMENTS[part].texs);
@@ -2079,7 +2081,7 @@ async function wearFigure(f) { const ask = ++dressingUp;
   for (const [part] of CHOICES) if (part !== 'hair') { if (f.picked[part]) { picked[part] = f.picked[part]; recolour(part, f.picked[part]); } else unpick(part); }
   if (f.picked.hair) { picked.hair = f.picked.hair; recolour('hair', f.picked.hair); } else unpick('hair');
   eyesNow = f.eyes; browsNow = f.brows; mouthNow = f.mouth; noseNow = f.nose; pyntNow = [...f.pynt]; nameNow = f.name; badgeNow = f.badge;
-  nameInput.value = nameNow; showBadges(); redrawBody(); showSwatches(); setItem(f.item || '');
+  nameInput.value = nameNow; showBadges(); redrawBody(); showSwatches(); setItem(f.item || ''); earringsNow = f.earrings || ''; setEars(f.ears || 'oerer-naturlig');
   if (f.hair !== hairNow) await setHair(f.hair); if (ask !== dressingUp) return;
   // (a dress last: it takes off the top and trousers)
   for (const p of ['shirt', 'pants', 'socks', 'shoe', 'hat', 'glasses', 'dress']) { if (p === 'dress' && !f.wear.dress) continue; await setGarment(p, f.wear[p] || ''); if (ask !== dressingUp) return; }
@@ -2170,7 +2172,7 @@ document.getElementById('keepChoice').addEventListener('click', e => { const c =
 // all-white vest and shorts and nothing else, no name, every colour the figure's own; a boy with short hair or a girl
 // with plaits. The user dropped the app's pink and blue underwear)
 const newFig = kind => ({ picked: {}, hair: kind === 'pige' ? 'haar-fletninger' : 'haar-kort',
-  eyes: 'oejne-naturlige', brows: 'bryn-naturlige', mouth: 'mund-smil', nose: 'naese-naturlig', pynt: [], wear: Object.fromEntries(Object.keys(GARMENTS).map(p => [p, ''])), name: '', badge: 'ingen', item: '' });
+  eyes: 'oejne-naturlige', brows: 'bryn-naturlige', mouth: 'mund-smil', nose: 'naese-naturlig', pynt: [], wear: Object.fromEntries(Object.keys(GARMENTS).map(p => [p, ''])), name: '', badge: 'ingen', item: '', ears: 'oerer-naturlig', earrings: '' });
 const sameFig = (a, b) => !!a && !!b && JSON.stringify(a) === JSON.stringify(b);
 document.getElementById('newBtn').addEventListener('click', () => { document.getElementById('newChoice').hidden = false; });
 document.getElementById('newChoice').addEventListener('click', async e => { const b = e.target.closest('[data-new]'); if (!b || !hairBase) return;
@@ -2191,6 +2193,58 @@ document.getElementById('gallery').addEventListener('click', e => { const load =
     l.splice(+del.dataset.del, 1); storeFigs(l); renderGallery(); } });
 for (const s of document.querySelectorAll('.sheet')) s.addEventListener('click', e => { if (e.target === s || e.target.closest('[data-close]')) s.hidden = true; });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') for (const s of document.querySelectorAll('.sheet')) s.hidden = true; });
+// ---- Ører, as in the app: the ears' shape - natural, small, big, sticking out, elf ears - and earrings at the lobes ----
+// (the ears are the body's own: each its points beyond the skull at the side of the head - a third of an eye's distance
+// behind the eyes to a half below them, further out than the skull there - moved about the ear's root, more the further
+// out from the skull, so the skin goes smoothly over into the head; their light turned with them)
+const EARS = [['oerer-naturlig', 'Naturlige'], ['oerer-smaa', 'Små', { s: .72 }], ['oerer-store', 'Store', { s: 1.4 }], ['oerer-udstaaende', 'Udstående', { out: .8 }], ['oerer-alfe', 'Alfeører', { elf: 1 }]];
+const EARRINGS = [['', 'Ingen'], ['oerering-perler', 'Perler'], ['oerering-ringe', 'Guldringe'], ['oerering-stjerner', 'Stjerner'], ['oerering-hjerter', 'Hjerter']];
+let earsNow = 'oerer-naturlig', earringsNow = '', earData = null; const earrings = {};
+function setEars(name) { earsNow = EARS.some(e => e[0] === name) ? name : 'oerer-naturlig'; shapeEars(); setEarrings(earringsNow); renderStyles(); }
+function setupEars() { const hb = hairBase, { pts, inv } = hb.whole, [L, R] = hb.eyes, a = L.distanceTo(R), ey = (L.y + R.y) / 2, mx = (L.x + R.x) / 2, ez = (L.z + R.z) / 2;
+  const geo = hb.body.geometry, A = geo.attributes.position, N = geo.attributes.normal, sides = {};
+  for (const s of [-1, 1]) { const idx = [], w = [];
+    for (let j = 0; j < pts.length / 6; j++) { const x = (pts[j * 6] - mx) / a * s, y = (pts[j * 6 + 1] - ey) / a, z = (pts[j * 6 + 2] - ez) / a;
+      // (the whole ear moved, its bowl too - moving only what stood furthest out, the rim went and the bowl stayed: a ring)
+      if (y > -.62 && y < .38 && z > -1.45 && z < -.6 && x > .9) { idx.push(j); w.push(Math.min(1, Math.max(0, (x - .9) / .07)) ** 2 * (3 - 2 * Math.min(1, Math.max(0, (x - .9) / .07)))); } }
+    // (the root: where the ear meets the head - the middle of its points nearest the skull)
+    const near = idx.filter((j, k) => w[k] < .5), root = new THREE.Vector3(); for (const j of near) root.add(new THREE.Vector3(pts[j * 6], pts[j * 6 + 1], pts[j * 6 + 2])); root.divideScalar(near.length || 1);
+    sides[s] = { idx: Int32Array.from(idx), w: Float32Array.from(w), pos: Float32Array.from(idx.flatMap(j => [A.getX(j), A.getY(j), A.getZ(j)])), nrm: Float32Array.from(idx.flatMap(j => [N.getX(j), N.getY(j), N.getZ(j)])), root }; }
+  earData = { sides, a, ey, ez, mx, inv, M: inv.clone().invert() }; }
+function shapeEars() { if (!hairBase) return; if (!earData) setupEars(); const o = (EARS.find(e => e[0] === earsNow) || [])[2] || {}, { sides, a, inv, M } = earData;
+  const geo = hairBase.body.geometry, A = geo.attributes.position, N = geo.attributes.normal, v = new THREE.Vector3(), n = new THREE.Vector3(), q = new THREE.Quaternion();
+  for (const s of [-1, 1]) { const E = sides[s];
+    for (let k = 0; k < E.idx.length; k++) { const j = E.idx[k], w = E.w[k]; v.set(E.pos[k * 3], E.pos[k * 3 + 1], E.pos[k * 3 + 2]).applyMatrix4(M); n.set(E.nrm[k * 3], E.nrm[k * 3 + 1], E.nrm[k * 3 + 2]).transformDirection(M);
+      if (o.s) v.sub(E.root).multiplyScalar(1 + (o.s - 1) * w).add(E.root);
+      // (sticking out: the ear turned about an upright line through its root, its back swung away from the head)
+      if (o.out) { q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), -s * o.out * w); v.sub(E.root).applyQuaternion(q).add(E.root); n.applyQuaternion(q); }
+      // (elf ears: the upper part drawn up and back into a point - more the higher up the ear, a little narrower)
+      if (o.elf) { const t = Math.min(1, Math.max(0, (v.y - E.root.y + .05 * a) / (.36 * a))) * w; v.y += .8 * a * t * t * t; v.z -= .25 * a * t * t; v.x += s * .22 * a * t * t; } // (out from the hair, where the point shows)
+      v.applyMatrix4(inv); A.setXYZ(j, v.x, v.y, v.z); n.transformDirection(inv); N.setXYZ(j, n.x, n.y, n.z); } }
+  A.needsUpdate = true; N.needsUpdate = true; }
+// (the earrings: hanging from each lobe - the lowest point of the ear as it is shaped now - bound to the head like the
+// clown's nose)
+function setEarrings(name) { earringsNow = EARRINGS.some(e => e[0] === name) ? name : '';
+  for (const m of earrings.list || []) { m.parent?.remove(m); m.geometry.dispose(); } earrings.list = [];
+  if (earringsNow && hairBase) { if (!earData) setupEars(); const kind = earringsNow.slice(9), { sides, a, inv } = earData, A = hairBase.body.geometry.attributes.position, M = earData.M, parts = [];
+    for (const s of [-1, 1]) { const E = sides[s]; let lo = null; const v = new THREE.Vector3();
+      for (let k = 0; k < E.idx.length; k++) { if (E.w[k] < .5) continue; v.fromBufferAttribute(A, E.idx[k]).applyMatrix4(M); if (!lo || v.y < lo.y) lo = v.clone(); }
+      if (!lo) continue; lo.x -= s * .02 * a; // (a little in from the lobe's edge)
+      const r = .1 * a, gs = kind === 'perler' ? [new THREE.SphereGeometry(r * .75, 20, 14).translate(0, -r * .8, 0)]
+        : kind === 'ringe' ? [new THREE.TorusGeometry(r * 1.1, r * .2, 10, 32).rotateY(Math.PI / 2).translate(0, -r * 1.2, 0)]
+        : kind === 'stjerner' ? [(() => { const sh = new THREE.Shape(); for (let i = 0; i < 10; i++) { const rr = i % 2 ? r * .45 : r * 1.15, an = Math.PI / 2 + i * Math.PI / 5; i ? sh.lineTo(rr * Math.cos(an), rr * Math.sin(an)) : sh.moveTo(rr * Math.cos(an), rr * Math.sin(an)); }
+            return new THREE.ExtrudeGeometry(sh, { depth: r * .3, bevelEnabled: true, bevelThickness: r * .15, bevelSize: r * .12, bevelSegments: 2 }).rotateY(Math.PI / 2).translate(0, -r * 1.5, 0); })()]
+        : [(() => { const sh = new THREE.Shape(), w = r * 1.1; sh.moveTo(0, -w * .55); sh.bezierCurveTo(w * .55, -w * .1, w * .6, w * .45, 0, w * .25); sh.bezierCurveTo(-w * .6, w * .45, -w * .55, -w * .1, 0, -w * .55);
+            return new THREE.ExtrudeGeometry(sh, { depth: r * .3, bevelEnabled: true, bevelThickness: r * .15, bevelSize: r * .12, bevelSegments: 2 }).rotateY(Math.PI / 2).translate(0, -r * 1.3, 0); })()];
+      gs.push(new THREE.SphereGeometry(r * .18, 8, 6)); // (a small ring at the lobe it hangs from)
+      for (const g of gs) { g.translate(lo.x, lo.y, lo.z); const P = g.attributes.position, w = new THREE.Vector3(); for (let i = 0; i < P.count; i++) { w.fromBufferAttribute(P, i).applyMatrix4(inv); P.setXYZ(i, w.x, w.y, w.z); } g.computeVertexNormals(); parts.push(g); } }
+    const col = { perler: ['#F5F1FA', .2, 0], ringe: ['#E8B730', .25, .6], stjerner: ['#FFC233', .3, .3], hjerter: ['#FF4F8B', .3, 0] }[kind], mats = [new THREE.MeshStandardMaterial({ color: col[0], roughness: col[1], metalness: col[2] }), new THREE.MeshStandardMaterial({ color: '#E8B730', roughness: .3, metalness: .6 })];
+    const body = hairBase.body;
+    parts.forEach((g, i) => { const cnt = g.attributes.position.count; g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(new Uint16Array(cnt * 4).map((_, k) => k % 4 ? 0 : hairBase.head), 4));
+      g.setAttribute('skinWeight', new THREE.Float32BufferAttribute(new Float32Array(cnt * 4).map((_, k) => k % 4 ? 0 : 1), 4));
+      const sm = new THREE.SkinnedMesh(g, mats[i % 2]); sm.castShadow = true; sm.frustumCulled = false; sm.position.copy(body.position); sm.quaternion.copy(body.quaternion); sm.scale.copy(body.scale);
+      body.parent.add(sm); sm.bind(body.skeleton, body.bindMatrix); earrings.list.push(sm); }); }
+  renderStyles(); }
 // ---- Ting, as in the app: a thing held in the hand - balloon, teddy, wand, ice cream, flower, ball, umbrella - a
 // football on the ground by the foot, or a hula hoop round the waist. Built of simple round shapes, like the app's
 // pictures; the grey parts there (the balloon, the teddy's heart, the scoop, the petals, the ball, the hoop, the
@@ -2370,7 +2424,7 @@ async function loadFbx() { if (!(await exists('figur.fbx' + FIGUR_V))) return fa
   whitesByPlace(fbx);
   const box = new THREE.Box3().setFromObject(fbx), size = box.getSize(new THREE.Vector3()), k = 2.15 / size.y;
   fbx.scale.setScalar(k); fbx.position.y = -box.min.y * k; holder.add(fbx); glb = fbx;
-  measureHead(fbx); if (hairBase) setupBrows(hairBase.body); await setHair(hairNow); chestName();
+  measureHead(fbx); if (hairBase) setupBrows(hairBase.body); await setHair(hairNow); chestName(); setupEars();
   mixer = new THREE.AnimationMixer(fbx); if (fbx.animations[0]) glbActions.vink = mixer.clipAction(fbx.animations[0]);
   // (each movement preferably as figur-<name>.json: only the movement, taken out of Mixamo's file - a few hundred KB
   // where the .fbx, the whole figure again, is 19 MB)
@@ -2392,7 +2446,7 @@ loadFbx().then(ok => { document.getElementById('tag').textContent = ok ? '3D-for
 const clock = new THREE.Clock();
 // (the face's parts - the eyes so far - are shown close up: the camera glides in front of the face, and out again to the
 // whole figure when another tab is chosen; dragging and pinching still work in between)
-const FACE = ['eyes', 'brows', 'nose', 'mouth', 'pynt']; let farZ = 8, closeUp = false, goal = null;
+const FACE = ['eyes', 'brows', 'nose', 'mouth', 'pynt', 'ears']; let farZ = 8, closeUp = false, goal = null;
 function lookFor(part) { const near = FACE.includes(part) && hairBase;
   if (near) { const at = hairBase.body.skeleton.bones[hairBase.head].getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(0, .15, 0));
     controls.minDistance = .5; goal = { target: at, camera: at.clone().add(new THREE.Vector3(0, .04, 1.5)) }; }
