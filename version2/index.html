@@ -76,6 +76,16 @@
   .tabgroup button .emo { height: 32px; font-size: 25px; line-height: 32px; pointer-events: none; }
   .tabgroup button span { pointer-events: none; }
   #saveBtn { position: relative; }
+  /* Hop over bolden: the stars top left, the cross top right, a hint at the foot of the picture at the start */
+  .hud { position: absolute; top: 10px; left: 10px; right: 10px; display: flex; justify-content: space-between; align-items: center; pointer-events: none; z-index: 2; }
+  .hud[hidden], .tap-hint[hidden] { display: none; }
+  .stars { background: var(--tile); border-radius: 999px; padding: 6px 16px; font: 800 24px/1.2 system-ui, sans-serif; box-shadow: 0 2px 10px rgba(58, 46, 92, .2); }
+  .game-x { pointer-events: auto; width: 46px; height: 46px; border-radius: 50%; border: 0; background: var(--tile); color: var(--ink); font: 700 20px/1 system-ui, sans-serif; cursor: pointer; box-shadow: 0 2px 10px rgba(58, 46, 92, .2); }
+  .tap-hint { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); white-space: nowrap; pointer-events: none; z-index: 2;
+    background: var(--tile); border-radius: 999px; padding: 8px 16px; font: 700 18px/1.2 system-ui, sans-serif; box-shadow: 0 2px 10px rgba(58, 46, 92, .2); }
+  @media (prefers-reduced-motion: no-preference) { .tap-hint { animation: nudge 1s ease-in-out infinite alternate; } }
+  @keyframes nudge { to { transform: translateX(-50%) translateY(-6px); } }
+  .top[hidden] { display: none; }
   @media (prefers-reduced-motion: no-preference) { .pop { animation: pop .5s ease; } }
   @keyframes pop { 40% { transform: scale(1.35) rotate(-12deg); } 100% { transform: none; } }
   .lock-badge { position: absolute; right: -4px; bottom: -4px; width: 22px; height: 22px; border-radius: 50%; background: #2FB872;
@@ -128,6 +138,9 @@
 <div id="bgFar" hidden></div><div id="bgNear" hidden></div>
 <canvas id="scene"></canvas>
 <div class="top"><span class="tag" id="tag">Henter figuren …</span></div>
+<!-- Hop over bolden: the stars won, and the cross that ends the game; a hint at the start -->
+<div class="hud" id="hud" hidden><span class="stars" id="stars">⭐ 0</span><button class="game-x" id="gameExit" aria-label="Stop spillet">✕</button></div>
+<div class="tap-hint" id="tapHint" hidden>👆 Tryk for at hoppe</div>
 </div>
 <div class="panel">
   <div class="parts" id="parts"></div>
@@ -151,6 +164,10 @@
     <button data-anim="kolboette"><img src="ikoner/stilling-kolboette.png" alt=""><span>Kolbøtte</span></button>
     <button data-anim="spark"><img src="ikoner/stilling-spark.png" alt=""><span>Spark</span></button>
     <button id="spin"><img src="ikoner/stilling-drej.png" alt=""><span>Drej rundt</span></button>
+  </div>
+  <!-- the games, after the movements (the first: Hop over bolden, 03-11-2026) -->
+  <div class="tabgroup" id="games">
+    <button data-game="hop"><img src="ikoner/spil-hop.png" alt=""><span>Hop over bolden</span></button>
   </div>
   <div class="box">
     <div class="choices" id="styles" hidden></div><div class="choices" id="styles2" hidden></div>
@@ -310,7 +327,7 @@ for (const el of Object.values(S)) el.addEventListener('input', () => { paintTra
 const groups = [0, 1, 2].map(() => document.getElementById('parts').appendChild(Object.assign(document.createElement('div'), { className: 'tabgroup' })));
 for (const [part, name, icon] of CHOICES) { const b = iconButton(`ikoner/${icon}.png`, name); b.dataset.part = part; b.onclick = () => { partNow = part; showSwatches(); lookFor(part); };
   groups[['shirt', 'pants', 'dress', 'socks', 'shoe', 'hat', 'glasses'].includes(part) ? 1 : ['item', 'name', 'bg'].includes(part) ? 2 : 0].append(b); }
-document.getElementById('parts').append(document.getElementById('moves')); document.getElementById('parts').prepend(document.getElementById('saving'));
+document.getElementById('parts').append(document.getElementById('moves'), document.getElementById('games')); document.getElementById('parts').prepend(document.getElementById('saving'));
 showSwatches();
 
 // The AI figure's colours are painted into one picture (its texture). Each pixel of it is sorted once by its colour
@@ -1039,7 +1056,7 @@ function smoothUnder() {
 const MOVES = { staa: [['staa', 'Stå']], vink: [['vink', 'Vink']],
   hop: [['hop', 'Glad hop'], ['hop-hoejt', 'Højt hop'], ['hop-lille', 'Lille hop'], ['loebehop', 'Løbehop']],
   dans: [['dans', 'Hiphop'], ['dans-hiphop', 'Hiphop 2'], ['dans-fjollet', 'Fjollet'], ['dans-arme', 'Armdans'], ['dans-break', 'Breakdance'], ['dans-flair', 'Flair'], ['dans-flair2', 'Flair 2']],
-  loeb: [['loeb', 'Sjovt løb'], ['loeb-a', 'Løb'], ['loeb-b', 'Løb 2']],
+  loeb: [['loeb', 'Sjovt løb'], ['loeb-a', 'Løb stærkt'], ['loeb-b', 'Løb']],
   jubel: [['jubel', 'Jubel'], ['jubel-klap', 'Klap'], ['jubel-yes', 'Yes!']],
   kolboette: [['kolboette', 'Kolbøtte'], ['snubl', 'Snuble'], ['fald', 'Bums']],
   spark: [['spark', 'Venstre fod'], ['spark-hoejre', 'Højre fod']] };
@@ -1050,10 +1067,11 @@ let anim = 'staa', spin = false; // (anim: the movement playing now, one of the 
 const holder = new THREE.Group(); holder.visible = false; scene.add(holder); let spinAngle = 0;
 // (a movement's tab plays its kind chosen last and shows its kinds in the box)
 document.querySelectorAll('[data-anim]').forEach(b => b.onclick = () => { partNow = 'move-' + b.dataset.anim; showSwatches(); lookFor(''); playMove(moveNow[b.dataset.anim]); });
-async function playMove(id) { const g = Object.keys(MOVES).find(k => MOVES[k].some(m => m[0] === id)); if (!g) return; moveNow[g] = id; anim = id;
+// (choosing a movement ends the game, if one is going)
+async function playMove(id) { const g = Object.keys(MOVES).find(k => MOVES[k].some(m => m[0] === id)); if (!g) return; stopGame(); moveNow[g] = id; anim = id;
   document.querySelectorAll('[data-anim]').forEach(x => x.classList.toggle('on', x.dataset.anim === g)); renderStyles();
   if (!glb) return; const a = await loadMove(id); if (!a || anim !== id) return;
-  Object.values(glbActions).forEach(x => x !== a && x.fadeOut(.3)); a.reset().fadeIn(.3).play(); }
+  Object.values(glbActions).forEach(x => x !== a && x.fadeOut(.3)); a.setLoop(THREE.LoopRepeat, Infinity); a.clampWhenFinished = false; a.reset().fadeIn(.3).play(); }
 document.getElementById('spin').onclick = e => { spin = !spin; e.currentTarget.classList.toggle('on', spin); };
 
 // ---- the figure ----
@@ -2367,7 +2385,11 @@ let bgShown = '';
 function bgZoom() { if (bgNow === 'bg-sol') return; const im = bgImgs[bgNow.slice(3)]; if (!im?.naturalWidth || !holder.visible) return;
   const W = stage.clientWidth, H = stage.clientHeight, toPx = v => [(v.x + 1) / 2 * W, (1 - (v.y + 1) / 2) * H];
   const [fx, fy] = toPx(bgFeet.set(0, 0, 0).applyMatrix4(holder.matrixWorld).project(camera)), [, hy] = toPx(bgHead.set(0, 2.15, 0).applyMatrix4(holder.matrixWorld).project(camera));
-  const h = Math.round((fy - hy) / .7), w = Math.round(h * im.naturalWidth / im.naturalHeight), x = Math.round(fx - w / 2), y = Math.round(fy - .85 * h), s = `${w} ${h} ${x} ${y}`;
+  let h = (fy - hy) / .7, w = h * im.naturalWidth / im.naturalHeight, x = fx - w / 2;
+  // (in the game the figure stands off to the left: the picture then as wide as the whole figure's half, the ground still
+  // under its feet)
+  if (game.on) { if (w < W * 1.05) { h *= W * 1.05 / w; w = W * 1.05; } x = (W - w) / 2; }
+  h = Math.round(h); w = Math.round(w); x = Math.round(x); const y = Math.round(fy - .85 * h), s = `${w} ${h} ${x} ${y}`;
   if (s === bgShown) return; bgShown = s; bgNear.style.width = w + 'px'; bgNear.style.height = h + 'px'; bgNear.style.left = x + 'px'; bgNear.style.top = y + 'px'; }
 // ---- Ører, as in the app: the ears' shape - natural, small, big, sticking out, elf ears - and earrings at the lobes ----
 // (the ears are the body's own: each its points beyond the skull at the side of the head - a third of an eye's distance
@@ -2655,6 +2677,59 @@ function kickBall(dt) { const b = kick.ball; if (!b) return; const k = kicks[ani
   else { const s = t - contact; // (off up and out, towards the one looking and a little across, spinning)
     g.position.set(rest.x - 1.2 * s * side, Math.max(r, r + 3.2 * s - 4.4 * s * s), rest.z + 4.5 * s); g.rotation.x += dt * 14; }
   if (glb) g.position.applyAxisAngle(yAxis, glb.rotation.y); }
+
+// ---- Hop over bolden: the first little game (03-11-2026) ----
+// The figure runs on the spot, seen from the side; footballs roll in from the right. A tap on the figure's picture (or
+// the space bar) jumps - Mixamo's Running Jump with a lift on top, high enough to clear a ball. Cleared: a star. Hit:
+// it stumbles and runs on - no losing, it is for 3-6 year olds. Every fifth star it cheers. Slow at first, a little
+// quicker with each star. Runs in the figure's own clothes, hair and thing in the hand
+const GAME = { run: 'loeb-b', jump: 'loebehop', trip: 'snubl', cheer: 'jubel', x: -.25, camX: .55, camY: 1.55, dist: 10, jumpFor: .95, high: .65, ball: .9 };
+const game = { on: false, stars: 0, balls: [], pool: [], jumpT: -1, busy: 0, cheer: 0, next: 0, hint: 0, saved: null };
+const hud = document.getElementById('hud'), starsEl = document.getElementById('stars'), hintEl = document.getElementById('tapHint');
+function startGame() { if (game.on || !glb) return; game.on = true; Object.assign(game, { stars: 0, jumpT: -1, busy: 0, cheer: 0, next: 1.5, hint: 4 });
+  game.saved = { cam: camera.position.clone(), target: controls.target.clone(), anim, bg: bgNow, spin }; spin = false; document.getElementById('spin').classList.remove('on');
+  goal = null; closeUp = false; controls.enabled = false; controls.maxDistance = 12; holder.position.x = GAME.x;
+  // (the plain sun has no ground to run on: the football field then, until the game stops)
+  if (bgNow === 'bg-sol') setBg('bg-fodboldbane');
+  // (four balls made once and used again - each is a drawn picture, too slow to make for every ball)
+  while (game.pool.length < 4) { const b = makeItem('fodbold'); b.group.scale.setScalar(GAME.ball); game.pool.push(b); }
+  Promise.all([GAME.run, GAME.jump, GAME.trip, GAME.cheer].map(loadMove)).then(() => { if (game.on) runAnim(GAME.run); });
+  hud.hidden = false; hintEl.hidden = false; document.querySelector('.top').hidden = true; showStars(); document.querySelectorAll('[data-game]').forEach(b => b.classList.add('on')); }
+function stopGame() { if (!game.on) return; game.on = false; for (const b of game.pool) b.group.visible = false; game.balls = []; holder.position.x = 0;
+  hud.hidden = true; hintEl.hidden = true; document.querySelector('.top').hidden = false; document.querySelectorAll('[data-game]').forEach(b => b.classList.remove('on'));
+  if (game.saved.bg !== bgNow) setBg(game.saved.bg); camera.position.copy(game.saved.cam); controls.target.copy(game.saved.target); controls.enabled = true; controls.maxDistance = 10;
+  if (game.saved.spin) document.getElementById('spin').click(); playMove(game.saved.anim); }
+// (a movement within the game: quicker change, and the jump, the stumble and the cheer once each, not over and over)
+function runAnim(id, once) { const a = glbActions[id]; if (!a) return; anim = id; Object.values(glbActions).forEach(x => x !== a && x.fadeOut(.15));
+  a.reset(); a.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat, Infinity); a.clampWhenFinished = !!once; a.fadeIn(.15).play(); }
+function jump() { if (!game.on || game.jumpT >= 0 || game.busy || game.cheer || !glbActions[GAME.jump]) return; game.jumpT = 0; game.hint = 0; runAnim(GAME.jump, true); }
+function showStars(pop) { starsEl.textContent = '⭐ ' + game.stars; if (pop) { starsEl.classList.remove('pop'); void starsEl.offsetWidth; starsEl.classList.add('pop'); } }
+function gameTick(dt) { if (!game.on || !glb) return; const r = .158 * GAME.ball, figX = GAME.x;
+  // (seen from the side, the figure facing the balls - turned to look out at the one playing when it cheers)
+  glb.rotation.y = game.cheer ? .3 : Math.PI / 2;
+  // (a wide picture - a phone held upright gives one - from nearer: the figure was small in it)
+  const dist = camera.aspect > .85 ? 7.5 : GAME.dist, halfW = Math.tan(camera.fov * Math.PI / 360) * dist * camera.aspect, right = GAME.camX + halfW + .4, left = GAME.camX - halfW - .5;
+  camera.position.set(GAME.camX, GAME.camY + .05, dist); controls.target.set(GAME.camX, GAME.camY, 0); camera.lookAt(controls.target);
+  if (game.hint > 0 && (game.hint -= dt) <= 0) hintEl.hidden = true; else if (game.hint <= 0) hintEl.hidden = true;
+  // (the jump: up and down in a smooth arc over the ball, the run again when it lands)
+  let lift = 0; if (game.jumpT >= 0) { game.jumpT += dt; const s = game.jumpT / GAME.jumpFor; if (s >= 1) { game.jumpT = -1; runAnim(GAME.run); } else lift = GAME.high * 4 * s * (1 - s); }
+  glb.position.y += lift;
+  if (game.busy && (game.busy -= dt) <= 0) { game.busy = 0; runAnim(GAME.run); }
+  if (game.cheer && (game.cheer -= dt) <= 0) { game.cheer = 0; runAnim(GAME.run); }
+  // (a new ball now and then - never while it cheers - a little sooner and quicker with more stars)
+  const speed = Math.min(2.4, 1.4 + game.stars * .05);
+  if (!game.cheer && (game.next -= dt) <= 0) { const b = game.pool.find(p => !p.group.visible); if (b) { game.next = 2.3 + Math.random() * 1.6 - Math.min(.8, game.stars * .04);
+    Object.assign(b, { vx: -speed, vy: 0, hit: false, done: false }); b.group.position.set(right, r, 0); b.group.visible = true; game.balls.push(b); } }
+  for (const b of [...game.balls]) { const p = b.group.position; p.x += b.vx * dt; b.group.rotation.z -= b.vx * dt / r;
+    if (b.hit) { b.vy -= 9.8 * dt; p.y += b.vy * dt; if (p.y < r) { p.y = r; b.vy *= -.45; } }
+    // (it clears the ball when the feet are over it as it passes - forgiving: the ball counts a little smaller than it is)
+    if (!b.done && Math.abs(p.x - figX) < .18 && lift < .2) { b.hit = b.done = true; b.vx = 1.4; b.vy = 2.6; game.jumpT = -1; game.busy = 1.1; runAnim(GAME.trip, true); }
+    if (!b.done && p.x < figX - .25) { b.done = true; game.stars++; showStars(true); if (game.stars % 5 === 0) { game.cheer = 2.6; runAnim(GAME.cheer); } }
+    if (p.x < left || p.x > right + .5) { b.group.visible = false; game.balls.splice(game.balls.indexOf(b), 1); } } }
+document.getElementById('stage').addEventListener('pointerdown', e => { if (game.on && !e.target.closest('button')) { e.preventDefault(); jump(); } });
+addEventListener('keydown', e => { if (game.on && e.code === 'Space' && !/INPUT/.test(e.target.tagName)) { e.preventDefault(); jump(); } });
+document.getElementById('gameExit').onclick = stopGame;
+document.querySelectorAll('[data-game]').forEach(b => b.onclick = () => game.on ? stopGame() : startGame());
 loadFbx().then(ok => { document.getElementById('tag').textContent = ok ? 'Version 2 · træk for at dreje, knib for at zoome' : 'Figuren kunne ikke hentes'; });
 
 // ---- render loop ----
@@ -2662,7 +2737,7 @@ const clock = new THREE.Clock();
 // (the face's parts - the eyes so far - are shown close up: the camera glides in front of the face, and out again to the
 // whole figure when another tab is chosen; dragging and pinching still work in between)
 const FACE = ['eyes', 'brows', 'nose', 'mouth', 'pynt', 'ears']; let farZ = 8, closeUp = false, goal = null;
-function lookFor(part) { const near = FACE.includes(part) && hairBase;
+function lookFor(part) { if (game.on) return; const near = FACE.includes(part) && hairBase;
   if (near) { const at = hairBase.body.skeleton.bones[hairBase.head].getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(0, .15, 0));
     controls.minDistance = .5; goal = { target: at, camera: at.clone().add(new THREE.Vector3(0, .04, 1.5)) }; }
   else if (closeUp) goal = { target: new THREE.Vector3(0, 1.05, 0), camera: new THREE.Vector3(0, 1.25, farZ), far: true };
@@ -2676,6 +2751,6 @@ function resize() { const w = stage.clientWidth, h = stage.clientHeight; rendere
 addEventListener('resize', resize); resize(); new ResizeObserver(resize).observe(stage);
 renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElapsedTime();
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
-  if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0); kickBall(dt); armsOut(); holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); });</script>
+  if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0); gameTick(dt); kickBall(dt); armsOut(); holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); });</script>
 </body>
 </html>
