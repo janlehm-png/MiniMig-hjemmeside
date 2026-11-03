@@ -167,6 +167,8 @@
   .lock-badge { position: absolute; right: -4px; bottom: -4px; width: 22px; height: 22px; border-radius: 50%; background: #2FB872;
     display: grid; place-items: center; font-size: .72rem; line-height: 1; box-shadow: 0 1px 4px rgba(58, 46, 92, .2); }
   .lock-badge[hidden] { display: none; }
+  /* the grown-ups' sum always on top - it is also asked from inside other sheets (the stars' players button) */
+  #gate { z-index: 60; }
   .sheet { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; background: rgba(20, 14, 40, .55);
     padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
   .sheet[hidden] { display: none; }
