@@ -1111,7 +1111,7 @@ async function playMove(id) { const g = Object.keys(MOVES).find(k => MOVES[k].so
   if (g === 'dans' && musicOn) soundOut()?.resume();
   document.querySelectorAll('[data-anim]').forEach(x => x.classList.toggle('on', x.dataset.anim === g)); renderStyles();
   if (!glb) return; const a = await loadMove(id); if (!a || anim !== id) return;
-  Object.values(glbActions).forEach(x => x !== a && x.fadeOut(.3)); a.setLoop(THREE.LoopRepeat, Infinity); a.clampWhenFinished = false; a.reset().fadeIn(.3).play(); }
+  Object.values(glbActions).forEach(x => x !== a && x.fadeOut(.3)); a.setLoop(THREE.LoopRepeat, Infinity); a.clampWhenFinished = false; a.timeScale = 1; a.reset().fadeIn(.3).play(); }
 document.getElementById('spin').onclick = e => { spin = !spin; e.currentTarget.classList.toggle('on', spin); };
 
 // ---- the figure ----
@@ -2831,13 +2831,18 @@ function kickBall(dt) { if (!kick.ball) return; const k = kicks[anim], a = glbAc
 // (the jump: Mixamo's small jump, knees drawn up - the running jump's long stride in the air looked like hanging there,
 // the user said twice - with only a little lift of its own on top, in its own time in the air: the clip already lifts
 // the feet near a metre. Whether a ball is touched is told by where the figure's feet really are)
-const GAME = { jump: 'hop-lille', trip: 'snubl', cheer: 'jubel', extra: .25, up: .05, down: .8, r: .224 };
+// (then a touch of float again - too hard to get over even at the easiest, the user said: the jump played a little
+// slower, slow, and a little more lift)
+const GAME = { jump: 'hop-lille', trip: 'snubl', cheer: 'jubel', extra: .35, up: .05, down: .9, slow: .85, r: .224,
+  // (the super jump: now and then a big gold ball; a tap for it dives over it and rolls - Mixamo's Jump Over, begun
+  // after its run-up, at the take-off - and it gives three stars. safe: when the body is up over the ball, in the clip)
+  dive: 'hop-over', diveFrom: .45, safe: [.52, 1.5], bigR: .38 };
 // (five levels since 03-11-2026 - the user: a very easy one for the youngest, a very hard one for the eldest)
 // (air: how long a jump lasts; hit: how near the middle of the ball the feet must be to touch it. A slow ball takes long
 // to roll under the figure - it landed on it before it was through: the easy levels count the ball smaller. A longer,
 // floating jump looked made-up - the user, 03-11-2026 - so every level jumps the same natural arc again)
 // (clear: how high the feet must be over a ball; the easy levels let a lower, earlier or later jump do)
-const LEVELS = [['niveau-meget-let', 'Meget let', { run: 'loeb', speed: .9, top: 1.3, gap: 3.8, hit: .06, clear: .2 }], ['niveau-let', 'Let', { run: 'loeb', speed: 1.2, top: 1.8, gap: 3.2, hit: .08, clear: .24 }],
+const LEVELS = [['niveau-meget-let', 'Meget let', { run: 'loeb', speed: .9, top: 1.3, gap: 3.8, hit: .04, clear: .14 }], ['niveau-let', 'Let', { run: 'loeb', speed: 1.2, top: 1.8, gap: 3.2, hit: .06, clear: .2 }],
   ['niveau-mellem', 'Mellem', { run: 'loeb-b', speed: 1.6, top: 2.5, gap: 2.5, hit: .12, clear: .28 }], ['niveau-svaer', 'Svær', { run: 'loeb-a', speed: 2.2, top: 3.2, gap: 1.8, hit: .16, clear: .33 }],
   ['niveau-meget-svaer', 'Meget svær', { run: 'loeb-a', speed: 2.8, top: 3.8, gap: 1.5, hit: .2, clear: .36 }]];
 // Three ways to play (the user, 03-11-2026): from the side, the balls rolling in from the right; from behind, the figure
@@ -2867,9 +2872,16 @@ function beachBall() { if (!beachMat) { const cv = document.createElement('canva
 // big as the beach ball; five of each kind made once and used again)
 const BALL_ITEMS = ['ting-bold', 'ting-fodbold'];
 const gamePool = () => (game.pools ??= {})[game.kind || ''] ??= [];
-function useGameBall(name) { for (const b of gamePool()) b.group.visible = false; game.balls = []; game.kind = BALL_ITEMS.includes(name) ? name : '';
+function useGameBall(name) { for (const b of [...gamePool(), ...(game.bigPool || [])]) b.group.visible = false; game.balls = []; game.kind = BALL_ITEMS.includes(name) ? name : '';
   const pool = gamePool(); while (pool.length < 5) { if (!game.kind) pool.push(beachBall()); else { const it = makeItem(game.kind.slice(5)); it.group.scale.setScalar(GAME.r / (game.kind === 'ting-bold' ? .1 : .158)); paintItemOf(it); pool.push(it); } }
   if (items[name]) items[name].group.visible = false; if (BALL_ITEMS.includes(name)) item = null; }
+// (the big gold ball for the super jump - two made once and used again)
+let goldMat = null;
+function goldBall() { if (!goldMat) { const cv = document.createElement('canvas'); cv.width = 512; cv.height = 256; const c = cv.getContext('2d'), cols = ['#FFC233', '#FFF6D8', '#FF9F1C', '#FFF6D8'];
+    for (let i = 0; i < 8; i++) { c.fillStyle = cols[i % 4]; c.fillRect(i * 64, 0, 64, 256); } c.fillStyle = '#FFF6D8'; c.fillRect(0, 0, 512, 22); c.fillRect(0, 234, 512, 22);
+    const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; goldMat = new THREE.MeshStandardMaterial({ map: t, roughness: .25, metalness: .25, emissive: new THREE.Color('#5A3A00'), emissiveIntensity: .25 }); }
+  const g = new THREE.Group(), m = new THREE.Mesh(new THREE.SphereGeometry(GAME.bigR, 44, 30), goldMat); m.castShadow = true; m.rotation.x = Math.PI / 2; g.add(m); g.visible = false; scene.add(g); return { group: g, big: true }; }
+function startDive() { const a = glbActions[GAME.dive]; if (!a) return false; game.dive = true; game.hint = 0; runAnim(GAME.dive, true); a.time = GAME.diveFrom; sfx('boing'); sfx('boing', .12); return true; }
 function setLevel(id) { game.level = id; renderStyles(); stopGame(true); startGame(game.mode); }
 const hud = document.getElementById('hud'), starsEl = document.getElementById('stars'), hintEl = document.getElementById('tapHint');
 function startGame(mode = game.mode) { if (game.on || !glb) return; game.mode = mode; const M = MODES[mode]; game.on = true; Object.assign(game, { stars: 0, jumpT: -1, busy: 0, cheer: 0, cheerWait: false, rotY: M.face, next: 1.5, hint: 4 });
@@ -2880,11 +2892,12 @@ function startGame(mode = game.mode) { if (game.on || !glb) return; game.mode = 
   // (five balls made once and used again)
   // (a ball chosen under Ting - Bold or Fodbold - is the game's ball, not one in the hand as well)
   useGameBall(BALL_ITEMS.includes(itemNow) ? itemNow : '');
-  const run = levelNow().run; Promise.all([run, GAME.jump, GAME.trip, GAME.cheer].map(loadMove)).then(() => { if (game.on) runAnim(run); });
+  game.bigPool ??= [goldBall(), goldBall()]; Object.assign(game, { dive: false, sinceBig: 0 });
+  const run = levelNow().run; Promise.all([run, GAME.jump, GAME.trip, GAME.cheer, GAME.dive].map(loadMove)).then(() => { if (game.on) runAnim(run); });
   hud.hidden = false; hintEl.hidden = false; document.querySelector('.top').hidden = true; document.getElementById('stage').classList.add('playing'); showStars();
   document.querySelectorAll('[data-game]').forEach(b => b.classList.toggle('on', b.dataset.game === mode)); prepScene(); }
 // (again: only stopped to start once more - at another level or in another way - the figure's own setting not put back)
-function stopGame(again) { if (!game.on) return; game.on = false; for (const b of gamePool()) b.group.visible = false; game.balls = []; confetti.length = 0; unprepScene();
+function stopGame(again) { if (!game.on) return; game.on = false; for (const b of [...gamePool(), ...(game.bigPool || [])]) b.group.visible = false; game.dive = false; game.balls = []; confetti.length = 0; unprepScene();
   // (the sound shut down when nothing plays: on an iPad an open sound channel could go on sounding after the game)
   if (!again) { try { if (!musicPlaying()) game.audio?.suspend(); } catch (e) {} setItem(itemNow); }
   if (again) { game.again = true; return; } holder.position.x = 0;
@@ -2895,7 +2908,10 @@ function stopGame(again) { if (!game.on) return; game.on = false; for (const b o
 function runAnim(id, once) { const a = glbActions[id]; if (!a) return; anim = id; Object.values(glbActions).forEach(x => x !== a && x.fadeOut(.15));
   a.reset(); a.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat, Infinity); a.clampWhenFinished = !!once; a.fadeIn(.15).play(); }
 function jump() { if (!game.audio) try { game.audio = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { game.audio = null; } game.audio?.resume?.();
-  if (!game.on || game.jumpT >= 0 || game.busy || game.cheer || !glbActions[GAME.jump]) return; game.jumpT = 0; game.hint = 0; runAnim(GAME.jump, true); sfx('boing'); }
+  if (!game.on || game.jumpT >= 0 || game.dive || game.busy || game.cheer || !glbActions[GAME.jump]) return;
+  // (the gold ball next and near: the dive instead of the jump)
+  const next = game.balls.filter(b => !b.done).sort((a, c) => a.u - c.u)[0]; if (next?.big && next.u / -next.v < 1.4 && startDive()) return;
+  game.jumpT = 0; game.hint = 0; runAnim(GAME.jump, true); glbActions[GAME.jump].timeScale = GAME.slow; sfx('boing'); }
 // (the balls on their way are taken away under the confetti when it cheers - one rolled over the figure while it stood
 // cheering, the user said - and the next comes only once it runs again)
 function startCheer() { game.cheerWait = false; game.cheer = 2.2; runAnim(GAME.cheer); for (const b of game.balls) b.group.visible = false; game.balls = []; }
@@ -2910,26 +2926,34 @@ function gameTick(dt) { confettiTick(dt); if (!game.on || !glb) return; const r 
   // (the jump: up and down in a smooth arc over the ball, the run again when it lands)
   // (the fifth star mostly comes in the air: the cheer then waits for the landing - before, the landing put the run back
   // in the middle of the cheer, the figure running on the spot facing out, no balls, as if waiting for a tap)
-  const air = glbActions[GAME.jump]?.getClip().duration || .9;
+  const air = (glbActions[GAME.jump]?.getClip().duration || .9) / GAME.slow;
   if (game.jumpT >= 0) { game.jumpT += dt; if (game.jumpT >= air) { game.jumpT = -1; if (game.cheerWait) startCheer(); else runAnim(L.run); }
-    else { const s = (game.jumpT - GAME.up) / (GAME.down - GAME.up); if (s > 0 && s < 1) glb.position.y += GAME.extra * Math.sin(Math.PI * s); } }
+    else { const s = (game.jumpT * GAME.slow - GAME.up) / (GAME.down - GAME.up); if (s > 0 && s < 1) glb.position.y += GAME.extra * Math.sin(Math.PI * s); } }
   // (how high the feet are now - the lower of the two toes, over the ground)
   glb.updateMatrixWorld(true); let lift = 9; for (const n of ['LeftToeBase', 'RightToeBase']) { const b = bone(n); if (b) lift = Math.min(lift, holder.worldToLocal(b.getWorldPosition(lv)).y); }
+  // (the dive over: done when its clip is through - then the cheer, if a fifth star came in it, or the run)
+  const da = glbActions[GAME.dive]; if (game.dive && (!da?.isRunning() || da.time >= da.getClip().duration - .04)) { game.dive = false; if (game.cheerWait) startCheer(); else runAnim(L.run); }
   if (game.busy && (game.busy -= dt) <= 0) { game.busy = 0; runAnim(L.run); }
   if (game.cheer && (game.cheer -= dt) <= 0) { game.cheer = 0; runAnim(L.run); game.next = Math.min(game.next, .6); }
   // (a new ball now and then - never while it cheers - a little sooner and quicker with more stars)
   const speed = Math.min(L.top, L.speed + game.stars * .04) * M.k, from = M.from(halfW, cx, cz) - (game.mode === 'side' ? M.x : 0);
-  if (!game.cheer && (game.next -= dt) <= 0) { const b = gamePool().find(p => !p.group.visible); if (b) { // (never so close that the figure is still in the air from the last ball - every ball can be cleared)
-    game.next = Math.max(air + .5, L.gap + Math.random() * 1.4 - Math.min(L.gap * .3, game.stars * .03));
-    Object.assign(b, { u: from, v: -speed, vy: 0, hit: false, done: false }); b.group.position.y = r; M.put(b.group.position, b.u); b.group.visible = true; game.balls.push(b); } }
-  for (const b of [...game.balls]) { const p = b.group.position; b.u += b.v * dt; M.roll(b.group, -b.v * dt / r);
-    if (b.hit) { b.vy -= 9.8 * dt; p.y += b.vy * dt; if (p.y < r) { p.y = r; b.vy *= -.45; } }
+  // (after four ordinary balls or more, now and then the big gold one - and the next ball only once the dive is through)
+  if (!game.cheer && !game.dive && (game.next -= dt) <= 0) { const big = game.sinceBig >= 4 && Math.random() < .3, b = (big ? game.bigPool : gamePool()).find(p => !p.group.visible);
+    if (b) { // (never so close that the figure is still in the air from the last ball - every ball can be cleared)
+    game.next = Math.max(big ? 2.4 : air + .5, L.gap + Math.random() * 1.4 - Math.min(L.gap * .3, game.stars * .03)); game.sinceBig = big ? 0 : game.sinceBig + 1;
+    Object.assign(b, { u: from, v: -speed, vy: 0, hit: false, done: false, r: big ? GAME.bigR : r }); b.group.position.y = b.r; M.put(b.group.position, b.u); b.group.visible = true; game.balls.push(b); } }
+  // (a ball the figure stumbled over bounces back but keeps turning the way it rolled, slowing - as a real ball does;
+  // turned the other way it looked wrong, the user said)
+  for (const b of [...game.balls]) { const p = b.group.position, br = b.r || r; b.u += b.v * dt; if (b.hit) { b.spin *= 1 - dt * .8; M.roll(b.group, b.spin * dt); } else M.roll(b.group, -b.v * dt / br);
+    if (b.hit) { b.vy -= 9.8 * dt; p.y += b.vy * dt; if (p.y < br) { p.y = br; b.vy *= -.45; } }
     M.put(p, b.u);
-    // (it clears the ball when the feet are over it as it passes - forgiving: the ball counts a little smaller than it is)
+    // (it clears the ball when the feet are over it as it passes - forgiving: the ball counts a little smaller than it is;
+    // the gold ball only by the dive, while the body is up over it)
     // (no stumbling over a ball while it cheers - it cannot jump then: such a ball just rolls by)
-    if (!b.done && Math.abs(b.u) < L.hit && lift < L.clear && !game.cheer) { b.hit = b.done = true; b.v = 1.4; b.vy = 2.6; game.jumpT = -1; game.busy = 1.1; runAnim(GAME.trip, true); sfx('bonk'); }
-    if (!b.done && b.u < -.32) { b.done = true; if (game.cheer) continue; game.stars++; showStars(true);
-      if (game.stars % 5 === 0) { celebrate(); if (game.jumpT >= 0) game.cheerWait = true; else startCheer(); } }
+    const over = b.big ? game.dive && da.time > GAME.safe[0] && da.time < GAME.safe[1] : lift >= L.clear;
+    if (!b.done && Math.abs(b.u) < (b.big ? .3 : L.hit) && !over && !game.cheer) { b.hit = b.done = true; b.spin = -b.v / br; b.v = 1.4; b.vy = 2.6; game.jumpT = -1; game.dive = false; game.busy = 1.1; runAnim(GAME.trip, true); sfx('bonk'); }
+    if (!b.done && b.u < (b.big ? -.45 : -.32)) { b.done = true; if (game.cheer) continue; const before = game.stars; game.stars += b.big ? 3 : 1; showStars(true);
+      if (Math.floor(game.stars / 5) > Math.floor(before / 5)) { celebrate(); if (game.jumpT >= 0 || game.dive) game.cheerWait = true; else startCheer(); } }
     if (b.u < M.gone || b.u > from + .5) { b.group.visible = false; game.balls.splice(game.balls.indexOf(b), 1); } } }
 document.getElementById('stage').addEventListener('pointerdown', e => { if (game.on && !e.target.closest('button')) { e.preventDefault(); jump(); } });
 addEventListener('keydown', e => { if (game.on && e.code === 'Space' && !/INPUT/.test(e.target.tagName)) { e.preventDefault(); jump(); } });
@@ -3004,7 +3028,7 @@ function keys(ctx, t, f, len, vol) { const lp = ctx.createBiquadFilter(), g = ct
   g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + .01); g.gain.exponentialRampToValueAtTime(.0008, t + len); lp.connect(g).connect(musicOut(ctx));
   for (const [type, d] of [['square', 0], ['triangle', 3]]) { const o = ctx.createOscillator(); o.type = type; o.frequency.value = f; o.detune.value = d; o.connect(lp); o.start(t); o.stop(t + len + .02); } }
 // (the game's sounds: a boing up as it jumps, a wobbly boing down as it stumbles over a ball - always, music or not)
-function sfx(kind) { const ctx = game.audio; if (!ctx || ctx.state !== 'running') return; const t = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain(), lfo = ctx.createOscillator(), wob = ctx.createGain();
+function sfx(kind, later = 0) { const ctx = game.audio; if (!ctx || ctx.state !== 'running') return; const t = ctx.currentTime + later, o = ctx.createOscillator(), g = ctx.createGain(), lfo = ctx.createOscillator(), wob = ctx.createGain();
   o.type = 'sine'; lfo.frequency.value = kind === 'boing' ? 22 : 14; wob.gain.value = kind === 'boing' ? 25 : 60; lfo.connect(wob).connect(o.frequency);
   const [from, to, len] = kind === 'boing' ? [180, 620, .28] : [520, 110, .5]; o.frequency.setValueAtTime(from, t); o.frequency.exponentialRampToValueAtTime(to, t + len);
   g.gain.setValueAtTime(.28, t); g.gain.exponentialRampToValueAtTime(.0008, t + len); o.connect(g).connect(ctx.destination); for (const x of [o, lfo]) { x.start(t); x.stop(t + len + .02); } }
