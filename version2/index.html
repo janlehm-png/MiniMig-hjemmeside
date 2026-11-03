@@ -146,6 +146,14 @@
   .share-off, .share-choices button { border: 2px solid var(--line); background: var(--tile); color: var(--ink); border-radius: 14px; cursor: pointer; font: 700 1rem/1.2 system-ui, sans-serif; padding: 10px 14px; }
   .share-choices { display: grid; gap: 8px; }
   .share-choices button { text-align: left; padding: 12px 14px; }
+  .sound-opts { display: grid; gap: 8px; }
+  .sound-opt { display: flex; align-items: center; justify-content: space-between; gap: 12px; border: 2px solid var(--line); background: #FFF8E1; color: var(--ink); border-radius: 14px;
+    padding: 12px 14px; font: 700 1rem/1.2 system-ui, sans-serif; cursor: pointer; text-align: left; }
+  .sound-opt b { flex: none; width: 46px; height: 26px; border-radius: 13px; background: #CFC8E6; position: relative; transition: background .15s; }
+  .sound-opt b::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: left .15s; }
+  .sound-opt[aria-pressed="true"] b { background: #2FB872; }
+  .sound-opt[aria-pressed="true"] b::after { left: 23px; }
+  .sound-all { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
   .share-choices button.best { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent) inset; }
   .share-choices small { display: block; font-weight: 600; font-size: .8rem; color: #6B6191; }
   .toast { position: fixed; left: 50%; top: max(24px, env(safe-area-inset-top, 0px)); transform: translateX(-50%); z-index: 60; pointer-events: none;
@@ -186,6 +194,7 @@
     <button id="figsBtn"><span class="emo" aria-hidden="true">🖼️</span><span>Mine figurer</span></button>
     <button id="newBtn"><span class="emo" aria-hidden="true">✨</span><span>Ny figur</span></button>
     <button id="saveBtn"><span class="emo" aria-hidden="true">📷</span><span>Billede</span><span class="lock-badge" id="lockBadge" hidden aria-hidden="true">🔓</span></button>
+    <button id="soundBtn"><span class="emo" aria-hidden="true">🔊</span><span>Lyd</span></button>
   </div>
   <!-- (the movements' group, put after the other three groups by the page) -->
   <div class="tabgroup" id="moves">
@@ -254,6 +263,20 @@
       <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
       <button data-k="del" aria-label="Slet">⌫</button><button data-k="0">0</button><button data-k="ok">OK</button>
     </div>
+  </div>
+</div>
+<!-- the sound, for grown-ups (behind the sum): which of MiniMig's sounds may play - the user, 03-11-2026 -->
+<div class="sheet" id="soundSheet" hidden>
+  <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="soundTitle">
+    <div class="sheet-head"><h2 id="soundTitle">Lyd</h2><button class="sheet-x" data-close aria-label="Luk">✕</button></div>
+    <p class="note">For voksne: vælg hvilke lyde MiniMig må lave. Valget huskes på denne enhed.</p>
+    <div class="sound-opts">
+      <button class="sound-opt" data-sound="game"><span>🎮 Musik i spillene</span><b></b></button>
+      <button class="sound-opt" data-sound="dance"><span>💃 Musik til dansene</span><b></b></button>
+      <button class="sound-opt" data-sound="sfx"><span>🔔 Lydeffekter – boing, bonk og ta-da</span><b></b></button>
+      <button class="sound-opt" data-sound="voice"><span>🗣️ Stemmen, der siger navnet</span><b></b></button>
+    </div>
+    <div class="sound-all"><button class="share-off" data-sound-all="0">Slå al lyd fra</button><button class="share-off" data-sound-all="1">Slå al lyd til</button></div>
   </div>
 </div>
 <!-- the star: save the whole figure or its profile picture in Mine figurer (stays on the device, so no grown-up needed) -->
@@ -1096,7 +1119,7 @@ const MOVES = { staa: [['staa', 'Stå']], vink: [['vink', 'Vink']],
   dans: [['dans', 'Hiphop'], ['dans-hiphop', 'Hiphop 2'], ['dans-fjollet', 'Fjollet'], ['dans-arme', 'Armdans'], ['dans-break', 'Breakdance'], ['dans-flair', 'Flair'], ['dans-flair2', 'Flair 2']],
   loeb: [['loeb', 'Sjovt løb'], ['loeb-a', 'Løb stærkt'], ['loeb-b', 'Løb']],
   jubel: [['jubel', 'Jubel'], ['jubel-klap', 'Klap'], ['jubel-yes', 'Yes!']],
-  kolboette: [['kolboette', 'Kolbøtte'], ['snubl', 'Snuble'], ['fald', 'Bums']],
+  kolboette: [['kolboette', 'Kolbøtte'], ['hop-over', 'Dyk og rul'], ['snubl', 'Snuble'], ['fald', 'Falder på numsen']],
   spark: [['spark', 'Venstre fod'], ['spark-hoejre', 'Højre fod']] };
 const moveNow = Object.fromEntries(Object.entries(MOVES).map(([g, list]) => [g, list[0][0]]));
 let anim = 'staa', spin = false; // (anim: the movement playing now, one of the ids above)
@@ -2278,7 +2301,7 @@ nameInput.addEventListener('input', () => { nameNow = nameInput.value; chestName
 let sayTimer = 0, sayOpen = false, playing = null;
 const VOICE_KEY = 'minimig3d.stemmer', voices = (() => { try { return JSON.parse(localStorage.getItem(VOICE_KEY)) || {}; } catch (e) { return {}; } })();
 const voiceFor = n => voices[n.trim().toLowerCase()];
-function sayName() { const n = nameInput.value.trim(); if (!n) return; const own = voiceFor(n);
+function sayName() { const n = nameInput.value.trim(); if (!n || !sound.voice) return; const own = voiceFor(n);
   if (own) { playOwn(own); return; }
   if (!window.speechSynthesis) return; speechSynthesis.cancel();
   const da = speechSynthesis.getVoices().filter(v => /^da/i.test(v.lang)), v = da.find(v => /premium|enhanced|forbedret|neural|natural/i.test(v.name)) || da.find(v => !v.localService) || da[0];
@@ -2903,7 +2926,9 @@ function stopGame(again) { if (!game.on) return; game.on = false; for (const b o
   if (again) { game.again = true; return; } holder.position.x = 0;
   hud.hidden = true; hintEl.hidden = true; document.querySelector('.top').hidden = false; document.getElementById('stage').classList.remove('playing'); document.querySelectorAll('[data-game]').forEach(b => b.classList.remove('on'));
   if (game.saved.bg !== bgNow) setBg(game.saved.bg); camera.position.copy(game.saved.cam); controls.target.copy(game.saved.target); controls.enabled = true; controls.maxDistance = 10;
-  if (game.saved.spin) document.getElementById('spin').click(); playMove(game.saved.anim); }
+  // (back to standing - not to the dance from before the game: its music came straight back, as if the game's sound
+  // never stopped, the user found on a computer)
+  if (game.saved.spin) document.getElementById('spin').click(); playMove(isDance(game.saved.anim) ? 'staa' : game.saved.anim); }
 // (a movement within the game: quicker change, and the jump, the stumble and the cheer once each, not over and over)
 function runAnim(id, once) { const a = glbActions[id]; if (!a) return; anim = id; Object.values(glbActions).forEach(x => x !== a && x.fadeOut(.15));
   a.reset(); a.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat, Infinity); a.clampWhenFinished = !!once; a.fadeIn(.15).play(); }
@@ -2970,7 +2995,7 @@ function celebrate() { const st = document.getElementById('stage'), W = st.clien
   confCv.width = W * dpr; confCv.height = H * dpr; confCx.setTransform(dpr, 0, 0, dpr, 0, 0);
   for (const side of [-1, 1]) for (let k = 0; k < 70; k++) confetti.push({ x: side < 0 ? 10 : W - 10, y: H - 10, vx: -side * (120 + Math.random() * 320), vy: -(H * .9 + Math.random() * H * .7),
     a: Math.random() * 6, va: (Math.random() - .5) * 14, col: CONF_COLS[k % CONF_COLS.length], star: Math.random() < .22, life: 2.6 + Math.random() * .8, s: 6 + Math.random() * 6 });
-  const au = game.audio; if (au) { au.resume(); const t0 = au.currentTime; [523, 659, 784, 1047].forEach((f, i) => { const o = au.createOscillator(), g = au.createGain(); o.type = 'triangle'; o.frequency.value = f;
+  const au = game.audio; if (au && sound.sfx) { au.resume(); const t0 = au.currentTime; [523, 659, 784, 1047].forEach((f, i) => { const o = au.createOscillator(), g = au.createGain(); o.type = 'triangle'; o.frequency.value = f;
     g.gain.setValueAtTime(0, t0 + i * .11); g.gain.linearRampToValueAtTime(.16, t0 + i * .11 + .02); g.gain.exponentialRampToValueAtTime(.001, t0 + i * .11 + (i === 3 ? .7 : .25));
     o.connect(g).connect(au.destination); o.start(t0 + i * .11); o.stop(t0 + i * .11 + .75); }); } }
 function confettiTick(dt) { if (!confetti.length && !confCv.dataset.drawn) return; const W = confCv.width, H = confCv.height; confCx.clearRect(0, 0, W, H); confCv.dataset.drawn = confetti.length ? '1' : '';
@@ -2994,10 +3019,21 @@ const CHORDS = [[48, 52, 55], [45, 48, 52], [41, 45, 48], [43, 47, 50]], TUNE = 
 let musicOn = (() => { try { return localStorage.getItem('minimig3d.musik') !== 'fra'; } catch (e) { return true; } })();
 const music = { id: null, last: 0, out: null, noise: null }, musicBtn = document.getElementById('musicBtn');
 const isDance = id => MOVES.dans.some(m => m[0] === id), hz = m => 440 * 2 ** ((m - 69) / 12);
-function musicPlaying() { return musicOn && (isDance(anim) || game.on); }
-function musicTick() { musicBtn.hidden = !isDance(anim) && !game.on; musicBtn.textContent = musicOn ? '🎵' : '🔇';
+// (the grown-ups' choice of sounds - 🔊 Lyd, behind the sum: the games' music, the dances' music, the boings and the
+// ta-da, the voice saying the name - remembered on the device; the 🎵 on the picture only turns off what they allow)
+const SOUND_KEY = 'minimig3d.lyd', sound = Object.assign({ game: true, dance: true, sfx: true, voice: true }, (() => { try { return JSON.parse(localStorage.getItem(SOUND_KEY)) || {}; } catch (e) { return {}; } })());
+function showSound() { for (const b of document.querySelectorAll('[data-sound]')) b.setAttribute('aria-pressed', String(!!sound[b.dataset.sound])); }
+function setSound(k, on) { if (k) sound[k] = on; else for (const x of Object.keys(sound)) sound[x] = on; try { localStorage.setItem(SOUND_KEY, JSON.stringify(sound)); } catch (e) {}
+  showSound(); if (!musicPlaying()) try { game.audio?.suspend(); } catch (e) {} if (!sound.voice) { try { speechSynthesis.cancel(); playing?.stop?.(); } catch (e) {} } }
+document.getElementById('soundBtn').onclick = () => askGrownUp(() => { showSound(); document.getElementById('soundSheet').hidden = false; });
+for (const b of document.querySelectorAll('[data-sound]')) b.onclick = () => setSound(b.dataset.sound, !sound[b.dataset.sound]);
+for (const b of document.querySelectorAll('[data-sound-all]')) b.onclick = () => setSound(null, b.dataset.soundAll === '1');
+// (no sound from a page one cannot see - another tab or the app in the background)
+document.addEventListener('visibilitychange', () => { try { if (document.hidden) game.audio?.suspend(); else if (musicPlaying()) game.audio?.resume(); } catch (e) {} });
+function musicPlaying() { return musicOn && ((isDance(anim) && sound.dance) || (game.on && sound.game)); }
+function musicTick() { musicBtn.hidden = !(isDance(anim) && sound.dance) && !(game.on && sound.game); musicBtn.textContent = musicOn ? '🎵' : '🔇';
   // (the games: a steady beat of their own, 112 to the minute, by the sound's own clock)
-  if (game.on) { const ctx = game.audio; if (!musicOn || !ctx || ctx.state !== 'running') { music.at = 0; return; } const stepT = 60 / 112 / 4;
+  if (game.on) { const ctx = game.audio; if (!musicOn || !sound.game || !ctx || ctx.state !== 'running') { music.at = 0; return; } const stepT = 60 / 112 / 4;
     if (!music.at || music.at < ctx.currentTime - .2) { music.at = ctx.currentTime + .05; music.n = 0; }
     while (music.at < ctx.currentTime + .12) { playStep(ctx, music.at, music.n % 64, stepT, BEATS.pop, music.n); music.at += stepT; music.n++; } return; }
   music.at = 0;
@@ -3028,7 +3064,7 @@ function keys(ctx, t, f, len, vol) { const lp = ctx.createBiquadFilter(), g = ct
   g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + .01); g.gain.exponentialRampToValueAtTime(.0008, t + len); lp.connect(g).connect(musicOut(ctx));
   for (const [type, d] of [['square', 0], ['triangle', 3]]) { const o = ctx.createOscillator(); o.type = type; o.frequency.value = f; o.detune.value = d; o.connect(lp); o.start(t); o.stop(t + len + .02); } }
 // (the game's sounds: a boing up as it jumps, a wobbly boing down as it stumbles over a ball - always, music or not)
-function sfx(kind, later = 0) { const ctx = game.audio; if (!ctx || ctx.state !== 'running') return; const t = ctx.currentTime + later, o = ctx.createOscillator(), g = ctx.createGain(), lfo = ctx.createOscillator(), wob = ctx.createGain();
+function sfx(kind, later = 0) { const ctx = game.audio; if (!sound.sfx || !ctx || ctx.state !== 'running') return; const t = ctx.currentTime + later, o = ctx.createOscillator(), g = ctx.createGain(), lfo = ctx.createOscillator(), wob = ctx.createGain();
   o.type = 'sine'; lfo.frequency.value = kind === 'boing' ? 22 : 14; wob.gain.value = kind === 'boing' ? 25 : 60; lfo.connect(wob).connect(o.frequency);
   const [from, to, len] = kind === 'boing' ? [180, 620, .28] : [520, 110, .5]; o.frequency.setValueAtTime(from, t); o.frequency.exponentialRampToValueAtTime(to, t + len);
   g.gain.setValueAtTime(.28, t); g.gain.exponentialRampToValueAtTime(.0008, t + len); o.connect(g).connect(ctx.destination); for (const x of [o, lfo]) { x.start(t); x.stop(t + len + .02); } }
