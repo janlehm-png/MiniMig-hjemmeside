@@ -121,6 +121,27 @@
   .star-table th img { width: 30px; height: 30px; display: block; margin: 0 auto; }
   .star-table tr + tr td { border-top: 1px solid var(--line); }
   .star-table td.none { color: #B7AFD3; }
+  /* the players: their pictures to tap (who plays, whose stars), small beside the stars in a game, and the grown-ups' list */
+  .who { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px; }
+  .who button { border: 3px solid var(--line); background: #FFF8E1; color: var(--ink); border-radius: 18px; padding: 6px 6px 8px; cursor: pointer; display: grid; gap: 4px; justify-items: center; font: 700 1rem/1.1 system-ui, sans-serif; min-width: 0; }
+  .who button.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent) inset; }
+  .who img, .who .face-none { width: 100%; aspect-ratio: 1; border-radius: 12px; object-fit: cover; }
+  .face-none { display: grid; place-items: center; font-size: 3rem; background: #FFE9A8; }
+  .who span:not(.face-none) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+  .who-small { grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 8px; }
+  .who-small button { border-radius: 14px; padding: 3px 3px 5px; font-size: .8rem; }
+  .who-small .face-none { font-size: 2rem; }
+  .who[hidden], .hud-face[hidden] { display: none; }
+  .hud-face img, .hud-face .face-none { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; display: grid; border: 3px solid var(--tile); box-shadow: 0 2px 10px rgba(58, 46, 92, .2); }
+  .hud-face .face-none { font-size: 1.4rem; }
+  .players-btn { justify-self: center; }
+  .player-list { display: grid; gap: 10px; }
+  .player-row { display: flex; align-items: center; gap: 8px; padding: 8px; border: 2px solid var(--line); border-radius: 16px; background: #FFF8E1; }
+  .player-row img, .player-row .face-none { width: 56px; height: 56px; border-radius: 12px; object-fit: cover; flex: none; font-size: 2rem; }
+  .player-row input { flex: 1; min-width: 0; font: 700 1rem/1.2 system-ui, sans-serif; padding: 8px 10px; border-radius: 10px; border: 2px solid var(--line); background: var(--tile); color: var(--ink); }
+  .player-row button { flex: none; width: 42px; height: 42px; border-radius: 12px; border: 2px solid var(--line); background: var(--tile); font-size: 1.1rem; cursor: pointer; }
+  .player-row .del-p.armed { width: auto; padding: 0 8px; font: 700 .9rem/1 system-ui, sans-serif; color: #E8384F; }
+  .player-row small { display: block; font-weight: 600; color: #6B6191; }
   .stars { background: var(--tile); border-radius: 999px; padding: 6px 16px; font: 800 24px/1.2 system-ui, sans-serif; box-shadow: 0 2px 10px rgba(58, 46, 92, .2); }
   /* (the treasure hunt: a sky behind the island, and the parrot's task in pictures under the stars) */
   .stage.island { background: linear-gradient(#7FD3FF, #CDEFFF 55%, #E8F8FF); }
@@ -205,7 +226,7 @@
 <button class="info-btn" id="infoBtn" aria-label="Sådan gør du" aria-expanded="false" hidden>i</button>
 <div class="info-pop" id="infoPop" hidden>👆 Træk for at dreje figuren<br>🤏 Knib for at zoome<br>👕 Tryk på navnet på trøjen, så siger figuren det – med din egen indtalte stemme, hvis du har indtalt en</div>
 <!-- Hop over bolden: the stars won, and the cross that ends the game; a hint at the start -->
-<div class="hud" id="hud" hidden><span class="hud-left"><span class="stars" id="stars">⭐ 0</span><span class="record" id="record" title="Din rekord">🏆 0</span></span><button class="game-x" id="gameExit" aria-label="Stop spillet">✕</button></div>
+<div class="hud" id="hud" hidden><span class="hud-left"><span class="hud-face" id="hudFace" hidden></span><span class="stars" id="stars">⭐ 0</span><span class="record" id="record" title="Din rekord">🏆 0</span></span><button class="game-x" id="gameExit" aria-label="Stop spillet">✕</button></div>
 <div class="tap-hint" id="tapHint" hidden>👆 Tryk for at hoppe</div>
 <div class="quest" id="quest" hidden></div>
 <!-- (the dances' music on and off - only while a dance runs) -->
@@ -302,10 +323,28 @@
 <div class="sheet" id="starSheet" hidden>
   <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="starTitle">
     <div class="sheet-head"><h2 id="starTitle">Dine stjerner</h2><button class="sheet-x" data-close aria-label="Luk">✕</button></div>
+    <div class="who who-small" id="starWho"></div>
     <div class="star-total" id="starTotal">⭐ 0</div>
     <p class="note" id="starNote"></p>
     <table class="star-table" id="starTable"></table>
     <p class="note">🏆 = din rekord i det spil på det niveau. Snart kan du bruge dine stjerner til at låse nye ting op.</p>
+    <button class="share-off players-btn" id="playersBtn">👪 Spillere – for voksne</button>
+  </div>
+</div>
+<!-- who plays: with two players or more, a game asks first - each child taps their own picture -->
+<div class="sheet" id="whoSheet" hidden>
+  <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="whoTitle">
+    <div class="sheet-head"><h2 id="whoTitle">Hvem spiller?</h2><button class="sheet-x" data-close aria-label="Luk">✕</button></div>
+    <div class="who" id="whoList"></div>
+  </div>
+</div>
+<!-- the players, for grown-ups (behind the sum): a name, a new picture from the figure on the screen, delete; a new one -->
+<div class="sheet" id="playerSheet" hidden>
+  <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="playerTitle">
+    <div class="sheet-head"><h2 id="playerTitle">Spillere</h2><button class="sheet-x" data-close aria-label="Luk">✕</button></div>
+    <p class="note">Hvert barn får sine egne stjerner. Billedet tages af den figur, der står på skærmen, når du trykker 📷 – byg barnets figur først. Gemmes kun på denne enhed.</p>
+    <div class="player-list" id="playerList"></div>
+    <button class="share-off players-btn" id="addPlayer">➕ Ny spiller</button>
   </div>
 </div>
 <!-- the sound, for grown-ups (behind the sum): which of MiniMig's sounds may play - the user, 03-11-2026 -->
@@ -3199,8 +3238,28 @@ function addStars(n) { const before = game.stars; game.stars += n; showStars(tru
 // own. Every star won goes in at once (nothing lost if the game is left), all of them counted up - to be spent later on
 // things to unlock - and the best of each game at each level kept; beating it: "Ny rekord!" and more confetti, once a game.
 // Shown under 🏆 Stjerner. Kept in localStorage minimig3d.stjerner: { total, spent, best: { game: { level: n } }, games }
-const SCORE_KEY = 'minimig3d.stjerner', score = Object.assign({ total: 0, spent: 0, best: {}, games: 0 }, (() => { try { return JSON.parse(localStorage.getItem(SCORE_KEY)) || {}; } catch (e) { return {}; } })());
-const saveScore = () => { try { localStorage.setItem(SCORE_KEY, JSON.stringify(score)); } catch (e) {} };
+// Players (the user, 03-11-2026: brothers and sisters on one iPad, each with their own stars): every child a player, shown
+// by a picture of a figure - no reading needed - and a name if a grown-up writes one. The stars above are now each
+// player's own. With two players or more a game asks »Hvem spiller?« first. Grown-ups add, name, re-picture and delete
+// players under 🏆 Stjerner, behind the sum. Kept in localStorage minimig3d.spillere: { list: [{ id, name, pic, score }],
+// now }; the stars from before (minimig3d.stjerner) became the first player's
+const SCORE_KEY = 'minimig3d.stjerner', PLAYERS_KEY = 'minimig3d.spillere';
+const blankScore = () => ({ total: 0, spent: 0, best: {}, games: 0 });
+const players = (() => { try { const p = JSON.parse(localStorage.getItem(PLAYERS_KEY)); if (p?.list?.length) return p; } catch (e) {}
+  let old = {}; try { old = JSON.parse(localStorage.getItem(SCORE_KEY)) || {}; } catch (e) {}
+  const id = 'p' + Date.now().toString(36); return { list: [{ id, name: '', pic: '', score: Object.assign(blankScore(), old) }], now: id }; })();
+const playerNow = () => players.list.find(p => p.id === players.now) || players.list[0];
+let score = playerNow().score;
+const savePlayers = () => { try { localStorage.setItem(PLAYERS_KEY, JSON.stringify(players)); return true; } catch (e) { return false; } };
+const saveScore = savePlayers;
+function setPlayer(id) { players.now = id; score = playerNow().score; savePlayers(); showPlayer(); }
+// (a player's picture: the figure on the screen now, as its profile picture - small, to keep in the device's store)
+// (not in a game: the island or the road would be in the picture)
+function playerPic() { try { return hairBase && !game.on ? thumb(figurePicture('profil', .35)) : ''; } catch (e) { return ''; } }
+function newPlayer() { const p = { id: 'p' + Date.now().toString(36) + Math.floor(Math.random() * 1e3), name: '', pic: playerPic(), score: blankScore() }; players.list.push(p); savePlayers(); return p; }
+const playerFace = (p, cls = '') => p.pic ? `<img class="${cls}" src="${p.pic}" alt="">` : `<span class="${cls} face-none">🙂</span>`;
+// (the one playing, small beside the stars in a game)
+function showPlayer() { const p = playerNow(), el = document.getElementById('hudFace'); el.innerHTML = players.list.length > 1 ? playerFace(p) : ''; el.hidden = players.list.length < 2; }
 const bestNow = () => score.best[game.mode]?.[game.level] || 0;
 function scoreGain(n) { score.total += n; if (!game.counted) { game.counted = true; score.games++; } const best = bestNow(); if (game.stars > best) { (score.best[game.mode] ??= {})[game.level] = game.stars;
     if (best > 0 && !game.record) { game.record = true; toast('🏆 Ny rekord!'); celebrate(); } }
@@ -3352,12 +3411,42 @@ function islandTick(dt) { const t = performance.now() / 1000, p = il.rig.positio
 function ilBurst() { il.burst = true; addStars(5); celebrate(); il.gold.forEach(c => { c.visible = true; c.position.set(0, .45, 0); c.userData.v = new THREE.Vector3((Math.random() - .5) * 2.2, 3 + Math.random() * 2, (Math.random() - .5) * 2.2); });
   if (!glbActions[IL_MOVES.lift]) { il.target = null; il.walking = false; runAnim(GAME.cheer); il.face = Math.atan2(il.chest.position.x - il.rig.position.x, il.chest.position.z - il.rig.position.z); } }
 const GAME_NAMES = [['side', 'Hop fra siden'], ['back', 'Hop bagfra'], ['front', 'Hop forfra'], ['skate', 'Skateboard'], ['island', 'Skattejagt']];
-document.getElementById('starBtn').onclick = () => { const have = score.total - score.spent;
+// (with two players or more: their pictures on top, the one shown marked - tapping another shows that child's stars)
+let starShown = null;
+function showStarSheet(id = starShown || players.now) { starShown = id; const p = players.list.find(q => q.id === id) || playerNow(), s = p.score, have = s.total - s.spent, many = players.list.length > 1;
+  const who = document.getElementById('starWho'); who.hidden = !many;
+  who.innerHTML = many ? players.list.map(q => `<button data-who="${q.id}" class="${q.id === p.id ? 'on' : ''}">${playerFace(q)}<span>${esc(q.name) || '&nbsp;'}</span></button>`).join('') : '';
+  document.getElementById('starTitle').textContent = many && p.name ? `${p.name}s stjerner` : 'Dine stjerner';
   document.getElementById('starTotal').textContent = '⭐ ' + have;
-  document.getElementById('starNote').textContent = score.games ? `Samlet i ${score.games} spil på denne enhed.` : 'Spil et af spillene for at samle stjerner.';
+  document.getElementById('starNote').textContent = s.games ? `Samlet i ${s.games} spil på denne enhed.` : 'Spil et af spillene for at samle stjerner.';
   document.getElementById('starTable').innerHTML = `<tr><th></th>${LEVELS.map(([id, name]) => `<th><img src="ikoner/valg-${id}.png" alt="${name}"></th>`).join('')}</tr>` +
-    GAME_NAMES.map(([g, name]) => `<tr><td>${name}</td>${LEVELS.map(([id]) => { const b = score.best[g]?.[id]; return b ? `<td>🏆 ${b}</td>` : '<td class="none">–</td>'; }).join('')}</tr>`).join('');
-  document.getElementById('starSheet').hidden = false; };
+    GAME_NAMES.map(([g, name]) => `<tr><td>${name}</td>${LEVELS.map(([id]) => { const b = s.best[g]?.[id]; return b ? `<td>🏆 ${b}</td>` : '<td class="none">–</td>'; }).join('')}</tr>`).join('');
+  document.getElementById('starSheet').hidden = false; }
+const esc = t => String(t || '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+document.getElementById('starBtn').onclick = () => { starShown = null; showStarSheet(); };
+document.getElementById('starWho').addEventListener('click', e => { const b = e.target.closest('[data-who]'); if (b) showStarSheet(b.dataset.who); });
+// (who plays: each child's picture; the game starts for the one tapped)
+let whoThen = null;
+function askWho(then) { if (players.list.length < 2) { if (!playerNow().pic && !game.on) { playerNow().pic = playerPic(); savePlayers(); } then(); return; }
+  whoThen = then; document.getElementById('whoList').innerHTML = players.list.map(q => `<button data-who="${q.id}">${playerFace(q)}<span>${esc(q.name) || '&nbsp;'}</span></button>`).join('');
+  document.getElementById('whoSheet').hidden = false; }
+document.getElementById('whoList').addEventListener('click', e => { const b = e.target.closest('[data-who]'); if (!b) return; document.getElementById('whoSheet').hidden = true; setPlayer(b.dataset.who); whoThen?.(); whoThen = null; });
+// (the grown-ups' list: a name to write, 📷 a new picture from the figure on the screen, 🗑 delete - asked twice)
+function showPlayers() { document.getElementById('playerList').innerHTML = players.list.map(q => `<div class="player-row" data-id="${q.id}">${playerFace(q)}
+    <div style="flex:1;min-width:0"><input value="${esc(q.name)}" maxlength="12" placeholder="Navn" aria-label="Navn" autocomplete="off" data-1p-ignore data-lpignore="true"><small>⭐ ${q.score.total - q.score.spent}</small></div>
+    <button class="pic-p" aria-label="Nyt billede af figuren på skærmen">📷</button>${players.list.length > 1 ? '<button class="del-p" aria-label="Slet spiller">🗑</button>' : ''}</div>`).join('');
+  document.getElementById('playerSheet').hidden = false; }
+document.getElementById('playersBtn').onclick = () => askGrownUp(() => { document.getElementById('starSheet').hidden = true; showPlayers(); });
+document.getElementById('addPlayer').onclick = () => { newPlayer(); showPlayers(); showPlayer(); };
+document.getElementById('playerList').addEventListener('input', e => { const row = e.target.closest('[data-id]'), p = row && players.list.find(q => q.id === row.dataset.id); if (p) { p.name = e.target.value.trim(); savePlayers(); } });
+document.getElementById('playerList').addEventListener('click', e => { const row = e.target.closest('[data-id]'), p = row && players.list.find(q => q.id === row.dataset.id); if (!p) return;
+  if (e.target.closest('.pic-p')) { if (game.on) { toast('Stop spillet først'); return; } p.pic = playerPic() || p.pic; savePlayers(); showPlayers(); showPlayer(); return; }
+  const del = e.target.closest('.del-p'); if (!del) return;
+  if (!del.classList.contains('armed')) { del.classList.add('armed'); del.textContent = 'Slet?'; setTimeout(() => { del.classList.remove('armed'); del.textContent = '🗑'; }, 2500); return; }
+  players.list.splice(players.list.indexOf(p), 1); if (players.now === p.id) players.now = players.list[0].id; score = playerNow().score; starShown = null; savePlayers(); showPlayers(); showPlayer(); });
+// (closing the list: back to the stars, where the players now are)
+document.getElementById('playerSheet').addEventListener('click', e => { if (e.target.id === 'playerSheet' || e.target.closest('[data-close]')) setTimeout(() => showStarSheet(players.now), 0); });
+showPlayer();
 function showRecord() { const el = document.getElementById('record'); el.textContent = '🏆 ' + bestNow(); el.classList.toggle('beaten', !!game.record); }
 document.getElementById('stage').addEventListener('pointerdown', e => { if (!game.on || e.target.closest('button')) return; e.preventDefault();
   if (game.mode === 'skate') { const r = e.currentTarget.getBoundingClientRect(); steer(e.clientX < r.left + r.width / 2 ? -1 : 1); } else if (game.mode === 'island') islandTap(e); else jump(); });
@@ -3368,7 +3457,7 @@ document.getElementById('gameExit').onclick = () => stopGame();
 // (no menu from a long press anywhere but in the name box)
 document.querySelector('.main').addEventListener('contextmenu', e => { if (e.target.tagName !== 'INPUT') e.preventDefault(); });
 // (the game's tab starts it and shows its levels in the box, as a movement's tab shows its kinds)
-document.querySelectorAll('[data-game]').forEach(b => b.onclick = () => { soundOut()?.resume(); partNow = 'game-hop'; showSwatches(); stopGame(true); startGame(b.dataset.game); });
+document.querySelectorAll('[data-game]').forEach(b => b.onclick = () => { soundOut()?.resume(); askWho(() => { partNow = 'game-hop'; showSwatches(); stopGame(true); startGame(b.dataset.game); }); });
 function gameList() { try { return [LEVELS, game.level, setLevel]; } catch (e) { return null; } }
 // Every fifth star: confetti shot up from two cannons at the bottom corners of the picture, with little stars among it,
 // and a short ta-da (only once the child has tapped: a page may not sound before that)
