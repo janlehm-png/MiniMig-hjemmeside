@@ -2298,7 +2298,16 @@ const BGS = [['bg-sol', 'Sol'], ['bg-have', 'Have'], ['bg-strand', 'Strand'], ['
 let bgNow = 'bg-sol'; const bgImgs = {};
 function setBg(name) { bgNow = BGS.some(b => b[0] === name) ? name : 'bg-sol'; const k = bgNow.slice(3);
   if (k !== 'sol' && !bgImgs[k]) { bgImgs[k] = new Image(); bgImgs[k].src = `baggrund/${k}.jpg`; }
-  document.body.style.background = k === 'sol' ? '' : `#FFF8E1 url("baggrund/${k}.jpg") center 62% / cover no-repeat`; disc.visible = k === 'sol'; renderStyles(); }
+  document.body.style.background = k === 'sol' ? '' : `#FFF8E1 url("baggrund/${k}.jpg") center 62% / cover no-repeat`; disc.visible = k === 'sol'; bgShown = ''; renderStyles(); }
+// (the scene zoomed with the camera - pinched in towards the figure, it comes closer too; a little less than the figure,
+// as it lies further back. Its size worked out from the screen's, the picture's and how near the camera is, each frame
+// it changes; centred on the same point as before)
+let bgShown = '';
+function bgZoom() { if (bgNow === 'bg-sol') return; const im = bgImgs[bgNow.slice(3)]; if (!im?.naturalWidth) return;
+  // (counted from the furthest the camera can go: zoomed right out the scene still fills the screen)
+  const z = Math.pow(controls.maxDistance / camera.position.distanceTo(controls.target), .6), W = innerWidth, H = innerHeight, k = Math.max(W / im.naturalWidth, H / im.naturalHeight) * z;
+  const w = Math.round(im.naturalWidth * k), h = Math.round(im.naturalHeight * k), s = `${w}px ${h}px`; if (s === bgShown) return; bgShown = s;
+  document.body.style.backgroundSize = s; document.body.style.backgroundPosition = `${Math.round((W - w) / 2)}px ${Math.round((H - h) * .62)}px`; }
 // ---- Ører, as in the app: the ears' shape - natural, small, big, sticking out, elf ears - and earrings at the lobes ----
 // (the ears are the body's own: each its points beyond the skull at the side of the head - a third of an eye's distance
 // behind the eyes to a half below them, further out than the skull there - moved about the ear's root, more the further
@@ -2568,6 +2577,6 @@ function resize() { const w = innerWidth, h = innerHeight, bar = document.queryS
 addEventListener('resize', resize); resize(); new ResizeObserver(resize).observe(document.querySelector('.bar'));
 renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElapsedTime();
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
-  if (mixer) mixer.update(dt); armsOut(); holdItem(t); glide(); controls.update(); renderer.render(scene, camera); });</script>
+  if (mixer) mixer.update(dt); armsOut(); holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); });</script>
 </body>
 </html>
