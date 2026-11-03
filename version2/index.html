@@ -2881,13 +2881,13 @@ function confettiTick(dt) { if (!confetti.length && !confCv.dataset.drawn) retur
     confCx.save(); confCx.globalAlpha = Math.min(1, p.life / .6); confCx.translate(p.x, p.y); confCx.rotate(p.a); confCx.fillStyle = p.star ? '#FFC233' : p.col;
     if (p.star) { confCx.beginPath(); for (let k = 0; k < 10; k++) { const r = k % 2 ? p.s * .45 : p.s * 1.1, an = k * Math.PI / 5 - Math.PI / 2; confCx.lineTo(r * Math.cos(an), r * Math.sin(an)); } confCx.fill(); }
     else confCx.fillRect(-p.s / 2, -p.s * .35, p.s, p.s * .7); confCx.restore(); } }
-// (once the figure is in: on a computer the hint stays as a line at the top, for the mouse; on a touch screen it goes into
-// the i in the corner)
+// (once the figure is in, the hint goes into the i in the corner - on a touch screen and on a computer alike)
 const infoBtn = document.getElementById('infoBtn'), infoPop = document.getElementById('infoPop'); let infoTimer = 0;
 infoBtn.onclick = () => { infoPop.hidden = !infoPop.hidden; infoBtn.setAttribute('aria-expanded', String(!infoPop.hidden)); clearTimeout(infoTimer); if (!infoPop.hidden) infoTimer = setTimeout(() => { infoPop.hidden = true; infoBtn.setAttribute('aria-expanded', 'false'); }, 9000); };
 loadFbx().then(ok => { const tag = document.getElementById('tag'); if (!ok) { tag.textContent = 'Figuren kunne ikke hentes'; return; }
-  if (matchMedia('(hover: hover) and (pointer: fine)').matches) tag.textContent = 'Version 2 · træk for at dreje, rul med musen for at zoome, klik på navnet på trøjen for at høre det';
-  else { tag.textContent = ''; infoBtn.hidden = false; } });
+  // (on a computer too, since 03-11-2026 - the user wanted it the same everywhere - in words for the mouse)
+  if (matchMedia('(hover: hover) and (pointer: fine)').matches) infoPop.innerHTML = '🖱️ Træk for at dreje figuren<br>🔍 Rul med musen for at zoome<br>👕 Klik på navnet på trøjen, så siger figuren det – med din egen indtalte stemme, hvis du har indtalt en';
+  tag.textContent = ''; infoBtn.hidden = false; });
 
 // ---- render loop ----
 const clock = new THREE.Clock();
