@@ -72,6 +72,10 @@
   .panel .badges button { width: 46px; height: 46px; padding: 0; border-radius: 50%; font-size: 22px; line-height: 1; }
   /* the colours: three sliders (colour, strength, light) for the part chosen - no fixed colours */
   .sliders[hidden] { display: none; }
+  .swatches { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+  .swatches[hidden] { display: none; }
+  .panel .swatches button { width: 38px; height: 38px; padding: 0; border-radius: 50%; border: 3px solid #FFFFFF; box-shadow: 0 0 0 2px var(--line); }
+  .panel .swatches button.on { box-shadow: 0 0 0 3px var(--accent); }
   .sliders { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 14px; font-size: 12px; font-weight: 700; }
   .sliders label { display: flex; align-items: center; gap: 6px; }
   .sliders input { width: min(210px, 70vw); height: 22px; border-radius: 11px; -webkit-appearance: none; appearance: none; }
@@ -221,6 +225,8 @@
       <div class="namerow"><button id="recBtn" class="rec-btn">🎤 <span>Indtal selv</span></button><button id="recDel" class="rec-del" aria-label="Slet din egen stemme" hidden>🗑</button></div>
       <p class="rec-note" id="recNote"></p>
       <div class="badges" id="badges"></div></div>
+    <!-- (the app's fixed colours as round buttons - back beside the sliders, the user wanted, 03-11-2026) -->
+    <div class="swatches" id="swatches"></div>
     <div class="sliders" id="sliders">
       <label>Farve <input type="range" id="s-h" min="0" max="360" step="1"></label>
       <label>Styrke <input type="range" id="s-s" min="0" max="100" step="1"></label>
@@ -360,9 +366,19 @@ const picked = {}, START = { skin: '#EDB98A', hair: '#4A2C1D', eyes: '#7A4220', 
 const apply = (part, c) => { picked[part] = c; recolour(part, c); if (part === 'shirt' || part === 'dress') chestName(); };
 const iconButton = (src, label) => { const b = document.createElement('button'), i = new Image(); i.src = src; i.alt = ''; i.onerror = () => i.remove();
   const s = document.createElement('span'); s.textContent = label; b.append(i, s); return b; };
+// (the app's colours, as in version 2.5D)
+const PALETTES = { skin: ['#F6D0AE', '#EDB98A', '#D9965F', '#B5713F', '#8D5530', '#5A3520'], hair: ['#2A1C17', '#4A2C1D', '#7A4428', '#A8582E', '#D9A55C', '#F0D9A0', '#FF7EBB', '#5AA9FF'],
+  eyes: ['#9C5A1E', '#6B3A1A', '#4A2814', '#2E1A10', '#1A110C', '#3B7BD4', '#3E9A5C', '#A0763A', '#7D8A99', '#8A5CE6'],
+  cloth: ['#E8384F', '#FF7A2F', '#FFC233', '#2FB872', '#13BFA6', '#3D8BFF', '#46699E', '#7A4DFF', '#FF6FB1', '#F4F1EA', '#3A3550'] };
+PALETTES.brows = PALETTES.hair;
 // (the nose, the mouth and Pynt have no colour of their own, as in the app: no sliders under them - nor the movements)
 function showSwatches() { const move = /^(move|game)-/.test(partNow); if (!move) slidersFrom(picked[partNow] || START[partNow]);
-  document.getElementById('sliders').style.display = move || ['nose', 'mouth', 'pynt', 'name', 'ears', 'bg'].includes(partNow) ? 'none' : '';
+  const noColour = move || ['nose', 'mouth', 'pynt', 'name', 'ears', 'bg'].includes(partNow);
+  document.getElementById('sliders').style.display = noColour ? 'none' : '';
+  // (the fixed colours of the app over the sliders: skin, hair - the brows too - eyes, and the clothes' colours for the rest)
+  const sw = document.getElementById('swatches'), list = noColour ? [] : PALETTES[partNow] || PALETTES.cloth; sw.hidden = !list.length; sw.innerHTML = '';
+  for (const c of list) { const b = document.createElement('button'); b.style.background = c; b.setAttribute('aria-label', c); b.classList.toggle('on', (picked[partNow] || START[partNow] || '').toLowerCase() === c.toLowerCase());
+    b.onclick = () => { apply(partNow, c); slidersFrom(c); sw.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); }; sw.append(b); }
   document.getElementById('nameBox').hidden = partNow !== 'name';
   document.querySelectorAll('#parts [data-part]').forEach(b => b.classList.toggle('on', b.dataset.part === partNow));
   renderStyles(); }
@@ -384,7 +400,7 @@ function paintTracks() { const h = S.h.value, s = S.s.value, l = S.l.value;
   S.s.style.background = `linear-gradient(90deg, hsl(${h},0%,${l}%), hsl(${h},100%,${l}%))`;
   S.l.style.background = `linear-gradient(90deg, hsl(${h},${s}%,5%), hsl(${h},${s}%,50%), hsl(${h},${s}%,95%))`; }
 for (const el of Object.values(S)) el.addEventListener('input', () => { paintTracks();
-  const c = '#' + new THREE.Color().setHSL(S.h.value / 360, S.s.value / 100, S.l.value / 100, THREE.SRGBColorSpace).getHexString(THREE.SRGBColorSpace); apply(partNow, c); });
+  const c = '#' + new THREE.Color().setHSL(S.h.value / 360, S.s.value / 100, S.l.value / 100, THREE.SRGBColorSpace).getHexString(THREE.SRGBColorSpace); apply(partNow, c); document.querySelectorAll('#swatches button').forEach(x => x.classList.remove('on')); });
 // (the tabs in the app's three groups: the body and face, the clothes, the rest)
 const groups = [0, 1, 2].map(() => document.getElementById('parts').appendChild(Object.assign(document.createElement('div'), { className: 'tabgroup' })));
 for (const [part, name, icon] of CHOICES) { const b = iconButton(`ikoner/${icon}.png`, name); b.dataset.part = part; b.onclick = () => { partNow = part; showSwatches(); lookFor(part); };
@@ -1024,12 +1040,14 @@ function setupHairTexture(img, list = hairTexs) {
 // (socks painted in their colour, knitted - fine ribs up and down - and the football socks' stripe across, a little
 // below the top, in a contrast colour: white, or navy on light socks. The picture goes from the floor (bottom) to the
 // socks' top)
-function paintSocks(only) { if (typeof GARMENTS === 'undefined') return; const hex = picked.socks || START.socks, n = parseInt(hex.slice(1), 16), sock = [n >> 16 & 255, n >> 8 & 255, n & 255];
-  const hsl = {}; new THREE.Color().setStyle(hex, THREE.SRGBColorSpace).getHSL(hsl, THREE.SRGBColorSpace); const band = hsl.l > .7 ? [44, 62, 140] : [255, 255, 255];
-  for (const m of only ? [only] : Object.values(GARMENTS.socks.meshes)) { if (!m) continue; const map = m.material.map, cv = map.image, g = cv.getContext('2d'), W = cv.width, H = cv.height, o = m.userData.sock;
+// (the socks - and the high heels, made the same way: their own colour, smooth, no ribs)
+function paintSocks(only) { if (typeof GARMENTS === 'undefined') return;
+  for (const m of only ? [only] : [...Object.values(GARMENTS.socks.meshes), ...Object.values(GARMENTS.shoe.meshes)]) { if (!m?.userData.sock) continue; const map = m.material.map, cv = map.image, g = cv.getContext('2d'), W = cv.width, H = cv.height, o = m.userData.sock;
+    const part = o.heel ? 'shoe' : 'socks', hex = picked[part] || START[part], n = parseInt(hex.slice(1), 16), sock = [n >> 16 & 255, n >> 8 & 255, n & 255];
+    const hsl = {}; new THREE.Color().setStyle(hex, THREE.SRGBColorSpace).getHSL(hsl, THREE.SRGBColorSpace); const band = hsl.l > .7 ? [44, 62, 140] : [255, 255, 255];
     const im = g.createImageData(W, H), d = im.data, s = o.stripe ? o.stripe.map(f => f / o.top * H) : null;
     for (let y = 0; y < H; y++) { const b = s ? Math.min(1, Math.max(0, Math.min(y + .5 - s[0], s[1] - y - .5) + .5)) : 0; // (the stripe's edges soft over one row)
-      for (let x = 0; x < W; x++) { const k = (x % 4 < 2 ? .9 : 1) * (1 + (Math.random() - .5) * .04), i = (y * W + x) * 4;
+      for (let x = 0; x < W; x++) { const k = (o.heel ? 1 : x % 4 < 2 ? .9 : 1) * (1 + (Math.random() - .5) * (o.heel ? .015 : .04)), i = (y * W + x) * 4;
         for (let c = 0; c < 3; c++) d[i + c] = Math.min(255, (sock[c] * (1 - b) + band[c] * b) * k); d[i + 3] = 255; } }
     g.putImageData(im, 0, 0); map.needsUpdate = true; } }
 function recolourHair(hexColour, list = hairTexs) {
@@ -1042,6 +1060,7 @@ function recolourHair(hexColour, list = hairTexs) {
   hairTex.ctx.putImageData(out, 0, 0); hairTex.texture.needsUpdate = true; } }
 function recolour(part, hexColour) {
   if (part === 'socks') return paintSocks(); if (part === 'item') return paintItem();
+  if (part === 'shoe' && typeof GARMENTS !== 'undefined' && GARMENTS.shoe.meshes[GARMENTS.shoe.shown]?.userData.sock) { paintSocks(); paintHeels(); return; }
   if (part === 'hair') recolourHair(hexColour); if (typeof GARMENTS !== 'undefined' && GARMENTS[part]) recolourHair(hexColour, GARMENTS[part].texs);
   // (the picked colour read straight from its #rrggbb code: a THREE.Color would hold it in linear light, too dark here)
   if (!tex) return; const n = parseInt(hexColour.slice(1), 16); tex.colours[PARTS[part]] = { r: (n >> 16 & 255) / 255, g: (n >> 8 & 255) / 255, b: (n & 255) / 255 };
@@ -1625,7 +1644,10 @@ const GARMENTS = {
   // (socks made from the body too: low ones for sneakers, football socks with a stripe at the top, and knee socks)
   socks: { items: [['', 'Ingen strømper'], ['stroemper-ankel', 'Ankelstrømper', { made: true, top: .045, cloth: 'knit' }],
     ['stroemper-fodbold', 'Fodboldstrømper', { made: true, top: .2, stripe: [.012, .026], cloth: 'knit' }], ['stroemper-hoeje', 'Knæstrømper', { made: true, top: .24, cloth: 'knit' }]], texs: [] },
-  shoe: { items: [['', 'Bare fødder'], ['sko-sneakers', 'Sneakers', { sole: .02 }], ['sko-fodbold', 'Fodboldstøvler', { file: 'sko-sneakers', sole: .02, studs: true }], ['sko-gummi', 'Gummistøvler', { pale: .9, paleTop: .015 }], ['sko-ballet', 'Balletsko', { paleFrom: .06, flat: .35, solid: .03 }]], texs: [] },
+  shoe: { items: [['', 'Bare fødder'], ['sko-sneakers', 'Sneakers', { sole: .02 }], ['sko-fodbold', 'Fodboldstøvler', { file: 'sko-sneakers', sole: .02, studs: true }], ['sko-gummi', 'Gummistøvler', { pale: .9, paleTop: .015 }], ['sko-ballet', 'Balletsko', { paleFrom: .06, flat: .35, solid: .03 }],
+    // (high heels, for the dresses - the user, 03-11-2026: made from the feet as the socks are, a shiny shell, the heels
+    // raised and a thin heel under each - see heelsTick)
+    ['sko-hoej', 'Højhælede', { made: true, top: .03, out: .0055, heel: true }]], texs: [] },
   // (hats were made on a bald head: on top of hair they are raised - lift, in eyes' distances - or, a cap, made wider)
   hat: { items: [['', 'Ingen hat'], ['hat-kasket', 'Kasket', { grow: 1.12, lift: .1, cap: true }], ['hat-krone', 'Krone', { grow: 1.05, rest: .12 }], ['hat-kanin', 'Kaninører', { grow: 1.12, lift: .3, wrap: .03, ears: .45, thin: .35, scalp: true, flat: .3 }],
     ['hat-sloejfe', 'Sløjfe', { grow: 1.05, lift: .35, move: .02, size: .75 }]], texs: [], head: true },
@@ -1674,6 +1696,34 @@ function layer() { const top = GARMENTS.shirt.meshes[GARMENTS.shirt.shown], unde
 // (a wide skirt - the princess dress - takes the arms a little out from the body in every movement, armsOut degrees:
 // hanging straight down the hands went into the skirt)
 const armTurn = new THREE.Quaternion(), armUp = new THREE.Quaternion(), armAxis = new THREE.Vector3();
+// (every turn the page lays over a movement - the arms out for the skirt, the head after the ball, the skater's pose, the
+// fist - is taken off again once the frame is drawn: three.js writes a joint anew only when the movement changes it,
+// so where a movement stands still - the start and end of the kick - the turns piled up frame on frame and the arms
+// spun round; the user, 03-11-2026)
+const overlaid = new Map(); const keepJoint = b => { if (b && !overlaid.has(b)) overlaid.set(b, b.quaternion.clone()); };
+function takeOffOverlays() { for (const [b, q] of overlaid) b.quaternion.copy(q); overlaid.clear(); }
+// (the high heels, each frame over every movement - taken off again after it, see takeOffOverlays: the heel raised, the
+// toes bent back flat, the figure lifted so its toes stay where they stood, and a thin heel under each heel, fixed to
+// the foot - as long as the heel stood off the floor the first time, so it goes with the foot in a jump too)
+const heels = { posts: null, len: 0, q: new THREE.Quaternion(), right: new THREE.Vector3(), v: new THREE.Vector3(), a: new THREE.Vector3(), t: new THREE.Vector3(), n: new THREE.Vector3(), up: new THREE.Vector3(0, 1, 0) };
+function paintHeels() { if (!heels.posts) return; const c = picked.shoe || START.shoe; for (const p of heels.posts) p.material.color.setStyle(c, THREE.SRGBColorSpace); }
+function heelsTick() { const on = !!(GARMENTS.shoe.shown === 'sko-hoej' && glb && hairBase);
+  if (!heels.posts) { if (!on) return; heels.posts = [0, 1].map(() => { const m = new THREE.Mesh(new THREE.CylinderGeometry(.017, .009, 1, 14), new THREE.MeshStandardMaterial({ roughness: .28 })); m.castShadow = true; scene.add(m); return m; }); paintHeels(); }
+  for (const p of heels.posts) p.visible = on; if (!on) return;
+  glb.updateMatrixWorld(true); glb.getWorldQuaternion(heels.q); const right = heels.right.set(-1, 0, 0).applyQuaternion(heels.q), fwd = new THREE.Vector3(0, 0, 1).applyQuaternion(heels.q);
+  const toesY = () => Math.min(...['LeftToeBase', 'RightToeBase'].map(n => bone(n)?.getWorldPosition(heels.v).y ?? 9)), before = toesY();
+  const flat = heels.local ? null : ['Left', 'Right'].map(s => [bone(s + 'Foot').getWorldPosition(new THREE.Vector3()), bone(s + 'ToeBase').getWorldPosition(new THREE.Vector3())]);
+  for (const s of ['Left', 'Right']) turnBone(s + 'Foot', right, -.45); glb.updateMatrixWorld(true);
+  for (const s of ['Left', 'Right']) turnBone(s + 'ToeBase', right, .45); glb.updateMatrixWorld(true);
+  glb.position.y += Math.max(0, before - toesY()); glb.updateMatrixWorld(true);
+  // (the heel, worked out once: where the foot's heel was on the floor - below the ankle, a little behind it - turned up
+  // with the foot; then kept in the foot's own frame, with the floor's downward line there, and the length to the floor)
+  if (!heels.local) { const floorY = holder.getWorldPosition(new THREE.Vector3()).y; heels.local = ['Left', 'Right'].map((s, i) => { const f = bone(s + 'Foot'), [a0, b0] = flat[i];
+      const a = f.getWorldPosition(new THREE.Vector3()), b = bone(s + 'ToeBase').getWorldPosition(new THREE.Vector3()), q = new THREE.Quaternion().setFromUnitVectors(b0.clone().sub(a0).normalize(), b.clone().sub(a).normalize());
+      const heel = a.clone().add(new THREE.Vector3(a0.x, b0.y, a0.z).addScaledVector(fwd, -.03).sub(a0).applyQuaternion(q)), fq = f.getWorldQuaternion(new THREE.Quaternion()).invert();
+      return { at: f.worldToLocal(heel.clone()), down: new THREE.Vector3(0, -1, 0).applyQuaternion(fq), len: Math.min(.12, Math.max(.03, heel.y - floorY)) }; }); }
+  for (const [i, s] of ['Left', 'Right'].entries()) { const f = bone(s + 'Foot'), L = heels.local[i], p = heels.posts[i], heel = f.localToWorld(heels.a.copy(L.at)), down = heels.n.copy(L.down).applyQuaternion(f.getWorldQuaternion(heels.q));
+    p.position.copy(heel).addScaledVector(down, L.len / 2); p.scale.set(1, L.len, 1); p.quaternion.setFromUnitVectors(heels.up, down.clone().negate()); } }
 function armsOut() { const deg = GARMENTS.dress.items.find(it => it[0] === GARMENTS.dress.shown)?.[2]?.armsOut; if (!deg || !hairBase) return;
   const sk = hairBase.body.skeleton, hips = sk.bones[hairBase.hips]; glb.updateMatrixWorld(true);
   const hx = hips.getWorldPosition(new THREE.Vector3()).applyMatrix4(glb.matrixWorld.clone().invert()).x;
@@ -1681,7 +1731,7 @@ function armsOut() { const deg = GARMENTS.dress.items.find(it => it[0] === GARME
     // (outwards: about the figure's own forward line, towards the arm's side)
     const side = Math.sign(b.getWorldPosition(new THREE.Vector3()).applyMatrix4(glb.matrixWorld.clone().invert()).x - hx);
     armAxis.set(0, 0, 1).applyQuaternion(glb.getWorldQuaternion(armUp)); armTurn.setFromAxisAngle(armAxis, side * deg * Math.PI / 180);
-    b.parent.getWorldQuaternion(armUp); b.quaternion.premultiply(armUp.clone().invert().multiply(armTurn).multiply(armUp)); b.updateMatrixWorld(true); } }
+    keepJoint(b); b.parent.getWorldQuaternion(armUp); b.quaternion.premultiply(armUp.clone().invert().multiply(armTurn).multiply(armUp)); b.updateMatrixWorld(true); } }
 // (where the figure's parts are, at rest with its arms out: the middle, the bottom of the neck, how far out from the
 // middle the upper arms, forearms and hands begin, and the middle of the chest front to back - worked out once)
 function clothMarks() { if (hairBase.marks) return hairBase.marks;
@@ -1711,7 +1761,7 @@ function makeCloth(name, part, opts) {
   // after those had been on, the shorts had a hole there and only their hem and waistband showed)
   const G = GARMENTS[part], body = hairBase.body, geo = body.geometry, { pts, inv, H } = hairBase.whole, K = clothMarks();
   const bsi = geo.attributes.skinIndex, bsw = geo.attributes.skinWeight, bones = body.skeleton.bones, corners = geo.attributes.position.count;
-  const pants = part === 'pants', socks = part === 'socks', hipY = hairBase.hipY, top = hipY + .06 * H, crotch = hipY - .06 * H, side = p => Math.abs(p[0] - K.mid), clamp = v => Math.min(1, Math.max(0, v));
+  const pants = part === 'pants', socks = part === 'socks' || (part === 'shoe' && opts.made), hipY = hairBase.hipY, top = hipY + .06 * H, crotch = hipY - .06 * H, side = p => Math.abs(p[0] - K.mid), clamp = v => Math.min(1, Math.max(0, v));
   const arms = new Set(bones.flatMap((b, j) => /Arm|Hand/.test(b.name) ? [j] : [])), armPt = new Uint8Array(pts.length / 6);
   for (let j = 0; j < armPt.length; j++) { let a = 0; for (let c = 0; c < 4; c++) if (arms.has(bsi.getComponent(j, c))) a += bsw.getComponent(j, c); armPt[j] = a > .5; }
   // (its edges: f is under 0 inside; fold: the cloth turned up there, how far; bare: how far in from it the body stays -
@@ -1722,7 +1772,7 @@ function makeCloth(name, part, opts) {
   let edges, out, level = Infinity, tuckIn = null;
   // (socks: the feet and legs up to their top - opts.top, in fractions of the height - close on the skin; stripe: a band
   // in the contrast colour that far below the top, [from, to])
-  if (socks) { const top = opts.top * H; edges = [{ f: p => p[1] - top, bare: .008 * H }]; out = () => .0035 * H; }
+  if (socks) { const top = opts.top * H; edges = [{ f: p => p[1] - top, bare: .008 * H }]; out = () => (opts.out || .0035) * H; }
   else if (pants) { const hem = opts.hem * H;
     edges = [{ f: p => hem - p[1], fold: (opts.cuff || 0) * H, bare: .012 * H }, { f: p => p[1] - top, bare: .003 * H }];
     // (loose: the legs that much further out all the way down, from just under the crotch - long trousers sat like tights)
@@ -1853,7 +1903,7 @@ function makeCloth(name, part, opts) {
   cloth.castShadow = true; cloth.name = name; cloth.frustumCulled = false; cloth.normalizeSkinWeights(); cloth.userData.orig = g.attributes.position.array.slice();
   cloth.position.copy(body.position); cloth.quaternion.copy(body.quaternion); cloth.scale.copy(body.scale);
   body.parent.add(cloth); cloth.bind(body.skeleton, body.bindMatrix); if (picked[part]) recolourHair(picked[part], G.texs);
-  if (socks) { cloth.userData.sock = opts; paintSocks(cloth); }
+  if (socks) { cloth.userData.sock = opts; paintSocks(cloth); if (opts.heel) { cloth.material.roughness = .28; cloth.material.metalness = .05; } }
   // (the body under it hidden, all but near its edges)
   const covered = new Uint8Array(pts.length / 6); for (let j = 0; j < covered.length; j++) covered[j] = !((pants || socks) && armPt[j]) && edges.every(e => e.f(P3(j)) < -e.bare) ? 1 : 0;
   cloth.userData.covered = covered; cloth.userData.made = true; cloth.userData.tucked = T; return cloth; }
@@ -2356,7 +2406,7 @@ const figureNow = () => ({ picked: { ...picked }, hair: hairNow, eyes: eyesNow, 
   wear: Object.fromEntries(Object.entries(GARMENTS).map(([p, G]) => [p, G.now])), name: nameNow, badge: badgeNow, item: itemNow, ears: earsNow, earrings: earringsNow, bg: bgNow });
 // (a part's own colour back: the figure's painted one, the hair's and the garments' as made)
 const unpaint = list => { for (const t of list) { const im = t.ctx.createImageData(t.w, t.h); im.data.set(t.src); t.ctx.putImageData(im, 0, 0); t.texture.needsUpdate = true; } };
-function unpick(part) { delete picked[part]; if (part === 'socks') paintSocks(); if (part === 'item') paintItem(); if (part === 'hair') unpaint(hairTexs); if (GARMENTS[part]) unpaint(GARMENTS[part].texs);
+function unpick(part) { delete picked[part]; if (part === 'socks' || part === 'shoe') { paintSocks(); paintHeels(); } if (part === 'item') paintItem(); if (part === 'hair') unpaint(hairTexs); if (GARMENTS[part]) unpaint(GARMENTS[part].texs);
   if (tex && PARTS[part]) { delete tex.colours[PARTS[part]]; if (part === 'hair' && !picked.brows) delete tex.colours[PARTS.brows]; if (part === 'brows' && picked.hair) tex.colours[PARTS.brows] = tex.colours[PARTS.hair]; } }
 let dressingUp = 0;
 async function wearFigure(f) { const ask = ++dressingUp;
@@ -2681,7 +2731,7 @@ const fv = new THREE.Vector3(), fn = new THREE.Vector3(), fa = new THREE.Vector3
 const FIST_BONES = ['LeftHand', ...['Thumb', 'Index', 'Middle', 'Ring', 'Pinky'].flatMap(f => [1, 2, 3].map(k => `LeftHand${f}${k}`))];
 function unfist() { for (const n of FIST_BONES) { const b = bone(n); if (b?.userData.fs && b.quaternion.equals(b.userData.fs)) b.quaternion.copy(b.userData.fb); if (b) b.userData.fs = null; } }
 function fist(curl = 1, lift = 0, twist = true) { const P = n => bone(n).getWorldPosition(new THREE.Vector3());
-  unfist(); for (const n of FIST_BONES) { const b = bone(n); if (b) b.userData.fb = b.quaternion.clone(); } glb.updateMatrixWorld(true);
+  unfist(); for (const n of FIST_BONES) { const b = bone(n); if (b) { keepJoint(b); b.userData.fb = b.quaternion.clone(); } } glb.updateMatrixWorld(true);
   const r = fistAt(P, curl, lift, twist); for (const n of FIST_BONES) { const b = bone(n); if (b) b.userData.fs = b.quaternion.clone(); } return r; }
 function fistAt(P, curl, lift, twist) {
   // (first the wrist turned, so the thumb's side faces forwards - with the palm backwards, as the movements hold it, a
@@ -2827,7 +2877,7 @@ const hq = new THREE.Quaternion(), pq = new THREE.Quaternion(), dq = new THREE.Q
 function lookAtBall(g, w) { const head = bone('Head'); if (!head || !kick.headFwd || w <= 0) return; glb.updateMatrixWorld(true);
   head.getWorldPosition(hp); head.getWorldQuaternion(hq); g.getWorldPosition(bp); fNow.copy(kick.headFwd).applyQuaternion(hq);
   dq.setFromUnitVectors(fNow, bp.sub(hp).normalize()); const angle = 2 * Math.acos(Math.min(1, Math.abs(dq.w))), part = w * Math.min(1, 1.1 / Math.max(angle, 1e-3));
-  dq.slerp(noTurn, 1 - part); head.parent.getWorldQuaternion(pq); head.quaternion.premultiply(pq.clone().invert().multiply(dq).multiply(pq)); }
+  dq.slerp(noTurn, 1 - part); keepJoint(head); head.parent.getWorldQuaternion(pq); head.quaternion.premultiply(pq.clone().invert().multiply(dq).multiply(pq)); }
 function kickBall(dt) { if (!kick.ball) return; const k = kicks[anim], a = glbActions[anim], on = !!k && a?.isRunning() && !game.on;
   // (a ball chosen under Ting is the one kicked - the user, 03-11-2026: not one in the hand and another at the foot. Bold
   // gets a kick ball of its own, as big as the football)
@@ -2927,7 +2977,7 @@ function startGame(mode = game.mode) { if (game.on || !glb) return; game.mode = 
 // (again: only stopped to start once more - at another level or in another way - the figure's own setting not put back)
 function stopGame(again) { if (!game.on) return; game.on = false; for (const b of [...gamePool(), ...(game.bigPool || [])]) b.group.visible = false; game.dive = false; game.balls = []; confetti.length = 0; unprepScene(); skateStop();
   // (the sound shut down when nothing plays: on an iPad an open sound channel could go on sounding after the game)
-  if (!again) { try { if (!musicPlaying()) game.audio?.suspend(); } catch (e) {} setItem(itemNow); }
+  if (!again) { try { game.audio?.suspend(); } catch (e) {} setItem(itemNow); }
   if (again) { game.again = true; return; } holder.position.x = 0;
   hud.hidden = true; hintEl.hidden = true; document.querySelector('.top').hidden = false; document.getElementById('stage').classList.remove('playing'); document.querySelectorAll('[data-game]').forEach(b => b.classList.remove('on'));
   if (game.saved.bg !== bgNow) setBg(game.saved.bg); camera.position.copy(game.saved.cam); controls.target.copy(game.saved.target); controls.enabled = true; controls.maxDistance = 10;
@@ -3036,7 +3086,7 @@ function steer(dir) { if (!game.on || game.mode !== 'skate') return; const lane 
 // (the skater's pose, laid over the standing still each frame - turned about the figure's own axes as it stands now:
 // fwd the way its chest faces, right its right, up)
 const skAxes = { fwd: new THREE.Vector3(), right: new THREE.Vector3(), up: new THREE.Vector3(), q: new THREE.Quaternion() }, skQ = new THREE.Quaternion(), skP = new THREE.Quaternion();
-function turnBone(name, axis, angle) { const b = bone(name); if (!b) return; b.parent.getWorldQuaternion(skP); skQ.setFromAxisAngle(axis, angle); b.quaternion.premultiply(skP.clone().invert().multiply(skQ).multiply(skP)); }
+function turnBone(name, axis, angle) { const b = bone(name); if (!b) return; keepJoint(b); b.parent.getWorldQuaternion(skP); skQ.setFromAxisAngle(axis, angle); b.quaternion.premultiply(skP.clone().invert().multiply(skQ).multiply(skP)); }
 function skatePose() { glb.updateMatrixWorld(true); glb.getWorldQuaternion(skAxes.q); const { fwd, right, up, q } = skAxes; fwd.set(0, 0, 1).applyQuaternion(q); right.set(-1, 0, 0).applyQuaternion(q); up.set(0, 1, 0).applyQuaternion(q);
   for (const [n, s] of [['LeftUpLeg', 1], ['RightUpLeg', -1]]) { turnBone(n, fwd, s * .3); turnBone(n, right, .5); }
   glb.updateMatrixWorld(true); for (const n of ['LeftLeg', 'RightLeg']) turnBone(n, right, -.85); glb.updateMatrixWorld(true); for (const n of ['LeftFoot', 'RightFoot']) turnBone(n, right, .38);
@@ -3186,6 +3236,6 @@ addEventListener('resize', resize); resize(); new ResizeObserver(resize).observe
 renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElapsedTime();
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
-  try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } armsOut(); holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); });</script>
+  try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } armsOut(); try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
 </body>
 </html>
