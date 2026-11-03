@@ -50,7 +50,6 @@
     .parts { flex-direction: row; overflow-x: auto; flex: none; scrollbar-width: none; }
     .tabgroup { flex-wrap: nowrap; flex: none; }
     .tabgroup button { width: 54px; flex: none; }
-    .stage .top { display: none; }
   }
   /* the name tab: the name written in a box, the badges as round buttons under it (as in the app) */
   .namebox { display: flex; flex-direction: column; align-items: center; gap: 8px; }
@@ -71,6 +70,13 @@
   .top { position: absolute; top: 10px; left: 10px; right: 10px; display: flex; justify-content: center; pointer-events: none; }
   .tag { background: var(--tile); border: 2px solid var(--line); border-radius: 14px; padding: 5px 9px; font-weight: 700; font-size: 12px; }
   .tag:empty { display: none; }
+  .info-btn { position: absolute; top: 10px; right: 10px; z-index: 2; width: 34px; height: 34px; border-radius: 50%; border: 2px solid var(--line); background: var(--tile); color: var(--accent);
+    font: italic 800 18px/1 Georgia, serif; cursor: pointer; box-shadow: 0 2px 8px rgba(58, 46, 92, .15); }
+  .info-pop { position: absolute; top: 52px; right: 10px; z-index: 2; max-width: calc(100% - 20px); background: var(--tile); border-radius: 14px; padding: 8px 12px;
+    font: 700 14px/1.3 system-ui, sans-serif; box-shadow: 0 4px 14px rgba(58, 46, 92, .2); }
+  .info-btn[hidden], .info-pop[hidden], .stage.playing .info-btn, .stage.playing .info-pop { display: none; }
+  /* (on a computer the mouse shows it can zoom the figure - the wheel - and grabs it while turning it) */
+  @media (hover: hover) and (pointer: fine) { #scene { cursor: zoom-in; } #scene:active { cursor: grabbing; } .stage.playing #scene { cursor: pointer; } }
   /* saving: the star, Mine figurer, the new MiniMig and the camera - first of the groups on the right, as tabs with
      their sign for a picture (they sat on the figure's picture until 03-11-2026; the user wanted the picture clear) */
   .tabgroup button .emo { height: 32px; font-size: 25px; line-height: 32px; pointer-events: none; }
@@ -86,6 +92,7 @@
   @media (prefers-reduced-motion: no-preference) { .tap-hint { animation: nudge 1s ease-in-out infinite alternate; } }
   @keyframes nudge { to { transform: translateX(-50%) translateY(-6px); } }
   .top[hidden] { display: none; }
+  #confetti { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 3; }
   @media (prefers-reduced-motion: no-preference) { .pop { animation: pop .5s ease; } }
   @keyframes pop { 40% { transform: scale(1.35) rotate(-12deg); } 100% { transform: none; } }
   .lock-badge { position: absolute; right: -4px; bottom: -4px; width: 22px; height: 22px; border-radius: 50%; background: #2FB872;
@@ -138,9 +145,13 @@
 <div id="bgFar" hidden></div><div id="bgNear" hidden></div>
 <canvas id="scene"></canvas>
 <div class="top"><span class="tag" id="tag">Henter figuren …</span></div>
+<!-- (on an iPad or a phone the hint as a small i in the top right corner, opened with a tap - the user, 03-11-2026) -->
+<button class="info-btn" id="infoBtn" aria-label="Sådan gør du" aria-expanded="false" hidden>i</button>
+<div class="info-pop" id="infoPop" hidden>Træk for at dreje · knib for at zoome</div>
 <!-- Hop over bolden: the stars won, and the cross that ends the game; a hint at the start -->
 <div class="hud" id="hud" hidden><span class="stars" id="stars">⭐ 0</span><button class="game-x" id="gameExit" aria-label="Stop spillet">✕</button></div>
 <div class="tap-hint" id="tapHint" hidden>👆 Tryk for at hoppe</div>
+<canvas id="confetti"></canvas>
 </div>
 <div class="panel">
   <div class="parts" id="parts"></div>
@@ -299,7 +310,7 @@ const apply = (part, c) => { picked[part] = c; recolour(part, c); if (part === '
 const iconButton = (src, label) => { const b = document.createElement('button'), i = new Image(); i.src = src; i.alt = ''; i.onerror = () => i.remove();
   const s = document.createElement('span'); s.textContent = label; b.append(i, s); return b; };
 // (the nose, the mouth and Pynt have no colour of their own, as in the app: no sliders under them - nor the movements)
-function showSwatches() { const move = partNow.startsWith('move-'); if (!move) slidersFrom(picked[partNow] || START[partNow]);
+function showSwatches() { const move = /^(move|game)-/.test(partNow); if (!move) slidersFrom(picked[partNow] || START[partNow]);
   document.getElementById('sliders').style.display = move || ['nose', 'mouth', 'pynt', 'name', 'ears', 'bg'].includes(partNow) ? 'none' : '';
   document.getElementById('nameBox').hidden = partNow !== 'name';
   document.querySelectorAll('#parts [data-part]').forEach(b => b.classList.toggle('on', b.dataset.part === partNow));
@@ -1054,7 +1065,7 @@ function smoothUnder() {
 // the movements: a tab for each kind, and its kinds in the box as the hairstyles are under Hår (the user, 03-11-2026).
 // Each a figur-<id>.json taken out of a Mixamo file (see LÆS-MIG), fetched the first time it is chosen
 const MOVES = { staa: [['staa', 'Stå']], vink: [['vink', 'Vink']],
-  hop: [['hop', 'Glad hop'], ['hop-hoejt', 'Højt hop'], ['hop-lille', 'Lille hop'], ['loebehop', 'Løbehop']],
+  hop: [['hop', 'Glad hop'], ['hop-hoejt', 'Højt hop'], ['hop-lille', 'Lille løbehop'], ['loebehop', 'Langt løbehop']],
   dans: [['dans', 'Hiphop'], ['dans-hiphop', 'Hiphop 2'], ['dans-fjollet', 'Fjollet'], ['dans-arme', 'Armdans'], ['dans-break', 'Breakdance'], ['dans-flair', 'Flair'], ['dans-flair2', 'Flair 2']],
   loeb: [['loeb', 'Sjovt løb'], ['loeb-a', 'Løb stærkt'], ['loeb-b', 'Løb']],
   jubel: [['jubel', 'Jubel'], ['jubel-klap', 'Klap'], ['jubel-yes', 'Yes!']],
@@ -1400,7 +1411,7 @@ async function loadHair(name, list = hairTexs, colourPart = 'hair', extra = {}) 
   body.parent.add(hair); hair.bind(body.skeleton, body.bindMatrix); scalpCap(hair, g, W, earLines, apart, eyeY); if (picked[colourPart]) recolourHair(picked[colourPart], list); return hair; }
 var styleLists = () => ({ hair: [HAIRS, hairNow, setHair], eyes: [EYES, eyesNow, setEyes], brows: [BROWS, browsNow, setBrows], mouth: [MOUTHS, mouthNow, setMouth], pynt: [PYNT, pyntNow.map(k => 'pynt-' + k), setPynt], nose: [NOSES, noseNow, setNose], item: [ITEMS, itemNow, setItem], bg: [BGS, bgNow, setBg], ears: [EARS, earsNow, setEars, [EARRINGS, earringsNow, setEarrings, 'oerering']],
   ...Object.fromEntries(Object.entries(GARMENTS).map(([part, G]) => [part, [G.items, G.now, n => setGarment(part, n)]])),
-  ...Object.fromEntries(Object.entries(MOVES).map(([g, list]) => ['move-' + g, [list, moveNow[g], playMove]])) });
+  ...Object.fromEntries(Object.entries(MOVES).map(([g, list]) => ['move-' + g, [list, moveNow[g], playMove]])), 'game-hop': gameList() });
 async function setHair(name) {
   hairNow = name; renderStyles();
   if (name && !hairMeshes[name]) hairMeshes[name] = await loadHair(name);
@@ -2669,42 +2680,67 @@ function kickSetup(id) { const clip = glbActions[id].getClip();
   const foot = track.reduce((a, b) => Math.max(...b.map(p => p.z)) > Math.max(...a.map(p => p.z)) ? b : a);
   let best = 1, speed = -1; for (let k = 1; k <= n; k++) { const v = foot[k].z - foot[k - 1].z; if (v > speed) { speed = v; best = k; } }
   if (!kick.ball) { kick.ball = makeItem('fodbold'); kick.ball.group.scale.setScalar(.75); scene.remove(kick.ball.group); holder.add(kick.ball.group); }
-  kicks[id] = { contact: kick.pre + len * best / n, rest: new THREE.Vector3(foot[best].x, kick.r, foot[best].z + kick.r * .6), side: Math.sign(foot[best].x) || 1 }; }
+  kicks[id] = { contact: kick.pre + len * best / n, rest: new THREE.Vector3(foot[best].x, kick.r, foot[best].z + kick.r * .6), side: Math.sign(foot[best].x) || 1 };
+  // (which way the head looks, in its own turn: measured standing straight, looking ahead - the kick's own start looks down)
+  if (!kick.headFwd && bone('Head') && glbActions.staa) { sample('staa', 0); kick.headFwd = new THREE.Vector3(0, 0, 1).applyQuaternion(bone('Head').getWorldQuaternion(new THREE.Quaternion()).invert()); } }
+// (the head follows the ball with the eyes - the user, 03-11-2026: in Mixamo's kick it jerked up at every kick - turned
+// towards the ball as far as a neck turns, w how much)
+const hq = new THREE.Quaternion(), pq = new THREE.Quaternion(), dq = new THREE.Quaternion(), noTurn = new THREE.Quaternion(), hp = new THREE.Vector3(), bp = new THREE.Vector3(), fNow = new THREE.Vector3();
+function lookAtBall(g, w) { const head = bone('Head'); if (!head || !kick.headFwd || w <= 0) return; glb.updateMatrixWorld(true);
+  head.getWorldPosition(hp); head.getWorldQuaternion(hq); g.getWorldPosition(bp); fNow.copy(kick.headFwd).applyQuaternion(hq);
+  dq.setFromUnitVectors(fNow, bp.sub(hp).normalize()); const angle = 2 * Math.acos(Math.min(1, Math.abs(dq.w))), part = w * Math.min(1, 1.1 / Math.max(angle, 1e-3));
+  dq.slerp(noTurn, 1 - part); head.parent.getWorldQuaternion(pq); head.quaternion.premultiply(pq.clone().invert().multiply(dq).multiply(pq)); }
 function kickBall(dt) { const b = kick.ball; if (!b) return; const k = kicks[anim], a = glbActions[anim], on = !!k && a?.isRunning(); b.group.visible = on; if (!on) return;
   const t = a.time, g = b.group, r = kick.r, { rest, side, contact } = k;
   if (t < contact) { // (rolling in from the kicking foot's side, slowing down, turning as it rolls)
     const s = Math.max(0, 1 - t / (contact * .85)), d = 2.2 * s * s * side; g.position.set(rest.x + d, r, rest.z); g.rotation.set(0, 0, d / r); }
   else { const s = t - contact; // (off up and out, towards the one looking and a little across, spinning)
     g.position.set(rest.x - 1.2 * s * side, Math.max(r, r + 3.2 * s - 4.4 * s * s), rest.z + 4.5 * s); g.rotation.x += dt * 14; }
-  if (glb) g.position.applyAxisAngle(yAxis, glb.rotation.y); }
+  if (glb) g.position.applyAxisAngle(yAxis, glb.rotation.y);
+  // (eyes on the ball from when it rolls in until it is away, easing in and out)
+  lookAtBall(g, .85 * Math.min(1, t / .4) * Math.max(0, Math.min(1, 1 - (t - contact - 1) / .4))); }
 
 // ---- Hop over bolden: the first little game (03-11-2026) ----
 // The figure runs on the spot, seen from the side; footballs roll in from the right. A tap on the figure's picture (or
 // the space bar) jumps - Mixamo's Running Jump with a lift on top, high enough to clear a ball. Cleared: a star. Hit:
 // it stumbles and runs on - no losing, it is for 3-6 year olds. Every fifth star it cheers. Slow at first, a little
 // quicker with each star. Runs in the figure's own clothes, hair and thing in the hand
-const GAME = { run: 'loeb-b', jump: 'loebehop', trip: 'snubl', cheer: 'jubel', x: -.25, camX: .55, camY: 1.55, dist: 10, jumpFor: .95, high: .65, ball: .9 };
-const game = { on: false, stars: 0, balls: [], pool: [], jumpT: -1, busy: 0, cheer: 0, next: 0, hint: 0, saved: null };
+// (the balls: big beach balls, about twice the football - the user, 03-11-2026 - so the jump is higher and a little
+// longer. Levels, chosen in the box under the game's tab: how quick the balls roll and how often they come, each a
+// little quicker with every star up to its top)
+const GAME = { run: 'loeb-b', jump: 'loebehop', trip: 'snubl', cheer: 'jubel', x: -.25, camX: .55, camY: 1.55, dist: 10, jumpFor: 1.05, high: 1.05, r: .28 };
+const LEVELS = [['niveau-let', 'Let', { speed: 1.2, top: 1.8, gap: 3.2 }], ['niveau-mellem', 'Mellem', { speed: 1.6, top: 2.5, gap: 2.5 }], ['niveau-svaer', 'Svær', { speed: 2.2, top: 3.2, gap: 1.8 }]];
+const game = { on: false, level: 'niveau-let', stars: 0, balls: [], pool: [], jumpT: -1, busy: 0, cheer: 0, next: 0, hint: 0, saved: null };
+// (a beach ball: segments in four bright colours and white, a white cap at each end - drawn once for all four balls)
+let beachMat = null;
+function beachBall() { if (!beachMat) { const cv = document.createElement('canvas'); cv.width = 512; cv.height = 256; const c = cv.getContext('2d'), cols = ['#E8384F', '#FFFFFF', '#3D8BFF', '#FFFFFF', '#FFC233', '#FFFFFF', '#2FB872', '#FFFFFF'];
+    cols.forEach((col, i) => { c.fillStyle = col; c.fillRect(i * 64, 0, 64, 256); }); c.fillStyle = '#FFFFFF'; c.fillRect(0, 0, 512, 22); c.fillRect(0, 234, 512, 22);
+    const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; beachMat = new THREE.MeshStandardMaterial({ map: t, roughness: .3 }); }
+  const g = new THREE.Group(), m = new THREE.Mesh(new THREE.SphereGeometry(GAME.r, 40, 28), beachMat); m.castShadow = true; m.rotation.x = Math.PI / 2; g.add(m); g.visible = false; scene.add(g); return { group: g }; }
+function setLevel(id) { game.level = id; renderStyles(); if (game.on) { stopGame(true); startGame(); } else startGame(); }
 const hud = document.getElementById('hud'), starsEl = document.getElementById('stars'), hintEl = document.getElementById('tapHint');
-function startGame() { if (game.on || !glb) return; game.on = true; Object.assign(game, { stars: 0, jumpT: -1, busy: 0, cheer: 0, next: 1.5, hint: 4 });
-  game.saved = { cam: camera.position.clone(), target: controls.target.clone(), anim, bg: bgNow, spin }; spin = false; document.getElementById('spin').classList.remove('on');
+function startGame() { if (game.on || !glb) return; const restart = !!game.saved && holder.position.x === GAME.x; game.on = true; Object.assign(game, { stars: 0, jumpT: -1, busy: 0, cheer: 0, next: 1.5, hint: 4 });
+  if (!restart) game.saved = { cam: camera.position.clone(), target: controls.target.clone(), anim, bg: bgNow, spin }; spin = false; document.getElementById('spin').classList.remove('on');
   goal = null; closeUp = false; controls.enabled = false; controls.maxDistance = 12; holder.position.x = GAME.x;
   // (the plain sun has no ground to run on: the football field then, until the game stops)
   if (bgNow === 'bg-sol') setBg('bg-fodboldbane');
   // (four balls made once and used again - each is a drawn picture, too slow to make for every ball)
-  while (game.pool.length < 4) { const b = makeItem('fodbold'); b.group.scale.setScalar(GAME.ball); game.pool.push(b); }
+  while (game.pool.length < 4) game.pool.push(beachBall());
   Promise.all([GAME.run, GAME.jump, GAME.trip, GAME.cheer].map(loadMove)).then(() => { if (game.on) runAnim(GAME.run); });
-  hud.hidden = false; hintEl.hidden = false; document.querySelector('.top').hidden = true; showStars(); document.querySelectorAll('[data-game]').forEach(b => b.classList.add('on')); }
-function stopGame() { if (!game.on) return; game.on = false; for (const b of game.pool) b.group.visible = false; game.balls = []; holder.position.x = 0;
-  hud.hidden = true; hintEl.hidden = true; document.querySelector('.top').hidden = false; document.querySelectorAll('[data-game]').forEach(b => b.classList.remove('on'));
+  hud.hidden = false; hintEl.hidden = false; document.querySelector('.top').hidden = true; document.getElementById('stage').classList.add('playing'); showStars(); document.querySelectorAll('[data-game]').forEach(b => b.classList.add('on')); }
+// (again: only stopped to start at another level - the figure's own setting not put back yet)
+function stopGame(again) { if (!game.on) return; game.on = false; for (const b of game.pool) b.group.visible = false; game.balls = []; confetti.length = 0;
+  if (again) { game.on = false; return; } holder.position.x = 0;
+  hud.hidden = true; hintEl.hidden = true; document.querySelector('.top').hidden = false; document.getElementById('stage').classList.remove('playing'); document.querySelectorAll('[data-game]').forEach(b => b.classList.remove('on'));
   if (game.saved.bg !== bgNow) setBg(game.saved.bg); camera.position.copy(game.saved.cam); controls.target.copy(game.saved.target); controls.enabled = true; controls.maxDistance = 10;
   if (game.saved.spin) document.getElementById('spin').click(); playMove(game.saved.anim); }
 // (a movement within the game: quicker change, and the jump, the stumble and the cheer once each, not over and over)
 function runAnim(id, once) { const a = glbActions[id]; if (!a) return; anim = id; Object.values(glbActions).forEach(x => x !== a && x.fadeOut(.15));
   a.reset(); a.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat, Infinity); a.clampWhenFinished = !!once; a.fadeIn(.15).play(); }
-function jump() { if (!game.on || game.jumpT >= 0 || game.busy || game.cheer || !glbActions[GAME.jump]) return; game.jumpT = 0; game.hint = 0; runAnim(GAME.jump, true); }
+function jump() { if (!game.audio) try { game.audio = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { game.audio = null; } game.audio?.resume?.();
+  if (!game.on || game.jumpT >= 0 || game.busy || game.cheer || !glbActions[GAME.jump]) return; game.jumpT = 0; game.hint = 0; runAnim(GAME.jump, true); }
 function showStars(pop) { starsEl.textContent = '⭐ ' + game.stars; if (pop) { starsEl.classList.remove('pop'); void starsEl.offsetWidth; starsEl.classList.add('pop'); } }
-function gameTick(dt) { if (!game.on || !glb) return; const r = .158 * GAME.ball, figX = GAME.x;
+function gameTick(dt) { confettiTick(dt); if (!game.on || !glb) return; const r = GAME.r, figX = GAME.x, L = LEVELS.find(l => l[0] === game.level)[2];
   // (seen from the side, the figure facing the balls - turned to look out at the one playing when it cheers)
   glb.rotation.y = game.cheer ? .3 : Math.PI / 2;
   // (a wide picture - a phone held upright gives one - from nearer: the figure was small in it)
@@ -2717,20 +2753,44 @@ function gameTick(dt) { if (!game.on || !glb) return; const r = .158 * GAME.ball
   if (game.busy && (game.busy -= dt) <= 0) { game.busy = 0; runAnim(GAME.run); }
   if (game.cheer && (game.cheer -= dt) <= 0) { game.cheer = 0; runAnim(GAME.run); }
   // (a new ball now and then - never while it cheers - a little sooner and quicker with more stars)
-  const speed = Math.min(2.4, 1.4 + game.stars * .05);
-  if (!game.cheer && (game.next -= dt) <= 0) { const b = game.pool.find(p => !p.group.visible); if (b) { game.next = 2.3 + Math.random() * 1.6 - Math.min(.8, game.stars * .04);
+  const speed = Math.min(L.top, L.speed + game.stars * .04);
+  if (!game.cheer && (game.next -= dt) <= 0) { const b = game.pool.find(p => !p.group.visible); if (b) { game.next = L.gap + Math.random() * 1.4 - Math.min(L.gap * .3, game.stars * .03);
     Object.assign(b, { vx: -speed, vy: 0, hit: false, done: false }); b.group.position.set(right, r, 0); b.group.visible = true; game.balls.push(b); } }
   for (const b of [...game.balls]) { const p = b.group.position; p.x += b.vx * dt; b.group.rotation.z -= b.vx * dt / r;
     if (b.hit) { b.vy -= 9.8 * dt; p.y += b.vy * dt; if (p.y < r) { p.y = r; b.vy *= -.45; } }
     // (it clears the ball when the feet are over it as it passes - forgiving: the ball counts a little smaller than it is)
-    if (!b.done && Math.abs(p.x - figX) < .18 && lift < .2) { b.hit = b.done = true; b.vx = 1.4; b.vy = 2.6; game.jumpT = -1; game.busy = 1.1; runAnim(GAME.trip, true); }
-    if (!b.done && p.x < figX - .25) { b.done = true; game.stars++; showStars(true); if (game.stars % 5 === 0) { game.cheer = 2.6; runAnim(GAME.cheer); } }
+    if (!b.done && Math.abs(p.x - figX) < .24 && lift < .42) { b.hit = b.done = true; b.vx = 1.4; b.vy = 2.6; game.jumpT = -1; game.busy = 1.1; runAnim(GAME.trip, true); }
+    if (!b.done && p.x < figX - .35) { b.done = true; game.stars++; showStars(true); if (game.stars % 5 === 0) { game.cheer = 2.8; runAnim(GAME.cheer); celebrate(); } }
     if (p.x < left || p.x > right + .5) { b.group.visible = false; game.balls.splice(game.balls.indexOf(b), 1); } } }
 document.getElementById('stage').addEventListener('pointerdown', e => { if (game.on && !e.target.closest('button')) { e.preventDefault(); jump(); } });
 addEventListener('keydown', e => { if (game.on && e.code === 'Space' && !/INPUT/.test(e.target.tagName)) { e.preventDefault(); jump(); } });
-document.getElementById('gameExit').onclick = stopGame;
-document.querySelectorAll('[data-game]').forEach(b => b.onclick = () => game.on ? stopGame() : startGame());
-loadFbx().then(ok => { document.getElementById('tag').textContent = ok ? 'Version 2 · træk for at dreje, knib for at zoome' : 'Figuren kunne ikke hentes'; });
+document.getElementById('gameExit').onclick = () => stopGame();
+// (the game's tab starts it and shows its levels in the box, as a movement's tab shows its kinds)
+document.querySelectorAll('[data-game]').forEach(b => b.onclick = () => { partNow = 'game-' + b.dataset.game; showSwatches(); startGame(); });
+function gameList() { try { return [LEVELS, game.level, setLevel]; } catch (e) { return null; } }
+// Every fifth star: confetti shot up from two cannons at the bottom corners of the picture, with little stars among it,
+// and a short ta-da (only once the child has tapped: a page may not sound before that)
+const confetti = [], confCv = document.getElementById('confetti'), confCx = confCv.getContext('2d'), CONF_COLS = ['#E8384F', '#3D8BFF', '#FFC233', '#2FB872', '#FF6FB1', '#7C5CFF'];
+function celebrate() { const st = document.getElementById('stage'), W = st.clientWidth, H = st.clientHeight, dpr = Math.min(2, devicePixelRatio || 1);
+  confCv.width = W * dpr; confCv.height = H * dpr; confCx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  for (const side of [-1, 1]) for (let k = 0; k < 70; k++) confetti.push({ x: side < 0 ? 10 : W - 10, y: H - 10, vx: -side * (120 + Math.random() * 320), vy: -(H * .9 + Math.random() * H * .7),
+    a: Math.random() * 6, va: (Math.random() - .5) * 14, col: CONF_COLS[k % CONF_COLS.length], star: Math.random() < .22, life: 2.6 + Math.random() * .8, s: 6 + Math.random() * 6 });
+  const au = game.audio; if (au) { const t0 = au.currentTime; [523, 659, 784, 1047].forEach((f, i) => { const o = au.createOscillator(), g = au.createGain(); o.type = 'triangle'; o.frequency.value = f;
+    g.gain.setValueAtTime(0, t0 + i * .11); g.gain.linearRampToValueAtTime(.16, t0 + i * .11 + .02); g.gain.exponentialRampToValueAtTime(.001, t0 + i * .11 + (i === 3 ? .7 : .25));
+    o.connect(g).connect(au.destination); o.start(t0 + i * .11); o.stop(t0 + i * .11 + .75); }); } }
+function confettiTick(dt) { if (!confetti.length && !confCv.dataset.drawn) return; const W = confCv.width, H = confCv.height; confCx.clearRect(0, 0, W, H); confCv.dataset.drawn = confetti.length ? '1' : '';
+  for (let i = confetti.length - 1; i >= 0; i--) { const p = confetti[i]; p.life -= dt; if (p.life <= 0) { confetti.splice(i, 1); continue; }
+    p.vy += 900 * dt; p.vx *= 1 - 1.2 * dt; p.vy *= 1 - .6 * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.a += p.va * dt;
+    confCx.save(); confCx.globalAlpha = Math.min(1, p.life / .6); confCx.translate(p.x, p.y); confCx.rotate(p.a); confCx.fillStyle = p.star ? '#FFC233' : p.col;
+    if (p.star) { confCx.beginPath(); for (let k = 0; k < 10; k++) { const r = k % 2 ? p.s * .45 : p.s * 1.1, an = k * Math.PI / 5 - Math.PI / 2; confCx.lineTo(r * Math.cos(an), r * Math.sin(an)); } confCx.fill(); }
+    else confCx.fillRect(-p.s / 2, -p.s * .35, p.s, p.s * .7); confCx.restore(); } }
+// (once the figure is in: on a computer the hint stays as a line at the top, for the mouse; on a touch screen it goes into
+// the i in the corner)
+const infoBtn = document.getElementById('infoBtn'), infoPop = document.getElementById('infoPop'); let infoTimer = 0;
+infoBtn.onclick = () => { infoPop.hidden = !infoPop.hidden; infoBtn.setAttribute('aria-expanded', String(!infoPop.hidden)); clearTimeout(infoTimer); if (!infoPop.hidden) infoTimer = setTimeout(() => { infoPop.hidden = true; infoBtn.setAttribute('aria-expanded', 'false'); }, 5000); };
+loadFbx().then(ok => { const tag = document.getElementById('tag'); if (!ok) { tag.textContent = 'Figuren kunne ikke hentes'; return; }
+  if (matchMedia('(hover: hover) and (pointer: fine)').matches) tag.textContent = 'Version 2 · træk for at dreje, rul med musen for at zoome';
+  else { tag.textContent = ''; infoBtn.hidden = false; } });
 
 // ---- render loop ----
 const clock = new THREE.Clock();
