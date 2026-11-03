@@ -11,50 +11,75 @@
   :root { --ink: #3A2E5C; --tile: #FFFFFF; --line: #E6DEFF; --accent: #7C5CFF; }
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; background: #FFF8E1; color: var(--ink); font: 15px/1.3 system-ui, sans-serif; overflow: hidden; }
-  /* (the size set here: on a sharp screen - an iPad, a phone - the canvas holds twice the pixels, and without it showed
-     twice too big, the figure off to the right) */
-  #scene { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
-  .bar { position: fixed; left: 0; right: 0; bottom: 0; padding: 10px max(12px, env(safe-area-inset-left)) calc(10px + env(safe-area-inset-bottom));
-    display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; background: linear-gradient(transparent, rgba(255, 248, 225, .95) 30%); }
-  .bar button { border: 2px solid var(--line); background: var(--tile); color: var(--ink); border-radius: 16px; padding: 10px 14px;
-    font: 700 15px/1 system-ui, sans-serif; cursor: pointer; }
-  .bar button.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent) inset; }
-  /* (the movements too, each with a little picture of the figure doing it - ikoner/stilling-*.png, made by the page) */
-  .bar button.pose { padding: 4px 10px 6px; font-size: 12px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
-  .bar button.pose img { width: 48px; height: 48px; pointer-events: none; }
-  .bar button.pose span { pointer-events: none; }
-  /* the colours: a part chosen above, its colours as small round buttons below (no pop-up over the figure) */
-  .colors { flex-basis: 100%; display: flex; flex-direction: column; align-items: center; gap: 6px; }
-  .parts { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
-  .parts button { padding: 4px 8px 6px; font-size: 12px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  /* the screen split as in the app (version 1): the figure and its scene on the left, the full height; the tabs, choices
+     and colours on the right, scrolling on their own. On a phone held upright: the figure on top, the rest under it */
+  .main { display: flex; gap: 14px; height: 100dvh; padding: max(10px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); }
+  .stage { position: relative; flex: none; height: 100%; aspect-ratio: 2 / 3; max-width: 58%; border-radius: 26px; overflow: hidden;
+    background: radial-gradient(circle at 50% 42%, #FFF3C2 0 38%, #FFD54A 100%); box-shadow: 0 4px 18px rgba(58, 46, 92, .14); }
+  /* (on a sharp screen - an iPad, a phone - the canvas holds twice the pixels; its size in the page set here) */
+  #scene { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+  /* the scene behind the 3D: the picture itself sized to the figure, and round it the same picture spread out, blurred */
+  #bgFar { position: absolute; inset: -40px; background: center / cover no-repeat; filter: blur(22px) saturate(1.1); }
+  #bgNear { position: absolute; background: center / 100% 100% no-repeat; /* (its sides fading into the blurred picture) */
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent); mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent); }
+  #bgFar[hidden], #bgNear[hidden] { display: none; }
+  .panel { flex: 1; min-width: 0; height: 100%; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; -webkit-overflow-scrolling: touch; }
+  .panel button, .moves button { border: 2px solid var(--line); background: var(--tile); color: var(--ink); border-radius: 14px; padding: 8px 12px;
+    font: 700 13px/1 system-ui, sans-serif; cursor: pointer; }
+  .panel button.on, .moves button.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent) inset; }
+  /* the movements: small buttons along the foot of the figure's picture, each with a little picture of the figure doing it */
+  .moves { position: absolute; left: 6px; right: 6px; bottom: 8px; display: flex; justify-content: center; gap: 5px; flex-wrap: wrap; pointer-events: none; }
+  .moves button { pointer-events: auto; padding: 3px 6px 4px; font-size: 11px; display: flex; flex-direction: column; align-items: center; gap: 1px; background: rgba(255, 255, 255, .88); border-radius: 12px; }
+  .moves button img { width: 34px; height: 34px; pointer-events: none; }
+  .moves button span { pointer-events: none; }
+  /* the tabs, smaller than before, in three groups as in the app: the body and face, the clothes, the rest */
+  .parts { display: flex; flex-direction: column; gap: 8px; }
+  .tabgroup { display: flex; flex-wrap: wrap; gap: 5px; padding: 6px; border-radius: 18px; background: #FFEDBB; }
+  .tabgroup button { width: 62px; padding: 4px 2px 5px; font-size: 11px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
   /* (each part and each choice with its picture over its name, as in the app - the children cannot read yet) */
-  .parts button img { width: 40px; height: 40px; object-fit: contain; }
-  #styles button img { width: 52px; height: 52px; border-radius: 10px; }
-  .parts[hidden] { display: none; }
+  .tabgroup button img { width: 32px; height: 32px; object-fit: contain; }
+  /* the choices and colours for the tab chosen, in a white box under the tabs */
+  .box { background: var(--tile); border-radius: 20px; padding: 12px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 4px 16px rgba(58, 46, 92, .1); }
+  .choices { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; }
+  .choices[hidden] { display: none; }
+  .choices button { padding: 5px 4px 7px; font-size: 12px; display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; }
+  .choices button img { width: 100%; max-width: 64px; aspect-ratio: 1; border-radius: 10px; object-fit: cover; }
+  .choices button span { max-width: 100%; text-align: center; overflow-wrap: break-word; }
+  /* a phone held upright: the figure on top, a little under half the height; the tab groups in one sideways row */
+  @media (max-aspect-ratio: 4/5) {
+    .main { flex-direction: column; gap: 8px; }
+    .stage { height: 46dvh; width: 100%; aspect-ratio: auto; max-width: none; border-radius: 22px; }
+    .parts { flex-direction: row; overflow-x: auto; flex: none; scrollbar-width: none; }
+    .tabgroup { flex-wrap: nowrap; flex: none; }
+    .tabgroup button { width: 54px; flex: none; }
+    .stage .top { display: none; }
+  }
   /* the name tab: the name written in a box, the badges as round buttons under it (as in the app) */
   .namebox { display: flex; flex-direction: column; align-items: center; gap: 8px; }
   .namebox[hidden] { display: none; }
   #nameInput { font: 700 20px/1 system-ui, sans-serif; color: var(--ink); text-align: center; width: min(260px, 80vw); padding: 10px 14px; border: 2px solid var(--line); border-radius: 16px; background: var(--tile); }
   #nameInput:focus { outline: none; border-color: var(--accent); }
   .badges { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
-  .bar .badges button { width: 46px; height: 46px; padding: 0; border-radius: 50%; font-size: 22px; line-height: 1; }
+  .panel .badges button { width: 46px; height: 46px; padding: 0; border-radius: 50%; font-size: 22px; line-height: 1; }
   /* the colours: three sliders (colour, strength, light) for the part chosen - no fixed colours */
   .sliders[hidden] { display: none; }
   .sliders { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 14px; font-size: 12px; font-weight: 700; }
   .sliders label { display: flex; align-items: center; gap: 6px; }
-  .sliders input { width: min(210px, 60vw); height: 22px; border-radius: 11px; -webkit-appearance: none; appearance: none; }
+  .sliders input { width: min(210px, 70vw); height: 22px; border-radius: 11px; -webkit-appearance: none; appearance: none; }
   .sliders input::-webkit-slider-thumb { -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%; background: #FFFFFF; border: 2px solid var(--ink); }
   .sliders input::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; background: #FFFFFF; border: 2px solid var(--ink); }
   #s-h { background: linear-gradient(90deg, hsl(0,80%,55%), hsl(60,80%,55%), hsl(120,80%,55%), hsl(180,80%,55%), hsl(240,80%,55%), hsl(300,80%,55%), hsl(360,80%,55%)); }
-  .top { position: fixed; top: calc(10px + env(safe-area-inset-top)); left: 12px; right: 12px; display: flex; justify-content: space-between; gap: 8px; pointer-events: none; }
-  .top > * { pointer-events: auto; }
-  .tag { background: var(--tile); border: 2px solid var(--line); border-radius: 14px; padding: 6px 10px; font-weight: 700; font-size: 13px; }
-  /* saving, as in the app: the camera top right, the star, Mine figurer and the new MiniMig down the left (under the tag) */
-  .stage-btn { position: fixed; top: calc(10px + env(safe-area-inset-top)); right: 12px; z-index: 3; width: 48px; height: 48px; border-radius: 50%; border: 0; cursor: pointer;
-    background: var(--tile); box-shadow: 0 2px 8px rgba(58, 46, 92, .2); font-size: 1.45rem; line-height: 1; padding: 0; }
-  .stage-btn.left { right: auto; left: 12px; top: calc(54px + env(safe-area-inset-top)); }
-  .stage-btn.second { top: calc(110px + env(safe-area-inset-top)); }
-  .stage-btn.third { top: calc(166px + env(safe-area-inset-top)); }
+  /* (a note at the top of the figure's picture while it loads, gone once it is in) */
+  .top { position: absolute; top: 10px; left: 60px; right: 60px; display: flex; justify-content: center; pointer-events: none; }
+  .tag { background: var(--tile); border: 2px solid var(--line); border-radius: 14px; padding: 5px 9px; font-weight: 700; font-size: 12px; }
+  .tag:empty { display: none; }
+  /* saving, as in the app, on the figure's picture: the camera top right, the star, Mine figurer and the new MiniMig
+     down the left */
+  .stage-btn { position: absolute; top: 10px; right: 10px; z-index: 3; width: 44px; height: 44px; border-radius: 50%; border: 0; cursor: pointer;
+    background: var(--tile); box-shadow: 0 2px 8px rgba(58, 46, 92, .2); font-size: 1.3rem; line-height: 1; padding: 0; }
+  .stage-btn.left { right: auto; left: 10px; }
+  .stage-btn.second { top: 62px; }
+  .stage-btn.third { top: 114px; }
   @media (prefers-reduced-motion: no-preference) { .stage-btn.pop { animation: pop .5s ease; } }
   @keyframes pop { 40% { transform: scale(1.35) rotate(-12deg); } 100% { transform: none; } }
   .lock-badge { position: absolute; right: -4px; bottom: -4px; width: 22px; height: 22px; border-radius: 50%; background: #2FB872;
@@ -102,6 +127,9 @@
   .empty { grid-column: 1 / -1; text-align: center; color: #6B6191; margin: 0; padding: 20px 8px; font: 600 1.05rem/1.4 system-ui, sans-serif; }</style>
 </head>
 <body>
+<div class="main">
+<div class="stage" id="stage">
+<div id="bgFar" hidden></div><div id="bgNear" hidden></div>
 <canvas id="scene"></canvas>
 <div class="top"><span class="tag" id="tag">Henter figuren …</span></div>
 <!-- as in the app: the star saves the figure (Mine figurer), the pictures button shows the saved ones, the sparkles start
@@ -110,20 +138,27 @@
 <button class="stage-btn left" id="keepBtn" aria-label="Gem figuren">⭐</button>
 <button class="stage-btn left second" id="figsBtn" aria-label="Mine figurer">🖼️</button>
 <button class="stage-btn left third" id="newBtn" aria-label="Ny MiniMig">✨</button>
-<div class="bar">
+<div class="moves">
   <button data-anim="staa" class="on pose"><img src="ikoner/stilling-staa.png" alt=""><span>Stå</span></button>
   <button data-anim="vink" class="pose"><img src="ikoner/stilling-vink.png" alt=""><span>Vink</span></button>
   <button data-anim="hop" class="pose"><img src="ikoner/stilling-hop.png" alt=""><span>Hop</span></button>
   <button data-anim="dans" class="pose"><img src="ikoner/stilling-dans.png" alt=""><span>Dans</span></button>
   <button id="spin" class="pose"><img src="ikoner/stilling-drej.png" alt=""><span>Drej rundt</span></button>
-  <div class="colors"><div class="parts" id="parts"></div><div class="parts" id="styles" hidden></div><div class="parts" id="styles2" hidden></div>
+</div>
+</div>
+<div class="panel">
+  <div class="parts" id="parts"></div>
+  <div class="box">
+    <div class="choices" id="styles" hidden></div><div class="choices" id="styles2" hidden></div>
     <div class="namebox" id="nameBox" hidden><input id="nameInput" type="text" maxlength="10" autocomplete="off" placeholder="Skriv dit navn" aria-label="Navn på trøjen">
       <div class="badges" id="badges"></div></div>
     <div class="sliders" id="sliders">
       <label>Farve <input type="range" id="s-h" min="0" max="360" step="1"></label>
       <label>Styrke <input type="range" id="s-s" min="0" max="100" step="1"></label>
       <label>Lys <input type="range" id="s-l" min="5" max="95" step="1"></label>
-    </div></div>
+    </div>
+  </div>
+</div>
 </div>
 <!-- saving a picture: the child picks the whole figure or a profile picture, then a grown-up answers a sum -->
 <div class="sheet" id="picChoice" hidden>
@@ -266,7 +301,10 @@ function paintTracks() { const h = S.h.value, s = S.s.value, l = S.l.value;
   S.l.style.background = `linear-gradient(90deg, hsl(${h},${s}%,5%), hsl(${h},${s}%,50%), hsl(${h},${s}%,95%))`; }
 for (const el of Object.values(S)) el.addEventListener('input', () => { paintTracks();
   const c = '#' + new THREE.Color().setHSL(S.h.value / 360, S.s.value / 100, S.l.value / 100, THREE.SRGBColorSpace).getHexString(THREE.SRGBColorSpace); apply(partNow, c); });
-for (const [part, name, icon] of CHOICES) { const b = iconButton(`ikoner/${icon}.png`, name); b.dataset.part = part; b.onclick = () => { partNow = part; showSwatches(); lookFor(part); }; document.getElementById('parts').append(b); }
+// (the tabs in the app's three groups: the body and face, the clothes, the rest)
+const groups = [0, 1, 2].map(() => document.getElementById('parts').appendChild(Object.assign(document.createElement('div'), { className: 'tabgroup' })));
+for (const [part, name, icon] of CHOICES) { const b = iconButton(`ikoner/${icon}.png`, name); b.dataset.part = part; b.onclick = () => { partNow = part; showSwatches(); lookFor(part); };
+  groups[['shirt', 'pants', 'dress', 'socks', 'shoe', 'hat', 'glasses'].includes(part) ? 1 : ['item', 'name', 'bg'].includes(part) ? 2 : 0].append(b); }
 showSwatches();
 
 // The AI figure's colours are painted into one picture (its texture). Each pixel of it is sorted once by its colour
@@ -2298,16 +2336,19 @@ const BGS = [['bg-sol', 'Sol'], ['bg-have', 'Have'], ['bg-strand', 'Strand'], ['
 let bgNow = 'bg-sol'; const bgImgs = {};
 function setBg(name) { bgNow = BGS.some(b => b[0] === name) ? name : 'bg-sol'; const k = bgNow.slice(3);
   if (k !== 'sol' && !bgImgs[k]) { bgImgs[k] = new Image(); bgImgs[k].src = `baggrund/${k}.jpg`; }
-  document.body.style.background = k === 'sol' ? '' : `#FFF8E1 url("baggrund/${k}.jpg") center 62% / cover no-repeat`; disc.visible = k === 'sol'; bgShown = ''; renderStyles(); }
-// (the scene zoomed with the camera - pinched in towards the figure, it comes closer too; a little less than the figure,
-// as it lies further back. Its size worked out from the screen's, the picture's and how near the camera is, each frame
-// it changes; centred on the same point as before)
+  const url = k === 'sol' ? '' : `url("baggrund/${k}.jpg")`; bgNear.style.backgroundImage = bgFar.style.backgroundImage = url; bgNear.hidden = bgFar.hidden = k === 'sol';
+  disc.visible = k === 'sol'; bgShown = ''; renderStyles(); }
+// (the scene as big against the figure as in the app - the figure about seven tenths of the picture's height - with the
+// picture's ground, 85 % down it as in the app, under the figure's feet; so it zooms in and out with the figure. Spread
+// over the whole screen the picture was far too big for the figure, and its ground could not come up under its feet: the
+// figure stood in the air. The rest of the screen the same picture, soft and blurred, filling it)
+const bgFar = document.getElementById('bgFar'), bgNear = document.getElementById('bgNear'), bgFeet = new THREE.Vector3(), bgHead = new THREE.Vector3();
 let bgShown = '';
-function bgZoom() { if (bgNow === 'bg-sol') return; const im = bgImgs[bgNow.slice(3)]; if (!im?.naturalWidth) return;
-  // (counted from the furthest the camera can go: zoomed right out the scene still fills the screen)
-  const z = Math.pow(controls.maxDistance / camera.position.distanceTo(controls.target), .6), W = innerWidth, H = innerHeight, k = Math.max(W / im.naturalWidth, H / im.naturalHeight) * z;
-  const w = Math.round(im.naturalWidth * k), h = Math.round(im.naturalHeight * k), s = `${w}px ${h}px`; if (s === bgShown) return; bgShown = s;
-  document.body.style.backgroundSize = s; document.body.style.backgroundPosition = `${Math.round((W - w) / 2)}px ${Math.round((H - h) * .62)}px`; }
+function bgZoom() { if (bgNow === 'bg-sol') return; const im = bgImgs[bgNow.slice(3)]; if (!im?.naturalWidth || !holder.visible) return;
+  const W = stage.clientWidth, H = stage.clientHeight, toPx = v => [(v.x + 1) / 2 * W, (1 - (v.y + 1) / 2) * H];
+  const [fx, fy] = toPx(bgFeet.set(0, 0, 0).applyMatrix4(holder.matrixWorld).project(camera)), [, hy] = toPx(bgHead.set(0, 2.15, 0).applyMatrix4(holder.matrixWorld).project(camera));
+  const h = Math.round((fy - hy) / .7), w = Math.round(h * im.naturalWidth / im.naturalHeight), x = Math.round(fx - w / 2), y = Math.round(fy - .85 * h), s = `${w} ${h} ${x} ${y}`;
+  if (s === bgShown) return; bgShown = s; bgNear.style.width = w + 'px'; bgNear.style.height = h + 'px'; bgNear.style.left = x + 'px'; bgNear.style.top = y + 'px'; }
 // ---- Ører, as in the app: the ears' shape - natural, small, big, sticking out, elf ears - and earrings at the lobes ----
 // (the ears are the body's own: each its points beyond the skull at the side of the head - a third of an eye's distance
 // behind the eyes to a half below them, further out than the skull there - moved about the ear's root, more the further
@@ -2571,10 +2612,12 @@ function lookFor(part) { const near = FACE.includes(part) && hairBase;
   closeUp = !!near; }
 function glide() { if (!goal) return; controls.target.lerp(goal.target, .12); camera.position.lerp(goal.camera, .12);
   if (camera.position.distanceTo(goal.camera) < .01) { controls.target.copy(goal.target); camera.position.copy(goal.camera); if (goal.far) controls.minDistance = 2.5; goal = null; } }
-// (the picture moved up by half the button bar's height, so the figure stands clear of the bar however tall it is)
-function resize() { const w = innerWidth, h = innerHeight, bar = document.querySelector('.bar').offsetHeight; renderer.setSize(w, h, false); camera.aspect = w / h;
-  farZ = w < h ? 8 : 7; if (!closeUp) camera.position.z = farZ; camera.setViewOffset(w, h, 0, bar * .4, w, h); /* (room above for the head in a hop) */ camera.updateProjectionMatrix(); }
-addEventListener('resize', resize); resize(); new ResizeObserver(resize).observe(document.querySelector('.bar'));
+// (the 3D fills the figure's half of the screen; the picture moved up by a little of the movement buttons' height, so
+// the feet stand clear of them)
+const stage = document.getElementById('stage');
+function resize() { const w = stage.clientWidth, h = stage.clientHeight, moves = document.querySelector('.moves').offsetHeight; renderer.setSize(w, h, false); camera.aspect = w / h;
+  farZ = w < h * .8 ? 6.6 : 7; if (!closeUp) camera.position.z = farZ; camera.setViewOffset(w, h, 0, moves * (w < h ? .4 : .7), w, h); /* (room above for the head in a hop) */ camera.updateProjectionMatrix(); bgShown = ''; }
+addEventListener('resize', resize); resize(); new ResizeObserver(resize).observe(stage);
 renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElapsedTime();
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); armsOut(); holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); });</script>
