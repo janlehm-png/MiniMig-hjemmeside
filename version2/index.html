@@ -2881,8 +2881,16 @@ const onTheSpot = clip => { const t = clip.tracks.find(tr => tr.name === 'mixamo
 const moveLoads = {};
 function loadMove(id) { return moveLoads[id] ??= (async () => {
   if (!glbActions[id]) try { glbActions[id] = mixer.clipAction(onTheSpot(THREE.AnimationClip.parse(await (await fetch(`figur-${id}.json${FIGUR_V}`)).json()))); } catch (e) { delete moveLoads[id]; return null; }
-  if (kick.ready) { if (MOVES.spark.some(m => m[0] === id)) kickSetup(id); lifts[id] = liftCurve(id); }
+  if (kick.ready) keepPlaying(() => { if (MOVES.spark.some(m => m[0] === id)) kickSetup(id); lifts[id] = liftCurve(id); });
   return glbActions[id]; })(); }
+// (measuring stops every movement - a movement fetched for the first time while a game ran, as after each new version,
+// left the skater frozen bent over on its board, the user said 03-11-2026: what was playing is put back after it)
+// (a movement fading in or out is put back as it would end: fully in, or left out)
+function keepPlaying(measure) { const was = Object.values(glbActions).map(a => ({ a, time: a.time, w: a._weightInterpolant ? a._weightInterpolant.sampleValues[1] : a.getEffectiveWeight(), ts: a.timeScale, loop: a.loop, clamp: a.clampWhenFinished }))
+    .filter(s => s.w > 0 && (s.a.isRunning() || s.a.enabled && s.a.isScheduled()));
+  const rotY = glb.rotation.y, y = glb.position.y; measure(); mixer.stopAllAction();
+  for (const s of was) { s.a.reset(); s.a.setLoop(s.loop, Infinity); s.a.clampWhenFinished = s.clamp; s.a.play(); s.a.time = s.time; s.a.timeScale = s.ts; s.a.setEffectiveWeight(s.w); }
+  mixer.update(0); glb.rotation.y = rotY; glb.position.y = y; glb.updateMatrixWorld(true); }
 // (one moment of a movement, standing straight - not turned by "Drej rundt", not lifted - to measure it)
 function sample(id, t) { mixer.stopAllAction(); const a = glbActions[id]; a.reset().play(); a.time = t; mixer.update(0); glb.rotation.y = 0; glb.position.y = kick.baseY; glb.updateMatrixWorld(true); }
 // Under the floor: Mixamo's roll, fall and breakdance keep the hips at their height, so the head went down through the
