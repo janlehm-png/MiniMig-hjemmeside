@@ -82,7 +82,7 @@
   .tag:empty { display: none; }
   .info-btn { position: absolute; top: 10px; right: 10px; z-index: 2; width: 34px; height: 34px; border-radius: 50%; border: 2px solid var(--line); background: var(--tile); color: var(--accent);
     font: italic 800 18px/1 Georgia, serif; cursor: pointer; box-shadow: 0 2px 8px rgba(58, 46, 92, .15); }
-  .info-pop { position: absolute; top: 52px; right: 10px; z-index: 2; max-width: calc(100% - 20px); background: var(--tile); border-radius: 14px; padding: 8px 12px;
+  .info-pop { position: absolute; top: 52px; right: 10px; z-index: 2; max-width: min(300px, calc(100% - 20px)); line-height: 1.5; background: var(--tile); border-radius: 14px; padding: 8px 12px;
     font: 700 14px/1.3 system-ui, sans-serif; box-shadow: 0 4px 14px rgba(58, 46, 92, .2); }
   .info-btn[hidden], .info-pop[hidden], .stage.playing .info-btn, .stage.playing .info-pop { display: none; }
   /* (on a computer the mouse shows it can zoom the figure - the wheel - and grabs it while turning it) */
@@ -162,7 +162,7 @@
 <div class="top"><span class="tag" id="tag">Henter figuren …</span></div>
 <!-- (on an iPad or a phone the hint as a small i in the top right corner, opened with a tap - the user, 03-11-2026) -->
 <button class="info-btn" id="infoBtn" aria-label="Sådan gør du" aria-expanded="false" hidden>i</button>
-<div class="info-pop" id="infoPop" hidden>Træk for at dreje · knib for at zoome</div>
+<div class="info-pop" id="infoPop" hidden>👆 Træk for at dreje figuren<br>🤏 Knib for at zoome<br>👕 Tryk på navnet på trøjen, så siger figuren det – med din egen indtalte stemme, hvis du har indtalt en</div>
 <!-- Hop over bolden: the stars won, and the cross that ends the game; a hint at the start -->
 <div class="hud" id="hud" hidden><span class="stars" id="stars">⭐ 0</span><button class="game-x" id="gameExit" aria-label="Stop spillet">✕</button></div>
 <div class="tap-hint" id="tapHint" hidden>👆 Tryk for at hoppe</div>
@@ -2276,7 +2276,7 @@ function sayName() { const n = nameInput.value.trim(); if (!n) return; const own
 // (recording one's own voice: a tap on the microphone, up to four seconds, a tap again stops it; kept in this browser
 // only, for the name written)
 const recBtn = document.getElementById('recBtn'), recDel = document.getElementById('recDel'), recNote = document.getElementById('recNote'); let recorder = null;
-function showRec(note) { const has = !!voiceFor(nameInput.value || ''); recDel.hidden = !has; recNote.textContent = note || (has ? 'Din egen stemme siger navnet' : ''); }
+function showRec(note) { const has = !!voiceFor(nameInput.value || ''); recDel.hidden = !has; recNote.textContent = note || (has ? 'Din egen stemme siger navnet – tryk på navnet på trøjen for at høre det igen' : ''); }
 // (the own voice played through the page's sound - opened by the tap on the microphone - so it can be heard by itself
 // right after the recording: an iPad will not start a plain sound that no tap started, and the recording stops by
 // itself after four seconds; the user, 03-11-2026)
@@ -2884,9 +2884,9 @@ function confettiTick(dt) { if (!confetti.length && !confCv.dataset.drawn) retur
 // (once the figure is in: on a computer the hint stays as a line at the top, for the mouse; on a touch screen it goes into
 // the i in the corner)
 const infoBtn = document.getElementById('infoBtn'), infoPop = document.getElementById('infoPop'); let infoTimer = 0;
-infoBtn.onclick = () => { infoPop.hidden = !infoPop.hidden; infoBtn.setAttribute('aria-expanded', String(!infoPop.hidden)); clearTimeout(infoTimer); if (!infoPop.hidden) infoTimer = setTimeout(() => { infoPop.hidden = true; infoBtn.setAttribute('aria-expanded', 'false'); }, 5000); };
+infoBtn.onclick = () => { infoPop.hidden = !infoPop.hidden; infoBtn.setAttribute('aria-expanded', String(!infoPop.hidden)); clearTimeout(infoTimer); if (!infoPop.hidden) infoTimer = setTimeout(() => { infoPop.hidden = true; infoBtn.setAttribute('aria-expanded', 'false'); }, 9000); };
 loadFbx().then(ok => { const tag = document.getElementById('tag'); if (!ok) { tag.textContent = 'Figuren kunne ikke hentes'; return; }
-  if (matchMedia('(hover: hover) and (pointer: fine)').matches) tag.textContent = 'Version 2 · træk for at dreje, rul med musen for at zoome';
+  if (matchMedia('(hover: hover) and (pointer: fine)').matches) tag.textContent = 'Version 2 · træk for at dreje, rul med musen for at zoome, klik på navnet på trøjen for at høre det';
   else { tag.textContent = ''; infoBtn.hidden = false; } });
 
 // ---- render loop ----
