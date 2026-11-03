@@ -24,18 +24,16 @@
     -webkit-mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent); mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent); }
   #bgFar[hidden], #bgNear[hidden] { display: none; }
   .panel { flex: 1; min-width: 0; height: 100%; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; -webkit-overflow-scrolling: touch; }
-  .panel button, .moves button { border: 2px solid var(--line); background: var(--tile); color: var(--ink); border-radius: 14px; padding: 8px 12px;
+  .panel button { border: 2px solid var(--line); background: var(--tile); color: var(--ink); border-radius: 14px; padding: 8px 12px;
     font: 700 13px/1 system-ui, sans-serif; cursor: pointer; }
-  .panel button.on, .moves button.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent) inset; }
-  /* the movements: small buttons along the foot of the figure's picture, each with a little picture of the figure doing it */
-  .moves { position: absolute; left: 6px; right: 6px; bottom: 8px; display: flex; justify-content: center; gap: 5px; flex-wrap: wrap; pointer-events: none; }
-  .moves button { pointer-events: auto; padding: 3px 6px 4px; font-size: 11px; display: flex; flex-direction: column; align-items: center; gap: 1px; background: rgba(255, 255, 255, .88); border-radius: 12px; }
-  .moves button img { width: 34px; height: 34px; pointer-events: none; }
-  .moves button span { pointer-events: none; }
+  .panel button.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent) inset; }
+  /* the movements: a fourth group of tabs on the right, as the others (the user, 03-11-2026), each with a little picture
+     of the figure doing it; a movement chosen stays lit beside the tab chosen in the other groups */
+  .tabgroup button[hidden] { display: none; }
   /* the tabs, smaller than before, in three groups as in the app: the body and face, the clothes, the rest */
   .parts { display: flex; flex-direction: column; gap: 8px; }
-  .tabgroup { display: flex; flex-wrap: wrap; gap: 5px; padding: 6px; border-radius: 18px; background: #FFEDBB; }
-  .tabgroup button { width: 62px; padding: 4px 2px 5px; font-size: 11px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .tabgroup { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px; border-radius: 18px; background: #FFEDBB; }
+  .tabgroup button { width: 60px; padding: 4px 2px 5px; font-size: 11px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
   /* (each part and each choice with its picture over its name, as in the app - the children cannot read yet) */
   .tabgroup button img { width: 32px; height: 32px; object-fit: contain; }
   /* the choices and colours for the tab chosen, in a white box under the tabs */
@@ -53,10 +51,6 @@
     .tabgroup { flex-wrap: nowrap; flex: none; }
     .tabgroup button { width: 54px; flex: none; }
     .stage .top { display: none; }
-    /* (the movements in one row along the foot of the picture, pushed sideways if they do not all fit) */
-    .moves { flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; scrollbar-width: none; pointer-events: auto; gap: 4px; }
-    .moves button { flex: none; padding: 2px 4px 3px; font-size: 10px; }
-    .moves button img { width: 28px; height: 28px; }
   }
   /* the name tab: the name written in a box, the badges as round buttons under it (as in the app) */
   .namebox { display: flex; flex-direction: column; align-items: center; gap: 8px; }
@@ -74,17 +68,15 @@
   .sliders input::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; background: #FFFFFF; border: 2px solid var(--ink); }
   #s-h { background: linear-gradient(90deg, hsl(0,80%,55%), hsl(60,80%,55%), hsl(120,80%,55%), hsl(180,80%,55%), hsl(240,80%,55%), hsl(300,80%,55%), hsl(360,80%,55%)); }
   /* (a note at the top of the figure's picture while it loads, gone once it is in) */
-  .top { position: absolute; top: 10px; left: 60px; right: 60px; display: flex; justify-content: center; pointer-events: none; }
+  .top { position: absolute; top: 10px; left: 10px; right: 10px; display: flex; justify-content: center; pointer-events: none; }
   .tag { background: var(--tile); border: 2px solid var(--line); border-radius: 14px; padding: 5px 9px; font-weight: 700; font-size: 12px; }
   .tag:empty { display: none; }
-  /* saving, as in the app, on the figure's picture: the camera top right, the star, Mine figurer and the new MiniMig
-     down the left */
-  .stage-btn { position: absolute; top: 10px; right: 10px; z-index: 3; width: 44px; height: 44px; border-radius: 50%; border: 0; cursor: pointer;
-    background: var(--tile); box-shadow: 0 2px 8px rgba(58, 46, 92, .2); font-size: 1.3rem; line-height: 1; padding: 0; }
-  .stage-btn.left { right: auto; left: 10px; }
-  .stage-btn.second { top: 62px; }
-  .stage-btn.third { top: 114px; }
-  @media (prefers-reduced-motion: no-preference) { .stage-btn.pop { animation: pop .5s ease; } }
+  /* saving: the star, Mine figurer, the new MiniMig and the camera - first of the groups on the right, as tabs with
+     their sign for a picture (they sat on the figure's picture until 03-11-2026; the user wanted the picture clear) */
+  .tabgroup button .emo { height: 32px; font-size: 25px; line-height: 32px; pointer-events: none; }
+  .tabgroup button span { pointer-events: none; }
+  #saveBtn { position: relative; }
+  @media (prefers-reduced-motion: no-preference) { .pop { animation: pop .5s ease; } }
   @keyframes pop { 40% { transform: scale(1.35) rotate(-12deg); } 100% { transform: none; } }
   .lock-badge { position: absolute; right: -4px; bottom: -4px; width: 22px; height: 22px; border-radius: 50%; background: #2FB872;
     display: grid; place-items: center; font-size: .72rem; line-height: 1; box-shadow: 0 1px 4px rgba(58, 46, 92, .2); }
@@ -136,25 +128,30 @@
 <div id="bgFar" hidden></div><div id="bgNear" hidden></div>
 <canvas id="scene"></canvas>
 <div class="top"><span class="tag" id="tag">Henter figuren …</span></div>
-<!-- as in the app: the star saves the figure (Mine figurer), the pictures button shows the saved ones, the sparkles start
-     a new MiniMig, the camera saves a picture out of the page - behind a grown-up's sum -->
-<button class="stage-btn" id="saveBtn" aria-label="Gem billede">📷<span class="lock-badge" id="lockBadge" hidden aria-hidden="true">🔓</span></button>
-<button class="stage-btn left" id="keepBtn" aria-label="Gem figuren">⭐</button>
-<button class="stage-btn left second" id="figsBtn" aria-label="Mine figurer">🖼️</button>
-<button class="stage-btn left third" id="newBtn" aria-label="Ny MiniMig">✨</button>
-<div class="moves">
-  <button data-anim="staa" class="on pose"><img src="ikoner/stilling-staa.png" alt=""><span>Stå</span></button>
-  <button data-anim="vink" class="pose"><img src="ikoner/stilling-vink.png" alt=""><span>Vink</span></button>
-  <button data-anim="hop" class="pose"><img src="ikoner/stilling-hop.png" alt=""><span>Hop</span></button>
-  <button data-anim="dans" class="pose"><img src="ikoner/stilling-dans.png" alt=""><span>Dans</span></button>
-  <button data-anim="loeb" class="pose" hidden><img src="ikoner/stilling-loeb.png" alt=""><span>Løb</span></button>
-  <button data-anim="kolboette" class="pose" hidden><img src="ikoner/stilling-kolboette.png" alt=""><span>Kolbøtte</span></button>
-  <button data-anim="spark" class="pose" hidden><img src="ikoner/stilling-spark.png" alt=""><span>Spark</span></button>
-  <button id="spin" class="pose"><img src="ikoner/stilling-drej.png" alt=""><span>Drej rundt</span></button>
-</div>
 </div>
 <div class="panel">
   <div class="parts" id="parts"></div>
+  <!-- as in the app: the star saves the figure (Mine figurer), the pictures button shows the saved ones, the sparkles start
+       a new MiniMig, the camera saves a picture out of the page - behind a grown-up's sum. Put first of the groups by
+       the page -->
+  <div class="tabgroup" id="saving">
+    <button id="keepBtn"><span class="emo" aria-hidden="true">⭐</span><span>Gem</span></button>
+    <button id="figsBtn"><span class="emo" aria-hidden="true">🖼️</span><span>Mine figurer</span></button>
+    <button id="newBtn"><span class="emo" aria-hidden="true">✨</span><span>Ny figur</span></button>
+    <button id="saveBtn"><span class="emo" aria-hidden="true">📷</span><span>Billede</span><span class="lock-badge" id="lockBadge" hidden aria-hidden="true">🔓</span></button>
+  </div>
+  <!-- (the movements' group, put after the other three groups by the page) -->
+  <div class="tabgroup" id="moves">
+    <button data-anim="staa" class="on"><img src="ikoner/stilling-staa.png" alt=""><span>Stå</span></button>
+    <button data-anim="vink"><img src="ikoner/stilling-vink.png" alt=""><span>Vink</span></button>
+    <button data-anim="hop"><img src="ikoner/stilling-hop.png" alt=""><span>Hop</span></button>
+    <button data-anim="dans"><img src="ikoner/stilling-dans.png" alt=""><span>Dans</span></button>
+    <button data-anim="loeb"><img src="ikoner/stilling-loeb.png" alt=""><span>Løb</span></button>
+    <button data-anim="jubel"><img src="ikoner/stilling-jubel.png" alt=""><span>Jubel</span></button>
+    <button data-anim="kolboette"><img src="ikoner/stilling-kolboette.png" alt=""><span>Kolbøtte</span></button>
+    <button data-anim="spark"><img src="ikoner/stilling-spark.png" alt=""><span>Spark</span></button>
+    <button id="spin"><img src="ikoner/stilling-drej.png" alt=""><span>Drej rundt</span></button>
+  </div>
   <div class="box">
     <div class="choices" id="styles" hidden></div><div class="choices" id="styles2" hidden></div>
     <div class="namebox" id="nameBox" hidden><input id="nameInput" type="text" maxlength="10" autocomplete="off" placeholder="Skriv dit navn" aria-label="Navn på trøjen">
@@ -284,10 +281,11 @@ const picked = {}, START = { skin: '#EDB98A', hair: '#4A2C1D', eyes: '#7A4220', 
 const apply = (part, c) => { picked[part] = c; recolour(part, c); if (part === 'shirt' || part === 'dress') chestName(); };
 const iconButton = (src, label) => { const b = document.createElement('button'), i = new Image(); i.src = src; i.alt = ''; i.onerror = () => i.remove();
   const s = document.createElement('span'); s.textContent = label; b.append(i, s); return b; };
-// (the nose, the mouth and Pynt have no colour of their own, as in the app: no sliders under them)
-function showSwatches() { slidersFrom(picked[partNow] || START[partNow]); document.getElementById('sliders').style.display = ['nose', 'mouth', 'pynt', 'name', 'ears', 'bg'].includes(partNow) ? 'none' : '';
+// (the nose, the mouth and Pynt have no colour of their own, as in the app: no sliders under them - nor the movements)
+function showSwatches() { const move = partNow.startsWith('move-'); if (!move) slidersFrom(picked[partNow] || START[partNow]);
+  document.getElementById('sliders').style.display = move || ['nose', 'mouth', 'pynt', 'name', 'ears', 'bg'].includes(partNow) ? 'none' : '';
   document.getElementById('nameBox').hidden = partNow !== 'name';
-  document.querySelectorAll('#parts button').forEach(b => b.classList.toggle('on', b.dataset.part === partNow));
+  document.querySelectorAll('#parts [data-part]').forEach(b => b.classList.toggle('on', b.dataset.part === partNow));
   renderStyles(); }
 // (the styles as buttons above the colours: hairstyles while Hår is chosen, tops while Trøje is; none before the figure -
 // each with a little picture of the figure wearing it, ikoner/valg-<name>.png, made by the page itself: see LÆS-MIG)
@@ -312,6 +310,7 @@ for (const el of Object.values(S)) el.addEventListener('input', () => { paintTra
 const groups = [0, 1, 2].map(() => document.getElementById('parts').appendChild(Object.assign(document.createElement('div'), { className: 'tabgroup' })));
 for (const [part, name, icon] of CHOICES) { const b = iconButton(`ikoner/${icon}.png`, name); b.dataset.part = part; b.onclick = () => { partNow = part; showSwatches(); lookFor(part); };
   groups[['shirt', 'pants', 'dress', 'socks', 'shoe', 'hat', 'glasses'].includes(part) ? 1 : ['item', 'name', 'bg'].includes(part) ? 2 : 0].append(b); }
+document.getElementById('parts').append(document.getElementById('moves')); document.getElementById('parts').prepend(document.getElementById('saving'));
 showSwatches();
 
 // The AI figure's colours are painted into one picture (its texture). Each pixel of it is sorted once by its colour
@@ -1035,14 +1034,27 @@ function smoothUnder() {
   for (let i = 0; i < near.length; i++) { if (!near[i]) continue; const from = near[i] & on ? now : was; N.array[i * 3] = from[i * 3]; N.array[i * 3 + 1] = from[i * 3 + 1]; N.array[i * 3 + 2] = from[i * 3 + 2]; }
   N.needsUpdate = true; }
 
-let anim = 'staa', spin = false;
+// the movements: a tab for each kind, and its kinds in the box as the hairstyles are under Hår (the user, 03-11-2026).
+// Each a figur-<id>.json taken out of a Mixamo file (see LÆS-MIG), fetched the first time it is chosen
+const MOVES = { staa: [['staa', 'Stå']], vink: [['vink', 'Vink']],
+  hop: [['hop', 'Glad hop'], ['hop-hoejt', 'Højt hop'], ['hop-lille', 'Lille hop'], ['loebehop', 'Løbehop']],
+  dans: [['dans', 'Hiphop'], ['dans-hiphop', 'Hiphop 2'], ['dans-fjollet', 'Fjollet'], ['dans-arme', 'Armdans'], ['dans-break', 'Breakdance'], ['dans-flair', 'Flair'], ['dans-flair2', 'Flair 2']],
+  loeb: [['loeb', 'Sjovt løb'], ['loeb-a', 'Løb'], ['loeb-b', 'Løb 2']],
+  jubel: [['jubel', 'Jubel'], ['jubel-klap', 'Klap'], ['jubel-yes', 'Yes!']],
+  kolboette: [['kolboette', 'Kolbøtte'], ['snubl', 'Snuble'], ['fald', 'Bums']],
+  spark: [['spark', 'Venstre fod'], ['spark-hoejre', 'Højre fod']] };
+const moveNow = Object.fromEntries(Object.entries(MOVES).map(([g, list]) => [g, list[0][0]]));
+let anim = 'staa', spin = false; // (anim: the movement playing now, one of the ids above)
 // the figure stands in a holder, which "Drej rundt" turns (hidden until the figure, its hair and its movements are all
 // in: no bald T-pose for a moment)
 const holder = new THREE.Group(); holder.visible = false; scene.add(holder); let spinAngle = 0;
-document.querySelectorAll('[data-anim]').forEach(b => b.onclick = () => { anim = b.dataset.anim;
-  if (glb && glbActions[anim]) { Object.values(glbActions).forEach(x => x.fadeOut(.3)); glbActions[anim].reset().fadeIn(.3).play(); }
-  document.querySelectorAll('[data-anim]').forEach(x => x.classList.toggle('on', x === b)); });
-document.getElementById('spin').onclick = e => { spin = !spin; e.target.classList.toggle('on', spin); };
+// (a movement's tab plays its kind chosen last and shows its kinds in the box)
+document.querySelectorAll('[data-anim]').forEach(b => b.onclick = () => { partNow = 'move-' + b.dataset.anim; showSwatches(); lookFor(''); playMove(moveNow[b.dataset.anim]); });
+async function playMove(id) { const g = Object.keys(MOVES).find(k => MOVES[k].some(m => m[0] === id)); if (!g) return; moveNow[g] = id; anim = id;
+  document.querySelectorAll('[data-anim]').forEach(x => x.classList.toggle('on', x.dataset.anim === g)); renderStyles();
+  if (!glb) return; const a = await loadMove(id); if (!a || anim !== id) return;
+  Object.values(glbActions).forEach(x => x !== a && x.fadeOut(.3)); a.reset().fadeIn(.3).play(); }
+document.getElementById('spin').onclick = e => { spin = !spin; e.currentTarget.classList.toggle('on', spin); };
 
 // ---- the figure ----
 let glb = null, mixer = null; const glbActions = {};
@@ -1369,7 +1381,8 @@ async function loadHair(name, list = hairTexs, colourPart = 'hair', extra = {}) 
   if (opts.cap) list.at(-1).cap = opts.cap;
   body.parent.add(hair); hair.bind(body.skeleton, body.bindMatrix); scalpCap(hair, g, W, earLines, apart, eyeY); if (picked[colourPart]) recolourHair(picked[colourPart], list); return hair; }
 var styleLists = () => ({ hair: [HAIRS, hairNow, setHair], eyes: [EYES, eyesNow, setEyes], brows: [BROWS, browsNow, setBrows], mouth: [MOUTHS, mouthNow, setMouth], pynt: [PYNT, pyntNow.map(k => 'pynt-' + k), setPynt], nose: [NOSES, noseNow, setNose], item: [ITEMS, itemNow, setItem], bg: [BGS, bgNow, setBg], ears: [EARS, earsNow, setEars, [EARRINGS, earringsNow, setEarrings, 'oerering']],
-  ...Object.fromEntries(Object.entries(GARMENTS).map(([part, G]) => [part, [G.items, G.now, n => setGarment(part, n)]])) });
+  ...Object.fromEntries(Object.entries(GARMENTS).map(([part, G]) => [part, [G.items, G.now, n => setGarment(part, n)]])),
+  ...Object.fromEntries(Object.entries(MOVES).map(([g, list]) => ['move-' + g, [list, moveNow[g], playMove]])) });
 async function setHair(name) {
   hairNow = name; renderStyles();
   if (name && !hairMeshes[name]) hairMeshes[name] = await loadHair(name);
@@ -2590,53 +2603,58 @@ async function loadFbx() { if (!(await exists('figur.fbx' + FIGUR_V))) return fa
   const box = new THREE.Box3().setFromObject(fbx), size = box.getSize(new THREE.Vector3()), k = 2.15 / size.y;
   fbx.scale.setScalar(k); fbx.position.y = -box.min.y * k; holder.add(fbx); glb = fbx;
   measureHead(fbx); if (hairBase) setupBrows(hairBase.body); setupEars(); await setHair(hairNow); chestName();
-  mixer = new THREE.AnimationMixer(fbx); if (fbx.animations[0]) glbActions.vink = mixer.clipAction(fbx.animations[0]);
-  // (each movement preferably as figur-<name>.json: only the movement, taken out of Mixamo's file - a few hundred KB
-  // where the .fbx, the whole figure again, is 19 MB)
-  // (each kept on the spot: the hips may go up and down, not off to the side or away - it dances on the yellow disc)
-  const onTheSpot = clip => { const t = clip.tracks.find(tr => tr.name === 'mixamorigHips.position'); if (!t) return clip;
-    for (let i = 0; i < t.values.length; i += 3) { t.values[i] = t.values[0]; t.values[i + 2] = t.values[2]; } return clip; };
-  // (løb, kolbøtte and spark added 03-11-2026 from Mixamo: Goofy Running, Sprinting Forward Roll, Kick Soccerball;
-  // figur-loebehop.json and figur-snubl.json - Running Jump, Jogging Stumble - wait for the running game)
-  for (const name of ['vink', 'staa', 'hop', 'dans', 'loeb', 'kolboette', 'spark']) {
-    if (await exists(`figur-${name}.json${FIGUR_V}`)) glbActions[name] = mixer.clipAction(onTheSpot(THREE.AnimationClip.parse(await (await fetch(`figur-${name}.json${FIGUR_V}`)).json())));
-    else if (name !== 'vink' && await exists(`figur-${name}.fbx${FIGUR_V}`)) { const a = await load(`figur-${name}.fbx`); if (a.animations[0]) glbActions[name] = mixer.clipAction(a.animations[0]); } }
-  // (no standing movement yet: it stands as in the first frame of the waving, not in the T-pose it was made in)
-  if (!glbActions.staa && glbActions.vink) { const still = glbActions.vink.getClip().clone(); still.tracks.forEach(t => { t.times = t.times.slice(0, 1); t.values = t.values.slice(0, t.getValueSize()); }); still.duration = 0; glbActions.staa = mixer.clipAction(still); }
-  for (const b of document.querySelectorAll('[data-anim]')) b.hidden = !glbActions[b.dataset.anim];
-  // (set on the floor as it stands in its movement - Mixamo moves the hips in its own units, the T-pose's box says little)
-  const sample = (name, t) => { mixer.stopAllAction(); const a = glbActions[name]; a.reset().play(); a.time = t; mixer.update(0); fbx.updateMatrixWorld(true); };
-  sample('staa', 0); fbx.position.y -= new THREE.Box3().setFromObject(fbx, true).min.y; fbx.updateMatrixWorld(true); kick.baseY = fbx.position.y;
-  if (glbActions.kolboette) roll.lift = rollLift(sample);
-  if (glbActions.spark) kickSetup(sample);
-  mixer.stopAllAction(); (glbActions[anim] || glbActions.staa)?.reset().play(); holder.visible = true; return true; }
-// Kolbøtte: Mixamo's roll keeps the hips at their height, so the head went down through the floor. Measured once at 30
-// moments how far the body then reaches under the floor; the figure is lifted by that much while it rolls
-const roll = { lift: null };
-function rollLift(sample) { const clip = glbActions.kolboette.getClip(), n = 30, lift = [];
-  for (let k = 0; k <= n; k++) { sample('kolboette', clip.duration * k / n); lift.push(Math.max(0, -new THREE.Box3().setFromObject(hairBase.body, true).min.y)); }
+  mixer = new THREE.AnimationMixer(fbx);
+  // (set on the floor as it stands - Mixamo moves the hips in its own units, the T-pose's box says little)
+  if (await loadMove('staa')) { sample('staa', 0); fbx.position.y -= new THREE.Box3().setFromObject(fbx, true).min.y; fbx.updateMatrixWorld(true); }
+  kick.baseY = fbx.position.y; if (glbActions.staa) { sample('staa', 0); kick.floor = underFloor(); } kick.ready = true;
+  const a = await loadMove(anim) || await loadMove('staa'); mixer.stopAllAction(); a?.reset().play(); holder.visible = true; return true; }
+// (each movement as figur-<id>.json: only the movement, taken out of Mixamo's file - a few hundred KB where the .fbx,
+// the whole figure again, is 13-19 MB. Kept on the spot: the hips may go up and down, not off to the side or away)
+const onTheSpot = clip => { const t = clip.tracks.find(tr => tr.name === 'mixamorigHips.position'); if (!t) return clip;
+  for (let i = 0; i < t.values.length; i += 3) { t.values[i] = t.values[0]; t.values[i + 2] = t.values[2]; } return clip; };
+const moveLoads = {};
+function loadMove(id) { return moveLoads[id] ??= (async () => {
+  if (!glbActions[id]) try { glbActions[id] = mixer.clipAction(onTheSpot(THREE.AnimationClip.parse(await (await fetch(`figur-${id}.json${FIGUR_V}`)).json()))); } catch (e) { delete moveLoads[id]; return null; }
+  if (kick.ready) { if (MOVES.spark.some(m => m[0] === id)) kickSetup(id); lifts[id] = liftCurve(id); }
+  return glbActions[id]; })(); }
+// (one moment of a movement, standing straight - not turned by "Drej rundt", not lifted - to measure it)
+function sample(id, t) { mixer.stopAllAction(); const a = glbActions[id]; a.reset().play(); a.time = t; mixer.update(0); glb.rotation.y = 0; glb.position.y = kick.baseY; glb.updateMatrixWorld(true); }
+// Under the floor: Mixamo's roll, fall and breakdance keep the hips at their height, so the head went down through the
+// floor. Measured once at 24 moments how far the body then reaches under it - by its joints, each with the body's
+// thickness round it (quick; measuring every point of the body held up the first choosing of a movement by seconds) -
+// and the figure is lifted by that much
+const lifts = {}, LIFT_JOINTS = [['HeadTop_End', .03], ['Head', .13], ['Neck', .07], ['Spine2', .11], ['Hips', .1], ['LeftShoulder', .06], ['RightShoulder', .06],
+  ['LeftArm', .05], ['RightArm', .05], ['LeftForeArm', .045], ['RightForeArm', .045], ['LeftHand', .04], ['RightHand', .04], ['LeftUpLeg', .08], ['RightUpLeg', .08],
+  ['LeftLeg', .06], ['RightLeg', .06], ['LeftFoot', .05], ['RightFoot', .05], ['LeftToeBase', .03], ['RightToeBase', .03]], lv = new THREE.Vector3();
+// (measured against the figure standing, whose feet are on the floor however thick the joints are counted)
+const underFloor = () => Math.max(...LIFT_JOINTS.map(([j, r]) => bone(j) ? r - holder.worldToLocal(bone(j).getWorldPosition(lv)).y : -9));
+function liftCurve(id) { const clip = glbActions[id].getClip(), n = 24, lift = []; if (clip.duration < .05) return null;
+  for (let k = 0; k <= n; k++) { sample(id, clip.duration * k / n); lift.push(Math.max(0, underFloor() - kick.floor)); }
+  if (Math.max(...lift) < .005) return null;
   return t => { const f = Math.min(n, Math.max(0, t / clip.duration * n)), k = Math.floor(f); return lift[k] + (lift[Math.min(n, k + 1)] - lift[k]) * (f - k); }; }
-// Spark: a football rolls in from the side and lies in front of the kicking foot; the foot meets it and it flies off,
+// Spark: a football rolls in from the kicking foot's side and lies in front of it; the foot meets it and it flies off,
 // up and out towards the one looking. Mixamo's kick is only a short half second: a still standing start is put in front
-// of it (the ball rolling in then) and a moment after it (the ball flying), so it kicks every two and a half seconds
-const kick = { ball: null, contact: 0, rest: new THREE.Vector3(), baseY: 0, pre: .9, post: 1.1 }, kv = new THREE.Vector3();
-function kickSetup(sample) { const clip = glbActions.spark.getClip();
+// of it (the ball rolling in then) and a moment after it (the ball flying), so it kicks every two and a half seconds.
+// Left or right foot, found by the movement itself; the ball turns with the figure in "Drej rundt" (it missed the foot)
+const kick = { ball: null, baseY: 0, floor: 0, pre: .9, post: 1.1, r: .158 * .75 }, kicks = {}, yAxis = new THREE.Vector3(0, 1, 0);
+function kickSetup(id) { const clip = glbActions[id].getClip();
   // (moved in place: the movement already holds these very lists)
   for (const t of clip.tracks) for (let i = 0; i < t.times.length; i++) t.times[i] += kick.pre;
   clip.duration += kick.pre + kick.post;
   // (the kicking foot: the one that comes furthest forward; the contact its fastest moment forward)
-  const toes = ['mixamorigRightToeBase', 'mixamorigLeftToeBase'].map(n => bone(n)).filter(Boolean), n = 40, track = toes.map(() => []);
-  for (let k = 0; k <= n; k++) { sample('spark', kick.pre + (clip.duration - kick.pre - kick.post) * k / n); toes.forEach((b, i) => track[i].push(holder.worldToLocal(b.getWorldPosition(new THREE.Vector3())))); }
+  const toes = ['RightToeBase', 'LeftToeBase'].map(n => bone(n)).filter(Boolean), n = 40, len = clip.duration - kick.pre - kick.post, track = toes.map(() => []);
+  for (let k = 0; k <= n; k++) { sample(id, kick.pre + len * k / n); toes.forEach((b, i) => track[i].push(holder.worldToLocal(b.getWorldPosition(new THREE.Vector3())))); }
   const foot = track.reduce((a, b) => Math.max(...b.map(p => p.z)) > Math.max(...a.map(p => p.z)) ? b : a);
   let best = 1, speed = -1; for (let k = 1; k <= n; k++) { const v = foot[k].z - foot[k - 1].z; if (v > speed) { speed = v; best = k; } }
-  kick.contact = kick.pre + (clip.duration - kick.pre - kick.post) * best / n; kick.ball = makeItem('fodbold'); kick.ball.group.scale.setScalar(.75);
-  scene.remove(kick.ball.group); holder.add(kick.ball.group); kick.r = .158 * .75; kick.rest.set(foot[best].x, kick.r, foot[best].z + kick.r * .6); }
-function kickBall(dt) { const b = kick.ball; if (!b) return; const a = glbActions.spark, on = anim === 'spark' && a?.isRunning(); b.group.visible = on; if (!on) return;
-  const t = a.time, g = b.group, r = kick.r;
-  if (t < kick.contact) { // (rolling in from the right, slowing down, turning as it rolls)
-    const s = Math.max(0, 1 - t / (kick.contact * .85)), d = 2.2 * s * s; g.position.set(kick.rest.x + d, r, kick.rest.z); g.rotation.set(0, 0, d / r); }
-  else { const s = t - kick.contact; // (off up and out, towards the one looking and a little to the side, spinning)
-    g.position.set(kick.rest.x - 1.2 * s, r + 3.2 * s - 4.9 * s * s * .9, kick.rest.z + 4.5 * s); g.position.y = Math.max(r, g.position.y); g.rotation.x += dt * 14; } }
+  if (!kick.ball) { kick.ball = makeItem('fodbold'); kick.ball.group.scale.setScalar(.75); scene.remove(kick.ball.group); holder.add(kick.ball.group); }
+  kicks[id] = { contact: kick.pre + len * best / n, rest: new THREE.Vector3(foot[best].x, kick.r, foot[best].z + kick.r * .6), side: Math.sign(foot[best].x) || 1 }; }
+function kickBall(dt) { const b = kick.ball; if (!b) return; const k = kicks[anim], a = glbActions[anim], on = !!k && a?.isRunning(); b.group.visible = on; if (!on) return;
+  const t = a.time, g = b.group, r = kick.r, { rest, side, contact } = k;
+  if (t < contact) { // (rolling in from the kicking foot's side, slowing down, turning as it rolls)
+    const s = Math.max(0, 1 - t / (contact * .85)), d = 2.2 * s * s * side; g.position.set(rest.x + d, r, rest.z); g.rotation.set(0, 0, d / r); }
+  else { const s = t - contact; // (off up and out, towards the one looking and a little across, spinning)
+    g.position.set(rest.x - 1.2 * s * side, Math.max(r, r + 3.2 * s - 4.4 * s * s), rest.z + 4.5 * s); g.rotation.x += dt * 14; }
+  if (glb) g.position.applyAxisAngle(yAxis, glb.rotation.y); }
 loadFbx().then(ok => { document.getElementById('tag').textContent = ok ? 'Version 2 · træk for at dreje, knib for at zoome' : 'Figuren kunne ikke hentes'; });
 
 // ---- render loop ----
@@ -2651,14 +2669,13 @@ function lookFor(part) { const near = FACE.includes(part) && hairBase;
   closeUp = !!near; }
 function glide() { if (!goal) return; controls.target.lerp(goal.target, .12); camera.position.lerp(goal.camera, .12);
   if (camera.position.distanceTo(goal.camera) < .01) { controls.target.copy(goal.target); camera.position.copy(goal.camera); if (goal.far) controls.minDistance = 2.5; goal = null; } }
-// (the 3D fills the figure's half of the screen; the picture moved up by a little of the movement buttons' height, so
-// the feet stand clear of them)
+// (the 3D fills the figure's half of the screen - nothing over its feet since the movements went to the right)
 const stage = document.getElementById('stage');
-function resize() { const w = stage.clientWidth, h = stage.clientHeight, moves = document.querySelector('.moves').offsetHeight; renderer.setSize(w, h, false); camera.aspect = w / h;
-  farZ = w < h * .8 ? 6.6 : 7; if (!closeUp) camera.position.z = farZ; camera.setViewOffset(w, h, 0, moves * (w < h ? .4 : .7), w, h); /* (room above for the head in a hop) */ camera.updateProjectionMatrix(); bgShown = ''; }
+function resize() { const w = stage.clientWidth, h = stage.clientHeight; renderer.setSize(w, h, false); camera.aspect = w / h;
+  farZ = w < h * .8 ? 6.6 : 7; if (!closeUp) camera.position.z = farZ; camera.updateProjectionMatrix(); bgShown = ''; }
 addEventListener('resize', resize); resize(); new ResizeObserver(resize).observe(stage);
 renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElapsedTime();
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
-  if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (anim === 'kolboette' && roll.lift ? roll.lift(glbActions.kolboette.time) : 0); kickBall(dt); armsOut(); holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); });</script>
+  if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0); kickBall(dt); armsOut(); holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); });</script>
 </body>
 </html>
