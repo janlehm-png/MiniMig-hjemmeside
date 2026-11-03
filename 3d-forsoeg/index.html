@@ -1478,8 +1478,9 @@ const GARMENTS = {
   shirt: { items: [['', 'Undertrøje'], ['toej-tshirt', 'T-shirt', { made: true, sleeve: .3, length: .01 }],
     ['toej-haette', 'Hættetrøje', { made: true, sleeve: 1.06, length: .04, hood: true, pocket: true, cloth: 'smooth' }],
     ['toej-fodbold', 'Fodboldtrøje', { made: true, sleeve: .32, length: .01, tuck: true, trim: true, cloth: 'smooth' }]], texs: clothTexs },
-  pants: { items: [['', 'Undershorts'], ['bukser-lange', 'Lange bukser', { made: true, hem: .06, loose: .004 }], ['bukser-shorts', 'Shorts', { made: true, hem: .3, cuff: .03 }],
-    ['bukser-cowboy', 'Cowboyshorts', { made: true, hem: .24, cuff: .035, cloth: 'denim' }], ['bukser-fodbold', 'Fodboldbukser', { made: true, hem: .295, loose: .004, loops: false, cloth: 'smooth' }]], texs: [], waist: true },
+  // (the folds lower than at first - the user - and the long trousers turned up a little too)
+  pants: { items: [['', 'Undershorts'], ['bukser-lange', 'Lange bukser', { made: true, hem: .06, loose: .004, cuff: .014 }], ['bukser-shorts', 'Shorts', { made: true, hem: .3, cuff: .018 }],
+    ['bukser-cowboy', 'Cowboyshorts', { made: true, hem: .24, cuff: .02, cloth: 'denim' }], ['bukser-fodbold', 'Fodboldbukser', { made: true, hem: .295, loose: .004, loops: false, cloth: 'smooth' }]], texs: [], waist: true },
   dress: { items: [['', 'Ingen kjole'], ['kjole-sommer', 'Sommerkjole'], ['kjole-prinsesse', 'Prinsessekjole', { hang: .5, armsOut: 12 }], ['kjole-havfrue', 'Havfruekjole', { skirt: false, margin: .012, reach: 8, tail: true, snug: .2, waist: .15 }]], texs: [], skirt: true, noArms: true },
   // (socks made from the body too: low ones for sneakers, football socks with a stripe at the top, and knee socks)
   socks: { items: [['', 'Ingen strømper'], ['stroemper-ankel', 'Ankelstrømper', { made: true, top: .045, cloth: 'knit' }],
@@ -1657,7 +1658,8 @@ function makeCloth(name, part, opts) {
   list.forEach((c, i) => { n.fromArray(c.n).normalize(); dir.set([n.x, n.y, n.z], i * 3); });
   for (let it = 0; it < 30; it++) { for (let i = 0; i < m; i++) { let x = dir[i * 3], y = dir[i * 3 + 1], z = dir[i * 3 + 2]; for (const j of nbs[i]) { x += dir[j * 3]; y += dir[j * 3 + 1]; z += dir[j * 3 + 2]; }
       if (list[i].p[1] < level) y = 0; const l = Math.hypot(x, y, z) || 1; tmp.set([x / l, y / l, z / l], i * 3); } dir.set(tmp); }
-  list.forEach((c, i) => { const e = edges[c.fold], fold = e ? .012 * (1 - (-e.f(c.p) / e.fold) ** 8) : 0; want[i] = out(c.p) + fold * H;
+  // (the turned-up fold only a little further out than the leg - at .012 it stood out, the user)
+  list.forEach((c, i) => { const e = edges[c.fold], fold = e ? .005 * (1 - (-e.f(c.p) / e.fold) ** 8) : 0; want[i] = out(c.p) + fold * H;
     w.fromArray(c.p).addScaledVector(n.fromArray(dir, i * 3), want[i]); if (c.p[1] < level) w.y = c.p[1]; wp.set([w.x, w.y, w.z], i * 3);
     if (tuckIn) { w.addScaledVector(n, tuckIn(c.p)).applyMatrix4(inv); T.set([w.x, w.y, w.z], i * 3); } });
   // (trouser legs: laid round each leg by a table of how far out the leg comes, at each height and all the way round it,
@@ -1687,7 +1689,7 @@ function makeCloth(name, part, opts) {
       wp[i * 3] += (axx + Math.sin(a) * rad - wp[i * 3]) * blend; wp[i * 3 + 2] += (axz + Math.cos(a) * rad - wp[i * 3 + 2]) * blend; }); }
   list.forEach((c, i) => { n.fromArray(dir, i * 3); w.fromArray(wp, i * 3); U.set([(w.x + w.z) * 3, w.y * 3], i * 2);
     // (shades: a pocket, and the trimmed edges)
-    const rim = hood && opts.hood ? hood(c.p) : 0, shade = (pocket && opts.pocket && pocket(c.p) ? .8 : 1) * (rim > 0 && rim < .25 ? .6 : 1) *(edges.some(e => e.trim && -e.f(c.p) < .018 * H) ? .55 : 1); C.set([shade, shade, shade], i * 3);
+    const rim = hood && opts.hood ? hood(c.p) : 0, shade = (pocket && opts.pocket && pocket(c.p) ? .8 : 1) * (rim > 0 && rim < .25 ? .6 : 1) *(edges.some(e => e.trim && -e.f(c.p) < .018 * H) ? .55 : 1) * (c.fold !== undefined ? 1.45 : 1); C.set([shade, shade, shade], i * 3); // (the fold a lighter shade of the cloth)
     // (socks: their picture once from the floor (0) to their top (1), so the stripe lies level round the leg)
     if (socks) U[i * 2 + 1] = c.p[1] / (opts.top * H);
     w.applyMatrix4(inv); P.set([w.x, w.y, w.z], i * 3); n.transformDirection(inv); N.set([n.x, n.y, n.z], i * 3);
