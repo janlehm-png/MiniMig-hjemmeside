@@ -192,6 +192,8 @@
     background: radial-gradient(circle, #6CC24A, #2E8A3A); color: #fff; font: 800 88px/1 system-ui, sans-serif; pointer-events: none; }
   .hide-cover[hidden] { display: none; }
   .hide-cover span { font-size: 64px; text-shadow: 0 3px 10px rgba(0, 0, 0, .25); }
+  /* (Straffespark: a summer sky over the pitch) */
+  .stage.pitch { background: linear-gradient(#6EC8FF, #BDE7FF 60%, #E6F6FF); }
   .quest { position: absolute; top: 64px; left: 50%; transform: translateX(-50%); display: flex; gap: 4px; align-items: center; padding: 4px 12px; border-radius: 999px; background: rgba(255, 255, 255, .85); box-shadow: 0 2px 10px rgba(58, 46, 92, .18); font-size: 26px; line-height: 1.2; pointer-events: none; z-index: 2; }
   .quest .q-shell { opacity: .3; filter: grayscale(1); transition: opacity .3s, transform .3s; }
   .quest .q-shell.got { opacity: 1; filter: none; transform: scale(1.15); }
@@ -319,6 +321,7 @@
     <button data-game="island"><img src="ikoner/spil-oe.png" alt=""><span>Skatte&shy;jagt</span></button>
     <button data-game="sea"><img src="ikoner/spil-hav.png" alt=""><span>Svømme&shy;verden</span></button>
     <button data-game="hide"><img src="ikoner/spil-gemmeleg.png" alt=""><span>Gemme&shy;leg</span></button>
+    <button data-game="pk"><img src="ikoner/spil-straffe.png" alt=""><span>Straffe&shy;spark</span></button>
   </div>
   <div class="box">
     <div class="choices" id="styles" hidden></div><div class="choices" id="styles2" hidden></div>
@@ -3175,9 +3178,11 @@ const MODES = {
   // (Svømmeverden: under the sea, seen from the side - the figure swims about the picture, see seaTick)
   sea: { x: 0, face: 0, cheer: 0, cam: w => [0, 1.5, w ? 8 : 11, 0, 1.5, 0] },
   // (Gemmeleg: the whole island from in front and above - see hideTick)
-  hide: { x: 0, face: 0, cheer: 0, cam: w => [0, w ? 7 : 9, w ? 10.5 : 14, 0, 0, -.6] } };
+  hide: { x: 0, face: 0, cheer: 0, cam: w => [0, w ? 7 : 9, w ? 10.5 : 14, 0, 0, -.6] },
+  // (Straffespark: from behind the figure, the goal ahead - see pkTick)
+  pk: { x: 0, face: Math.PI, cheer: 0, cam: w => [0, 2.3, w ? 4.6 : 6.4, 0, .9, -6] } };
 // (the games with a world of their own instead of the background picture)
-const OWN_WORLD = ['island', 'sea', 'hide'];
+const OWN_WORLD = ['island', 'sea', 'hide', 'pk'];
 const game = { on: false, mode: 'side', level: 'niveau-let', stars: 0, balls: [], pool: [], jumpT: -1, busy: 0, cheer: 0, next: 0, hint: 0, saved: null, again: false };
 const levelNow = () => LEVELS.find(l => l[0] === game.level)[2];
 // (a beach ball: segments in four bright colours and white, a white cap at each end - drawn once for all four balls)
@@ -3210,15 +3215,15 @@ function startGame(mode = game.mode) { if (game.on || !glb) return; game.mode = 
   if (bgNow === 'bg-sol' && !OWN_WORLD.includes(mode)) setBg('bg-fodboldbane');
   // (five balls made once and used again)
   // (a ball chosen under Ting - Bold or Fodbold - is the game's ball, not one in the hand as well)
-  if (mode === 'skate') skateStart(); else if (mode === 'island') islandStart(); else if (mode === 'sea') seaStart(); else if (mode === 'hide') hideStart(); else {
+  if (mode === 'skate') skateStart(); else if (mode === 'island') islandStart(); else if (mode === 'sea') seaStart(); else if (mode === 'hide') hideStart(); else if (mode === 'pk') pkStart(); else {
     useGameBall(BALL_ITEMS.includes(itemNow) ? itemNow : '');
     game.bigPool ??= [goldBall(), goldBall()]; Object.assign(game, { dive: false, sinceBig: 0 });
     const run = levelNow().run; Promise.all([run, GAME.jump, GAME.trip, GAME.cheer, GAME.dive].map(loadMove)).then(() => { if (game.on) runAnim(run); }); }
-  hintEl.textContent = mode === 'skate' ? '👈 Tryk i siden for at svinge 👉' : mode === 'island' ? '👆 Tryk hvor du vil gå hen' : mode === 'sea' ? '👆 Tryk eller træk – så svømmer du derhen' : mode === 'hide' ? '🔍 Hvor er jeg? Tryk på busken' : '👆 Tryk for at hoppe';
+  hintEl.textContent = mode === 'skate' ? '👈 Tryk i siden for at svinge 👉' : mode === 'island' ? '👆 Tryk hvor du vil gå hen' : mode === 'sea' ? '👆 Tryk eller træk – så svømmer du derhen' : mode === 'hide' ? '🔍 Hvor er jeg? Tryk på busken' : mode === 'pk' ? '👆 Tryk i målet, hvor bolden skal hen' : '👆 Tryk for at hoppe';
   hud.hidden = false; hintEl.hidden = false; document.querySelector('.top').hidden = true; document.getElementById('stage').classList.add('playing'); showStars(); showRecord();
   document.querySelectorAll('[data-game]').forEach(b => b.classList.toggle('on', b.dataset.game === mode)); prepScene(); }
 // (again: only stopped to start once more - at another level or in another way - the figure's own setting not put back)
-function stopGame(again) { if (!game.on) return; game.on = false; for (const b of [...gamePool(), ...(game.bigPool || [])]) b.group.visible = false; game.dive = false; game.balls = []; confetti.length = 0; unprepScene(); skateStop(); hideStop(); islandStop(); seaStop();
+function stopGame(again) { if (!game.on) return; game.on = false; for (const b of [...gamePool(), ...(game.bigPool || [])]) b.group.visible = false; game.dive = false; game.balls = []; confetti.length = 0; unprepScene(); skateStop(); hideStop(); islandStop(); seaStop(); pkStop();
   // (the sound shut down when nothing plays: on an iPad an open sound channel could go on sounding after the game)
   if (!again) { try { game.audio?.suspend(); } catch (e) {} setItem(itemNow); }
   if (again) { game.again = true; return; } holder.position.x = 0;
@@ -3253,6 +3258,7 @@ function gameTick(dt) { confettiTick(dt); if (!game.on || !glb) return; const r 
   if (game.mode === 'island') { islandTick(dt); return; }
   if (game.mode === 'sea') { seaTick(dt); return; }
   if (game.mode === 'hide') { hideTick(dt); return; }
+  if (game.mode === 'pk') { pkTick(dt); return; }
   // (the jump: up and down in a smooth arc over the ball, the run again when it lands)
   // (the fifth star mostly comes in the air: the cheer then waits for the landing - before, the landing put the run back
   // in the middle of the cheer, the figure running on the spot facing out, no balls, as if waiting for a tap)
@@ -3749,7 +3755,94 @@ function hideTick(dt) { const t = performance.now() / 1000, p = il.rig.position,
   // (the places rustling; the parrot bobbing its head; the sea rising and falling)
   for (const s of hd.spots) if (s.wig > 0) { s.wig = Math.max(0, s.wig - dt); s.obj.rotation.z = Math.sin(s.wig * 34) * .1 * Math.min(1, s.wig * 2); }
   il.sea.position.y = -.12 + Math.sin(t * 1.3) * .015; il.parrotHead.position.y = .47 + Math.abs(Math.sin(t * 2.5)) * .03; il.parrot.rotation.y = Math.sin(t * .7) * .4; }
-const GAME_NAMES = [['side', 'Hop fra siden'], ['back', 'Hop bagfra'], ['front', 'Hop forfra'], ['skate', 'Skateboard'], ['island', 'Skattejagt'], ['sea', 'Svømmeverden'], ['hide', 'Gemmeleg']];
+// ---- Straffespark: penalty kicks (the user, 03-11-2026, one of the games chosen after the talk about the other
+// children's apps) ----
+// The figure at the penalty spot with a football, seen from behind; a goal ahead with a teddy bear in it as keeper,
+// stepping from side to side. A tap in the goal: the figure kicks (Mixamo's kick, as under Spark) and the ball flies
+// where the finger was. The bear dives - sometimes the right way: saved, a bonk, nothing lost. Goal: the net bulges,
+// confetti, a cheer and a star. The level: how quickly the bear moves, how often it guesses right, how far it reaches
+const PK = { goalZ: -7, halfW: 2, top: 1.8, fly: .6, levels: { 'niveau-meget-let': { sway: .5, guess: .15, reach: .7 }, 'niveau-let': { sway: .7, guess: .3, reach: .85 },
+  'niveau-mellem': { sway: .9, guess: .45, reach: 1.05 }, 'niveau-svaer': { sway: 1.15, guess: .6, reach: 1.25 }, 'niveau-meget-svaer': { sway: 1.4, guess: .75, reach: 1.45 } } };
+const pk = { world: null, rig: null, ball: null, keeper: null, net: null, phase: '', t: 0, foot: 0, aim: new THREE.Vector3(), from: new THREE.Vector3(), dive: 0, saved: false, kx: 0 };
+const pkPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), -PK.goalZ), pkHit = new THREE.Vector3();
+const pkLevel = () => PK.levels[game.level] || PK.levels['niveau-let'];
+function pkBuild() { if (pk.world) return; const w = pk.world = new THREE.Group(), Z = PK.goalZ, W = PK.halfW, H = PK.top;
+  // (the grass in light and dark stripes across, the white lines: the goal line, the box, the spot)
+  const cv = document.createElement('canvas'); cv.width = 64; cv.height = 512; const c = cv.getContext('2d'); for (let k = 0; k < 8; k++) { c.fillStyle = k % 2 ? '#5DBE4E' : '#4FAE42'; c.fillRect(0, k * 64, 64, 64); }
+  const gt = new THREE.CanvasTexture(cv); gt.colorSpace = THREE.SRGBColorSpace; gt.wrapS = gt.wrapT = THREE.RepeatWrapping; gt.repeat.set(1, 5);
+  const grass = ilMesh(new THREE.PlaneGeometry(60, 60), new THREE.MeshStandardMaterial({ map: gt, roughness: .95 }), 0, 0, -10, w, false); grass.rotation.x = -Math.PI / 2;
+  const line = ilM('#FFFFFF', .6); const strip = (x, z, sx, sz) => ilMesh(new THREE.BoxGeometry(sx, .01, sz), line, x, .006, z, w, false);
+  strip(0, Z, 16, .1); strip(0, Z + 3.4, 8.2, .1); strip(-4.05, Z + 1.7, .1, 3.4); strip(4.05, Z + 1.7, .1, 3.4);
+  ilMesh(new THREE.CylinderGeometry(.14, .14, .012, 24), line, 0, .006, 0, w, false);
+  // (the goal: round white posts and bar, a net of white threads behind - back, sides and top)
+  const post = ilM('#FFFFFF', .35); for (const x of [-W, W]) ilMesh(new THREE.CylinderGeometry(.06, .06, H, 14), post, x, H / 2, Z, w);
+  ilMesh(new THREE.CylinderGeometry(.06, .06, W * 2 + .12, 14), post, 0, H, Z, w).rotation.z = Math.PI / 2;
+  const nc = document.createElement('canvas'); nc.width = nc.height = 128; const n = nc.getContext('2d'); n.strokeStyle = 'rgba(255,255,255,.9)'; n.lineWidth = 3;
+  for (let k = 0; k <= 128; k += 16) { n.beginPath(); n.moveTo(k, 0); n.lineTo(k, 128); n.stroke(); n.beginPath(); n.moveTo(0, k); n.lineTo(128, k); n.stroke(); }
+  const netTex = (rx, ry) => { const t = new THREE.CanvasTexture(nc); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, ry); return new THREE.MeshBasicMaterial({ map: t, transparent: true, side: THREE.DoubleSide, depthWrite: false }); };
+  const net = pk.net = new THREE.Group(); net.position.set(0, 0, Z); w.add(net);
+  const back = ilMesh(new THREE.PlaneGeometry(W * 2, H), netTex(10, 9), 0, H / 2, -1, net, false); back.receiveShadow = false; pk.netBack = back;
+  for (const s of [-1, 1]) { const side = ilMesh(new THREE.PlaneGeometry(1, H), netTex(5, 9), s * W, H / 2, -.5, net, false); side.rotation.y = Math.PI / 2; side.receiveShadow = false; }
+  const roof = ilMesh(new THREE.PlaneGeometry(W * 2, 1), netTex(10, 5), 0, H, -.5, net, false); roof.rotation.x = Math.PI / 2; roof.receiveShadow = false;
+  // (round trees and a low wooden fence far behind)
+  for (let k = -6; k <= 6; k++) { ilMesh(new THREE.BoxGeometry(1.2, .7, .08), ilM(k % 2 ? '#C98A4E' : '#B87A42', .8), k * 1.25, .35, Z - 4, w, false); }
+  for (const [x, z, s] of [[-7, -13, 1.6], [-4.5, -14, 1.2], [5, -13.5, 1.5], [8, -12, 1.1], [1.5, -15, 1.3]]) {
+    ilMesh(new THREE.CylinderGeometry(.18, .22, 1.4, 10), ilM('#8A5A2E'), x, .7, z, w, false); ilMesh(new THREE.SphereGeometry(s, 18, 14), ilM('#3E9A3A', .85), x, 1.4 + s * .7, z, w, false); }
+  // (the keeper: a teddy bear in an orange shirt with yellow gloves, its arms up and out)
+  const k = pk.keeper = new THREE.Group(); k.position.set(0, 0, Z + .35); w.add(k); const fur = ilM('#A8713F', .75), pale = ilM('#E8C79A', .75), dark = ilM('#2A1C17', .3);
+  for (const s of [-1, 1]) { ilMesh(new THREE.CylinderGeometry(.1, .11, .36, 12), fur, s * .15, .2, 0, k); ilMesh(new THREE.SphereGeometry(.12, 14, 10), pale, s * .15, .06, .05, k).scale.set(1, .6, 1.3); }
+  ilMesh(new THREE.SphereGeometry(.37, 20, 16), ilM('#FF7A2F', .6), 0, .66, 0, k).scale.set(1, 1.12, .85);
+  ilMesh(new THREE.CylinderGeometry(.03, .03, .2, 8), ilM('#FFFFFF', .6), 0, .72, .3, k).rotation.x = Math.PI / 2;
+  const head = new THREE.Group(); head.position.set(0, 1.2, 0); k.add(head); pk.kHead = head;
+  ilMesh(new THREE.SphereGeometry(.28, 20, 16), fur, 0, 0, 0, head); ilMesh(new THREE.SphereGeometry(.12, 14, 10), pale, 0, -.07, .22, head).scale.set(1, .8, .8);
+  ilMesh(new THREE.SphereGeometry(.045, 10, 8), dark, 0, -.03, .32, head); for (const s of [-1, 1]) { ilMesh(new THREE.SphereGeometry(.035, 10, 8), dark, s * .1, .06, .24, head, false);
+    ilMesh(new THREE.SphereGeometry(.1, 14, 10), fur, s * .2, .2, -.02, head); ilMesh(new THREE.SphereGeometry(.055, 10, 8), pale, s * .2, .2, .04, head, false); }
+  pk.arms = []; for (const s of [-1, 1]) { const arm = new THREE.Group(); arm.position.set(s * .32, .86, 0); arm.rotation.z = s * 1.05; k.add(arm);
+    ilMesh(new THREE.CylinderGeometry(.08, .09, .42, 12), fur, 0, .2, 0, arm); ilMesh(new THREE.SphereGeometry(.13, 14, 10), ilM('#FFC233', .5), 0, .45, 0, arm).scale.set(1, 1.1, .7); pk.arms.push(arm); }
+  pk.rig = new THREE.Group(); }
+function pkStart() { pkBuild(); scene.add(pk.world); holder.add(pk.rig); pk.rig.add(glb); pk.rig.position.set(0, 0, 0); game.rotY = Math.PI;
+  floor.visible = false; disc.visible = false; for (const el of [bgNear, bgFar, bgNear2]) el.hidden = true; stage.classList.add('pitch'); controls.maxDistance = 40;
+  if (!pk.ball) { pk.ball = makeItem('fodbold'); pk.ball.group.scale.setScalar(.75); scene.remove(pk.ball.group); }
+  pk.world.add(pk.ball.group); pk.ball.group.visible = true;
+  for (const id of ['spark', 'spark-hoejre', GAME.cheer]) loadMove(id); loadMove('staa').then(() => { if (game.on && game.mode === 'pk') runAnim('staa'); });
+  pkReady(); }
+function pkStop() { if (!pk.world?.parent) return; scene.remove(pk.world); holder.add(glb); holder.remove(pk.rig); stage.classList.remove('pitch'); floor.visible = true; pk.phase = ''; setBg(bgNow); }
+// (the ball back on the spot - where the next kicking foot meets it - the bear back in the middle of its goal)
+function pkReady() { pk.phase = 'aim'; pk.saved = false; pk.keeper.position.set(0, 0, PK.goalZ + .35); pk.keeper.rotation.set(0, 0, 0); pk.netBack.position.z = -1; pk.ball.group.position.copy(pkRest()); pk.ball.group.rotation.set(0, 0, 0); }
+const pkKick = () => ['spark', 'spark-hoejre'][pk.foot % 2];
+function pkRest() { const k = kicks[pkKick()]; return k ? new THREE.Vector3(-k.rest.x, kick.r, -k.rest.z) : new THREE.Vector3(0, kick.r, -.35); }
+// (a tap anywhere: aimed at the goal where the finger is, kept inside the posts and under the bar)
+function pkTap(e) { if (pk.phase !== 'aim' || !kicks.spark || !kicks['spark-hoejre']) return; const r = renderer.domElement.getBoundingClientRect();
+  ilAt.set((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1); ilRay.setFromCamera(ilAt, camera); if (!ilRay.ray.intersectPlane(pkPlane, pkHit)) return;
+  game.hint = 0; pk.aim.set(Math.max(-PK.halfW + .3, Math.min(PK.halfW - .3, pkHit.x)), Math.max(.18, Math.min(PK.top - .22, pkHit.y)), PK.goalZ - .15);
+  const id = pkKick(), a = glbActions[id]; pk.ball.group.position.copy(pkRest()); runAnim(id, true); a.time = Math.max(0, kicks[id].contact - .55); pk.phase = 'kick'; }
+function pkTick(dt) { const t = performance.now() / 1000, L = pkLevel(), kp = pk.keeper, b = pk.ball.group;
+  // (the camera far enough back that the whole goal is in the picture, however narrow it is)
+  const tanH = Math.tan(camera.fov * Math.PI / 360), D = Math.max(10.5, (PK.halfW + 1) / (tanH * camera.aspect));
+  // (from above and a little to the side, the goal seen over the figure's head)
+  camera.position.set(.9, 3.2, D + PK.goalZ); controls.target.set(0, .7, PK.goalZ + 1.8); camera.lookAt(controls.target);
+  // (facing the goal - turned round to the one playing while it cheers a goal)
+  const faceTo = pk.phase === 'after' && !pk.saved ? 2 * Math.PI : Math.PI; game.rotY = (game.rotY ?? Math.PI) + (faceTo - (game.rotY ?? Math.PI)) * Math.min(1, dt * 6); glb.rotation.y = game.rotY;
+  // (the bear stepping from side to side, bobbing, until the ball is kicked)
+  if (pk.phase === 'aim' || pk.phase === 'kick') { pk.kx = Math.sin(t * L.sway * 1.6) * .9; kp.position.x = pk.kx; kp.position.y = Math.abs(Math.sin(t * L.sway * 3.2)) * .05; pk.kHead.rotation.z = Math.sin(t * 2) * .1; }
+  if (pk.phase === 'kick') { const a = glbActions[pkKick()], k = kicks[pkKick()];
+    if (a.time >= k.contact) { pk.phase = 'fly'; pk.t = 0; pk.from.copy(b.position); sfx('swish');
+      // (the bear's guess: the right way, as far as it reaches - or the wrong way)
+      const right = Math.random() < L.guess; pk.dive = right ? Math.max(pk.kx - L.reach, Math.min(pk.kx + L.reach, pk.aim.x)) : pk.kx + (pk.aim.x > pk.kx ? -1 : 1) * L.reach * .8;
+      pk.dive = Math.max(-PK.halfW + .4, Math.min(PK.halfW - .4, pk.dive)); pk.saved = Math.abs(pk.aim.x - pk.dive) < .5 && pk.aim.y < 1.5; pk.diveFrom = pk.kx; } }
+  if (pk.phase === 'fly') { pk.t += dt; const s = Math.min(1, pk.t / PK.fly), end = pk.saved ? .82 : 1;
+    // (the ball on its way - a little arc, spinning; the bear diving to its side, tipping over)
+    const u = Math.min(s, end); b.position.lerpVectors(pk.from, pk.aim, u); b.position.y += Math.sin(Math.PI * u) * .35; b.rotation.x -= dt * 16;
+    const d = Math.min(1, s * 1.4); kp.position.x = pk.diveFrom + (pk.dive - pk.diveFrom) * d; kp.position.y = Math.sin(Math.PI * Math.min(1, d)) * .25; kp.rotation.z = -Math.sign(pk.dive - pk.diveFrom || 1) * 1.1 * d;
+    if (s >= end) { pk.phase = 'after'; pk.t = 0;
+      if (pk.saved) sfx('bonk');
+      else { sfx('boing'); sfx('ding', .1); addStars(1); celebrate(); runAnim(GAME.cheer); } } }
+  if (pk.phase === 'after') { pk.t += dt;
+    // (saved: the ball drops in front of the bear and rolls a little; goal: the net bulges back and settles)
+    if (pk.saved) { b.position.y = Math.max(kick.r, b.position.y - dt * 2.5); b.position.z = Math.min(PK.goalZ + 1.2, b.position.z + dt * 1.2); b.rotation.x += dt * 5; }
+    else { pk.netBack.position.z = -1 - .35 * Math.exp(-pk.t * 3) * Math.abs(Math.cos(pk.t * 8)); b.position.z = Math.max(PK.goalZ - .85, b.position.z - dt * 1.5); b.position.y = Math.max(kick.r, b.position.y - dt * 2); }
+    if (pk.t > 2.4) { pk.foot++; runAnim('staa'); pkReady(); } } }
+const GAME_NAMES = [['side', 'Hop fra siden'], ['back', 'Hop bagfra'], ['front', 'Hop forfra'], ['skate', 'Skateboard'], ['island', 'Skattejagt'], ['sea', 'Svømmeverden'], ['hide', 'Gemmeleg'], ['pk', 'Straffespark']];
 // (with two players or more: their pictures on top, the one shown marked - tapping another shows that child's stars)
 let starShown = null;
 function showStarSheet(id = starShown || players.now) { starShown = id; const p = players.list.find(q => q.id === id) || playerNow(), s = p.score, have = s.total - s.spent, many = players.list.length > 1;
@@ -3793,7 +3886,7 @@ document.getElementById('playerSheet').addEventListener('click', e => { if (e.ta
 showPlayer();
 function showRecord() { const el = document.getElementById('record'); el.textContent = '🏆 ' + bestNow(); el.classList.toggle('beaten', !!game.record); }
 document.getElementById('stage').addEventListener('pointerdown', e => { if (!game.on || e.target.closest('button')) return; e.preventDefault();
-  if (game.mode === 'skate') { const r = e.currentTarget.getBoundingClientRect(); steer(e.clientX < r.left + r.width / 2 ? -1 : 1); } else if (game.mode === 'island') islandTap(e); else if (game.mode === 'sea') { sea.held = true; seaTap(e); } else if (game.mode === 'hide') hideTap(e); else jump(); });
+  if (game.mode === 'skate') { const r = e.currentTarget.getBoundingClientRect(); steer(e.clientX < r.left + r.width / 2 ? -1 : 1); } else if (game.mode === 'island') islandTap(e); else if (game.mode === 'sea') { sea.held = true; seaTap(e); } else if (game.mode === 'hide') hideTap(e); else if (game.mode === 'pk') pkTap(e); else jump(); });
 // (under the sea a finger held down and moved leads the figure along)
 document.getElementById('stage').addEventListener('pointermove', e => { if (game.on && game.mode === 'sea' && sea.held) seaTap(e); });
 for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) document.getElementById('stage').addEventListener(ev, () => { sea.held = false; });
