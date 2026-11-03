@@ -135,6 +135,12 @@
   .hud-face img, .hud-face .face-none { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; display: grid; border: 3px solid var(--tile); box-shadow: 0 2px 10px rgba(58, 46, 92, .2); }
   .hud-face .face-none { font-size: 1.4rem; }
   .players-btn { justify-self: center; }
+  /* (Mine figurer: the children on top, each with their stars; Stjerner's line under its title) */
+  .kids { display: grid; gap: 6px; }
+  .kids[hidden] { display: none; }
+  .kids h3 { margin: 0; font: 800 1rem/1.2 system-ui, sans-serif; }
+  .who small { display: block; font: 700 .8rem/1.2 system-ui, sans-serif; color: #6B6191; }
+  .star-sub { margin-top: -4px; text-align: center; }
   /* the star shop (the user, 03-11-2026): a special thing shows a lock and its price in stars until the child buys it */
   .choices button.locked { position: relative; }
   .choices button.locked img { filter: saturate(.35) brightness(.92); }
@@ -389,6 +395,7 @@
 <div class="sheet" id="starSheet" hidden>
   <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="starTitle">
     <div class="sheet-head"><h2 id="starTitle">Dine stjerner</h2><button class="sheet-x" data-close aria-label="Luk">✕</button></div>
+    <p class="note star-sub">Saml stjerner i spillene – og køb ekstra ting for dem i Stjernebutikken.</p>
     <div class="who who-small" id="starWho"></div>
     <div class="star-total" id="starTotal">⭐ 0</div>
     <p class="note" id="starNote"></p>
@@ -397,7 +404,6 @@
     <h3>🔒 Stjernebutik</h3>
     <div class="choices shop" id="shopList"></div>
     <p class="note">Tryk på en ting med 🔒 for at købe den for dine stjerner. Hvert barn køber for sig selv.</p>
-    <button class="share-off players-btn" id="playersBtn">👪 Spillere – for voksne</button>
   </div>
 </div>
 <!-- the star shop: a locked thing's picture, its price, a big green button to buy it with the child's stars -->
@@ -420,8 +426,8 @@
 <!-- the players, for grown-ups (behind the sum): a name, a new picture from the figure on the screen, delete; a new one -->
 <div class="sheet" id="playerSheet" hidden>
   <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="playerTitle">
-    <div class="sheet-head"><h2 id="playerTitle">Spillere</h2><button class="sheet-x" data-close aria-label="Luk">✕</button></div>
-    <p class="note">Hvert barn får sine egne stjerner. Billedet tages af den figur, der står på skærmen, når du trykker 📷 – byg barnets figur først. Gemmes kun på denne enhed.</p>
+    <div class="sheet-head"><h2 id="playerTitle">Børn og spillere</h2><button class="sheet-x" data-close aria-label="Luk">✕</button></div>
+    <p class="note">Hvert barn har sin egen MiniMig og sine egne stjerner. Byg barnets figur, og tryk 📷 – så gemmes figuren på skærmen som barnets MiniMig. Under Mine figurer trykker barnet bare på sit billede. Gemmes kun på denne enhed.</p>
     <div class="player-list" id="playerList"></div>
     <button class="share-off players-btn" id="addPlayer">➕ Ny spiller</button>
   </div>
@@ -465,7 +471,11 @@
 <div class="sheet" id="figSheet" hidden>
   <div class="sheet-card fig-card" role="dialog" aria-modal="true" aria-labelledby="figSheetTitle">
     <div class="sheet-head"><h2 id="figSheetTitle">Mine figurer</h2><button class="sheet-x" data-close aria-label="Luk">✕</button></div>
+    <!-- (the children first, each with their own MiniMig and stars - tap one to be that child; the user, 03-11-2026: the
+         grown-ups' players belonged here with the figures, not under the stars) -->
+    <div class="kids" id="figKids"><h3>👪 Børn</h3><div class="who who-small" id="kidList"></div><h3>🖼️ Gemte figurer</h3></div>
     <div class="gallery" id="gallery"></div>
+    <button class="share-off players-btn" id="playersBtn">👪 Børn og spillere – for voksne</button>
   </div>
 </div>
 <div class="sheet" id="picSheet" hidden>
@@ -2749,7 +2759,7 @@ document.getElementById('newChoice').addEventListener('click', async e => { cons
   const now = figureNow(), l = savedFigs();
   if (![l[0]?.fig, newFig('dreng'), newFig('pige')].some(f => sameFig(f, now))) keepFig('hel', figurePicture('hel', .5));
   await wearFigure(newFig(b.dataset.new)); toast('✨ Ny MiniMig!'); });
-function renderGallery() { const l = savedFigs(), el = document.getElementById('gallery');
+function renderGallery() { const l = savedFigs(), el = document.getElementById('gallery'); renderKids();
   el.innerHTML = l.length ? l.map((s, i) => `<div class="saved"><button class="load" data-load="${i}" aria-label="Brug figur ${i + 1}"><img src="${s.pic}" alt=""></button><button class="del" data-del="${i}" aria-label="Slet figur ${i + 1}">✕</button></div>`).join('')
     : '<p class="empty">Ingen figurer endnu.<br>Tryk på ⭐ for at gemme din figur her.</p>'; }
 document.getElementById('figsBtn').addEventListener('click', () => { document.getElementById('figSheet').hidden = false; renderGallery(); });
@@ -3578,7 +3588,7 @@ function ilBurst() { il.burst = true; addStars(5); celebrate(); il.gold.forEach(
 const SEA = { speed: 1.8, lie: .85, hips: 1, levels: { 'niveau-meget-let': { jelly: 0, drift: .35, gap: 1.5 }, 'niveau-let': { jelly: 1, drift: .45, gap: 1.35 },
   'niveau-mellem': { jelly: 2, drift: .6, gap: 1.2 }, 'niveau-svaer': { jelly: 3, drift: .75, gap: 1.1 }, 'niveau-meget-svaer': { jelly: 4, drift: .95, gap: 1 } } };
 const sea = { world: null, rig: null, pos: new THREE.Vector3(), target: null, held: false, swim: false, stars: [], jellies: [], fish: [], weeds: [], rays: [], dots: [],
-  next: 0, roll: 0, safe: 0, face: 0, tilt: 0, box: { l: -3, r: 3, b: 0, t: 2.5, sand: -.3 } };
+  next: 0, roll: 0, safe: 0, face: 0, tilt: 0, strokeW: 0, box: { l: -3, r: 3, b: 0, t: 2.5, sand: -.3 } };
 const seaPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0), seaHit = new THREE.Vector3(), seaHips = new THREE.Vector3(), seaPivot = new THREE.Vector3();
 function seaBuild() { if (sea.world) return; const w = sea.world = new THREE.Group();
   // (the sand far down, rocks on it, seaweed swaying - its pieces each a little more bent than the one under it)
@@ -3601,6 +3611,26 @@ function seaBuild() { if (sea.world) return; const w = sea.world = new THREE.Gro
   const dotM = new THREE.MeshStandardMaterial({ color: '#E8F8FF', transparent: true, opacity: .55, roughness: .1, depthWrite: false });
   for (let k = 0; k < 26; k++) { const d = ilMesh(new THREE.SphereGeometry(.03 + (k % 4) * .015, 10, 8), dotM, 0, 0, -.5 - (k % 5) * .6, w, false); d.receiveShadow = false; d.userData.v = .3 + (k % 5) * .12; sea.dots.push(d); }
   sea.rig = new THREE.Group(); }
+// (crawl strokes over Mixamo's Swimming - the user, 03-11-2026: it looked as if the figure only floated about. Its
+// breaststroke sweeps the arms out flat to the sides, which from the side hardly shows. Here the arms go round in big
+// circles - reaching ahead, pulling down under the body, back along it, over the back out of the water - one half a turn
+// after the other, and the legs kick quickly up and down, both straight. Worked out in the body's own directions: along
+// it to the head, across it shoulder to shoulder, and its back - so it fits however the figure lies)
+const SEA_STROKE = { arms: 1.3, kick: .45, kickSize: .28 }, ssA = new THREE.Vector3(), ssB = new THREE.Vector3(), ssV = new THREE.Vector3(), ssD = new THREE.Vector3(), ssQ = new THREE.Quaternion(), ssP = new THREE.Quaternion();
+const ssH = new THREE.Vector3(), ssS = new THREE.Vector3(), ssBack = new THREE.Vector3();
+// (a bone turned, w of the way, so it points along dir - from it to its child)
+function aimBone(name, child, dir, w) { const b = bone(name), c = bone(child); if (!b || !c) return; glb.updateMatrixWorld(true);
+  b.getWorldPosition(ssA); c.getWorldPosition(ssB); ssV.subVectors(ssB, ssA).normalize(); ssQ.setFromUnitVectors(ssV, dir).slerp(noTurn, 1 - w);
+  keepJoint(b); b.parent.getWorldQuaternion(ssP); b.quaternion.premultiply(ssP.clone().invert().multiply(ssQ).multiply(ssP)); }
+function seaStroke(t, w) { if (w < .02 || !bone('Head') || !bone('LeftArm')) return; glb.updateMatrixWorld(true);
+  bone('Head').getWorldPosition(ssH); ssH.sub(seaHips).normalize(); bone('RightArm').getWorldPosition(ssS); bone('LeftArm').getWorldPosition(ssA); ssS.sub(ssA).normalize();
+  ssBack.crossVectors(ssS, ssH).normalize(); if (ssBack.y < 0) ssBack.negate();
+  for (const [side, s] of [['Left', -1], ['Right', 1]]) { const th = t / SEA_STROKE.arms * Math.PI * 2 + (s > 0 ? Math.PI : 0);
+    ssD.copy(ssH).multiplyScalar(Math.cos(th)).addScaledVector(ssBack, -Math.sin(th)).addScaledVector(ssS, s * .18).normalize();
+    aimBone(side + 'Arm', side + 'ForeArm', ssD, w); aimBone(side + 'ForeArm', side + 'Hand', ssD, w);
+    const k = Math.sin(t / SEA_STROKE.kick * Math.PI * 2 + (s > 0 ? Math.PI : 0)) * SEA_STROKE.kickSize;
+    ssD.copy(ssH).negate().addScaledVector(ssBack, k).addScaledVector(ssS, s * .06).normalize(); aimBone(side + 'UpLeg', side + 'Leg', ssD, w);
+    ssD.copy(ssH).negate().addScaledVector(ssBack, k * 1.4).addScaledVector(ssS, s * .06).normalize(); aimBone(side + 'Leg', side + 'Foot', ssD, w); } }
 // (a star in a bubble: a gold star inside a see-through bubble - or the gold pearl, a glowing pearl in a bigger bubble)
 let seaStarGeo = null;
 function seaStar(gold) { const g = new THREE.Group();
@@ -3665,6 +3695,7 @@ function seaTick(dt) { const t = performance.now() / 1000, p = sea.pos, b = sea.
   // (bobbing gently in the water; tipped and rolled round the hips, not the feet - the rig stands at the feet)
   seaPivot.set(0, SEA.hips, 0).applyEuler(sea.rig.rotation); sea.rig.position.set(p.x, p.y + SEA.hips + Math.sin(t * 1.8) * .04, 0).sub(seaPivot);
   glb.updateMatrixWorld(true); const hb = bone('Hips'); if (hb) hb.getWorldPosition(seaHips); else seaHips.set(p.x, p.y + .7, 0);
+  sea.strokeW += ((sea.swim ? 1 : 0) - sea.strokeW) * Math.min(1, dt * 5); seaStroke(t, sea.strokeW);
   // (new stars drifting in from the right at their own heights, a gold pearl now and then; caught: the ding and the star)
   if ((sea.next -= dt) <= 0) { sea.next = L.gap * (.8 + Math.random() * .5); const gold = Math.random() < .12;
     const s = sea.stars.find(x => !x.visible && x.userData.gold === gold) || (sea.stars.push(seaStar(gold)), sea.stars[sea.stars.length - 1]);
@@ -3874,18 +3905,27 @@ document.getElementById('whoList').addEventListener('click', e => { const b = e.
 // (the grown-ups' list: a name to write, 📷 a new picture from the figure on the screen, 🗑 delete - asked twice)
 function showPlayers() { document.getElementById('playerList').innerHTML = players.list.map(q => `<div class="player-row" data-id="${q.id}">${playerFace(q)}
     <div style="flex:1;min-width:0"><input value="${esc(q.name)}" maxlength="12" placeholder="Navn" aria-label="Navn" autocomplete="off" data-1p-ignore data-lpignore="true"><small>⭐ ${q.score.total - q.score.spent}</small></div>
-    <button class="pic-p" aria-label="Nyt billede af figuren på skærmen">📷</button>${players.list.length > 1 ? '<button class="del-p" aria-label="Slet spiller">🗑</button>' : ''}</div>`).join('');
+    <button class="pic-p" aria-label="Gem figuren på skærmen som barnets MiniMig">📷</button>${players.list.length > 1 ? '<button class="del-p" aria-label="Slet spiller">🗑</button>' : ''}</div>`).join('');
   document.getElementById('playerSheet').hidden = false; }
-document.getElementById('playersBtn').onclick = () => askGrownUp(() => { document.getElementById('starSheet').hidden = true; showPlayers(); });
+document.getElementById('playersBtn').onclick = () => askGrownUp(() => { document.getElementById('figSheet').hidden = true; showPlayers(); });
 document.getElementById('addPlayer').onclick = () => { newPlayer(); showPlayers(); showPlayer(); };
 document.getElementById('playerList').addEventListener('input', e => { const row = e.target.closest('[data-id]'), p = row && players.list.find(q => q.id === row.dataset.id); if (p) { p.name = e.target.value.trim(); savePlayers(); } });
 document.getElementById('playerList').addEventListener('click', e => { const row = e.target.closest('[data-id]'), p = row && players.list.find(q => q.id === row.dataset.id); if (!p) return;
-  if (e.target.closest('.pic-p')) { if (game.on) { toast('Stop spillet først'); return; } p.pic = playerPic() || p.pic; savePlayers(); showPlayers(); showPlayer(); return; }
+  // (📷: the figure on the screen becomes the child's own MiniMig - its picture and the whole figure, to be put on again
+  // from Mine figurer)
+  if (e.target.closest('.pic-p')) { if (game.on) { toast('Stop spillet først'); return; } p.pic = playerPic() || p.pic; if (hairBase) p.fig = figureNow(); savePlayers(); showPlayers(); showPlayer(); toast('📷 Gemt som barnets MiniMig'); return; }
   const del = e.target.closest('.del-p'); if (!del) return;
   if (!del.classList.contains('armed')) { del.classList.add('armed'); del.textContent = 'Slet?'; setTimeout(() => { del.classList.remove('armed'); del.textContent = '🗑'; }, 2500); return; }
   players.list.splice(players.list.indexOf(p), 1); if (players.now === p.id) players.now = players.list[0].id; score = playerNow().score; starShown = null; savePlayers(); showPlayers(); showPlayer(); });
-// (closing the list: back to the stars, where the players now are)
-document.getElementById('playerSheet').addEventListener('click', e => { if (e.target.id === 'playerSheet' || e.target.closest('[data-close]')) setTimeout(() => showStarSheet(players.now), 0); });
+// (closing the list: back to Mine figurer, where the children now are)
+document.getElementById('playerSheet').addEventListener('click', e => { if (e.target.id === 'playerSheet' || e.target.closest('[data-close]')) setTimeout(() => { document.getElementById('figSheet').hidden = false; renderGallery(); }, 0); });
+// (the children at the top of Mine figurer - each one's MiniMig picture, name and stars; tapping one makes that child
+// the player and puts on their MiniMig. Hidden while there is only one child with no MiniMig of their own yet)
+function renderKids() { const box = document.getElementById('figKids'), list = document.getElementById('kidList'), show = players.list.length > 1 || players.list.some(q => q.fig);
+  box.hidden = !show; if (!show) return;
+  list.innerHTML = players.list.map(q => `<button data-kid="${q.id}" class="${q.id === players.now ? 'on' : ''}">${playerFace(q)}<span>${esc(q.name) || '&nbsp;'}</span><small>⭐ ${q.score.total - q.score.spent}</small></button>`).join(''); }
+document.getElementById('kidList').addEventListener('click', e => { const b = e.target.closest('[data-kid]'), p = b && players.list.find(q => q.id === b.dataset.kid); if (!p) return;
+  if (game.on) { toast('Stop spillet først'); return; } setPlayer(p.id); document.getElementById('figSheet').hidden = true; if (p.fig && hairBase) wearFigure(p.fig); toast(p.name ? `Hej ${p.name}!` : '👋 Hej!'); });
 showPlayer();
 function showRecord() { const el = document.getElementById('record'); el.textContent = '🏆 ' + bestNow(); el.classList.toggle('beaten', !!game.record); }
 document.getElementById('stage').addEventListener('pointerdown', e => { if (!game.on || e.target.closest('button')) return; e.preventDefault();
