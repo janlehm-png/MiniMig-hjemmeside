@@ -3090,7 +3090,7 @@ function makePet(kind) { const g = new THREE.Group(), C = { 'dyr-kat': ['#F2994A
 function setPet(name) { if (!PETS.some(p => p[0] === name)) name = ''; petNow = name; if (pet) pet.group.visible = false; pet = name && glb ? pets[name] ??= makePet(name) : null; if (pet) pet.snap = true; renderStyles(); }
 // (an animal rigged at Meshy: a GLB file with one skinned mesh, its bones and a walk. Meshy's rigged file leaves out the
 // texture, so that comes separately. Standing on the floor, facing forward, as tall as asked)
-async function loadGlbPet(url, texUrl, height) { const tex = await new THREE.TextureLoader().loadAsync(texUrl), buf = await (await fetch(url)).arrayBuffer(), jl = new DataView(buf).getUint32(12, true), j = JSON.parse(new TextDecoder().decode(new Uint8Array(buf, 20, jl))), binAt = 20 + jl + 8;
+async function readGlb(url, texUrl) { const tex = await new THREE.TextureLoader().loadAsync(texUrl), buf = await (await fetch(url)).arrayBuffer(), jl = new DataView(buf).getUint32(12, true), j = JSON.parse(new TextDecoder().decode(new Uint8Array(buf, 20, jl))), binAt = 20 + jl + 8;
   const SIZE = { SCALAR: 1, VEC2: 2, VEC3: 3, VEC4: 4, MAT4: 16 }, TYPE = { 5121: Uint8Array, 5123: Uint16Array, 5125: Uint32Array, 5126: Float32Array };
   const read = i => { const a = j.accessors[i], v = j.bufferViews[a.bufferView], C = TYPE[a.componentType], n = SIZE[a.type], at = binAt + (v.byteOffset || 0) + (a.byteOffset || 0); return { n, data: new C(buf.slice(at, at + a.count * n * C.BYTES_PER_ELEMENT)) }; };
   const attr = i => { const a = read(i); return new THREE.BufferAttribute(a.data, a.n); }, skin = j.skins[0], joints = new Set(skin.joints);
@@ -3100,7 +3100,9 @@ async function loadGlbPet(url, texUrl, height) { const tex = await new THREE.Tex
   j.nodes.forEach((n, i) => { const o = nodes[i]; if (n.translation) o.position.fromArray(n.translation); if (n.rotation) o.quaternion.fromArray(n.rotation); if (n.scale) o.scale.fromArray(n.scale); (n.children || []).forEach(c => o.add(nodes[c])); });
   const inner = new THREE.Group(); j.scenes[0].nodes.forEach(i => inner.add(nodes[i])); inner.updateMatrixWorld(true);
   const bones = skin.joints.map(i => nodes[i]), ibm = read(skin.inverseBindMatrices).data, inverses = bones.map((_, i) => new THREE.Matrix4().fromArray(ibm, i * 16)), mesh = nodes.find(o => o.isSkinnedMesh); mesh.bind(new THREE.Skeleton(bones, inverses), new THREE.Matrix4());
-  const A = j.animations[0], tracks = A.channels.map(c => { const s = A.samplers[c.sampler], name = nodes[c.target.node].name, Track = { translation: THREE.VectorKeyframeTrack, rotation: THREE.QuaternionKeyframeTrack, scale: THREE.VectorKeyframeTrack }[c.target.path], prop = { translation: 'position', rotation: 'quaternion', scale: 'scale' }[c.target.path]; return new Track(name + '.' + prop, read(s.input).data, read(s.output).data, s.interpolation === 'STEP' ? THREE.InterpolateDiscrete : THREE.InterpolateLinear); }), clip = new THREE.AnimationClip('walk', -1, tracks);
+  const clips = j.animations.map(A => new THREE.AnimationClip(A.name || 'walk', -1, A.channels.map(c => { const s = A.samplers[c.sampler], name = nodes[c.target.node].name, Track = { translation: THREE.VectorKeyframeTrack, rotation: THREE.QuaternionKeyframeTrack, scale: THREE.VectorKeyframeTrack }[c.target.path], prop = { translation: 'position', rotation: 'quaternion', scale: 'scale' }[c.target.path]; return new Track(name + '.' + prop, read(s.input).data, read(s.output).data, s.interpolation === 'STEP' ? THREE.InterpolateDiscrete : THREE.InterpolateLinear); })));
+  return { inner, bones, mesh, clips }; }
+async function loadGlbPet(url, texUrl, height) { const { inner, bones, mesh, clips } = await readGlb(url, texUrl), clip = clips[0];
   const group = new THREE.Group(), turn = new THREE.Group(); turn.add(inner); group.add(turn); group.updateMatrixWorld(true); const bone = name => bones.find(b => b.name === name);
   const a = bone('head').getWorldPosition(new THREE.Vector3()), b = bone('Hips').getWorldPosition(new THREE.Vector3()); turn.rotation.y = -Math.atan2(a.x - b.x, a.z - b.z); group.updateMatrixWorld(true);
   const box = new THREE.Box3().setFromObject(mesh, true), k = height / (box.max.y - box.min.y); turn.scale.setScalar(k); turn.position.y = -box.min.y * k;
@@ -4138,7 +4140,32 @@ function pkBuild() { if (pk.world) return; const w = pk.world = new THREE.Group(
     // (long arms - the user, 03-11-2026: short ones looked as if it could never reach the ball)
     ilMesh(new THREE.CylinderGeometry(.075, .09, .72, 12), fur, 0, .35, 0, arm); ilMesh(new THREE.SphereGeometry(.14, 14, 10), ilM('#FFC233', .5), 0, .76, 0, arm).scale.set(1, 1.1, .7); pk.arms.push(arm); }
   pk.rig = new THREE.Group(); }
-function pkStart() { pkBuild(); scene.add(pk.world); holder.add(pk.rig); pk.rig.add(glb); pk.rig.position.set(0, 0, 0); game.rotY = Math.PI;
+// ---- The keeper since 04-11-2026 (the user: a silly monkey with long arms and big gloves): Meshy's model with Mixamo's
+// goalkeeper movements, dyr-abe.glb (see reference/mixamo-abe/lav-abe.html). Meshy melted the gloves' fingers, so the mesh
+// has none and these are put on each wrist. The bear only stands in if the file can't come ----
+const ABE = { height: 1.62, glove: 1.3, wrist: [.6, .187, -.015] };
+function makeGlove() { const G = new THREE.Group(), orange = ilM('#F4701E', .55), pad = ilM('#F67C2A', .6), white = ilM('#FBFAF6', .45), crease = ilM('#DE5F14', .7), add = (geo, m, x, y, z, p = G) => ilMesh(geo, m, x, y, z, p);
+  add(new THREE.SphereGeometry(.13, 24, 18), orange, .1, 0, 0).scale.set(1.02, 1, .42); add(new THREE.SphereGeometry(.1, 20, 14), pad, .1, -.005, .036).scale.set(1.05, .95, .3);
+  const wrist = add(new THREE.CapsuleGeometry(.062, .06, 6, 16), orange, .015, 0, 0); wrist.rotation.z = Math.PI / 2; wrist.scale.set(1, 1, .8);
+  const finger = (x, y, ang, len, r) => { const f = new THREE.Group(); f.position.set(x, y, 0); f.rotation.z = ang; G.add(f); const c = add(new THREE.CapsuleGeometry(r, len, 6, 14), orange, len / 2, 0, 0, f); c.rotation.z = -Math.PI / 2; c.scale.z = .82;
+    for (const k of [.36, .68]) { const ring = add(new THREE.TorusGeometry(r * .98, r * .1, 6, 18), crease, len * k, 0, 0, f); ring.rotation.y = Math.PI / 2; ring.scale.y = .82; }
+    add(new THREE.SphereGeometry(r * 1.02, 14, 10), white, len + r * .28, 0, 0, f).scale.set(.86, 1, .84); };
+  finger(.165, .09, .42, .125, .044); finger(.185, .034, .13, .15, .047); finger(.185, -.03, -.13, .145, .047); finger(.165, -.088, -.42, .115, .042); finger(.06, .095, 1, .105, .055); return G; }
+function pkAbeLoad() { if (pk.abeLoad) return; const bear = [...pk.keeper.children]; bear.forEach(c => { c.visible = false; });
+  pk.abeLoad = readGlb('dyr-abe.glb', 'dyr-abe.jpg').then(({ inner, bones, mesh, clips }) => { const bone = n => bones.find(b => b.name === 'mixamorig' + n), group = new THREE.Group(), box = new THREE.Box3().setFromObject(mesh, true), k = ABE.height / (box.max.y - box.min.y), [wx, wy, wz] = ABE.wrist;
+    inner.updateMatrixWorld(true); for (const n of ['Left', 'Right']) { const hand = bone(n + 'Hand'), s = Math.sign(hand.getWorldPosition(new THREE.Vector3()).x), g = makeGlove(), m = new THREE.Matrix4().compose(new THREE.Vector3(s * wx, wy, wz), new THREE.Quaternion(), new THREE.Vector3(s * ABE.glove, ABE.glove, ABE.glove)); hand.updateWorldMatrix(true, false); m.premultiply(hand.matrixWorld.clone().invert()); m.decompose(g.position, g.quaternion, g.scale); hand.add(g); }
+    // (its feet on the grass in Mixamo's movements, which stand it higher than the model was made: measured in one)
+    const mixer = new THREE.AnimationMixer(inner), act = {}; for (const c of clips) act[c.name] = mixer.clipAction(onTheSpot(c)); act.klar.play(); mixer.update(0); inner.updateMatrixWorld(true); const low = new THREE.Box3().setFromObject(mesh, true).min.y; act.klar.stop(); inner.scale.setScalar(k); inner.position.y = -low * k; group.add(inner); pk.keeper.add(group);
+    pk.abe = { group, mixer, act, now: '', hands: [bone('LeftHand'), bone('RightHand')], gloves: [] }; pkAbePlay('klar'); }).catch(() => bear.forEach(c => { c.visible = true; })); }
+function pkAbePlay(id, time = 0, once = false, fade = .18) { const m = pk.abe; if (!m || (m.now === id && !once)) return m?.act[id]; for (const [n, a] of Object.entries(m.act)) if (n !== id) a.fadeOut(fade); const a = m.act[id]; a.reset(); a.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat, Infinity); a.clampWhenFinished = once; a.timeScale = 1; a.time = time; a.fadeIn(fade).play(); m.now = id; return a; }
+const abeA = new THREE.Vector3(), abeB = new THREE.Vector3();
+// (a ball saved stays in its hands; when it has got up it throws it back along the grass to the one kicking - the user's idea)
+function pkAbeSaved(dt, b) { const m = pk.abe, kp = pk.keeper; pk.t += dt; if (pk.t > 1.2 && !pk.stood) { pk.stood = true; runAnim('staa'); }
+  if (pk.phase === 'after') { m.hands[0].getWorldPosition(abeA); m.hands[1].getWorldPosition(abeB); b.position.copy(abeA.add(abeB).multiplyScalar(.5)); b.position.y = Math.max(kick.r, b.position.y);
+    const wait = m.now.startsWith('dyk') ? 2.1 : 1; if (pk.t > wait && m.now !== 'aflever') { const a = pkAbePlay('aflever', 0, true, .3); a.timeScale = 1.2; }
+    if (m.now === 'aflever') { kp.position.x *= Math.exp(-dt * 1.6); if (m.act.aflever.time > 1.25) { pk.phase = 'return'; pk.r = 0; pk.from.copy(b.position); pk.foot++; sfx('swish'); } } }
+  else { pk.r += dt / 1.1; kp.position.x *= Math.exp(-dt * 1.6); const u = Math.min(1, pk.r), e = 1 - (1 - u) * (1 - u); b.position.lerpVectors(pk.from, pkRest(), e); b.position.y = kick.r + (pk.from.y - kick.r) * Math.max(0, 1 - u * 4); b.rotation.x += dt * 9 * (1 - u); if (u >= 1) { if (m.now === 'aflever' && m.act.aflever.time < m.act.aflever.getClip().duration - .1) return; runAnim('staa'); pkReady(); } } }
+function pkStart() { pkBuild(); pkAbeLoad(); scene.add(pk.world); holder.add(pk.rig); pk.rig.add(glb); pk.rig.position.set(0, 0, 0); game.rotY = Math.PI;
   floor.visible = false; disc.visible = false; for (const el of [bgNear, bgFar, bgNear2]) el.hidden = true; stage.classList.add('pitch'); controls.maxDistance = 40;
   if (!pk.ball) { pk.ball = makeItem('fodbold'); pk.ball.group.scale.setScalar(kick.r / .158); scene.remove(pk.ball.group); }
   pk.world.add(pk.ball.group); pk.ball.group.visible = true;
@@ -4146,7 +4173,7 @@ function pkStart() { pkBuild(); scene.add(pk.world); holder.add(pk.rig); pk.rig.
   pkReady(); }
 function pkStop() { if (!pk.world?.parent) return; scene.remove(pk.world); holder.add(glb); holder.remove(pk.rig); stage.classList.remove('pitch'); floor.visible = true; pk.phase = ''; setBg(bgNow); }
 // (the ball back on the spot - where the next kicking foot meets it - the bear back in the middle of its goal)
-function pkReady() { pk.phase = 'aim'; pk.saved = false; pk.keeper.position.set(0, 0, PK.goalZ + .35); pk.keeper.rotation.set(0, 0, 0); pk.netBack.position.z = -1; pk.ball.group.position.copy(pkRest()); pk.ball.group.rotation.set(0, 0, 0); }
+function pkReady() { pk.phase = 'aim'; pk.saved = false; pk.stood = false; if (pk.abe) { pk.back = pk.keeper.position.x - pk.kx; pk.abe.group.scale.x = 1; pkAbePlay('klar', 0, false, .35); } pk.keeper.position.set(0, 0, PK.goalZ + .35); pk.keeper.rotation.set(0, 0, 0); pk.netBack.position.z = -1; pk.ball.group.position.copy(pkRest()); pk.ball.group.rotation.set(0, 0, 0); }
 const pkKick = () => ['spark', 'spark-hoejre'][pk.foot % 2];
 function pkRest() { const k = kicks[pkKick()]; return k ? new THREE.Vector3(-k.rest.x, kick.r, -k.rest.z) : new THREE.Vector3(0, kick.r, -.35); }
 // (a tap anywhere: aimed at the goal where the finger is, kept inside the posts and under the bar)
@@ -4163,20 +4190,27 @@ function pkTick(dt) { const t = performance.now() / 1000, L = pkLevel(), kp = pk
   // (facing the goal - turned round to the one playing while it cheers a goal)
   const faceTo = pk.phase === 'after' && !pk.saved ? 2 * Math.PI : Math.PI; game.rotY = (game.rotY ?? Math.PI) + (faceTo - (game.rotY ?? Math.PI)) * Math.min(1, dt * 6); glb.rotation.y = game.rotY;
   // (the bear stepping from side to side, bobbing, until the ball is kicked)
-  if (pk.phase === 'aim' || pk.phase === 'kick') { pk.kx = Math.sin(t * L.sway * 1.6) * .9; kp.position.x = pk.kx; kp.position.y = Math.abs(Math.sin(t * L.sway * 3.2)) * .05; pk.kHead.rotation.z = Math.sin(t * 2) * .1; }
+  pk.abe?.mixer.update(dt);
+  if (pk.phase === 'aim' || pk.phase === 'kick') { pk.kx = Math.sin(t * L.sway * 1.6) * .9;
+    if (pk.abe) { pk.back = (pk.back || 0) * Math.exp(-dt * 4); kp.position.x = pk.kx + pk.back; const v = Math.cos(t * L.sway * 1.6) * .9 * L.sway * 1.6; // (it side-steps while it moves quickly - the other way in the mirror - and is ready, knees bent, as it turns)
+      if (Math.abs(v) > .62 && pk.abe.now !== 'side') { pk.abe.group.scale.x = Math.sign(v); pkAbePlay('side'); } else if (Math.abs(v) < .42 && pk.abe.now !== 'klar') pkAbePlay('klar', 0, false, .3); if (pk.abe.now === 'side') pk.abe.act.side.timeScale = Math.min(1.3, Math.abs(v) / .9); }
+    else { kp.position.x = pk.kx; kp.position.y = Math.abs(Math.sin(t * L.sway * 3.2)) * .05; pk.kHead.rotation.z = Math.sin(t * 2) * .1; } }
   if (pk.phase === 'kick') { const a = glbActions[pkKick()], k = kicks[pkKick()];
     if (a.time >= k.contact) { pk.phase = 'fly'; pk.t = 0; pk.from.copy(b.position); sfx('swish');
       // (the bear's guess: the right way, as far as it reaches - or the wrong way)
       const right = Math.random() < L.guess; pk.dive = right ? Math.max(pk.kx - L.reach, Math.min(pk.kx + L.reach, pk.aim.x)) : pk.kx + (pk.aim.x > pk.kx ? -1 : 1) * L.reach * .8;
-      pk.dive = Math.max(-PK.halfW + .4, Math.min(PK.halfW - .4, pk.dive)); pk.saved = Math.abs(pk.aim.x - pk.dive) < .5 && pk.aim.y < 1.5; pk.diveFrom = pk.kx; } }
+      pk.dive = Math.max(-PK.halfW + .4, Math.min(PK.halfW - .4, pk.dive)); pk.saved = Math.abs(pk.aim.x - pk.dive) < .5 && pk.aim.y < 1.5; pk.diveFrom = kp.position.x;
+      // (the monkey: a ball near it caught high, low or at the chest - it jumps for a high one - further off it dives)
+      if (pk.abe) { pk.abe.group.scale.x = 1; if (Math.abs(pk.dive - pk.diveFrom) < .35) { if (right) pk.saved = true; const [id, at] = pk.aim.y > 1.15 ? ['grib-hoej', .28] : pk.aim.y < .55 ? ['grib-lav', .22] : ['grib-midt', .05]; pkAbePlay(id, at, true); } else { const dir = Math.sign(pk.dive - pk.diveFrom); pkAbePlay(dir > 0 ? 'dyk-h' : 'dyk-v', .42, true); pk.dive -= dir * .8; } } } } // (its long arms reach the ball: the body lands short of it)
   if (pk.phase === 'fly') { pk.t += dt; const s = Math.min(1, pk.t / PK.fly), end = pk.saved ? .82 : 1;
     // (the ball on its way - a little arc, spinning; the bear diving to its side, tipping over)
     const u = Math.min(s, end); b.position.lerpVectors(pk.from, pk.aim, u); b.position.y += Math.sin(Math.PI * u) * .35; b.rotation.x -= dt * 16;
-    const d = Math.min(1, s * 1.4); kp.position.x = pk.diveFrom + (pk.dive - pk.diveFrom) * d; kp.position.y = Math.sin(Math.PI * Math.min(1, d)) * .25; kp.rotation.z = -Math.sign(pk.dive - pk.diveFrom || 1) * 1.1 * d;
+    const d = Math.min(1, s * 1.4); kp.position.x = pk.diveFrom + (pk.dive - pk.diveFrom) * d; if (!pk.abe) { kp.position.y = Math.sin(Math.PI * Math.min(1, d)) * .25; kp.rotation.z = -Math.sign(pk.dive - pk.diveFrom || 1) * 1.1 * d; }
     if (s >= end) { pk.phase = 'after'; pk.t = 0;
       if (pk.saved) sfx('bonk');
       else { sfx('boing'); sfx('ding', .1); addStars(1); celebrate(); runAnim(GAME.cheer); } } }
-  if (pk.phase === 'after') { pk.t += dt;
+  if (pk.abe && pk.saved && (pk.phase === 'after' || pk.phase === 'return')) pkAbeSaved(dt, b);
+  else if (pk.phase === 'after') { pk.t += dt;
     // (saved: the ball drops in front of the bear and rolls a little; goal: the net bulges back and settles)
     if (pk.saved) { b.position.y = Math.max(kick.r, b.position.y - dt * 2.5); b.position.z = Math.min(PK.goalZ + 1.2, b.position.z + dt * 1.2); b.rotation.x += dt * 5; }
     else { pk.netBack.position.z = -1 - .35 * Math.exp(-pk.t * 3) * Math.abs(Math.cos(pk.t * 8)); b.position.z = Math.max(PK.goalZ - .85, b.position.z - dt * 1.5); b.position.y = Math.max(kick.r, b.position.y - dt * 2); }
