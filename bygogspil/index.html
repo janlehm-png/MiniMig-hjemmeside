@@ -552,8 +552,9 @@ const PALETTES = { skin: ['#F6D0AE', '#EDB98A', '#D9965F', '#B5713F', '#8D5530',
   cloth: ['#E8384F', '#FF7A2F', '#FFC233', '#2FB872', '#13BFA6', '#3D8BFF', '#46699E', '#7A4DFF', '#FF6FB1', '#F4F1EA', '#3A3550'] };
 PALETTES.brows = PALETTES.hair;
 // (the nose, the mouth and Pynt have no colour of their own, as in the app: no sliders under them - nor the movements)
+var briefsOn = false; // (the briefs are always white: no colours under them)
 function showSwatches() { const move = /^(move|game)-/.test(partNow); if (!move) slidersFrom(picked[partNow] || START[partNow]);
-  const noColour = move || ['nose', 'mouth', 'pynt', 'name', 'ears', 'bg'].includes(partNow);
+  const noColour = move || ['nose', 'mouth', 'pynt', 'name', 'ears', 'bg'].includes(partNow) || partNow === 'pants' && briefsOn;
   document.getElementById('sliders').style.display = noColour ? 'none' : '';
   // (the fixed colours of the app over the sliders: skin, hair - the brows too - eyes, and the clothes' colours for the rest)
   const sw = document.getElementById('swatches'), list = noColour ? [] : PALETTES[partNow] || PALETTES.cloth; sw.hidden = !list.length; sw.innerHTML = '';
@@ -1294,7 +1295,7 @@ function redrawBody() {
     if (!c) { o[i] = s[i]; o[i + 1] = s[i + 1]; o[i + 2] = s[i + 2]; o[i + 3] = 255; continue; }
     const k = (.3 * s[i] + .59 * s[i + 1] + .11 * s[i + 2]) / tex.mid[tex.label[p]];
     o[i] = Math.min(255, c.r * 255 * k); o[i + 1] = Math.min(255, c.g * 255 * k); o[i + 2] = Math.min(255, c.b * 255 * k); o[i + 3] = 255; }
-  drawEyes(o); drawMouth(o); drawPynt(o); drawNose(o); drawBrows(o); tex.ctx.putImageData(out, 0, 0); tex.texture.needsUpdate = true; smoothUnder(); shapeNose(); mouthNormals(); bulgeLips(); }
+  matchThighs(o); drawEyes(o); drawMouth(o); drawPynt(o); drawNose(o); drawBrows(o); tex.ctx.putImageData(out, 0, 0); tex.texture.needsUpdate = true; smoothUnder(); thighLight(); shapeNose(); mouthNormals(); bulgeLips(); }
 // (the smile's crease lit smooth under a new mouth, as it was under the smile - after shapeNose, whose area reaches
 // down over the upper lip and put the crease's light back there)
 function mouthNormals() { const M = tex && tex.mouth, opts = (MOUTHS.find(m => m[0] === mouthNow) || [])[2]; if (!M || !M.verts || !hairBase) return;
@@ -1897,7 +1898,7 @@ const GARMENTS = {
     ['toej-haette', 'Hættetrøje', { made: true, sleeve: 1.06, length: .04, hood: true, pocket: true, cloth: 'smooth' }],
     ['toej-fodbold', 'Fodboldtrøje', { made: true, sleeve: .32, length: .01, tuck: true, trim: true, cloth: 'smooth' }]], texs: clothTexs },
   // (the folds lower than at first - the user - and the long trousers turned up a little too)
-  pants: { items: [['', 'Undershorts'], ['bukser-trusser', 'Trusser', { made: true, hem: .41, rise: .012, noBand: true }], ['bukser-lange', 'Lange bukser', { made: true, hem: .06, loose: .004, cuff: .014 }], ['bukser-shorts', 'Shorts', { made: true, hem: .3, cuff: .018 }],
+  pants: { items: [['', 'Undershorts'], ['bukser-trusser', 'Trusser', { made: true, hem: .41, brief: .07, rise: .012, noBand: true, white: true }], ['bukser-lange', 'Lange bukser', { made: true, hem: .06, loose: .004, cuff: .014 }], ['bukser-shorts', 'Shorts', { made: true, hem: .3, cuff: .018 }],
     ['bukser-cowboy', 'Cowboyshorts', { made: true, hem: .24, cuff: .02, cloth: 'denim' }], ['bukser-fodbold', 'Fodboldbukser', { made: true, hem: .295, loose: .004, loops: false, cloth: 'smooth' }]], texs: [], waist: true },
   dress: { items: [['', 'Ingen kjole'], ['kjole-sommer', 'Sommerkjole'], ['kjole-prinsesse', 'Prinsessekjole', { hang: .5, armsOut: 12 }], ['kjole-havfrue', 'Havfruekjole', { skirt: false, margin: .012, reach: 8, tail: true, snug: .2, waist: .15 }]], texs: [], skirt: true, noArms: true },
   // (socks made from the body too: low ones for sneakers, football socks with a stripe at the top, and knee socks)
@@ -1921,7 +1922,7 @@ async function setGarment(part, name) { const G = GARMENTS[part], ask = ++dressi
   if (name && part === 'dress') { if (!G.now) G.before = { shirt: GARMENTS.shirt.now, pants: GARMENTS.pants.now }; GARMENTS.shirt.now = GARMENTS.pants.now = ''; }
   if (!name && part === 'dress' && G.now && G.before) { GARMENTS.shirt.now = G.before.shirt; GARMENTS.pants.now = G.before.pants; }
   if (name && (part === 'shirt' || part === 'pants')) GARMENTS.dress.now = '';
-  G.now = name; renderStyles();
+  G.now = name; briefsOn = GARMENTS.pants.now === 'bukser-trusser'; if (part === 'pants') showSwatches(); else renderStyles();
   // (everything changed at once, when all of it is loaded - the underwear went skin coloured and the last dress stayed on
   // while a new one loaded; a choice made meanwhile wins)
   for (const [p, g] of Object.entries(GARMENTS)) if (g.now && !g.meshes[g.now]) { const n = g.now;
@@ -1939,7 +1940,59 @@ let underBriefs = null;
 function wearUnder() { const D = GARMENTS.dress, wide = !!D.shown && (D.items.find(i => i[0] === D.shown)?.[2]?.skirt ?? D.skirt);
   if (wide && !underBriefs) { const o = GARMENTS.pants.items.find(i => i[0] === 'bukser-trusser')[2]; underBriefs = makeCloth('bukser-trusser', 'pants', o);
     if (underBriefs) { underBriefs.material = new THREE.MeshStandardMaterial({ color: 0xF4F1EA, roughness: .85, side: THREE.DoubleSide }); underBriefs.name = 'under-dress'; } }
-  if (underBriefs) underBriefs.visible = wide; }
+  if (underBriefs) underBriefs.visible = wide; setSlim(wide || GARMENTS.pants.shown === 'bukser-trusser'); }
+// (the thighs in their own shape: the figure was made wearing its shorts, so down to their hem the thighs are that much
+// thicker, with a step at the hem - it shows only where nothing covers them: with the briefs, or looking up a wide skirt.
+// Then each thigh is drawn in to a smooth line from the top of the thigh to the leg as it is just under the hem - the
+// user, 04-11-2026 - and painted as that leg is. Fitted clothes keep the shape they were made on)
+const THIGH = { under: .02, bins: 36 };
+function slimThighs() { if (hairBase.slim) return hairBase.slim; const { pts, inv, H } = hairBase.whole, K = clothMarks(), geo = hairBase.body.geometry, P = geo.attributes.position, uv = geo.attributes.uv, bsi = geo.attributes.skinIndex, bsw = geo.attributes.skinWeight;
+  const armB = new Set(hairBase.body.skeleton.bones.flatMap((b, j) => /Arm|Hand/.test(b.name) ? [j] : [])), onArm = j => { let a = 0; for (let c = 0; c < 4; c++) if (armB.has(bsi.getComponent(j, c))) a += bsw.getComponent(j, c); return a > .2; };
+  const pixel = j => Math.min(tex.h - 1, Math.max(0, Math.floor((1 - uv.getY(j)) * tex.h))) * tex.w + Math.min(tex.w - 1, Math.max(0, Math.floor(uv.getX(j) * tex.w))), n = P.count, crotch = hairBase.hipY - .06 * H;
+  // (the hem: where the shorts' lowest corners are - the lowest twentieth left out, stray specks)
+  const ys = []; for (let j = 0; j < n; j++) if (tex.label[pixel(j)] === PARTS.pants && pts[j * 6 + 1] < crotch && !onArm(j)) ys.push(pts[j * 6 + 1]); ys.sort((a, b) => a - b); const hem = ys[Math.floor(ys.length * .05)], yRef = hem - THIGH.under * H;
+  const legs = { '-1': { x: 0, z: 0, c: 0, tx: 0, tz: 0, tc: 0, r: new Float32Array(THIGH.bins) }, 1: { x: 0, z: 0, c: 0, tx: 0, tz: 0, tc: 0, r: new Float32Array(THIGH.bins) } }, sideOf = x => x < K.mid ? -1 : 1;
+  for (let j = 0; j < n; j++) { const y = pts[j * 6 + 1]; if (onArm(j)) continue; const L = legs[sideOf(pts[j * 6])];
+    if (Math.abs(y - yRef) < .008 * H) { L.x += pts[j * 6]; L.z += pts[j * 6 + 2]; L.c++; } else if (y < crotch - .01 * H && y > crotch - .04 * H) { L.tx += pts[j * 6]; L.tz += pts[j * 6 + 2]; L.tc++; } }
+  for (const L of Object.values(legs)) { L.x /= L.c; L.z /= L.c; L.tx /= L.tc; L.tz /= L.tc; }
+  const binOf = (x, z, L) => Math.floor((Math.atan2(x, z) / (2 * Math.PI) + .5) * THIGH.bins) % THIGH.bins;
+  for (let j = 0; j < n; j++) { if (Math.abs(pts[j * 6 + 1] - yRef) >= .008 * H || onArm(j)) continue; const L = legs[sideOf(pts[j * 6])], dx = pts[j * 6] - L.x, dz = pts[j * 6 + 2] - L.z, b = binOf(dx, dz); L.r[b] = Math.max(L.r[b], Math.hypot(dx, dz)); }
+  // (and how far out the body comes at the top of the thigh, by the briefs' edge, all round: the thigh's outline runs in a
+  // straight smooth line from there down to the leg - held in to just under the crotch, the hips stood out over it in a
+  // sharp notch on the outside, seen from in front, the user said)
+  for (const L of Object.values(legs)) L.rt = new Float32Array(THIGH.bins);
+  for (let j = 0; j < n; j++) { const y = pts[j * 6 + 1]; if (y >= crotch || y <= crotch - .03 * H || onArm(j)) continue; const L = legs[sideOf(pts[j * 6])], dx = pts[j * 6] - L.tx, dz = pts[j * 6 + 2] - L.tz, b = binOf(dx, dz); L.rt[b] = Math.max(L.rt[b], Math.hypot(dx, dz)); }
+  const fill = r => { const s = r.map((v, b) => (v || Math.max(r[(b + 1) % r.length], r[(b + r.length - 1) % r.length]))); return s.map((_, b) => (s[(b + 1) % s.length] + s[b] * 2 + s[(b + s.length - 1) % s.length]) / 4); };
+  for (const L of Object.values(legs)) { L.r = fill(L.r); L.rt = fill(L.rt); }
+  const slim = P.array.slice(), w = new THREE.Vector3(), legPix = new Set(), thighPix = new Set();
+  for (let j = 0; j < n; j++) { const x = pts[j * 6], y = pts[j * 6 + 1], z = pts[j * 6 + 2]; if (onArm(j)) continue;
+    if (y < hem - .05 * H && y > hem - .09 * H && tex.label[pixel(j)] === PARTS.skin) legPix.add(pixel(j));
+    if (y <= yRef - .002 * H || y >= crotch) continue; if (tex.label[pixel(j)] === PARTS.pants || tex.seam[pixel(j)] === PARTS.pants) thighPix.add(pixel(j));
+    const L = legs[sideOf(x)], t = (y - yRef) / (crotch - yRef), cx = L.x + (L.tx - L.x) * t, cz = L.z + (L.tz - L.z) * t, dx = x - cx, dz = z - cz, now = Math.hypot(dx, dz); if (now < 1e-5) continue;
+    const a = (Math.atan2(dx, dz) / (2 * Math.PI) + .5) * THIGH.bins, b0 = Math.floor(a) % THIGH.bins, u = a - Math.floor(a), at = r => r[b0] * (1 - u) + r[(b0 + 1) % THIGH.bins] * u, R = at(L.r) + (at(L.rt) - at(L.r)) * t;
+    // (only ever in)
+    const to = Math.min(now, R); w.set(cx + dx / now * to, y, cz + dz / now * to).applyMatrix4(inv); slim[j * 3] = w.x; slim[j * 3 + 1] = w.y; slim[j * 3 + 2] = w.z; }
+  // (the shadow of the shorts painted on the leg under their hem, a dark ragged band: every little square of the picture
+  // from just above the hem to a little under it, drawn triangle by triangle - with how much of the leg's colour it
+  // gets, all at the hem, fading out downwards)
+  const band = new Map(), lo = hem - .05 * H, hi = crotch, cy = [0, 0, 0], cu = [0, 0, 0], cv = [0, 0, 0];
+  for (let t = 0; t + 2 < n; t += 3) { let inside = false; for (let c = 0; c < 3; c++) { const j = t + c; cy[c] = pts[j * 6 + 1]; cu[c] = uv.getX(j) * tex.w; cv[c] = (1 - uv.getY(j)) * tex.h; if (cy[c] > lo && cy[c] < hi) inside = true; } if (!inside || onArm(t)) continue;
+    const x0 = Math.floor(Math.min(...cu)), x1 = Math.ceil(Math.max(...cu)), y0 = Math.floor(Math.min(...cv)), y1 = Math.ceil(Math.max(...cv)), d = (cv[1] - cv[2]) * (cu[0] - cu[2]) + (cu[2] - cu[1]) * (cv[0] - cv[2]); if (!d || x1 - x0 > 60 || y1 - y0 > 60) continue;
+    for (let py = y0; py <= y1; py++) for (let px = x0; px <= x1; px++) { const a = ((cv[1] - cv[2]) * (px + .5 - cu[2]) + (cu[2] - cu[1]) * (py + .5 - cv[2])) / d, b = ((cv[2] - cv[0]) * (px + .5 - cu[2]) + (cu[0] - cu[2]) * (py + .5 - cv[2])) / d, e = 1 - a - b; if (a < -.25 || b < -.25 || e < -.25 || px < 0 || py < 0 || px >= tex.w || py >= tex.h) continue;
+      const k = Math.min(1, Math.max(0, ((a * cy[0] + b * cy[1] + e * cy[2]) - lo) / (.03 * H))), p = py * tex.w + px; band.set(p, Math.max(band.get(p) || 0, k * k * (3 - 2 * k))); } }
+  // (and the light: the way each point faces still came from the step at the hem, a dark ragged band across the leg - from
+  // just under it up to the crotch it faces straight out from the leg, fading into its own at both ends)
+  const N = geo.attributes.normal, turn = [], from = yRef - .05 * H, q = new THREE.Vector3(); for (let j = 0; j < n; j++) { const x = pts[j * 6], y = pts[j * 6 + 1], z = pts[j * 6 + 2]; if (y <= from || y >= crotch || onArm(j)) continue;
+    const L = legs[sideOf(x)], t = Math.max(0, (y - yRef) / (crotch - yRef)), dx = x - (L.x + (L.tx - L.x) * t), dz = z - (L.z + (L.tz - L.z) * t), l = Math.hypot(dx, dz); if (l < 1e-5) continue; q.set(dx / l, 0, dz / l).transformDirection(inv);
+    turn.push({ j, x: q.x, y: q.y, z: q.z, k: Math.min(1, (y - from) / (.03 * H), (crotch - y) / (.03 * H)), was: [N.getX(j), N.getY(j), N.getZ(j)] }); }
+  return hairBase.slim = { orig: P.array.slice(), slim, on: false, legPix: [...legPix], thighPix: [...thighPix], band, turn }; }
+function thighLight(off) { const S = hairBase?.slim; if (!S || !S.on && !off) return; const N = hairBase.body.geometry.attributes.normal, a = N.array;
+  for (const t of S.turn) { let x = t.was[0], y = t.was[1], z = t.was[2]; if (!off) { x += (t.x - x) * t.k; y += (t.y - y) * t.k; z += (t.z - z) * t.k; const l = Math.hypot(x, y, z) || 1; x /= l; y /= l; z /= l; } a[t.j * 3] = x; a[t.j * 3 + 1] = y; a[t.j * 3 + 2] = z; } N.needsUpdate = true; }
+function setSlim(on) { if (!hairBase || !tex || (!on && !hairBase.slim)) return; const S = slimThighs(); if (S.on === on) return; S.on = on; hairBase.body.geometry.attributes.position.array.set(on ? S.slim : S.orig); hairBase.body.geometry.attributes.position.needsUpdate = true; if (!on) thighLight(true); redrawBody(); }
+// (the thighs' paint made the same as the leg just under them, colour for colour)
+function matchThighs(o) { const S = hairBase?.slim; if (!S?.on || !tex.covered[PARTS.pants]) return; const mean = l => { const m = [0, 0, 0]; for (const p of l) for (let c = 0; c < 3; c++) m[c] += o[p * 4 + c]; return m.map(v => v / Math.max(1, l.length)); }, A = mean(S.legPix), B = mean(S.thighPix), f = A.map((v, c) => v / Math.max(1, B[c]));
+  for (let p = 0; p < tex.w * tex.h; p++) if (tex.label[p] === PARTS.pants || tex.seam[p] === PARTS.pants) for (let c = 0; c < 3; c++) o[p * 4 + c] = Math.min(255, o[p * 4 + c] * f[c]);
+  for (const [p, k] of S.band) for (let c = 0; c < 3; c++) o[p * 4 + c] += (A[c] - o[p * 4 + c]) * k; }
 // (a top over trousers: its lower part let out over them, wherever they come further out - drawn up by the navel the
 // trousers came out through the T-shirt's hem. Each time from the top's own shape, kept in orig)
 function layer() { const top = GARMENTS.shirt.meshes[GARMENTS.shirt.shown], under = GARMENTS.pants.meshes[GARMENTS.pants.shown]; if (!top) return;
@@ -2047,7 +2100,9 @@ function makeCloth(name, part, opts) {
   // in the contrast colour that far below the top, [from, to])
   if (socks) { const top = opts.top * H; edges = [{ f: p => p[1] - top, bare: .008 * H }]; out = () => (opts.out || .0035) * H; }
   else if (pants) { const hem = opts.hem * H;
-    edges = [{ f: p => hem - p[1], fold: (opts.cuff || 0) * H, bare: .012 * H }, { f: p => p[1] - top, bare: .003 * H }];
+    // (briefs: the leg openings on the slant, from the crotch up over the hips)
+    const hemAt = opts.brief ? p => crotch - .004 * H + clamp(side(p) / (.1 * H)) * opts.brief * H : () => hem;
+    edges = [{ f: p => hemAt(p) - p[1], fold: (opts.cuff || 0) * H, bare: .012 * H }, { f: p => p[1] - top, bare: .003 * H }];
     // (loose: the legs that much further out all the way down, from just under the crotch - long trousers sat like tights)
     out = p => { const s = clamp((crotch - p[1]) / (crotch - hem)); return (.006 + (opts.flare || 0) * s * s + (opts.loose || 0) * clamp((crotch - p[1]) / (.06 * H))) * H; }; }
   // (tucked: a top's bottom inside the trousers - as long as a T-shirt, so with underpants only no tummy shows)
@@ -2179,6 +2234,8 @@ function makeCloth(name, part, opts) {
   if (socks) { cloth.userData.sock = opts; paintSocks(cloth); if (opts.heel) { cloth.material.roughness = .28; cloth.material.metalness = .05; } }
   // (the body under it hidden, all but near its edges)
   const covered = new Uint8Array(pts.length / 6); for (let j = 0; j < covered.length; j++) covered[j] = !((pants || socks) && armPt[j]) && edges.every(e => e.f(P3(j)) < -e.bare) ? 1 : 0;
+  // (white: always white, like the vest and the undershorts - the briefs)
+  if (opts.white) cloth.material = new THREE.MeshStandardMaterial({ color: 0xF2EFE8, roughness: .85, metalness: 0, side: THREE.DoubleSide });
   cloth.userData.covered = covered; cloth.userData.made = true; cloth.userData.tucked = T; return cloth; }
 async function loadCloth(name, part) {
   const G = GARMENTS[part], file = G.items.find(it => it[0] === name)?.[2]?.file || name; // (file: made from another one's files)
