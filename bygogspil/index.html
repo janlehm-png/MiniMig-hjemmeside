@@ -106,6 +106,9 @@
   /* saving: the star, Mine figurer, the new MiniMig and the camera - first of the groups on the right, as tabs with
      their sign for a picture (they sat on the figure's picture until 03-11-2026; the user wanted the picture clear) */
   .tabgroup button .emo { height: 32px; font-size: 25px; line-height: 32px; pointer-events: none; }
+  .emo-coins { position: relative; display: inline-block; padding-right: 6px; }
+  .mini-coin { position: absolute; bottom: -1px; display: grid; place-items: center; border-radius: 50%; width: 15px; height: 15px; border: 1px solid #8E8BA0; background: radial-gradient(circle at 35% 30%, #FFFFFF, #CFCDD8 60%, #A9A6B8); color: #3A3550; font: 800 8px/1 system-ui, sans-serif; left: -6px; }
+  .mini-coin.gold { left: auto; right: -5px; bottom: 4px; width: 18px; height: 18px; font-size: 9px; border-color: #B8860B; background: radial-gradient(circle at 35% 30%, #FFF4B8, #F5C842 55%, #C9962A); color: #5A3A00; }
   .tabgroup button span { pointer-events: none; }
   #saveBtn { position: relative; }
   /* Hop over bolden: the stars top left, the cross top right, a hint at the foot of the picture at the start */
@@ -337,9 +340,11 @@
     <button id="newBtn"><span class="emo" aria-hidden="true">✨</span><span>Ny figur</span></button>
     <button id="saveBtn"><span class="emo" aria-hidden="true">📷</span><span>Billede</span><span class="lock-badge" id="lockBadge" hidden aria-hidden="true">🔓</span></button>
     <button id="soundBtn"><span class="emo" aria-hidden="true">🔊</span><span>Lyd</span></button>
-    <button id="starBtn"><span class="emo" aria-hidden="true">🏆</span><span>Stjerner</span></button>
+    <!-- (the coins are on the button too - the user, 04-11-2026) -->
+    <button id="starBtn"><span class="emo emo-coins" aria-hidden="true">🏆<i class="mini-coin">5</i><i class="mini-coin gold">20</i></span><span>Stjerner</span></button>
     <!-- (on minimig.dk only: the website's "Til voksne" - home screen, offline, privacy - from its pwa.js) -->
-    <button id="adultBtn" hidden><span class="emo" aria-hidden="true">👪</span><span>Til voksne</span></button>
+    <!-- (drawn here: an iPad shows the family emoji as a grey outline - the user, 04-11-2026) -->
+    <button id="adultBtn" hidden><span class="emo" aria-hidden="true"><svg viewBox="0 0 32 32" width="30" height="30"><circle cx="11.5" cy="8" r="5" fill="#F2C09A"/><path d="M7 7a5 5 0 0 1 9-1.5C13 7 10 7.500 7 7z" fill="#6B4226"/><path d="M4 30V20a7.500 7.500 0 0 1 15 0v10z" fill="#4F7BE8"/><circle cx="23.500" cy="15" r="4" fill="#F7CFAE"/><path d="M19.500 14.500a4 4 0 0 1 8 0c-3-.2-5.500-.8-8 0z" fill="#E0A63A"/><path d="M18 30v-5a5.500 5.500 0 0 1 11 0v5z" fill="#F0628F"/></svg></span><span>Til voksne</span></button>
   </div>
   <!-- (the movements' group, put after the other three groups by the page) -->
   <div class="tabgroup" id="moves">
@@ -515,9 +520,9 @@
     <div class="sheet-head"><h2 id="figSheetTitle">Mine figurer</h2><button class="sheet-x" data-close aria-label="Luk">✕</button></div>
     <!-- (the children first, each with their own MiniMig and stars - tap one to be that child; the user, 03-11-2026: the
          grown-ups' players belonged here with the figures, not under the stars) -->
-    <div class="kids" id="figKids"><h3>👪 Børn</h3><div class="who who-small" id="kidList"></div><h3>🖼️ Gemte figurer</h3></div>
+    <div class="kids" id="figKids"><h3>Børn</h3><div class="who who-small" id="kidList"></div><h3>🖼️ Gemte figurer</h3></div>
     <div class="gallery" id="gallery"></div>
-    <button class="share-off players-btn" id="playersBtn">👪 Børn og spillere – for voksne</button>
+    <button class="share-off players-btn" id="playersBtn">Børn og spillere – for voksne</button>
   </div>
 </div>
 <div class="sheet" id="picSheet" hidden>
@@ -2701,13 +2706,17 @@ function printOn(key, at, worn, draw) {
   const m = prints[key] = new THREE.SkinnedMesh(ng, new THREE.MeshStandardMaterial({ map, transparent: true, depthWrite: false, roughness: .8, metalness: 0, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
   m.frustumCulled = false; m.position.copy(body.position); m.quaternion.copy(body.quaternion); m.scale.copy(body.scale);
   body.parent.add(m); m.bind(body.skeleton, body.bindMatrix); }
-// (dark ink on a light garment, white on a dark - as the app's printName)
-const lightCloth = part => { const c = new THREE.Color().setStyle(part ? picked[part] || START[part] : '#FFFFFF', THREE.SRGBColorSpace); return .299 * c.r + .587 * c.g + .114 * c.b > .62; };
+// (whichever of dark ink and white stands out most from the garment, by how the eye sees contrast - the user, 04-11-2026:
+// always a contrast colour. A garment not coloured by hand, its colour as made: the average of its own picture)
+function clothColour(part, mesh) { const c = new THREE.Color(); if (!part) return c.set('#FFFFFF'); if (picked[part]) return c.setStyle(picked[part], THREE.SRGBColorSpace);
+  try { let im = null; mesh.traverse(o => { im ||= o.material?.map?.image; }); const cv = document.createElement('canvas'); cv.width = cv.height = 16; const g = cv.getContext('2d', { willReadFrequently: true }); g.drawImage(im, 0, 0, 16, 16); const d = g.getImageData(0, 0, 16, 16).data; let r = 0, gr = 0, b = 0, n = 0; for (let i = 0; i < d.length; i += 4) if (d[i + 3] > 128) { r += d[i]; gr += d[i + 1]; b += d[i + 2]; n++; } if (n) return c.setRGB(r / n / 255, gr / n / 255, b / n / 255, THREE.SRGBColorSpace); } catch (e) { /* (no picture: its start colour) */ }
+  return c.setStyle(START[part], THREE.SRGBColorSpace); }
+const lightCloth = (part, mesh) => { const c = clothColour(part, mesh); return .2126 * c.r + .7152 * c.g + .0722 * c.b > .223; };
 function chestName() { if (!hairBase) return;
   const name = nameNow.trim().slice(0, 10), badge = (BADGES.find(b => b[0] === badgeNow) || ['', ''])[1];
   const { H } = hairBase.whole, K = clothMarks(), dress = GARMENTS.dress.meshes[GARMENTS.dress.shown], shirt = GARMENTS.shirt.meshes[GARMENTS.shirt.shown];
   // (on a dress lower down: the dresses have no shoulders, and the badge sat on their top edge)
-  const light = lightCloth(dress ? 'dress' : shirt ? 'shirt' : '');
+  const light = lightCloth(dress ? 'dress' : shirt ? 'shirt' : '', dress || shirt);
   // (the picture: the badge over the name - the name alone in the middle, smaller as it gets longer, as in the app)
   printOn('name', { cx: K.mid, cy: K.neckY - (dress ? .16 : .115) * H, hw: .08 * H, hh: .055 * H }, dress || shirt, (name || badge) && ((g, w, h) => { const mx = w / 2, my = h / 2;
   g.textAlign = 'center'; g.textBaseline = 'middle';
@@ -2740,7 +2749,7 @@ function footballPrints() { if (!hairBase) return; const { H } = hairBase.whole,
   // (the figure's right: on the left as one looks at it)
   printOn('crest', { cx: K.mid - .045 * H, cy: K.neckY - .07 * H, hw: .018 * H, hh: .018 * H }, shirt, shirt && crest);
   printOn('crest-pants', { cx: K.mid - .055 * H, cy: hipY - .1 * H, hw: .014 * H, hh: .014 * H }, pants, pants && crest);
-  const light = lightCloth('shirt');
+  const light = lightCloth('shirt', shirt);
   printOn('number', { cx: K.mid, cy: K.neckY - .13 * H, hw: .075 * H, hh: .075 * H, back: true }, shirt, shirt && ((g, w, h) => {
     g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = `800 ${h * .78}px ui-rounded, "Arial Rounded MT Bold", system-ui, sans-serif`;
     g.shadowColor = light ? 'rgba(255,255,255,.35)' : 'rgba(0,0,0,.25)'; g.shadowOffsetY = 5; g.shadowBlur = 8;
@@ -3347,7 +3356,8 @@ function kickSetup(id) { const clip = glbActions[id].getClip();
   for (let k = 0; k <= n; k++) { sample(id, kick.pre + len * k / n); toes.forEach((b, i) => track[i].push(holder.worldToLocal(b.getWorldPosition(new THREE.Vector3())))); }
   const foot = track.reduce((a, b) => Math.max(...b.map(p => p.z)) > Math.max(...a.map(p => p.z)) ? b : a);
   let best = 1, speed = -1; for (let k = 1; k <= n; k++) { const v = foot[k].z - foot[k - 1].z; if (v > speed) { speed = v; best = k; } }
-  if (!kick.ball) { kick.ball = makeItem('fodbold'); kick.ball.group.scale.setScalar(.75); scene.remove(kick.ball.group); holder.add(kick.ball.group); }
+  // (a ball as high as half the sock, from the floor to the knee - the user, 04-11-2026: it was far too small)
+  if (!kick.ball) { if (bone('LeftLeg') && glbActions.staa) { sample('staa', 0); kick.r = holder.worldToLocal(bone('LeftLeg').getWorldPosition(new THREE.Vector3())).y * .3; } kick.ball = makeItem('fodbold'); kick.ball.group.scale.setScalar(kick.r / .158); scene.remove(kick.ball.group); holder.add(kick.ball.group); }
   kicks[id] = { contact: kick.pre + len * best / n, rest: new THREE.Vector3(foot[best].x, kick.r, foot[best].z + kick.r * .6), side: Math.sign(foot[best].x) || 1 };
   // (which way the head looks, in its own turn: measured standing straight, looking ahead - the kick's own start looks down)
   if (!kick.headFwd && bone('Head') && glbActions.staa) { sample('staa', 0); kick.headFwd = new THREE.Vector3(0, 0, 1).applyQuaternion(bone('Head').getWorldQuaternion(new THREE.Quaternion()).invert()); } }
@@ -3372,7 +3382,15 @@ function kickBall(dt) { if (!kick.ball) return; const k = kicks[anim], a = glbAc
     g.position.set(rest.x - 1.2 * s * side, Math.max(r, r + 3.2 * s - 4.4 * s * s), rest.z + 4.5 * s); g.rotation.x += dt * 14; }
   if (glb) g.position.applyAxisAngle(yAxis, glb.rotation.y);
   // (eyes on the ball from when it rolls in until it is away, easing in and out)
-  lookAtBall(g, .85 * Math.min(1, t / .4) * Math.max(0, Math.min(1, 1 - (t - contact - 1) / .4))); }
+  lookAtBall(g, .85 * Math.min(1, t / .4) * Math.max(0, Math.min(1, 1 - (t - contact - 1) / .4)));
+  kickArms(t, contact, side); }
+// (the arms go with the kick - the user, 04-11-2026: they just hung down. A little out from the body from the start;
+// in the kick the arm on the kicking side swings back and the other forward, as a body keeps its balance)
+const kaS = new THREE.Vector3(), kaO = new THREE.Vector3(), kaD = new THREE.Vector3(), kaQ = new THREE.Quaternion();
+function kickArms(t, contact, side) { const w = Math.min(1, t / .4) * Math.max(0, Math.min(1, 1 - (t - contact - .8) / .4)); if (w <= 0) return; holder.getWorldQuaternion(kaQ); if (glb) kaQ.multiply(glb.quaternion);
+  const s = Math.exp(-(((t - contact) / .38) ** 2));
+  kaS.set(side * (.5 + .25 * s), -.86 + .5 * s, .12 - .72 * s); kaO.set(-side * (.5 - .1 * s), -.86 + .55 * s, .12 + .75 * s);
+  [[side > 0 ? 'Left' : 'Right', kaS], [side > 0 ? 'Right' : 'Left', kaO]].forEach(([n, v]) => { kaD.copy(v).normalize().applyQuaternion(kaQ); aimBone(n + 'Arm', n + 'ForeArm', kaD, .9 * w); kaD.copy(v).add(ssBack.set(0, .35, .35)).normalize().applyQuaternion(kaQ); aimBone(n + 'ForeArm', n + 'Hand', kaD, .9 * w); }); }
 
 // ---- Hop over bolden: the first little game (03-11-2026) ----
 // The figure runs on the spot, seen from the side; footballs roll in from the right. A tap on the figure's picture (or
@@ -4075,7 +4093,7 @@ function pkBuild() { if (pk.world) return; const w = pk.world = new THREE.Group(
   pk.rig = new THREE.Group(); }
 function pkStart() { pkBuild(); scene.add(pk.world); holder.add(pk.rig); pk.rig.add(glb); pk.rig.position.set(0, 0, 0); game.rotY = Math.PI;
   floor.visible = false; disc.visible = false; for (const el of [bgNear, bgFar, bgNear2]) el.hidden = true; stage.classList.add('pitch'); controls.maxDistance = 40;
-  if (!pk.ball) { pk.ball = makeItem('fodbold'); pk.ball.group.scale.setScalar(.75); scene.remove(pk.ball.group); }
+  if (!pk.ball) { pk.ball = makeItem('fodbold'); pk.ball.group.scale.setScalar(kick.r / .158); scene.remove(pk.ball.group); }
   pk.world.add(pk.ball.group); pk.ball.group.visible = true;
   for (const id of ['spark', 'spark-hoejre', GAME.cheer]) loadMove(id); loadMove('staa').then(() => { if (game.on && game.mode === 'pk') runAnim('staa'); });
   pkReady(); }
@@ -4280,7 +4298,9 @@ function sfx(kind, later = 0) { const ctx = game.audio; if (!sound.sfx || !ctx |
 musicBtn.onclick = () => { musicOn = !musicOn; try { localStorage.setItem('minimig3d.musik', musicOn ? 'til' : 'fra'); } catch (e) {} if (musicOn) soundOut()?.resume(); };
 // (once the figure is in, the hint goes into the i in the corner - on a touch screen and on a computer alike)
 const infoBtn = document.getElementById('infoBtn'), infoPop = document.getElementById('infoPop'); let infoTimer = 0;
-infoBtn.onclick = () => { infoPop.hidden = !infoPop.hidden; infoBtn.setAttribute('aria-expanded', String(!infoPop.hidden)); clearTimeout(infoTimer); if (!infoPop.hidden) infoTimer = setTimeout(() => { infoPop.hidden = true; infoBtn.setAttribute('aria-expanded', 'false'); }, 9000); };
+// (one more line while the child isn't saved with a name yet - the user, 04-11-2026: how to keep one's own player)
+const infoSave = document.createElement('span'); infoSave.innerHTML = '<br>🙂 Gem dig selv som spiller: Byg din figur, og tryk på billedet nederst i højre hjørne. Vælg »Børn og spillere – for voksne«, og få en voksen til at løse regnestykket. Skriv navnet, og tryk 📷';
+infoBtn.onclick = () => { const p = playerNow(); infoSave.remove(); if (!p.name || !p.fig) infoPop.append(infoSave); infoPop.hidden = !infoPop.hidden; infoBtn.setAttribute('aria-expanded', String(!infoPop.hidden)); clearTimeout(infoTimer); if (!infoPop.hidden) infoTimer = setTimeout(() => { infoPop.hidden = true; infoBtn.setAttribute('aria-expanded', 'false'); }, 16000); };
 loadFbx().then(ok => { const tag = document.getElementById('tag'); if (!ok) { tag.textContent = 'Figuren kunne ikke hentes'; return; }
   // (on a computer too, since 03-11-2026 - the user wanted it the same everywhere - in words for the mouse)
   if (matchMedia('(hover: hover) and (pointer: fine)').matches) infoPop.innerHTML = '🖱️ Træk for at dreje figuren<br>🔍 Rul med musen for at zoome<br>👕 Klik på navnet på trøjen, så siger figuren det – med din egen indtalte stemme, hvis du har indtalt en';
