@@ -557,10 +557,10 @@ const LANG = (() => { let l = new URLSearchParams(location.search).get('lang'); 
 const T = (da, en) => LANG === 'en' ? en : da, krTxt = n => T(`${n} kr`, n == 1 ? '1 coin' : `${n} coins`);
 const EN = {
   // (the tabs)
-  'Hud': 'Skin', 'Hår': 'Hair', 'Øjne': 'Eyes', 'Bryn': 'Brows', 'Næse': 'Nose', 'Mund': 'Mouth', 'Ører': 'Ears', 'Pynt': 'Face art', 'Trøje': 'Top', 'Bukser': 'Pants', 'Kjole': 'Dress', 'Strømper': 'Socks', 'Sko': 'Shoes', 'Hat': 'Hat', 'Briller': 'Glasses', 'Ting': 'Things', 'Navn': 'Name', 'Baggrund': 'Background',
+  'Hud': 'Skin', 'Hår': 'Hair', 'Øjne': 'Eyes', 'Bryn': 'Brows', 'Næse': 'Nose', 'Mund': 'Mouth', 'Ører': 'Ears', 'Pynt': 'Face art', 'Trøje': 'Top', 'Bukser': 'Pants', 'Kjole': 'Dress', 'Strømper': 'Socks', 'Sko': 'Shoes', 'Hat': 'Hat', 'Briller': 'Glasses', 'Ting': 'Things', 'Navn': 'Name', 'Baggrund': 'Back­ground',
   'Gem': 'Save', 'Mine figurer': 'My figures', 'Ny figur': 'New figure', 'Send foto': 'Send photo', 'Lyd': 'Sound', 'Stjerner og mønter': 'Stars and coins', 'Til voksne': 'For grown-ups',
   'Stå': 'Stand', 'Vink': 'Wave', 'Hop': 'Jump', 'Dans': 'Dance', 'Løb': 'Run', 'Jubel': 'Cheer', 'Kolbøtte': 'Roll', 'Spark': 'Kick', 'Drej rundt': 'Spin', 'Min dans': 'My dance',
-  'Hop over bolden': 'Jump the ball', 'Skateboard': 'Skateboard', 'Skattejagt': 'Treasure hunt', 'Svømmeverden': 'Swim world', 'Gemmeleg': 'Hide and seek', 'Straffespark': 'Penalty kick',
+  'Hop over bolden': 'Jump the ball', 'Skateboard': 'Skate­board', 'Skattejagt': 'Treasure hunt', 'Svømmeverden': 'Swim world', 'Gemmeleg': 'Hide and seek', 'Straffespark': 'Penalty kick',
   // (hair, face)
   'Kort': 'Short', 'Krøller': 'Curls', 'Strit': 'Spiky', 'Fletninger': 'Braids', 'Fletning': 'Braid',
   'Naturlige': 'Natural', 'Tynde': 'Thin', 'Tykke': 'Thick', 'Høje': 'High', 'Sure': 'Angry', 'Triste': 'Sad', 'Ingen': 'None', 'Glade': 'Happy', 'Blink': 'Wink', 'Vipper': 'Lashes', 'Stjerner': 'Stars', 'Hjerter': 'Hearts',
@@ -2844,8 +2844,11 @@ const voiceFor = n => voices[n.trim().toLowerCase()];
 function sayName() { const n = nameInput.value.trim(); if (!n || !sound.voice) return; const own = voiceFor(n);
   if (own) { playOwn(own); return; }
   if (!window.speechSynthesis) return; speechSynthesis.cancel();
-  const da = speechSynthesis.getVoices().filter(v => (LANG === 'en' ? /^en/i : /^da/i).test(v.lang)), v = da.find(v => /premium|enhanced|forbedret|neural|natural/i.test(v.name)) || da.find(v => !v.localService) || da[0];
-  const u = new SpeechSynthesisUtterance(T(`Hej! Jeg hedder ${n}.`, `Hi! My name is ${n}.`)); u.lang = T('da-DK', 'en-US'); if (v) u.voice = v; u.rate = .92; u.pitch = 1.4; speechSynthesis.speak(u); }
+  // (English as near a child's as a device can: none has a child's voice, so an American woman's voice - the lightest there
+  // are - raised far up, the user 04-11-2026)
+  const light = /samantha|zira|jenny|aria|ava|allison|susan|nicky|shelley|flo|sandy|google us english/i, all = speechSynthesis.getVoices(), da = all.filter(v => (LANG === 'en' ? /^en/i : /^da/i).test(v.lang)), us = da.filter(v => /^en[-_]US/i.test(v.lang));
+  const v = LANG === 'en' ? us.find(v => light.test(v.name)) || da.find(v => light.test(v.name)) || us[0] || da[0] : da.find(v => /premium|enhanced|forbedret|neural|natural/i.test(v.name)) || da.find(v => !v.localService) || da[0];
+  const u = new SpeechSynthesisUtterance(T(`Hej! Jeg hedder ${n}.`, `Hi! My name is ${n}.`)); u.lang = T('da-DK', 'en-US'); if (v) u.voice = v; u.rate = T(.92, 1); u.pitch = T(1.4, 1.8); speechSynthesis.speak(u); }
 // (recording one's own voice: a tap on the microphone, up to four seconds, a tap again stops it; kept in this browser
 // only, for the name written)
 const recBtn = document.getElementById('recBtn'), recDel = document.getElementById('recDel'), recNote = document.getElementById('recNote'); let recorder = null;
@@ -4293,13 +4296,17 @@ function pkStop() { if (!pk.world?.parent) return; scene.remove(pk.world); holde
 // (the ball back on the spot - where the next kicking foot meets it - the bear back in the middle of its goal)
 function pkReady() { pk.phase = 'aim'; pk.saved = false; pk.stood = false; if (pk.abe) { pk.back = pk.keeper.position.x - pk.kx; pk.abe.group.scale.x = 1; pk.abe.hold = 0; pkAbeGrip(pk.abe, 1, 0); pkAbePlay('klar', 0, false, .35); } pk.keeper.position.set(0, 0, PK.goalZ + .35); pk.keeper.rotation.set(0, 0, 0); pk.netBack.position.z = -1; pk.ball.group.position.copy(pkRest()); pk.ball.group.rotation.set(0, 0, 0); }
 const pkKick = () => ['spark', 'spark-hoejre'][pk.foot % 2];
-function pkRest() { const k = kicks[pkKick()]; return k ? new THREE.Vector3(-k.rest.x, kick.r, -k.rest.z) : new THREE.Vector3(0, kick.r, -.35); }
+// (the ball always on the white spot, and the figure standing where its kicking foot meets it - the other foot next time,
+// a step to the side - the user, 04-11-2026: the ball lay beside the spot)
+function pkRest() { return new THREE.Vector3(0, kick.r, 0); }
+const pkStand = v => { const k = kicks[pkKick()]; return v.set(k ? k.rest.x : 0, 0, k ? k.rest.z : .35); }, pkWant = new THREE.Vector3();
 // (a tap anywhere: aimed at the goal where the finger is, kept inside the posts and under the bar)
 function pkTap(e) { if (pk.phase !== 'aim' || !kicks.spark || !kicks['spark-hoejre']) return; const r = renderer.domElement.getBoundingClientRect();
   ilAt.set((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1); ilRay.setFromCamera(ilAt, camera); if (!ilRay.ray.intersectPlane(pkPlane, pkHit)) return;
   game.hint = 0; pk.aim.set(Math.max(-PK.halfW + .3, Math.min(PK.halfW - .3, pkHit.x)), Math.max(.18, Math.min(PK.top - .22, pkHit.y)), PK.goalZ - .15);
-  const id = pkKick(), a = glbActions[id]; pk.ball.group.position.copy(pkRest()); runAnim(id, true); a.time = Math.max(0, kicks[id].contact - .55); pk.phase = 'kick'; }
+  const id = pkKick(), a = glbActions[id]; pk.ball.group.position.copy(pkRest()); pkStand(pk.rig.position); runAnim(id, true); a.time = Math.max(0, kicks[id].contact - .55); pk.phase = 'kick'; }
 function pkTick(dt) { const t = performance.now() / 1000, L = pkLevel(), kp = pk.keeper, b = pk.ball.group;
+  if (pk.phase === 'aim' || pk.phase === 'return') pk.rig.position.lerp(pkStand(pkWant), Math.min(1, dt * 5));
   // (the camera far enough back that the whole goal is in the picture, however narrow it is)
   // (never nearer than 13 m from the goal: on a wide picture it came so close the figure hid the goal again)
   const tanH = Math.tan(camera.fov * Math.PI / 360), D = Math.max(13, (PK.halfW + 1) / (tanH * camera.aspect));
@@ -4559,6 +4566,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.9.1 (d149143)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.9.1 (d940e95)</div>
 </body>
 </html>
