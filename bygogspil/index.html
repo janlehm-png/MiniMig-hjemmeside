@@ -44,6 +44,7 @@
   /* (each part and each choice with its picture over its name, as in the app - the children cannot read yet) */
   .tabgroup button img { width: 32px; height: 32px; object-fit: contain; }
   /* the choices and colours for the tab chosen, in a white box under the tabs */
+  .box[hidden] { display: none; }
   .box { background: var(--tile); border-radius: 20px; padding: 12px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 4px 16px rgba(58, 46, 92, .1); }
   .choices { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; }
   .choices[hidden] { display: none; }
@@ -101,7 +102,7 @@
   .stage.playing .music-btn { top: auto; bottom: 10px; } /* (the stars sit top left in the game) */
   .info-btn[hidden], .info-pop[hidden], .stage.playing .info-btn, .stage.playing .info-pop { display: none; }
   /* (on a computer the mouse shows it can zoom the figure - the wheel - and grabs it while turning it) */
-  @media (hover: hover) and (pointer: fine) { #scene { cursor: zoom-in; } #scene:active { cursor: grabbing; } .stage.playing #scene { cursor: pointer; } }
+  @media (hover: hover) and (pointer: fine) { #scene { cursor: grab; } #scene:active { cursor: grabbing; } .stage.playing #scene { cursor: pointer; } }
   /* saving: the star, Mine figurer, the new MiniMig and the camera - first of the groups on the right, as tabs with
      their sign for a picture (they sat on the figure's picture until 03-11-2026; the user wanted the picture clear) */
   .tabgroup button .emo { height: 32px; font-size: 25px; line-height: 32px; pointer-events: none; }
@@ -135,6 +136,10 @@
   .hud-face img, .hud-face .face-none { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; display: grid; border: 3px solid var(--tile); box-shadow: 0 2px 10px rgba(58, 46, 92, .2); }
   .hud-face .face-none { font-size: 1.4rem; }
   .players-btn { justify-self: center; }
+  .who-badge { position: absolute; right: 10px; bottom: 10px; z-index: 2; display: flex; align-items: center; gap: 6px; max-width: 55%; padding: 3px 12px 3px 3px; border: 2px solid #fff; border-radius: 999px; background: var(--tile); color: var(--ink); font: 800 14px/1 system-ui, sans-serif; cursor: pointer; box-shadow: 0 2px 10px rgba(58, 46, 92, .25); }
+  .who-badge img, .who-badge .face-none { width: 40px; height: 40px; flex: none; border-radius: 50%; object-fit: cover; display: grid; place-items: center; font-size: 24px; background: #FFF4D6; }
+  .who-badge span.nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .who-badge.only { padding-right: 3px; }
   /* (the website's pwa.js puts a bar with "Til voksne" under the page - here its dialog only, opened from our own button) */
   body > .pwa-tools { position: fixed; width: 0; height: 0; padding: 0; overflow: visible; }
   body > .pwa-tools > .pwa-help { display: none; }
@@ -292,6 +297,8 @@
 <!-- Hop over bolden: the stars won, and the cross that ends the game; a hint at the start -->
 <div class="hud" id="hud" hidden><span class="hud-left"><span class="hud-face" id="hudFace" hidden></span><span class="stars" id="stars">⭐ 0</span><span class="record" id="record" title="Din rekord">🏆 0</span></span><button class="game-x" id="gameExit" aria-label="Stop spillet">✕</button></div>
 <div class="tap-hint" id="tapHint" hidden>👆 Tryk for at hoppe</div>
+<!-- (who is playing, always in sight: the child's picture and name - tapped: Mine figurer, where the children are) -->
+<button class="who-badge" id="whoBadge" aria-label="Hvem spiller? Tryk for at skifte"></button>
 <div class="quest" id="quest" hidden></div>
 <!-- Gemmeleg: on the harder levels the picture is covered while the figure hides -->
 <div class="hide-cover" id="hideCover" hidden>🙈<span id="hideCount"></span></div>
@@ -329,17 +336,16 @@
   </div>
   <!-- the games, after the movements (the first: Hop over bolden, 03-11-2026) -->
   <div class="tabgroup" id="games">
-    <!-- (the three hop games named Hop og løb 1, 2, 3 - the user, 03-11-2026) -->
-    <button data-game="side"><img src="ikoner/spil-hop.png" alt=""><span>Hop og løb 1</span></button>
-    <button data-game="back"><img src="ikoner/spil-hop-bag.png" alt=""><span>Hop og løb 2</span></button>
-    <button data-game="front"><img src="ikoner/spil-hop-for.png" alt=""><span>Hop og løb 3</span></button>
+    <!-- (the three hop games made one - the user, 04-11-2026: from the side, behind or in front is chosen in the game) -->
+    <button data-game="hop"><img src="ikoner/spil-hop.png" alt=""><span>Hop over bolden</span></button>
     <button data-game="skate"><img src="ikoner/spil-skate.png" alt=""><span>Skate&shy;board</span></button>
     <button data-game="island"><img src="ikoner/spil-oe.png" alt=""><span>Skatte&shy;jagt</span></button>
     <button data-game="sea"><img src="ikoner/spil-hav.png" alt=""><span>Svømme&shy;verden</span></button>
     <button data-game="hide"><img src="ikoner/spil-gemmeleg.png" alt=""><span>Gemme&shy;leg</span></button>
     <button data-game="pk"><img src="ikoner/spil-straffe.png" alt=""><span>Straffe&shy;spark</span></button>
   </div>
-  <div class="box">
+  <!-- (opened right under the group of the tab tapped - see placeBox) -->
+  <div class="box" id="optBox" hidden>
     <div class="choices" id="styles" hidden></div><div class="choices" id="styles2" hidden></div>
     <div class="namebox" id="nameBox" hidden><div class="namerow"><input id="nameInput" name="mm-troeje-tekst" type="text" maxlength="10" autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false" enterkeyhint="done" data-1p-ignore data-lpignore="true" placeholder="Skriv dit navn" aria-label="Navn på trøjen"><button id="sayBtn" aria-label="Sig navnet">🔊</button></div>
       <div class="namerow"><button id="recBtn" class="rec-btn">🎤 <span>Indtal selv</span></button><button id="recDel" class="rec-del" aria-label="Slet din egen stemme" hidden>🗑</button></div>
@@ -554,8 +560,18 @@ function showSwatches() { const move = /^(move|game)-/.test(partNow); if (!move)
   for (const c of list) { const b = document.createElement('button'); b.style.background = c; b.setAttribute('aria-label', c); b.classList.toggle('on', (picked[partNow] || START[partNow] || '').toLowerCase() === c.toLowerCase());
     b.onclick = () => { apply(partNow, c); slidersFrom(c); sw.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); }; sw.append(b); }
   document.getElementById('nameBox').hidden = partNow !== 'name'; document.getElementById('myDance').hidden = partNow !== 'move-mindans';
-  document.querySelectorAll('#parts [data-part]').forEach(b => b.classList.toggle('on', b.dataset.part === partNow));
-  renderStyles(); }
+  document.querySelectorAll('#parts [data-part]').forEach(b => b.classList.toggle('on', b.dataset.part === partNow && boxOpen));
+  renderStyles(); placeBox(); }
+// (the choices and colours open right under the group of the tab tapped, and shut again with another tap on it - the user,
+// 04-11-2026: far down under all the groups there was too much scrolling. A phone held upright keeps its sideways row of
+// tabs, with the box under it)
+let boxOpen = false;
+function placeBox() { const box = document.getElementById('optBox'), parts = document.getElementById('parts'); box.hidden = !boxOpen; if (!boxOpen) return;
+  const tab = /^game-/.test(partNow) ? document.getElementById('games') : partNow === 'move-mindans' ? document.getElementById('myDanceTab') : partNow.startsWith('move-') ? document.querySelector(`[data-anim="${partNow.slice(5)}"]`) : document.querySelector(`#parts [data-part="${partNow}"]`);
+  const group = tab?.closest('.tabgroup'); if (matchMedia('(max-aspect-ratio: 4/5)').matches) { if (box.previousElementSibling !== parts) parts.after(box); return; }
+  if (group && box.previousElementSibling !== group) group.after(box); box.scrollIntoView({ block: 'nearest' }); }
+// (a tab tapped: opens its box - tapped again, shuts it)
+function tapTab(part, then) { if (boxOpen && partNow === part) { boxOpen = false; showSwatches(); return; } boxOpen = true; partNow = part; showSwatches(); then?.(); }
 // (the styles as buttons above the colours: hairstyles while Hår is chosen, tops while Trøje is; none before the figure -
 // each with a little picture of the figure wearing it, ikoner/valg-<name>.png, made by the page itself: see LÆS-MIG)
 // (a second row in the same tab, as the app's earrings under the ears: a fourth entry, [items, now, set, ingen-name])
@@ -599,7 +615,7 @@ for (const el of Object.values(S)) el.addEventListener('input', () => { paintTra
   const c = '#' + new THREE.Color().setHSL(S.h.value / 360, S.s.value / 100, S.l.value / 100, THREE.SRGBColorSpace).getHexString(THREE.SRGBColorSpace); apply(partNow, c); document.querySelectorAll('#swatches button').forEach(x => x.classList.remove('on')); });
 // (the tabs in the app's three groups: the body and face, the clothes, the rest)
 const groups = [0, 1, 2].map(() => document.getElementById('parts').appendChild(Object.assign(document.createElement('div'), { className: 'tabgroup' })));
-for (const [part, name, icon] of CHOICES) { const b = iconButton(`ikoner/${icon}.png`, name); b.dataset.part = part; b.onclick = () => { partNow = part; showSwatches(); lookFor(part); };
+for (const [part, name, icon] of CHOICES) { const b = iconButton(`ikoner/${icon}.png`, name); b.dataset.part = part; b.onclick = () => tapTab(part, () => lookFor(part));
   groups[['shirt', 'pants', 'dress', 'socks', 'shoe', 'hat', 'glasses'].includes(part) ? 1 : ['item', 'name', 'bg'].includes(part) ? 2 : 0].append(b); }
 document.getElementById('parts').append(document.getElementById('moves'), document.getElementById('games')); document.getElementById('parts').prepend(document.getElementById('saving'));
 showSwatches();
@@ -1343,7 +1359,8 @@ let anim = 'staa', spin = false; // (anim: the movement playing now, one of the 
 // in: no bald T-pose for a moment)
 const holder = new THREE.Group(); holder.visible = false; scene.add(holder); let spinAngle = 0;
 // (a movement's tab plays its kind chosen last and shows its kinds in the box)
-document.querySelectorAll('[data-anim]').forEach(b => b.onclick = () => { partNow = 'move-' + b.dataset.anim; showSwatches(); lookFor(''); playMove(moveNow[b.dataset.anim]); });
+// (tapped again: only its box shuts - the movement goes on)
+document.querySelectorAll('[data-anim]').forEach(b => b.onclick = () => tapTab('move-' + b.dataset.anim, () => { lookFor(''); playMove(moveNow[b.dataset.anim]); }));
 // (choosing a movement ends the game, if one is going)
 async function playMove(id) { const g = Object.keys(MOVES).find(k => MOVES[k].some(m => m[0] === id)); if (!g) return; stopGame(); if (md.on) mdStop(); moveNow[g] = id; anim = id;
   // (a dance's music may start: the sound opened by this tap - an iPad plays nothing a tap did not open)
@@ -1376,8 +1393,8 @@ async function mdNext() { const list = mdList(); if (!md.on || !list.length) ret
   md.cur = id; runAnim(id); const d = a.getClip().duration; md.left = (d > MD_LONG + 1 ? MD_LONG : d * Math.max(1, Math.ceil(2.4 / d))) - .2; if (partNow === 'move-mindans') showMyDance(); }
 // (each moment: the next movement when this one is done; another movement or a game chosen ends the dance)
 function myDanceTick(dt) { if (!md.on || !md.cur) return; if (anim !== md.cur || game.on) { mdStop(); return; } if ((md.left -= dt) <= 0) mdNext(); }
-document.getElementById('myDanceTab').onclick = () => { partNow = 'move-mindans'; showSwatches(); lookFor(''); document.querySelectorAll('[data-anim]').forEach(x => x.classList.remove('on'));
-  document.getElementById('myDanceTab').classList.add('on'); showMyDance(); showSavedDances(); };
+document.getElementById('myDanceTab').onclick = () => tapTab('move-mindans', () => { lookFor(''); document.querySelectorAll('[data-anim]').forEach(x => x.classList.remove('on'));
+  document.getElementById('myDanceTab').classList.add('on'); showMyDance(); showSavedDances(); });
 document.getElementById('mdPlay').onclick = () => md.on ? mdStop(true) : mdStart();
 document.getElementById('mdClear').onclick = () => { mdList().length = 0; savePlayers(); if (md.on) mdStop(true); showMyDance(); };
 // (the dances kept, under the player - the user, 03-11-2026: »gemme dansen med et navn under brugeren«. 💾 asks for a name
@@ -1880,7 +1897,7 @@ const GARMENTS = {
     ['toej-haette', 'Hættetrøje', { made: true, sleeve: 1.06, length: .04, hood: true, pocket: true, cloth: 'smooth' }],
     ['toej-fodbold', 'Fodboldtrøje', { made: true, sleeve: .32, length: .01, tuck: true, trim: true, cloth: 'smooth' }]], texs: clothTexs },
   // (the folds lower than at first - the user - and the long trousers turned up a little too)
-  pants: { items: [['', 'Undershorts'], ['bukser-lange', 'Lange bukser', { made: true, hem: .06, loose: .004, cuff: .014 }], ['bukser-shorts', 'Shorts', { made: true, hem: .3, cuff: .018 }],
+  pants: { items: [['', 'Undershorts'], ['bukser-trusser', 'Trusser', { made: true, hem: .41, rise: .012, noBand: true }], ['bukser-lange', 'Lange bukser', { made: true, hem: .06, loose: .004, cuff: .014 }], ['bukser-shorts', 'Shorts', { made: true, hem: .3, cuff: .018 }],
     ['bukser-cowboy', 'Cowboyshorts', { made: true, hem: .24, cuff: .02, cloth: 'denim' }], ['bukser-fodbold', 'Fodboldbukser', { made: true, hem: .295, loose: .004, loops: false, cloth: 'smooth' }]], texs: [], waist: true },
   dress: { items: [['', 'Ingen kjole'], ['kjole-sommer', 'Sommerkjole'], ['kjole-prinsesse', 'Prinsessekjole', { hang: .5, armsOut: 12 }], ['kjole-havfrue', 'Havfruekjole', { skirt: false, margin: .012, reach: 8, tail: true, snug: .2, waist: .15 }]], texs: [], skirt: true, noArms: true },
   // (socks made from the body too: low ones for sneakers, football socks with a stripe at the top, and knee socks)
@@ -1915,7 +1932,14 @@ async function setGarment(part, name) { const G = GARMENTS[part], ask = ++dressi
   const shirt = !!(GARMENTS.dress.now || GARMENTS.shirt.now), pants = !!(GARMENTS.dress.now || GARMENTS.pants.now);
   if (tex && (!!tex.covered[PARTS.shirt] !== shirt || !!tex.covered[PARTS.pants] !== pants)) { tex.covered = { [PARTS.shirt]: shirt, [PARTS.pants]: pants }; redrawBody(); }
   for (const g of Object.values(GARMENTS)) for (const [n, m] of Object.entries(g.meshes)) if (m) m.visible = n === g.shown;
-  hideBody(); layer(); hatHair(); chestName(); }
+  wearUnder(); hideBody(); layer(); hatHair(); chestName(); }
+// (white briefs under a wide skirt, on their own - the user, 04-11-2026: in a roll or a breakdance one could see up the
+// dress, and there nothing was on: the underwear there is painted over in skin under a dress, the body close under it hidden)
+let underBriefs = null;
+function wearUnder() { const D = GARMENTS.dress, wide = !!D.shown && (D.items.find(i => i[0] === D.shown)?.[2]?.skirt ?? D.skirt);
+  if (wide && !underBriefs) { const o = GARMENTS.pants.items.find(i => i[0] === 'bukser-trusser')[2]; underBriefs = makeCloth('bukser-trusser', 'pants', o);
+    if (underBriefs) { underBriefs.material = new THREE.MeshStandardMaterial({ color: 0xF4F1EA, roughness: .85, side: THREE.DoubleSide }); underBriefs.name = 'under-dress'; } }
+  if (underBriefs) underBriefs.visible = wide; }
 // (a top over trousers: its lower part let out over them, wherever they come further out - drawn up by the navel the
 // trousers came out through the T-shirt's hem. Each time from the top's own shape, kept in orig)
 function layer() { const top = GARMENTS.shirt.meshes[GARMENTS.shirt.shown], under = GARMENTS.pants.meshes[GARMENTS.pants.shown]; if (!top) return;
@@ -2010,7 +2034,7 @@ function makeCloth(name, part, opts) {
   // after those had been on, the shorts had a hole there and only their hem and waistband showed)
   const G = GARMENTS[part], body = hairBase.body, geo = body.geometry, { pts, inv, H } = hairBase.whole, K = clothMarks();
   const bsi = geo.attributes.skinIndex, bsw = geo.attributes.skinWeight, bones = body.skeleton.bones, corners = geo.attributes.position.count;
-  const pants = part === 'pants', socks = part === 'socks' || (part === 'shoe' && opts.made), hipY = hairBase.hipY, top = hipY + .06 * H, crotch = hipY - .06 * H, side = p => Math.abs(p[0] - K.mid), clamp = v => Math.min(1, Math.max(0, v));
+  const pants = part === 'pants', socks = part === 'socks' || (part === 'shoe' && opts.made), hipY = hairBase.hipY, top = hipY + (opts.rise ?? .06) * H, crotch = hipY - .06 * H, side = p => Math.abs(p[0] - K.mid), clamp = v => Math.min(1, Math.max(0, v));
   const arms = new Set(bones.flatMap((b, j) => /Arm|Hand/.test(b.name) ? [j] : [])), armPt = new Uint8Array(pts.length / 6);
   for (let j = 0; j < armPt.length; j++) { let a = 0; for (let c = 0; c < 4; c++) if (arms.has(bsi.getComponent(j, c))) a += bsw.getComponent(j, c); armPt[j] = a > .5; }
   // (its edges: f is under 0 inside; fold: the cloth turned up there, how far; bare: how far in from it the body stays -
@@ -2143,7 +2167,7 @@ function makeCloth(name, part, opts) {
     const k = kind === 'denim' ? ((x + y) % 4 < 2 ? -14 : 4) + streak[x] + r : kind === 'smooth' ? r * .6 : kind === 'knit' ? (x % 4 < 2 ? -12 : 0) + r * .5 : ((x + y) % 6 < 2 ? -9 : 0) + r;
     im.data.set(kind === 'knit' ? [240 + k, 240 + k, 240 + k, 255] : kind === 'denim' ? [38 + k * .4, 62 + k * .6, 150 + k, 255] : [44 + k * .4, 72 + k * .6, 170 + k, 255], o); }
   cx.putImageData(im, 0, 0);
-  let si2 = si, sw2 = sw; if (pants) [si2, sw2] = waistband(g, wp, si, sw, top, H, inv, opts.loops ?? true, cv, { pts, armPt, button: opts.loops ?? true });
+  let si2 = si, sw2 = sw; if (pants && !opts.noBand) [si2, sw2] = waistband(g, wp, si, sw, top, H, inv, opts.loops ?? true, cv, { pts, armPt, button: opts.loops ?? true });
   g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(si2, 4)); g.setAttribute('skinWeight', new THREE.Float32BufferAttribute(sw2, 4));
   // (socks: a picture of their own, painted in their colours by paintSocks - once up the leg, round and round it)
   const map = socks ? new THREE.CanvasTexture(cv) : setupHairTexture(cv, G.texs); map.wrapS = THREE.RepeatWrapping; map.wrapT = socks ? THREE.ClampToEdgeWrapping : THREE.RepeatWrapping;
@@ -3088,7 +3112,7 @@ function holdItem(t) { if (glb && (!item || item.ground || item.ring)) unfist();
     item.canopy.position.copy(local); item.canopy.quaternion.setFromUnitVectors(iUp, dir); item.shaft.position.copy(local).multiplyScalar(.5); item.shaft.scale.set(1, local.length(), 1); item.shaft.quaternion.setFromUnitVectors(iUp, dir);
     item.hook.position.copy(dir).multiplyScalar(-.05); item.hook.quaternion.setFromUnitVectors(iUp, dir); item.hook.rotateZ(Math.PI); } }
 function hideBody() { if (!hairBase) return; const geo = hairBase.body.geometry, n = geo.attributes.position.count, hide = new Uint8Array(n);
-  for (const G of Object.values(GARMENTS)) { const c = G.meshes[G.shown]?.userData.covered; if (c) for (let j = 0; j < n; j++) if (c[j]) hide[j] = 1; }
+  for (const c of [...Object.values(GARMENTS).map(G => G.meshes[G.shown]?.userData.covered), underBriefs?.visible ? underBriefs.userData.covered : null]) if (c) for (let j = 0; j < n; j++) if (c[j]) hide[j] = 1;
   const keep = []; for (let t = 0; t < n; t += 3) if (!(hide[t] && hide[t + 1] && hide[t + 2])) keep.push(t, t + 1, t + 2);
   geo.setIndex(keep.length === n ? null : keep); }
 // (FIGUR_V goes up with each new figure: a browser that remembers the last figure's files fetches them again - an iPad
@@ -3272,7 +3296,8 @@ function startGame(mode = game.mode) { if (game.on || !glb) return; game.mode = 
     const run = levelNow().run; Promise.all([run, GAME.jump, GAME.trip, GAME.cheer, GAME.dive].map(loadMove)).then(() => { if (game.on) runAnim(run); }); }
   hintEl.textContent = mode === 'skate' ? '👈 Tryk i siden for at svinge 👉' : mode === 'island' ? '👆 Tryk hvor du vil gå hen' : mode === 'sea' ? '👆 Tryk eller træk – så svømmer du derhen' : mode === 'hide' ? '🔍 Hvor er jeg? Tryk på busken' : mode === 'pk' ? '👆 Tryk i målet, hvor bolden skal hen' : '👆 Tryk for at hoppe';
   hud.hidden = false; hintEl.hidden = false; document.querySelector('.top').hidden = true; document.getElementById('stage').classList.add('playing'); showStars(); showRecord();
-  document.querySelectorAll('[data-game]').forEach(b => b.classList.toggle('on', b.dataset.game === mode)); prepScene(); }
+  if (MODES[mode].from) game.hopWay = mode; // (the way last chosen in Hop over bolden)
+  document.querySelectorAll('[data-game]').forEach(b => b.classList.toggle('on', b.dataset.game === mode || b.dataset.game === 'hop' && !!MODES[mode].from)); prepScene(); }
 // (again: only stopped to start once more - at another level or in another way - the figure's own setting not put back)
 function stopGame(again) { if (!game.on) return; game.on = false; for (const b of [...gamePool(), ...(game.bigPool || [])]) b.group.visible = false; game.dive = false; game.balls = []; confetti.length = 0; unprepScene(); skateStop(); hideStop(); islandStop(); seaStop(); pkStop();
   // (the sound shut down when nothing plays: on an iPad an open sound channel could go on sounding after the game)
@@ -3467,7 +3492,11 @@ function playerPic() { try { return hairBase && !game.on ? thumb(figurePicture('
 function newPlayer() { const p = { id: 'p' + Date.now().toString(36) + Math.floor(Math.random() * 1e3), name: '', pic: playerPic(), score: blankScore() }; players.list.push(p); savePlayers(); return p; }
 const playerFace = (p, cls = '') => p.pic ? `<img class="${cls}" src="${p.pic}" alt="">` : `<span class="${cls} face-none">🙂</span>`;
 // (the one playing, small beside the stars in a game)
-function showPlayer() { const p = playerNow(), el = document.getElementById('hudFace'); el.innerHTML = players.list.length > 1 ? playerFace(p) : ''; el.hidden = players.list.length < 2; }
+// (the user, 04-11-2026: it must show who is using the game - the picture and name in the corner of the figure's picture,
+// in the games too; a child without a MiniMig of their own has the figure on the screen as their picture, kept up to date)
+function showPlayer() { const p = playerNow(), b = document.getElementById('whoBadge'); b.innerHTML = playerFace(p) + (p.name ? `<span class="nm">${esc(p.name)}</span>` : ''); b.classList.toggle('only', !p.name); }
+document.getElementById('whoBadge').onclick = () => { document.getElementById('figSheet').hidden = false; renderGallery(); };
+let picOf = ''; setInterval(() => { try { const p = playerNow(); if (p.fig || !hairBase || game.on || document.hidden) return; const f = JSON.stringify(figureNow()); if (f === picOf && p.pic) return; picOf = f; p.pic = playerPic() || p.pic; savePlayers(); showPlayer(); } catch (e) {} }, 4000);
 const bestNow = () => score.best[game.mode]?.[game.level] || 0;
 function scoreGain(n) { score.total += n; if (!game.counted) { game.counted = true; score.games++; } const best = bestNow(); if (game.stars > best) { (score.best[game.mode] ??= {})[game.level] = game.stars;
     if (best > 0 && !game.record) { game.record = true; toast('🏆 Ny rekord!'); celebrate(); } }
@@ -3918,7 +3947,7 @@ function pkTick(dt) { const t = performance.now() / 1000, L = pkLevel(), kp = pk
     if (pk.saved) { b.position.y = Math.max(kick.r, b.position.y - dt * 2.5); b.position.z = Math.min(PK.goalZ + 1.2, b.position.z + dt * 1.2); b.rotation.x += dt * 5; }
     else { pk.netBack.position.z = -1 - .35 * Math.exp(-pk.t * 3) * Math.abs(Math.cos(pk.t * 8)); b.position.z = Math.max(PK.goalZ - .85, b.position.z - dt * 1.5); b.position.y = Math.max(kick.r, b.position.y - dt * 2); }
     if (pk.t > 2.4) { pk.foot++; runAnim('staa'); pkReady(); } } }
-const GAME_NAMES = [['side', 'Hop og løb 1'], ['back', 'Hop og løb 2'], ['front', 'Hop og løb 3'], ['skate', 'Skateboard'], ['island', 'Skattejagt'], ['sea', 'Svømmeverden'], ['hide', 'Gemmeleg'], ['pk', 'Straffespark']];
+const GAME_NAMES = [['hop', 'Hop over bolden'], ['skate', 'Skateboard'], ['island', 'Skattejagt'], ['sea', 'Svømmeverden'], ['hide', 'Gemmeleg'], ['pk', 'Straffespark']];
 // (with two players or more: their pictures on top, the one shown marked - tapping another shows that child's stars)
 let starShown = null;
 function showStarSheet(id = starShown || players.now) { starShown = id; const p = players.list.find(q => q.id === id) || playerNow(), s = p.score, have = s.total - s.spent, many = players.list.length > 1;
@@ -3928,7 +3957,8 @@ function showStarSheet(id = starShown || players.now) { starShown = id; const p 
   document.getElementById('starTotal').textContent = '⭐ ' + have;
   document.getElementById('starNote').textContent = s.games ? `Samlet i ${s.games} spil på denne enhed.` : 'Spil et af spillene for at samle stjerner.';
   document.getElementById('starTable').innerHTML = `<tr><th></th>${LEVELS.map(([id, name]) => `<th><img src="ikoner/valg-${id}.png" alt="${name}"></th>`).join('')}</tr>` +
-    GAME_NAMES.map(([g, name]) => `<tr><td>${name}</td>${LEVELS.map(([id]) => { const b = s.best[g]?.[id]; return b ? `<td>🏆 ${b}</td>` : '<td class="none">–</td>'; }).join('')}</tr>`).join('');
+    // (Hop over bolden: its best of the three ways to see it)
+    GAME_NAMES.map(([g, name]) => `<tr><td>${name}</td>${LEVELS.map(([id]) => { const b = g === 'hop' ? Math.max(...HOP_WAYS.map(w => s.best[w[0]]?.[id] || 0)) : s.best[g]?.[id]; return b ? `<td>🏆 ${b}</td>` : '<td class="none">–</td>'; }).join('')}</tr>`).join('');
   // (the shop: every special thing, ✓ when this child owns it, the lock and the price when not - tapping one buys it)
   const shop = document.getElementById('shopList'); shop.innerHTML = '';
   for (const [n, price] of Object.entries(SHOP)) { const b = iconButton(`ikoner/valg-${n}.png`, shopThing(n).label), own = s.owned?.includes(n);
@@ -3954,7 +3984,7 @@ const adultBtn = document.getElementById('adultBtn'), pwaDialog = () => document
 adultBtn.hidden = !pwaDialog(); addEventListener('load', () => { adultBtn.hidden = !pwaDialog(); }); adultBtn.onclick = () => pwaDialog()?.showModal();
 document.getElementById('playersBtn').onclick = () => askGrownUp(() => { document.getElementById('figSheet').hidden = true; showPlayers(); });
 document.getElementById('addPlayer').onclick = () => { newPlayer(); showPlayers(); showPlayer(); };
-document.getElementById('playerList').addEventListener('input', e => { const row = e.target.closest('[data-id]'), p = row && players.list.find(q => q.id === row.dataset.id); if (p) { p.name = e.target.value.trim(); savePlayers(); } });
+document.getElementById('playerList').addEventListener('input', e => { const row = e.target.closest('[data-id]'), p = row && players.list.find(q => q.id === row.dataset.id); if (p) { p.name = e.target.value.trim(); savePlayers(); showPlayer(); } });
 document.getElementById('playerList').addEventListener('click', e => { const row = e.target.closest('[data-id]'), p = row && players.list.find(q => q.id === row.dataset.id); if (!p) return;
   // (📷: the figure on the screen becomes the child's own MiniMig - its picture and the whole figure, to be put on again
   // from Mine figurer)
@@ -3985,8 +4015,11 @@ document.getElementById('gameExit').onclick = () => stopGame();
 // (no menu from a long press anywhere but in the name box)
 document.querySelector('.main').addEventListener('contextmenu', e => { if (e.target.tagName !== 'INPUT') e.preventDefault(); });
 // (the game's tab starts it and shows its levels in the box, as a movement's tab shows its kinds)
-document.querySelectorAll('[data-game]').forEach(b => b.onclick = () => { soundOut()?.resume(); askWho(() => { partNow = 'game-hop'; showSwatches(); stopGame(true); startGame(b.dataset.game); }); });
-function gameList() { try { return [LEVELS, game.level, setLevel]; } catch (e) { return null; } }
+document.querySelectorAll('[data-game]').forEach(b => b.onclick = () => { soundOut()?.resume(); askWho(() => { boxOpen = true; stopGame(true); startGame(b.dataset.game === 'hop' ? game.hopWay || 'side' : b.dataset.game); partNow = 'game-hop'; showSwatches(); }); });
+// (Hop over bolden: under the levels the three ways to see it, each with its picture)
+const HOP_WAYS = [['side', 'Fra siden'], ['back', 'Bagfra'], ['front', 'Forfra']];
+function setHopWay(id) { stopGame(true); startGame(id); renderStyles(); }
+function gameList() { try { return HOP_WAYS.some(w => w[0] === game.mode) && game.on ? [LEVELS, game.level, setLevel, [HOP_WAYS, game.mode, setHopWay, '']] : [LEVELS, game.level, setLevel]; } catch (e) { return null; } }
 // Every fifth star: confetti shot up from two cannons at the bottom corners of the picture, with little stars among it,
 // and a short ta-da (only once the child has tapped: a page may not sound before that)
 const confetti = [], confCv = document.getElementById('confetti'), confCx = confCv.getContext('2d'), CONF_COLS = ['#E8384F', '#3D8BFF', '#FFC233', '#2FB872', '#FF6FB1', '#7C5CFF'];
