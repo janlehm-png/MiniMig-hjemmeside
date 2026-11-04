@@ -136,6 +136,26 @@
   .hud-face img, .hud-face .face-none { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; display: grid; border: 3px solid var(--tile); box-shadow: 0 2px 10px rgba(58, 46, 92, .2); }
   .hud-face .face-none { font-size: 1.4rem; }
   .players-btn { justify-self: center; }
+  /* (paying with coins: silver 1, 2 and 5, golden 10 and 20, each with its number - no copies of real coins) */
+  #coinPay { display: grid; gap: 10px; }
+  #coinPay[hidden] { display: none; }
+  .coin { flex: none; display: grid; place-items: center; width: var(--d); height: var(--d); padding: 0; border-radius: 50%; border: 2px solid #8E8BA0; background: radial-gradient(circle at 35% 30%, #FFFFFF, #CFCDD8 55%, #A9A6B8); color: #3A3550; font: 800 calc(var(--d) * .42)/1 system-ui, sans-serif; cursor: pointer; box-shadow: inset 0 0 0 3px rgba(255, 255, 255, .55), 0 2px 5px rgba(58, 46, 92, .3); }
+  .coin.c1 { --d: 46px; } .coin.c2 { --d: 52px; } .coin.c5 { --d: 58px; } .coin.c10 { --d: 54px; } .coin.c20 { --d: 62px; }
+  .coin.c10, .coin.c20 { border-color: #B8860B; background: radial-gradient(circle at 35% 30%, #FFF4B8, #F5C842 55%, #C9962A); color: #5A3A00; }
+  .coin[disabled] { opacity: .3; cursor: default; }
+  .coin-disk { min-height: 74px; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; justify-content: center; padding: 6px; border-radius: 16px; border: 2px dashed #C9C2E0; background: #FFF8E1; }
+  .coin-disk:empty::before { content: "👇 Tryk på mønterne"; color: #6B6191; font: 700 .9rem/1.2 system-ui, sans-serif; }
+  .coin-sum { text-align: center; font: 800 1.15rem/1.2 system-ui, sans-serif; }
+  .coin-sum.ok { color: #1E9A5A; } .coin-sum.over { color: #E8384F; }
+  .coin-tray { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: center; }
+  .buy-go { display: flex; gap: 10px; justify-content: center; align-items: center; }
+  /* (what the child has bought: a picture, the name, when, for how much) */
+  .buy-log { display: grid; gap: 6px; }
+  .buy-log:empty::before { content: "Ingenting endnu."; color: #6B6191; font-size: .9rem; }
+  .buy-row { display: flex; align-items: center; gap: 8px; font-weight: 700; }
+  .buy-row img { width: 40px; height: 40px; flex: none; border-radius: 10px; object-fit: cover; background: #FFF8E1; }
+  .buy-row span { flex: 1; min-width: 0; }
+  .buy-row small { display: block; font-weight: 600; color: #6B6191; }
   .who-badge { position: absolute; right: 10px; bottom: 10px; z-index: 2; display: flex; align-items: center; gap: 6px; max-width: 55%; padding: 3px 12px 3px 3px; border: 2px solid #fff; border-radius: 999px; background: var(--tile); color: var(--ink); font: 800 14px/1 system-ui, sans-serif; cursor: pointer; box-shadow: 0 2px 10px rgba(58, 46, 92, .25); }
   .who-badge img, .who-badge .face-none { width: 40px; height: 40px; flex: none; border-radius: 50%; object-fit: cover; display: grid; place-items: center; font-size: 24px; background: #FFF4D6; }
   .who-badge span.nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -295,7 +315,7 @@
 <button class="info-btn" id="infoBtn" aria-label="Sådan gør du" aria-expanded="false" hidden>i</button>
 <div class="info-pop" id="infoPop" hidden>👆 Træk for at dreje figuren<br>🤏 Knib for at zoome<br>👕 Tryk på navnet på trøjen, så siger figuren det – med din egen indtalte stemme, hvis du har indtalt en</div>
 <!-- Hop over bolden: the stars won, and the cross that ends the game; a hint at the start -->
-<div class="hud" id="hud" hidden><span class="hud-left"><span class="hud-face" id="hudFace" hidden></span><span class="stars" id="stars">⭐ 0</span><span class="record" id="record" title="Din rekord">🏆 0</span></span><button class="game-x" id="gameExit" aria-label="Stop spillet">✕</button></div>
+<div class="hud" id="hud" hidden><span class="hud-left"><span class="hud-face" id="hudFace" hidden></span><span class="stars" id="stars">⭐ 0</span><span class="record" id="record" title="Din rekord">🏆 0</span><span class="record" id="hudKr" title="Din konto">💰 0</span></span><button class="game-x" id="gameExit" aria-label="Stop spillet">✕</button></div>
 <div class="tap-hint" id="tapHint" hidden>👆 Tryk for at hoppe</div>
 <!-- (who is playing, always in sight: the child's picture and name - tapped: Mine figurer, where the children are) -->
 <button class="who-badge" id="whoBadge" aria-label="Hvem spiller? Tryk for at skifte"></button>
@@ -409,8 +429,8 @@
 <!-- the stars kept: all of them, and the best of each game at each level (on this device) -->
 <div class="sheet" id="starSheet" hidden>
   <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="starTitle">
-    <div class="sheet-head"><h2 id="starTitle">Dine stjerner</h2><button class="sheet-x" data-close aria-label="Luk">✕</button></div>
-    <p class="note star-sub">Saml stjerner i spillene – og køb ekstra ting for dem i Stjernebutikken.</p>
+    <div class="sheet-head"><h2 id="starTitle">Din konto</h2><button class="sheet-x" data-close aria-label="Luk">✕</button></div>
+    <p class="note star-sub">Stjernerne fra spillene bliver til kroner på din konto – jo sværere niveau, jo flere. For kronerne køber du ting i butikken.</p>
     <div class="who who-small" id="starWho"></div>
     <div class="star-total" id="starTotal">⭐ 0</div>
     <p class="note" id="starNote"></p>
@@ -418,17 +438,24 @@
     <p class="note">🏆 = din rekord i det spil på det niveau.</p>
     <h3>🔒 Stjernebutik</h3>
     <div class="choices shop" id="shopList"></div>
-    <p class="note">Tryk på en ting med 🔒 for at købe den for dine stjerner. Hvert barn køber for sig selv.</p>
+    <p class="note">Tryk på en ting med 🔒, og betal med mønter. Hvert barn køber for sig selv.</p>
+    <h3>🧾 Det har du købt</h3>
+    <div class="buy-log" id="buyLog"></div>
   </div>
 </div>
-<!-- the star shop: a locked thing's picture, its price, a big green button to buy it with the child's stars -->
+<!-- the star shop: a locked thing's picture, its price, and the coins: tapped up on to the counter until they make the price -->
 <div class="sheet" id="buySheet" hidden>
   <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="buyTitle">
     <div class="sheet-head"><h2 id="buyTitle">Køb</h2><button class="sheet-x" data-close aria-label="Luk">✕</button></div>
     <div class="buy-pic"><img id="buyImg" alt=""></div>
     <div class="buy-price" id="buyPrice"></div>
     <p class="note" id="buyNote" style="text-align:center"></p>
-    <button class="buy-yes" id="buyYes">Køb ✓</button>
+    <div id="coinPay">
+      <div class="coin-disk" id="coinDisk" aria-label="Mønterne på disken"></div>
+      <div class="coin-sum" id="coinSum" role="status"></div>
+      <div class="coin-tray" id="coinTray"></div>
+      <div class="buy-go"><button class="share-off" id="coinHelp">🤝 Hjælp</button><button class="buy-yes" id="buyYes">Betal ✓</button></div>
+    </div>
   </div>
 </div>
 <!-- who plays: with two players or more, a game asks first - each child taps their own picture -->
@@ -583,27 +610,42 @@ function renderStyles() { const all = typeof styleLists === 'undefined' ? null :
   if (box.hidden) continue; const [items, now, set] = list;
   // (now: the chosen one - or, for Pynt, the list of all chosen, Ingen lit when it is empty)
   for (const [n, label] of items) { const b = iconButton(`ikoner/valg-${n || 'ingen-' + none}.png`, label), locked = !owns(n);
-    if (locked) { b.classList.add('locked'); b.append(Object.assign(document.createElement('span'), { className: 'price', textContent: '🔒 ⭐' + SHOP[n] })); }
+    if (locked) { b.classList.add('locked'); b.append(Object.assign(document.createElement('span'), { className: 'price', textContent: `🔒 ${SHOP[n]} kr` })); }
     b.classList.toggle('on', Array.isArray(now) ? (n.endsWith('-ingen') ? !now.length : now.includes(n)) : n === now); b.onclick = () => locked ? askBuy(n) : set(n); box.append(b); } } }
 // ---- the star shop (the user, 03-11-2026: "Særlige ting låses"): the most special things cost stars, the rest stays free.
 // Each child buys with their own stars and owns what they bought (score.owned); a thing worn already, or on a saved
 // figure, stays on - only choosing it again asks for the stars ----
-const SHOP = { 'hat-krone': 20, 'kjole-prinsesse': 30, 'kjole-havfrue': 30, 'sko-hoej': 15, 'briller-hjerte': 10, 'briller-stjerne': 10,
-  'ting-tryllestav': 15, 'bg-slot': 15, 'bg-slikland': 20, 'bg-rummet': 20, 'dyr-kat': 40, 'dyr-hund': 40, 'dyr-kanin': 40 };
+// (prices in kroner since 04-11-2026, paid in coins - see askBuy; the child's account: score.kr, the stars won become
+// kroner by the level - starWorth - and what there was before, one krone to a star)
+const SHOP = { 'hat-krone': 40, 'kjole-prinsesse': 60, 'kjole-havfrue': 60, 'sko-hoej': 30, 'briller-hjerte': 20, 'briller-stjerne': 20,
+  'ting-tryllestav': 30, 'bg-slot': 30, 'bg-slikland': 40, 'bg-rummet': 40, 'dyr-kat': 100, 'dyr-hund': 100, 'dyr-kanin': 100 };
+const krOf = s => s.kr ??= Math.max(0, (s.total || 0) - (s.spent || 0));
 function owns(n) { if (!SHOP[n]) return true; try { return !!playerNow().score.owned?.includes(n); } catch (e) { return true; } }
 // (the tab a shop thing belongs to: its name and how to put it on)
 function shopThing(n) { for (const top of Object.values(styleLists())) for (const l of [top, top?.[3]]) { const it = Array.isArray(l?.[0]) && l[0].find(i => i[0] === n); if (it) return { label: it[1], set: l[2] }; } return { label: '', set: null }; }
-// (tapping a locked thing: with two players or more, who buys first; then its picture, the price and the stars the child
-// has - the green button buys it when there are enough, with confetti, and puts it on; not enough: how many are missing)
-let buying = null;
+// (tapping a locked thing: with two players or more, who buys first; then its picture and price, and the coins - the user,
+// 04-11-2026: tapped up on to the counter until they make the price, one on the counter tapped takes it off again. The
+// account changes money by itself: any coin may be used as long as the kroner are there. 🤝 lays them out for the
+// youngest. Paid: confetti, it goes on, and it is written in the child's list; not enough: how many are missing)
+const COINS = [1, 2, 5, 10, 20], coinHtml = v => `<button class="coin c${v}" data-coin="${v}" aria-label="${v} kroner">${v}</button>`;
+let buying = null, onDisk = [];
+function showCoins() { const s = playerNow().score, have = krOf(s), price = SHOP[buying], sum = onDisk.reduce((a, b) => a + b, 0), out = document.getElementById('coinSum'), rest = have - sum;
+  document.getElementById('coinDisk').innerHTML = onDisk.map(coinHtml).join('');
+  document.getElementById('coinTray').innerHTML = COINS.map(coinHtml).join(''); document.querySelectorAll('#coinTray .coin').forEach(b => { b.disabled = +b.dataset.coin > rest; });
+  out.textContent = sum > price ? `${sum} kr – det er for meget! Tryk på en mønt for at tage den af` : `${sum} af ${price} kr`; out.className = 'coin-sum' + (sum === price ? ' ok' : sum > price ? ' over' : '');
+  document.getElementById('buyYes').disabled = sum !== price; }
 function askBuy(n, who) { if (who) setPlayer(who); else if (players.list.length > 1) { document.getElementById('whoTitle').textContent = 'Hvem køber?'; askWho(() => askBuy(n, players.now)); return; }
-  const s = playerNow().score, have = s.total - s.spent, price = SHOP[n]; buying = n;
+  const have = krOf(playerNow().score), price = SHOP[n]; buying = n; onDisk = []; soundOut()?.resume();
   document.getElementById('buyImg').src = `ikoner/valg-${n}.png`; document.getElementById('buyTitle').textContent = shopThing(n).label;
-  document.getElementById('buyPrice').textContent = '⭐ ' + price; document.getElementById('buyYes').disabled = have < price;
-  document.getElementById('buyNote').textContent = have >= price ? `Du har ⭐ ${have}` : `Du har ⭐ ${have} – du mangler ⭐ ${price - have}. Spil et spil og saml flere!`;
-  document.getElementById('buySheet').hidden = false; }
-document.getElementById('buyYes').onclick = () => { const s = playerNow().score, price = SHOP[buying]; if (!buying || s.total - s.spent < price) return;
-  s.spent += price; (s.owned ??= []).push(buying); savePlayers(); document.getElementById('buySheet').hidden = true; celebrate();
+  document.getElementById('buyPrice').textContent = price + ' kr';
+  document.getElementById('buyNote').textContent = have >= price ? `Du har ${have} kr på din konto` : `Du har ${have} kr – du mangler ${price - have} kr. Spil et spil, og saml flere stjerner!`;
+  document.getElementById('coinPay').hidden = have < price; showCoins(); document.getElementById('buySheet').hidden = false; }
+document.getElementById('coinTray').addEventListener('click', e => { const b = e.target.closest('[data-coin]'); if (!b || b.disabled) return; onDisk.push(+b.dataset.coin); sfx('ding'); showCoins(); });
+document.getElementById('coinDisk').addEventListener('click', e => { const b = e.target.closest('[data-coin]'); if (!b) return; onDisk.splice(onDisk.indexOf(+b.dataset.coin), 1); sfx('swish'); showCoins(); });
+// (help: the price in as few coins as can be)
+document.getElementById('coinHelp').onclick = () => { onDisk = []; let left = SHOP[buying]; for (const v of [...COINS].reverse()) while (left >= v) { onDisk.push(v); left -= v; } sfx('ding'); showCoins(); };
+document.getElementById('buyYes').onclick = () => { const s = playerNow().score, price = SHOP[buying]; if (!buying || onDisk.reduce((a, b) => a + b, 0) !== price || krOf(s) < price) return;
+  s.kr -= price; (s.owned ??= []).push(buying); (s.history ??= []).unshift({ n: buying, kr: price, at: Date.now() }); savePlayers(); document.getElementById('buySheet').hidden = true; celebrate();
   const n = buying; buying = null; if (hairBase && !game.on) shopThing(n).set?.(n); renderStyles(); if (!document.getElementById('starSheet').hidden) showStarSheet(); };
 document.getElementById('whoSheet').addEventListener('click', () => setTimeout(() => { if (document.getElementById('whoSheet').hidden) document.getElementById('whoTitle').textContent = 'Hvem spiller?'; }, 0));
 // the sliders: colour (hue), strength (saturation) and light, set from the part's colour now; moving one colours it
@@ -3595,7 +3637,9 @@ function showPlayer() { const p = playerNow(), b = document.getElementById('whoB
 document.getElementById('whoBadge').onclick = () => { document.getElementById('figSheet').hidden = false; renderGallery(); };
 let picOf = ''; setInterval(() => { try { const p = playerNow(); if (p.fig || !hairBase || game.on || document.hidden) return; const f = JSON.stringify(figureNow()); if (f === picOf && p.pic) return; picOf = f; p.pic = playerPic() || p.pic; savePlayers(); showPlayer(); } catch (e) {} }, 4000);
 const bestNow = () => score.best[game.mode]?.[game.level] || 0;
-function scoreGain(n) { score.total += n; if (!game.counted) { game.counted = true; score.games++; } const best = bestNow(); if (game.stars > best) { (score.best[game.mode] ??= {})[game.level] = game.stars;
+// (a star's worth in kroner: one on the easiest level, five on the hardest - the user, 04-11-2026: harder is worth more)
+const starWorth = (level = game.level) => LEVELS.findIndex(l => l[0] === level) + 1;
+function scoreGain(n) { krOf(score); score.kr += n * starWorth(); score.total += n; if (!game.counted) { game.counted = true; score.games++; } const best = bestNow(); if (game.stars > best) { (score.best[game.mode] ??= {})[game.level] = game.stars;
     if (best > 0 && !game.record) { game.record = true; toast('🏆 Ny rekord!'); celebrate(); } }
   saveScore(); showRecord(); }
 // (🏆 Stjerner: the stars to spend, and a table - a game a row, a level a column, with its icon)
@@ -4047,20 +4091,22 @@ function pkTick(dt) { const t = performance.now() / 1000, L = pkLevel(), kp = pk
 const GAME_NAMES = [['hop', 'Hop over bolden'], ['skate', 'Skateboard'], ['island', 'Skattejagt'], ['sea', 'Svømmeverden'], ['hide', 'Gemmeleg'], ['pk', 'Straffespark']];
 // (with two players or more: their pictures on top, the one shown marked - tapping another shows that child's stars)
 let starShown = null;
-function showStarSheet(id = starShown || players.now) { starShown = id; const p = players.list.find(q => q.id === id) || playerNow(), s = p.score, have = s.total - s.spent, many = players.list.length > 1;
+function showStarSheet(id = starShown || players.now) { starShown = id; const p = players.list.find(q => q.id === id) || playerNow(), s = p.score, have = krOf(s), many = players.list.length > 1;
   const who = document.getElementById('starWho'); who.hidden = !many;
   who.innerHTML = many ? players.list.map(q => `<button data-who="${q.id}" class="${q.id === p.id ? 'on' : ''}">${playerFace(q)}<span>${esc(q.name) || '&nbsp;'}</span></button>`).join('') : '';
-  document.getElementById('starTitle').textContent = many && p.name ? `${p.name}s stjerner` : 'Dine stjerner';
-  document.getElementById('starTotal').textContent = '⭐ ' + have;
-  document.getElementById('starNote').textContent = s.games ? `Samlet i ${s.games} spil på denne enhed.` : 'Spil et af spillene for at samle stjerner.';
-  document.getElementById('starTable').innerHTML = `<tr><th></th>${LEVELS.map(([id, name]) => `<th><img src="ikoner/valg-${id}.png" alt="${name}"></th>`).join('')}</tr>` +
+  document.getElementById('starTitle').textContent = p.name ? `${p.name}s konto` : 'Din konto';
+  document.getElementById('starTotal').textContent = `💰 ${have} kr`;
+  document.getElementById('starNote').textContent = s.games ? `⭐ ${s.total} stjerner samlet i ${s.games} spil på denne enhed.` : 'Spil et af spillene for at samle stjerner.';
+  document.getElementById('starTable').innerHTML = `<tr><th></th>${LEVELS.map(([id, name]) => `<th><img src="ikoner/valg-${id}.png" alt="${name}"></th>`).join('')}</tr><tr><td>⭐ giver</td>${LEVELS.map(([id]) => `<td>${starWorth(id)} kr</td>`).join('')}</tr>` +
     // (Hop over bolden: its best of the three ways to see it)
     GAME_NAMES.map(([g, name]) => `<tr><td>${name}</td>${LEVELS.map(([id]) => { const b = g === 'hop' ? Math.max(...HOP_WAYS.map(w => s.best[w[0]]?.[id] || 0)) : s.best[g]?.[id]; return b ? `<td>🏆 ${b}</td>` : '<td class="none">–</td>'; }).join('')}</tr>`).join('');
   // (the shop: every special thing, ✓ when this child owns it, the lock and the price when not - tapping one buys it)
   const shop = document.getElementById('shopList'); shop.innerHTML = '';
   for (const [n, price] of Object.entries(SHOP)) { const b = iconButton(`ikoner/valg-${n}.png`, shopThing(n).label), own = s.owned?.includes(n);
-    b.classList.toggle('locked', !own); b.append(Object.assign(document.createElement('span'), { className: 'price' + (own ? ' own' : ''), textContent: own ? '✓' : '🔒 ⭐' + price }));
+    b.classList.toggle('locked', !own); b.append(Object.assign(document.createElement('span'), { className: 'price' + (own ? ' own' : ''), textContent: own ? '✓' : `🔒 ${price} kr` }));
     b.onclick = () => { if (!own) askBuy(n, p.id); }; shop.append(b); }
+  // (what this child has bought, the newest first - a picture to go by, the name, the day and the price)
+  document.getElementById('buyLog').innerHTML = (s.history || []).map(h => `<div class="buy-row"><img src="ikoner/valg-${h.n}.png" alt=""><span>${esc(shopThing(h.n).label)}<small>${new Date(h.at).toLocaleDateString('da-DK')}</small></span><b>${h.kr} kr</b></div>`).join('');
   document.getElementById('starSheet').hidden = false; }
 const esc = t => String(t || '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 document.getElementById('starBtn').onclick = () => { starShown = null; showStarSheet(); };
@@ -4073,7 +4119,7 @@ function askWho(then) { if (players.list.length < 2) { if (!playerNow().pic && !
 document.getElementById('whoList').addEventListener('click', e => { const b = e.target.closest('[data-who]'); if (!b) return; document.getElementById('whoSheet').hidden = true; setPlayer(b.dataset.who); whoThen?.(); whoThen = null; });
 // (the grown-ups' list: a name to write, 📷 a new picture from the figure on the screen, 🗑 delete - asked twice)
 function showPlayers() { document.getElementById('playerList').innerHTML = players.list.map(q => `<div class="player-row" data-id="${q.id}">${playerFace(q)}
-    <div style="flex:1;min-width:0"><input value="${esc(q.name)}" maxlength="12" placeholder="Navn" aria-label="Navn" autocomplete="off" data-1p-ignore data-lpignore="true"><small>⭐ ${q.score.total - q.score.spent}</small></div>
+    <div style="flex:1;min-width:0"><input value="${esc(q.name)}" maxlength="12" placeholder="Navn" aria-label="Navn" autocomplete="off" data-1p-ignore data-lpignore="true"><small>💰 ${krOf(q.score)} kr</small></div>
     <button class="pic-p" aria-label="Gem figuren på skærmen som barnets MiniMig">📷</button>${players.list.length > 1 ? '<button class="del-p" aria-label="Slet spiller">🗑</button>' : ''}</div>`).join('');
   document.getElementById('playerSheet').hidden = false; }
 // (Til voksne: the website's dialog, if its pwa.js is on the page - not when the game runs on its own)
@@ -4095,11 +4141,11 @@ document.getElementById('playerSheet').addEventListener('click', e => { if (e.ta
 // the player and puts on their MiniMig. Hidden while there is only one child with no MiniMig of their own yet)
 function renderKids() { const box = document.getElementById('figKids'), list = document.getElementById('kidList'), show = players.list.length > 1 || players.list.some(q => q.fig);
   box.hidden = !show; if (!show) return;
-  list.innerHTML = players.list.map(q => `<button data-kid="${q.id}" class="${q.id === players.now ? 'on' : ''}">${playerFace(q)}<span>${esc(q.name) || '&nbsp;'}</span><small>⭐ ${q.score.total - q.score.spent}</small></button>`).join(''); }
+  list.innerHTML = players.list.map(q => `<button data-kid="${q.id}" class="${q.id === players.now ? 'on' : ''}">${playerFace(q)}<span>${esc(q.name) || '&nbsp;'}</span><small>💰 ${krOf(q.score)} kr</small></button>`).join(''); }
 document.getElementById('kidList').addEventListener('click', e => { const b = e.target.closest('[data-kid]'), p = b && players.list.find(q => q.id === b.dataset.kid); if (!p) return;
   if (game.on) { toast('Stop spillet først'); return; } setPlayer(p.id); document.getElementById('figSheet').hidden = true; if (p.fig && hairBase) wearFigure(p.fig); toast(p.name ? `Hej ${p.name}!` : '👋 Hej!'); });
 showPlayer();
-function showRecord() { const el = document.getElementById('record'); el.textContent = '🏆 ' + bestNow(); el.classList.toggle('beaten', !!game.record); }
+function showRecord() { const el = document.getElementById('record'); el.textContent = '🏆 ' + bestNow(); el.classList.toggle('beaten', !!game.record); document.getElementById('hudKr').textContent = `💰 ${krOf(score)}`; }
 document.getElementById('stage').addEventListener('pointerdown', e => { if (!game.on || e.target.closest('button')) return; e.preventDefault();
   if (game.mode === 'skate') { const r = e.currentTarget.getBoundingClientRect(); steer(e.clientX < r.left + r.width / 2 ? -1 : 1); } else if (game.mode === 'island') islandTap(e); else if (game.mode === 'sea') { sea.held = true; seaTap(e); } else if (game.mode === 'hide') hideTap(e); else if (game.mode === 'pk') pkTap(e); else jump(); });
 // (under the sea a finger held down and moved leads the figure along)
