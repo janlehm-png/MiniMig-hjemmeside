@@ -26,7 +26,7 @@ panel.innerHTML = `<button type="button" class="pwa-help">Til voksne</button>
 <p>Tryk på <strong>Installér MiniMig</strong>, hvis knappen vises. Ellers åbner du browserens menu i Chrome og vælger <strong>Installér app</strong> eller <strong>Føj til startskærm</strong>. Bekræft tilføjelsen.</p>
 </div>
 <h3>Spil uden internet</h3>
-<p>MiniMig gemmer det vigtigste på denne enhed – figuren, standardhåret, ikonerne og baggrundene – så I også kan spille uden internet. Tøj, hår, hatte og bevægelser gemmes første gang barnet bruger dem.</p>
+<p>MiniMig gemmer det vigtigste på denne enhed – omkring 25 MB med figuren, standardhåret, ikonerne og baggrundene – så I også kan spille uden internet. Derfor tager det lidt længere tid første gang. Tøj, hår, hatte, bevægelser og kæledyr gemmes første gang barnet bruger dem, så der kan gå et øjeblik, før de dukker op. Bruger barnet det hele, fylder spillet omkring 120 MB.</p>
 <p>I boksen <strong>Besked</strong> nedenfor kan du se, om spillet er klar. Vent, til der står <strong>“Spillet kan nu bruges uden internet”</strong>, før du slår internetforbindelsen fra.</p>
 <div class="pwa-message" role="status" aria-live="polite" aria-atomic="true"><strong>Besked</strong>
 <p class="pwa-status">Spillet hentes. Vent lidt, og behold internetforbindelsen.</p></div>
