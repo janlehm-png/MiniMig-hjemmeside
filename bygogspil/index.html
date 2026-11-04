@@ -553,8 +553,9 @@ const PALETTES = { skin: ['#F6D0AE', '#EDB98A', '#D9965F', '#B5713F', '#8D5530',
 PALETTES.brows = PALETTES.hair;
 // (the nose, the mouth and Pynt have no colour of their own, as in the app: no sliders under them - nor the movements)
 var briefsOn = false; // (the briefs are always white: no colours under them)
+var petPick = false; // (a pet tapped last under Ting: its colours can't be changed, so no colours show until a thing is tapped)
 function showSwatches() { const move = /^(move|game)-/.test(partNow); if (!move) slidersFrom(picked[partNow] || START[partNow]);
-  const noColour = move || ['nose', 'mouth', 'pynt', 'name', 'ears', 'bg'].includes(partNow) || partNow === 'pants' && briefsOn;
+  const noColour = move || ['nose', 'mouth', 'pynt', 'name', 'ears', 'bg'].includes(partNow) || partNow === 'pants' && briefsOn || partNow === 'item' && petPick;
   document.getElementById('sliders').style.display = noColour ? 'none' : '';
   // (the fixed colours of the app over the sliders: skin, hair - the brows too - eyes, and the clothes' colours for the rest)
   const sw = document.getElementById('swatches'), list = noColour ? [] : PALETTES[partNow] || PALETTES.cloth; sw.hidden = !list.length; sw.innerHTML = '';
@@ -1741,7 +1742,7 @@ async function loadHair(name, list = hairTexs, colourPart = 'hair', extra = {}) 
   // (cap: no lighter than that over the middle - the glasses' frames had white smears inside, by the glass)
   if (opts.cap) list.at(-1).cap = opts.cap;
   body.parent.add(hair); hair.bind(body.skeleton, body.bindMatrix); scalpCap(hair, g, W, earLines, apart, eyeY); if (picked[colourPart]) recolourHair(picked[colourPart], list); return hair; }
-var styleLists = () => ({ hair: [HAIRS, hairNow, setHair], eyes: [EYES, eyesNow, setEyes], brows: [BROWS, browsNow, setBrows], mouth: [MOUTHS, mouthNow, setMouth], pynt: [PYNT, pyntNow.map(k => 'pynt-' + k), setPynt], nose: [NOSES, noseNow, setNose], item: [ITEMS, itemNow, setItem, [PETS, petNow, setPet, 'dyr']], bg: [BGS, bgNow, setBg], ears: [EARS, earsNow, setEars, [EARRINGS, earringsNow, setEarrings, 'oerering']],
+var styleLists = () => ({ hair: [HAIRS, hairNow, setHair], eyes: [EYES, eyesNow, setEyes], brows: [BROWS, browsNow, setBrows], mouth: [MOUTHS, mouthNow, setMouth], pynt: [PYNT, pyntNow.map(k => 'pynt-' + k), setPynt], nose: [NOSES, noseNow, setNose], item: [ITEMS, itemNow, n => { petPick = false; setItem(n); showSwatches(); }, [PETS, petNow, n => { petPick = true; setPet(n); showSwatches(); }, 'dyr']], bg: [BGS, bgNow, setBg], ears: [EARS, earsNow, setEars, [EARRINGS, earringsNow, setEarrings, 'oerering']],
   ...Object.fromEntries(Object.entries(GARMENTS).map(([part, G]) => [part, [G.items, G.now, n => setGarment(part, n)]])),
   ...Object.fromEntries(Object.entries(MOVES).map(([g, list]) => ['move-' + g, [list, moveNow[g], playMove]])), 'game-hop': gameList() });
 async function setHair(name) {
@@ -3013,22 +3014,30 @@ let petNow = '', pet = null; const pets = {};
 function makePet(kind) { const g = new THREE.Group(), C = { 'dyr-kat': ['#F2994A', '#FFE9CF', '#E8627A'], 'dyr-hund': ['#B57F4A', '#F3DDBB', '#2A1C17'], 'dyr-kanin': ['#F6F3EC', '#FFD3E2', '#E8627A'] }[kind], fur = ilM(C[0], .8), pale = ilM(C[1], .8), nose = ilM(C[2], .4), dark = ilM('#1C1A22', .25), S = (r, m, x, y, z, p = g) => ilMesh(new THREE.SphereGeometry(r, 18, 14), m, x, y, z, p);
   S(.2, fur, 0, .24, 0).scale.set(.9, .85, 1.2); S(.15, pale, 0, .2, .08).scale.set(.75, .7, 1.05);
   const head = new THREE.Group(); head.position.set(0, .45, .24); head.scale.setScalar(1.22); g.add(head);
-  S(.17, fur, 0, 0, 0, head); S(.075, pale, 0, -.045, .125, head).scale.set(1.15, .8, .9); S(.024, nose, 0, -.015, .19, head);
+  S(.17, fur, 0, 0, 0, head);
+  // (the cat's face comes to a point - a cone for the muzzle, a small nose on its tip, whiskers - the user, 04-11-2026: it
+  // looked like the dog; the dog and the rabbit keep a round muzzle)
+  if (kind === 'dyr-kat') { head.children[0].scale.set(1.08, .92, .95); const m = ilMesh(new THREE.ConeGeometry(.115, .17, 16), fur, 0, -.045, .15, head); m.rotation.x = Math.PI / 2; m.scale.set(1, 1, .72); S(.02, nose, 0, -.04, .237, head);
+    for (const s of [-1, 1]) for (const a of [-.14, .14]) { const w = ilMesh(new THREE.CylinderGeometry(.003, .003, .16, 5), ilM('#FFFFFF', .5), s * .1, -.05 + a * .12, .17, head, false); w.rotation.z = Math.PI / 2 + s * a; } }
+  else { S(.075, pale, 0, -.045, .125, head).scale.set(1.15, .8, .9); S(.024, nose, 0, -.015, .19, head); }
   for (const s of [-1, 1]) { S(.03, dark, s * .075, .035, .14, head); S(.009, ilM('#FFFFFF', .2), s * .07, .05, .167, head);
-    if (kind === 'dyr-kat') { const e = ilMesh(new THREE.ConeGeometry(.065, .13, 12), fur, s * .1, .15, 0, head); e.rotation.z = -s * .25; const i = ilMesh(new THREE.ConeGeometry(.035, .08, 10), pale, s * .1, .14, .025, head); i.rotation.z = -s * .25; }
+    if (kind === 'dyr-kat') { const e = ilMesh(new THREE.ConeGeometry(.08, .17, 4), fur, s * .105, .17, 0, head); e.rotation.z = -s * .28; e.scale.z = .55; const i = ilMesh(new THREE.ConeGeometry(.045, .1, 4), pale, s * .105, .155, .03, head); i.rotation.z = -s * .28; i.scale.z = .3; }
     if (kind === 'dyr-hund') { const e = S(.075, ilM('#8A5A2E', .8), s * .165, -.01, -.01, head); e.scale.set(.5, 1.35, .85); e.rotation.z = s * .18; }
     if (kind === 'dyr-kanin') { const e = S(.05, fur, s * .07, .24, -.02, head); e.scale.set(.95, 3, .55); e.rotation.z = -s * .1; const i = S(.03, pale, s * .07, .24, .005, head); i.scale.set(.9, 3, .4); i.rotation.z = -s * .1; } }
-  const legs = []; for (const [x, z] of [[-.1, .17], [.1, .17], [-.1, -.17], [.1, -.17]]) { const l = new THREE.Group(); l.position.set(x, .13, z); g.add(l); ilMesh(new THREE.CylinderGeometry(.05, .055, .12, 10), fur, 0, -.06, 0, l); S(.06, pale, 0, -.1, .015, l).scale.set(1, .7, 1.25); legs.push(l); }
-  const tail = new THREE.Group(); tail.position.set(0, .3, -.23); g.add(tail);
-  if (kind === 'dyr-kanin') S(.075, ilM('#FFFFFF', .9), 0, 0, -.02, tail);
-  else { const n = kind === 'dyr-kat' ? 5 : 3, len = kind === 'dyr-kat' ? .085 : .07; for (let k = 0; k < n; k++) { const p = ilMesh(new THREE.SphereGeometry(.036 - k * .003, 10, 8), fur, 0, (k + .5) * len, -k * k * .006 - k * .01, tail); p.scale.y = 1.5; } }
+  // (the legs start well up inside the body and the tail is one piece growing out of it - the user, 04-11-2026: they
+  // looked stuck on, the tail loose beads)
+  const legs = []; for (const [x, z] of [[-.09, .13], [.09, .13], [-.09, -.13], [.09, -.13]]) { const l = new THREE.Group(); l.position.set(x, .21, z); g.add(l); ilMesh(new THREE.CylinderGeometry(.056, .052, .19, 12), fur, 0, -.095, 0, l); S(.06, pale, 0, -.18, .015, l).scale.set(1, .7, 1.25); legs.push(l); }
+  const tail = new THREE.Group(); tail.position.set(0, .3, -.17); g.add(tail);
+  if (kind === 'dyr-kanin') S(.08, ilM('#FFFFFF', .9), 0, 0, -.07, tail);
+  else { const pts = (kind === 'dyr-kat' ? [[0, -.03, .05], [0, .02, -.04], [0, .14, -.11], [0, .27, -.13], [0, .36, -.08]] : [[0, -.03, .05], [0, .02, -.05], [0, .1, -.12], [0, .17, -.15]]).map(p => new THREE.Vector3(...p));
+    ilMesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 16, kind === 'dyr-kat' ? .03 : .036, 10), fur, 0, 0, 0, tail); S(kind === 'dyr-kat' ? .03 : .036, fur, pts.at(-1).x, pts.at(-1).y, pts.at(-1).z, tail); }
   g.visible = false; scene.add(g); return { group: g, head, legs, tail, t: 0, walk: 0, face: .5, hop: 0, snap: true }; }
 function setPet(name) { if (!PETS.some(p => p[0] === name)) name = ''; petNow = name; if (pet) pet.group.visible = false; pet = name && glb ? pets[name] ??= makePet(name) : null; if (pet) pet.snap = true; renderStyles(); }
 const petAt = new THREE.Vector3();
 // (each moment: to its place beside the figure - a place of its own in each game - legs going when it moves)
 function petTick(dt) { if (!pet) return; const hb = bone('Hips'), g = pet.group, mode = game.on ? game.mode : ''; if (!hb) return; hb.getWorldPosition(petAt);
-  const behind = mode === 'sea' ? -Math.sign(Math.sin(game.rotY ?? 0)) || -1 : 1, [ox, oz, face] = { '': [.62, .5, .5], side: [-.9, .35, Math.PI / 2], back: [.75, .35, Math.PI], front: [.75, -.15, 0], skate: [petAt.x >= 0 ? -.8 : .8, .6, Math.PI], sea: [behind * 1, .2, null], island: [-.75, .5, null], hide: [.85, .5, 0], pk: [-.8, .3, Math.PI] }[mode] ?? [.62, .5, .5];
-  const running = ['side', 'back', 'front', 'skate'].includes(mode), floorY = mode === 'sea' ? petAt.y - .45 : 0, tx = petAt.x + ox, tz = petAt.z + oz; g.visible = holder.visible && !(mode === 'hide' && !il.rig.visible);
+  const behind = mode === 'sea' ? -Math.sign(Math.sin(game.rotY ?? 0)) || -1 : 1, [ox, oz, face] = { '': [.62, .5, .5], side: [-.9, .35, Math.PI / 2], back: [.75, .35, Math.PI], front: [.75, -.15, 0], skate: [0, 1.25, Math.PI], sea: [behind * 1, .2, null], island: [-.75, .5, null], hide: [.85, .5, 0], pk: [-.8, .3, Math.PI] }[mode] ?? [.62, .5, .5];
+  const running = ['side', 'back', 'front', 'skate'].includes(mode), floorY = mode === 'sea' ? petAt.y - .45 : 0, tx = petAt.x + ox, tz = petAt.z + oz; g.visible = holder.visible && mode !== 'sea' && !(mode === 'hide' && !il.rig.visible); // (not in the sea - the user, 04-11-2026)
   if (pet.snap) { g.position.set(tx, floorY, tz); pet.snap = false; } const x0 = g.position.x, z0 = g.position.z, k = 1 - Math.exp(-dt * (running ? 9 : 4)); g.position.x += (tx - x0) * k; g.position.z += (tz - z0) * k; pet.y = (pet.y ?? floorY) + (floorY - (pet.y ?? floorY)) * k;
   const vx = g.position.x - x0, vz = g.position.z - z0, speed = dt ? Math.hypot(vx, vz) / dt : 0, moving = running || speed > .35, t = performance.now() / 1000;
   const faceTo = !running && speed > .35 ? Math.atan2(vx, vz) : face ?? pet.face; let d = faceTo - pet.face; d = Math.atan2(Math.sin(d), Math.cos(d)); pet.face += d * Math.min(1, dt * 7); g.rotation.y = pet.face;
