@@ -235,6 +235,7 @@
   /* (Straffespark: a summer sky over the pitch) */
   .stage.pitch { background: linear-gradient(#6EC8FF, #BDE7FF 60%, #E6F6FF); }
   .quest { position: absolute; top: 64px; left: 50%; transform: translateX(-50%); display: flex; gap: 4px; align-items: center; padding: 4px 12px; border-radius: 999px; background: rgba(255, 255, 255, .85); box-shadow: 0 2px 10px rgba(58, 46, 92, .18); font-size: 26px; line-height: 1.2; pointer-events: none; z-index: 2; }
+  .quest[hidden] { display: none; }
   .quest .q-shell { opacity: .3; filter: grayscale(1); transition: opacity .3s, transform .3s; }
   .quest .q-shell.got { opacity: 1; filter: none; transform: scale(1.15); }
   .quest .q-chest, .quest .q-arrow { animation: questPulse 1s ease-in-out infinite alternate; }
@@ -863,7 +864,9 @@ function setupBrows(body) {
 function drawBrows(o) {
   const B = tex.brows, opts = (BROWS.find(b => b[0] === browsNow) || [])[2]; if (!B || !opts) return;
   const skin = tex.colours[PARTS.skin] || tex.skin, brow = tex.colours[PARTS.brows] || B.colour, T = B.texels, len = B.x1 - B.x0, edge = .025;
-  for (let j = 0; j < T.length; j += 4) { const p = T[j], X = T[j + 1], Y = T[j + 2], k = T[j + 3], i = p * 4;
+  for (let j = 0; j < T.length; j += 4) { const p = T[j], X = T[j + 1], Y = T[j + 2], i = p * 4;
+    // (the tail's palest end, taken for skin when the brows were measured, painted over with the rest of it)
+    const k = T[j + 3] || (Math.abs(X) > BROW_END && Math.abs(X) < B.x1 + .1 && Math.abs(Y - B.mid(Math.min(B.x1, Math.abs(X)))) < .08 ? 1 : 0);
     if (opts.own) { const ax = Math.abs(X); if (!k || ax <= BROW_END) continue; const a = Math.max(0, Math.min(1, (Math.hypot(Y - B.mid(BROW_END), ax - BROW_END) - B.thick(BROW_END) / 2) / edge + .5));
       o[i] += (Math.min(255, skin.r * 255 * k) - o[i]) * a; o[i + 1] += (Math.min(255, skin.g * 255 * k) - o[i + 1]) * a; o[i + 2] += (Math.min(255, skin.b * 255 * k) - o[i + 2]) * a; continue; }
     if (k) { o[i] = Math.min(255, skin.r * 255 * k); o[i + 1] = Math.min(255, skin.g * 255 * k); o[i + 2] = Math.min(255, skin.b * 255 * k); }
@@ -1009,7 +1012,7 @@ function drawEyes(o) {
       // (and shorter ones on, the further from the middle the shorter, so together they make an arch: three in towards the
       // nose and two out past the corner, there going on down from the lid's end - the user, 04-11-2026)
       for (let n = -3; n < 14; n++) { const g = -.45 + 1.43 * n / 11, l = g > 1 ? lidAt(1) - .25 * (g - 1) * E.ew : lidAt(g); if (l < -1) continue;
-        const bx = E.cx + sg * g * E.ew, by = l + .04, len = n < 0 ? .047 + .007 * n : n > 11 ? .12 - .03 * (n - 11) : .05 + .07 * (g + .45) / 1.43, a1 = .05 + .9 * g, a2 = a1 + .4 * Math.sign(a1 || 1);
+        const bx = E.cx + sg * g * E.ew, by = l + .04, len = n < 0 ? .047 + .007 * n : n >= 11 ? .06 - .015 * (n - 11) : .05 + .07 * (g + .45) / 1.43, a1 = .05 + .9 * g, a2 = a1 + .4 * Math.sign(a1 || 1);
         const mx = bx + sg * Math.sin(a1) * len * .55, my = by + Math.cos(a1) * len * .55, tx = mx + sg * Math.sin(a2) * len * .45, ty = my + Math.cos(a2) * len * .45;
         const [d1, t1] = seg(X, Y, bx, by, mx, my), [d2, t2] = seg(X, Y, mx, my, tx, ty);
         put(i, dark, 1, cov(Math.max(.016 * (1 - .4 * t1) - d1, .0096 * (1 - .75 * t2) - d2))); } }
@@ -4482,6 +4485,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.9.1 (a809f79)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.9.1 (b14f08c)</div>
 </body>
 </html>
