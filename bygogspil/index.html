@@ -588,10 +588,10 @@ function renderStyles() { const all = typeof styleLists === 'undefined' ? null :
 // Each child buys with their own stars and owns what they bought (score.owned); a thing worn already, or on a saved
 // figure, stays on - only choosing it again asks for the stars ----
 const SHOP = { 'hat-krone': 20, 'kjole-prinsesse': 30, 'kjole-havfrue': 30, 'sko-hoej': 15, 'briller-hjerte': 10, 'briller-stjerne': 10,
-  'ting-tryllestav': 15, 'bg-slot': 15, 'bg-slikland': 20, 'bg-rummet': 20 };
+  'ting-tryllestav': 15, 'bg-slot': 15, 'bg-slikland': 20, 'bg-rummet': 20, 'dyr-kat': 40, 'dyr-hund': 40, 'dyr-kanin': 40 };
 function owns(n) { if (!SHOP[n]) return true; try { return !!playerNow().score.owned?.includes(n); } catch (e) { return true; } }
 // (the tab a shop thing belongs to: its name and how to put it on)
-function shopThing(n) { for (const l of Object.values(styleLists())) { const it = Array.isArray(l?.[0]) && l[0].find(i => i[0] === n); if (it) return { label: it[1], set: l[2] }; } return { label: '', set: null }; }
+function shopThing(n) { for (const top of Object.values(styleLists())) for (const l of [top, top?.[3]]) { const it = Array.isArray(l?.[0]) && l[0].find(i => i[0] === n); if (it) return { label: it[1], set: l[2] }; } return { label: '', set: null }; }
 // (tapping a locked thing: with two players or more, who buys first; then its picture, the price and the stars the child
 // has - the green button buys it when there are enough, with confetti, and puts it on; not enough: how many are missing)
 let buying = null;
@@ -1741,7 +1741,7 @@ async function loadHair(name, list = hairTexs, colourPart = 'hair', extra = {}) 
   // (cap: no lighter than that over the middle - the glasses' frames had white smears inside, by the glass)
   if (opts.cap) list.at(-1).cap = opts.cap;
   body.parent.add(hair); hair.bind(body.skeleton, body.bindMatrix); scalpCap(hair, g, W, earLines, apart, eyeY); if (picked[colourPart]) recolourHair(picked[colourPart], list); return hair; }
-var styleLists = () => ({ hair: [HAIRS, hairNow, setHair], eyes: [EYES, eyesNow, setEyes], brows: [BROWS, browsNow, setBrows], mouth: [MOUTHS, mouthNow, setMouth], pynt: [PYNT, pyntNow.map(k => 'pynt-' + k), setPynt], nose: [NOSES, noseNow, setNose], item: [ITEMS, itemNow, setItem], bg: [BGS, bgNow, setBg], ears: [EARS, earsNow, setEars, [EARRINGS, earringsNow, setEarrings, 'oerering']],
+var styleLists = () => ({ hair: [HAIRS, hairNow, setHair], eyes: [EYES, eyesNow, setEyes], brows: [BROWS, browsNow, setBrows], mouth: [MOUTHS, mouthNow, setMouth], pynt: [PYNT, pyntNow.map(k => 'pynt-' + k), setPynt], nose: [NOSES, noseNow, setNose], item: [ITEMS, itemNow, setItem, [PETS, petNow, setPet, 'dyr']], bg: [BGS, bgNow, setBg], ears: [EARS, earsNow, setEars, [EARRINGS, earringsNow, setEarrings, 'oerering']],
   ...Object.fromEntries(Object.entries(GARMENTS).map(([part, G]) => [part, [G.items, G.now, n => setGarment(part, n)]])),
   ...Object.fromEntries(Object.entries(MOVES).map(([g, list]) => ['move-' + g, [list, moveNow[g], playMove]])), 'game-hop': gameList() });
 async function setHair(name) {
@@ -2763,7 +2763,7 @@ showBadges();
 // saved out of the page (the camera, behind a grown-up's sum) ----
 // (a figure: its choices - the colours picked, the hair, the face, what it wears, the name)
 const figureNow = () => ({ picked: { ...picked }, hair: hairNow, eyes: eyesNow, brows: browsNow, mouth: mouthNow, nose: noseNow, pynt: [...pyntNow],
-  wear: Object.fromEntries(Object.entries(GARMENTS).map(([p, G]) => [p, G.now])), name: nameNow, badge: badgeNow, item: itemNow, ears: earsNow, earrings: earringsNow, bg: bgNow });
+  wear: Object.fromEntries(Object.entries(GARMENTS).map(([p, G]) => [p, G.now])), name: nameNow, badge: badgeNow, item: itemNow, pet: petNow, ears: earsNow, earrings: earringsNow, bg: bgNow });
 // (a part's own colour back: the figure's painted one, the hair's and the garments' as made)
 const unpaint = list => { for (const t of list) { const im = t.ctx.createImageData(t.w, t.h); im.data.set(t.src); t.ctx.putImageData(im, 0, 0); t.texture.needsUpdate = true; } };
 function unpick(part) { delete picked[part]; if (part === 'socks' || part === 'shoe') { paintSocks(); paintHeels(); } if (part === 'item') paintItem(); if (part === 'hair') unpaint(hairTexs); if (GARMENTS[part]) unpaint(GARMENTS[part].texs);
@@ -2774,7 +2774,7 @@ async function wearFigure(f) { const ask = ++dressingUp;
   for (const [part] of CHOICES) if (part !== 'hair') { if (f.picked[part]) { picked[part] = f.picked[part]; recolour(part, f.picked[part]); } else unpick(part); }
   if (f.picked.hair) { picked.hair = f.picked.hair; recolour('hair', f.picked.hair); } else unpick('hair');
   eyesNow = f.eyes; browsNow = f.brows; mouthNow = f.mouth; noseNow = f.nose; pyntNow = [...f.pynt]; nameNow = f.name; badgeNow = f.badge;
-  nameInput.value = nameNow; showRec(); showBadges(); redrawBody(); showSwatches(); setItem(f.item || ''); earringsNow = f.earrings || ''; setEars(f.ears || 'oerer-naturlig'); setBg(f.bg || 'bg-sol');
+  nameInput.value = nameNow; showRec(); showBadges(); redrawBody(); showSwatches(); setItem(f.item || ''); setPet(f.pet || ''); earringsNow = f.earrings || ''; setEars(f.ears || 'oerer-naturlig'); setBg(f.bg || 'bg-sol');
   if (f.hair !== hairNow) await setHair(f.hair); if (ask !== dressingUp) return;
   // (a dress last: it takes off the top and trousers. No dress: taken off at once - a new MiniMig in just its underwear
   // kept the dress on before, as only a top or trousers put on took it off; the user, 03-11-2026)
@@ -3005,6 +3005,37 @@ function setEarrings(name) { earringsNow = EARRINGS.some(e => e[0] === name) ? n
 const ITEMS = [['', 'Ingen'], ['ting-ballon', 'Ballon'], ['ting-bamse', 'Bamse'], ['ting-tryllestav', 'Tryllestav'], ['ting-is', 'Is'], ['ting-blomst', 'Blomst'],
   ['ting-bold', 'Bold'], ['ting-fodbold', 'Fodbold'], ['ting-hulahop', 'Hulahopring']]; // (Paraply dropped by the user)
 let itemNow = '', item = null; const items = {};
+// ---- a pet (the user, 04-11-2026, the first new thing in the star shop): a cat, a dog or a rabbit of simple round shapes
+// that goes with the figure - sits beside it, runs along in the games, swims behind it, hops when it dances or cheers,
+// hides with it. Chosen under Ting, under the things; bought for stars, kept with the figure ----
+const PETS = [['', 'Intet dyr'], ['dyr-kat', 'Kat'], ['dyr-hund', 'Hund'], ['dyr-kanin', 'Kanin']];
+let petNow = '', pet = null; const pets = {};
+function makePet(kind) { const g = new THREE.Group(), C = { 'dyr-kat': ['#F2994A', '#FFE9CF', '#E8627A'], 'dyr-hund': ['#B57F4A', '#F3DDBB', '#2A1C17'], 'dyr-kanin': ['#F6F3EC', '#FFD3E2', '#E8627A'] }[kind], fur = ilM(C[0], .8), pale = ilM(C[1], .8), nose = ilM(C[2], .4), dark = ilM('#1C1A22', .25), S = (r, m, x, y, z, p = g) => ilMesh(new THREE.SphereGeometry(r, 18, 14), m, x, y, z, p);
+  S(.2, fur, 0, .24, 0).scale.set(.9, .85, 1.2); S(.15, pale, 0, .2, .08).scale.set(.75, .7, 1.05);
+  const head = new THREE.Group(); head.position.set(0, .45, .24); head.scale.setScalar(1.22); g.add(head);
+  S(.17, fur, 0, 0, 0, head); S(.075, pale, 0, -.045, .125, head).scale.set(1.15, .8, .9); S(.024, nose, 0, -.015, .19, head);
+  for (const s of [-1, 1]) { S(.03, dark, s * .075, .035, .14, head); S(.009, ilM('#FFFFFF', .2), s * .07, .05, .167, head);
+    if (kind === 'dyr-kat') { const e = ilMesh(new THREE.ConeGeometry(.065, .13, 12), fur, s * .1, .15, 0, head); e.rotation.z = -s * .25; const i = ilMesh(new THREE.ConeGeometry(.035, .08, 10), pale, s * .1, .14, .025, head); i.rotation.z = -s * .25; }
+    if (kind === 'dyr-hund') { const e = S(.075, ilM('#8A5A2E', .8), s * .165, -.01, -.01, head); e.scale.set(.5, 1.35, .85); e.rotation.z = s * .18; }
+    if (kind === 'dyr-kanin') { const e = S(.05, fur, s * .07, .24, -.02, head); e.scale.set(.95, 3, .55); e.rotation.z = -s * .1; const i = S(.03, pale, s * .07, .24, .005, head); i.scale.set(.9, 3, .4); i.rotation.z = -s * .1; } }
+  const legs = []; for (const [x, z] of [[-.1, .17], [.1, .17], [-.1, -.17], [.1, -.17]]) { const l = new THREE.Group(); l.position.set(x, .13, z); g.add(l); ilMesh(new THREE.CylinderGeometry(.05, .055, .12, 10), fur, 0, -.06, 0, l); S(.06, pale, 0, -.1, .015, l).scale.set(1, .7, 1.25); legs.push(l); }
+  const tail = new THREE.Group(); tail.position.set(0, .3, -.23); g.add(tail);
+  if (kind === 'dyr-kanin') S(.075, ilM('#FFFFFF', .9), 0, 0, -.02, tail);
+  else { const n = kind === 'dyr-kat' ? 5 : 3, len = kind === 'dyr-kat' ? .085 : .07; for (let k = 0; k < n; k++) { const p = ilMesh(new THREE.SphereGeometry(.036 - k * .003, 10, 8), fur, 0, (k + .5) * len, -k * k * .006 - k * .01, tail); p.scale.y = 1.5; } }
+  g.visible = false; scene.add(g); return { group: g, head, legs, tail, t: 0, walk: 0, face: .5, hop: 0, snap: true }; }
+function setPet(name) { if (!PETS.some(p => p[0] === name)) name = ''; petNow = name; if (pet) pet.group.visible = false; pet = name && glb ? pets[name] ??= makePet(name) : null; if (pet) pet.snap = true; renderStyles(); }
+const petAt = new THREE.Vector3();
+// (each moment: to its place beside the figure - a place of its own in each game - legs going when it moves)
+function petTick(dt) { if (!pet) return; const hb = bone('Hips'), g = pet.group, mode = game.on ? game.mode : ''; if (!hb) return; hb.getWorldPosition(petAt);
+  const behind = mode === 'sea' ? -Math.sign(Math.sin(game.rotY ?? 0)) || -1 : 1, [ox, oz, face] = { '': [.62, .5, .5], side: [-.9, .35, Math.PI / 2], back: [.75, .35, Math.PI], front: [.75, -.15, 0], skate: [petAt.x >= 0 ? -.8 : .8, .6, Math.PI], sea: [behind * 1, .2, null], island: [-.75, .5, null], hide: [.85, .5, 0], pk: [-.8, .3, Math.PI] }[mode] ?? [.62, .5, .5];
+  const running = ['side', 'back', 'front', 'skate'].includes(mode), floorY = mode === 'sea' ? petAt.y - .45 : 0, tx = petAt.x + ox, tz = petAt.z + oz; g.visible = holder.visible && !(mode === 'hide' && !il.rig.visible);
+  if (pet.snap) { g.position.set(tx, floorY, tz); pet.snap = false; } const x0 = g.position.x, z0 = g.position.z, k = 1 - Math.exp(-dt * (running ? 9 : 4)); g.position.x += (tx - x0) * k; g.position.z += (tz - z0) * k; pet.y = (pet.y ?? floorY) + (floorY - (pet.y ?? floorY)) * k;
+  const vx = g.position.x - x0, vz = g.position.z - z0, speed = dt ? Math.hypot(vx, vz) / dt : 0, moving = running || speed > .35, t = performance.now() / 1000;
+  const faceTo = !running && speed > .35 ? Math.atan2(vx, vz) : face ?? pet.face; let d = faceTo - pet.face; d = Math.atan2(Math.sin(d), Math.cos(d)); pet.face += d * Math.min(1, dt * 7); g.rotation.y = pet.face;
+  pet.walk += ((moving ? 1 : 0) - pet.walk) * Math.min(1, dt * 8); pet.t += dt * (running ? 13 : 9); pet.legs.forEach((l, i) => { l.rotation.x = Math.sin(pet.t + (i === 0 || i === 3 ? 0 : Math.PI)) * .75 * pet.walk; });
+  pet.tail.rotation.y = Math.sin(t * (moving ? 15 : 6)) * .5; pet.tail.rotation.x = -.5; pet.head.rotation.x = Math.sin(t * 2) * .05 + (moving ? Math.sin(pet.t * 2) * .05 : 0); pet.head.rotation.y = moving ? 0 : Math.sin(t * .7) * .3;
+  // (a little hop in the cheers and dances - and while running; in the water bobbing)
+  const happy = (typeof game.cheer === 'number' && game.cheer > 0) || MOVES.jubel.some(m => m[0] === anim) || isDance(anim) || md.on; g.position.y = pet.y + (mode === 'sea' ? Math.sin(t * 2) * .05 : happy ? Math.abs(Math.sin(t * 6)) * .2 : running ? Math.abs(Math.sin(pet.t)) * .06 : 0); }
 // (a saved figure's dropped thing - the umbrella - becomes none)
 function setItem(name) { if (!ITEMS.some(i => i[0] === name)) name = ''; itemNow = name;
   // (in the game Bold and Fodbold are the balls rolling in - not one in the hand and one more in the game - and Ingen
@@ -4194,6 +4225,6 @@ addEventListener('resize', resize); resize(); new ResizeObserver(resize).observe
 renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElapsedTime();
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
-  try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } armsOut(); try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
+  try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
 </body>
 </html>
