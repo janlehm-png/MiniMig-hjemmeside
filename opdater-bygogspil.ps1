@@ -27,7 +27,7 @@ try {
   # (kun spillets egne filer - ikke scripts, noter, referencebilleder eller gamle figurer)
   $filer = Get-ChildItem $kilde -Recurse -File | Where-Object {
     $rel = $_.FullName.Substring($kilde.Length + 1).Replace('\', '/')
-    $rel -match '^(index\.html|manifest\.webmanifest|three/.*|ikoner/.*|baggrund/.*|[a-z0-9-]+\.(fbx|json|jpg|png))$' -and $rel -notmatch '^(reference|gammel-figur|mixamo-nye|tests)/'
+    $rel -match '^(index\.html|manifest\.webmanifest|three/.*|ikoner/.*|baggrund/.*|[a-z0-9-]+\.(fbx|glb|json|jpg|png))$' -and $rel -notmatch '^(reference|gammel-figur|mixamo-nye|tests)/'
   }
   if (-not ($filer | Where-Object Name -eq 'index.html')) { throw 'Fandt ikke index.html i 3d-forsoeg.' }
   if (Test-Path $maal) { Remove-Item $maal -Recurse -Force }

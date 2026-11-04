@@ -3073,17 +3073,45 @@ function makePet(kind) { const g = new THREE.Group(), C = { 'dyr-kat': ['#F2994A
   if (kind === 'dyr-kanin') S(.08, ilM('#FFFFFF', .9), 0, 0, -.07, tail);
   else { const pts = (kind === 'dyr-kat' ? [[0, -.03, .05], [0, .02, -.04], [0, .14, -.11], [0, .27, -.13], [0, .36, -.08]] : [[0, -.03, .05], [0, .02, -.05], [0, .1, -.12], [0, .17, -.15]]).map(p => new THREE.Vector3(...p));
     ilMesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 16, kind === 'dyr-kat' ? .03 : .036, 10), fur, 0, 0, 0, tail); S(kind === 'dyr-kat' ? .03 : .036, fur, pts.at(-1).x, pts.at(-1).y, pts.at(-1).z, tail); }
-  g.visible = false; scene.add(g); return { group: g, head, legs, tail, t: 0, walk: 0, face: .5, hop: 0, snap: true }; }
+  g.visible = false; scene.add(g); const me = { group: g, head, legs, tail, t: 0, walk: 0, face: .5, hop: 0, snap: true };
+  // (the cat is the one rigged at Meshy - the user, 04-11-2026. Until its file has come, or if it can't, the simple one stands in)
+  if (kind === 'dyr-kat') loadGlbPet('dyr-kat.glb', 'dyr-kat.jpg', .72).then(m => { g.children.forEach(c => { c.visible = false; }); g.add(m.group); me.model = m; }).catch(() => {});
+  return me; }
 function setPet(name) { if (!PETS.some(p => p[0] === name)) name = ''; petNow = name; if (pet) pet.group.visible = false; pet = name && glb ? pets[name] ??= makePet(name) : null; if (pet) pet.snap = true; renderStyles(); }
+// (an animal rigged at Meshy: a GLB file with one skinned mesh, its bones and a walk. Meshy's rigged file leaves out the
+// texture, so that comes separately. Standing on the floor, facing forward, as tall as asked)
+async function loadGlbPet(url, texUrl, height) { const buf = await (await fetch(url)).arrayBuffer(), jl = new DataView(buf).getUint32(12, true), j = JSON.parse(new TextDecoder().decode(new Uint8Array(buf, 20, jl))), binAt = 20 + jl + 8;
+  const SIZE = { SCALAR: 1, VEC2: 2, VEC3: 3, VEC4: 4, MAT4: 16 }, TYPE = { 5121: Uint8Array, 5123: Uint16Array, 5125: Uint32Array, 5126: Float32Array };
+  const read = i => { const a = j.accessors[i], v = j.bufferViews[a.bufferView], C = TYPE[a.componentType], n = SIZE[a.type], at = binAt + (v.byteOffset || 0) + (a.byteOffset || 0); return { n, data: new C(buf.slice(at, at + a.count * n * C.BYTES_PER_ELEMENT)) }; };
+  const attr = i => { const a = read(i); return new THREE.BufferAttribute(a.data, a.n); }, skin = j.skins[0], joints = new Set(skin.joints);
+  const nodes = j.nodes.map((n, i) => { const o = joints.has(i) ? new THREE.Bone() : n.mesh !== undefined ? null : new THREE.Object3D(); if (o) o.name = n.name; return o; });
+  j.nodes.forEach((n, i) => { if (n.mesh === undefined) return; const p = j.meshes[n.mesh].primitives[0], a = p.attributes, geo = new THREE.BufferGeometry(); geo.setAttribute('position', attr(a.POSITION)); geo.setAttribute('normal', attr(a.NORMAL)); geo.setAttribute('uv', attr(a.TEXCOORD_0)); geo.setAttribute('skinIndex', attr(a.JOINTS_0)); geo.setAttribute('skinWeight', attr(a.WEIGHTS_0)); geo.setIndex(attr(p.indices));
+    const tex = new THREE.TextureLoader().load(texUrl); tex.flipY = false; tex.colorSpace = THREE.SRGBColorSpace; const m = new THREE.SkinnedMesh(geo, new THREE.MeshStandardMaterial({ map: tex, roughness: .8, side: THREE.DoubleSide })); m.castShadow = true; m.frustumCulled = false; m.name = n.name; nodes[i] = m; });
+  j.nodes.forEach((n, i) => { const o = nodes[i]; if (n.translation) o.position.fromArray(n.translation); if (n.rotation) o.quaternion.fromArray(n.rotation); if (n.scale) o.scale.fromArray(n.scale); (n.children || []).forEach(c => o.add(nodes[c])); });
+  const inner = new THREE.Group(); j.scenes[0].nodes.forEach(i => inner.add(nodes[i])); inner.updateMatrixWorld(true);
+  const bones = skin.joints.map(i => nodes[i]), ibm = read(skin.inverseBindMatrices).data, inverses = bones.map((_, i) => new THREE.Matrix4().fromArray(ibm, i * 16)), mesh = nodes.find(o => o.isSkinnedMesh); mesh.bind(new THREE.Skeleton(bones, inverses), new THREE.Matrix4());
+  const A = j.animations[0], tracks = A.channels.map(c => { const s = A.samplers[c.sampler], name = nodes[c.target.node].name, Track = { translation: THREE.VectorKeyframeTrack, rotation: THREE.QuaternionKeyframeTrack, scale: THREE.VectorKeyframeTrack }[c.target.path], prop = { translation: 'position', rotation: 'quaternion', scale: 'scale' }[c.target.path]; return new Track(name + '.' + prop, read(s.input).data, read(s.output).data, s.interpolation === 'STEP' ? THREE.InterpolateDiscrete : THREE.InterpolateLinear); }), clip = new THREE.AnimationClip('walk', -1, tracks);
+  const group = new THREE.Group(), turn = new THREE.Group(); turn.add(inner); group.add(turn); group.updateMatrixWorld(true); const bone = name => bones.find(b => b.name === name);
+  const a = bone('head').getWorldPosition(new THREE.Vector3()), b = bone('Hips').getWorldPosition(new THREE.Vector3()); turn.rotation.y = -Math.atan2(a.x - b.x, a.z - b.z); group.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(mesh, true), k = height / (box.max.y - box.min.y); turn.scale.setScalar(k); turn.position.y = -box.min.y * k;
+  const mixer = new THREE.AnimationMixer(inner), walk = mixer.clipAction(clip); walk.setEffectiveWeight(0); walk.play(); const swing = ['head', 'tail1', 'tail2', 'tail3'].map(n => ({ b: bone(n), rest: bone(n).quaternion.clone() }));
+  return { group, mixer, walk, swing, walkW: 0, idle: 0 }; }
+const petUp = new THREE.Vector3(0, 1, 0), petQ = new THREE.Quaternion(), petQ2 = new THREE.Quaternion();
+// (the walk fades in when it moves. Standing still it looks about and swishes its tail - its own bones turned about the
+// world's up - and only then, for the walk's mixer leaves a bone alone when the walk has nothing new to say)
+function petModelTick(m, dt, moving, running, t) { m.idle += ((!moving && !m.walkW ? 1 : 0) - m.idle) * Math.min(1, dt * (moving ? 12 : 2)); m.walkW += ((moving && m.idle < .03 ? 1 : 0) - m.walkW) * Math.min(1, dt * 8); if (m.walkW < .01 && !moving) m.walkW = 0;
+  m.walk.setEffectiveWeight(m.walkW); m.mixer.update(dt * (running ? 1.8 : 1.1)); if (m.walkW) return;
+  m.swing.forEach(({ b, rest }, i) => { const a = (i ? Math.sin(t * 5 - i * .6) * .22 : Math.sin(t * .7) * .3) * m.idle; b.parent.getWorldQuaternion(petQ); b.quaternion.copy(rest).premultiply(petQ2.copy(petQ).invert().multiply(new THREE.Quaternion().setFromAxisAngle(petUp, a)).multiply(petQ)); }); }
 const petAt = new THREE.Vector3();
 // (each moment: to its place beside the figure - a place of its own in each game - legs going when it moves)
 function petTick(dt) { if (!pet) return; const hb = bone('Hips'), g = pet.group, mode = game.on ? game.mode : ''; if (!hb) return; hb.getWorldPosition(petAt);
-  const behind = mode === 'sea' ? -Math.sign(Math.sin(game.rotY ?? 0)) || -1 : 1, [ox, oz, face] = { '': [.62, .5, .5], side: [-.9, .35, Math.PI / 2], back: [.75, .35, Math.PI], front: [.75, -.15, 0], skate: [0, 1.25, Math.PI], sea: [behind * 1, .2, null], island: [-.75, .5, null], hide: [.85, .5, 0], pk: [-.8, .3, Math.PI] }[mode] ?? [.62, .5, .5];
+  const behind = mode === 'sea' ? -Math.sign(Math.sin(game.rotY ?? 0)) || -1 : 1, [ox, oz, face] = { '': [.62, .5, .5], side: [pet.model ? -.73 : -.9, .35, Math.PI / 2], back: [.75, .35, Math.PI], front: [.75, -.15, 0], skate: [0, 1.25, Math.PI], sea: [behind * 1, .2, null], island: [-.75, .5, null], hide: [.85, .5, 0], pk: [-.8, .3, Math.PI] }[mode] ?? [.62, .5, .5];
   const running = ['side', 'back', 'front', 'skate'].includes(mode), floorY = mode === 'sea' ? petAt.y - .45 : 0, tx = petAt.x + ox, tz = petAt.z + oz; g.visible = holder.visible && mode !== 'sea' && !(mode === 'hide' && !il.rig.visible); // (not in the sea - the user, 04-11-2026)
   if (pet.snap) { g.position.set(tx, floorY, tz); pet.snap = false; } const x0 = g.position.x, z0 = g.position.z, k = 1 - Math.exp(-dt * (running ? 9 : 4)); g.position.x += (tx - x0) * k; g.position.z += (tz - z0) * k; pet.y = (pet.y ?? floorY) + (floorY - (pet.y ?? floorY)) * k;
   const vx = g.position.x - x0, vz = g.position.z - z0, speed = dt ? Math.hypot(vx, vz) / dt : 0, moving = running || speed > .35, t = performance.now() / 1000;
   const faceTo = !running && speed > .35 ? Math.atan2(vx, vz) : face ?? pet.face; let d = faceTo - pet.face; d = Math.atan2(Math.sin(d), Math.cos(d)); pet.face += d * Math.min(1, dt * 7); g.rotation.y = pet.face;
   pet.walk += ((moving ? 1 : 0) - pet.walk) * Math.min(1, dt * 8); pet.t += dt * (running ? 13 : 9); pet.legs.forEach((l, i) => { l.rotation.x = Math.sin(pet.t + (i === 0 || i === 3 ? 0 : Math.PI)) * .75 * pet.walk; });
+  if (pet.model) petModelTick(pet.model, dt, moving, running, t);
   pet.tail.rotation.y = Math.sin(t * (moving ? 15 : 6)) * .5; pet.tail.rotation.x = -.5; pet.head.rotation.x = Math.sin(t * 2) * .05 + (moving ? Math.sin(pet.t * 2) * .05 : 0); pet.head.rotation.y = moving ? 0 : Math.sin(t * .7) * .3;
   // (a little hop in the cheers and dances - and while running; in the water bobbing)
   const happy = (typeof game.cheer === 'number' && game.cheer > 0) || MOVES.jubel.some(m => m[0] === anim) || isDance(anim) || md.on; g.position.y = pet.y + (mode === 'sea' ? Math.sin(t * 2) * .05 : happy ? Math.abs(Math.sin(t * 6)) * .2 : running ? Math.abs(Math.sin(pet.t)) * .06 : 0); }
