@@ -552,7 +552,8 @@ import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
 // ---- the language: Danish, or English on a device not set to Danish; the globe among the tabs changes it (the page is
 // loaded anew, the figure on the screen kept - see langBtn). Each text is written in Danish in the page and the code, and
 // EN holds the English for it; tr(text) gives it in the language chosen, T(da, en) is for texts with a number or name in ----
-const LANG = (() => { let l = null; try { l = localStorage.getItem('minimig-test.sprog'); } catch (e) {} return l || (/^da\b/i.test(navigator.language || '') ? 'da' : 'en'); })(); // (American English - the user, 04-11-2026)
+// (?lang=en: the way in from the website's English pages, kept from then on)
+const LANG = (() => { let l = new URLSearchParams(location.search).get('lang'); l = l === 'en' || l === 'da' ? l : null; try { if (l) localStorage.setItem('minimig-test.sprog', l); else l = localStorage.getItem('minimig-test.sprog'); } catch (e) {} return l || (/^da\b/i.test(navigator.language || '') ? 'da' : 'en'); })(); // (American English - the user, 04-11-2026)
 const T = (da, en) => LANG === 'en' ? en : da, krTxt = n => T(`${n} kr`, n == 1 ? '1 coin' : `${n} coins`);
 const EN = {
   // (the tabs)
@@ -4558,6 +4559,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.9.1 (6911a47)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.9.1 (ac9a4f8)</div>
 </body>
 </html>
