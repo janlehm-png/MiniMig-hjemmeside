@@ -1,10 +1,53 @@
 (() => {
 'use strict';
 const root = new URL('./', document.currentScript.src);
+// (the language: on the website the page's own; in the game as the game has it - it runs after this, so it is worked out here too)
+const en = (() => { if (!document.getElementById('scene')) return document.documentElement.lang === 'en';
+ let l = new URLSearchParams(location.search).get('lang'); if (l !== 'en' && l !== 'da') { try { l = localStorage.getItem('minimig3d.sprog'); } catch (e) { l = null; } }
+ return (l || (/^da\b/i.test(navigator.language || '') ? 'da' : 'en')) === 'en'; })();
+const say = (da, english) => en ? english : da;
 const panel = document.createElement('aside');
 panel.className = 'pwa-tools';
-panel.setAttribute('aria-label', 'Installation og offline');
-panel.innerHTML = `<button type="button" class="pwa-help">Til voksne</button>
+panel.setAttribute('aria-label', say('Installation og offline', 'Installing and offline'));
+panel.innerHTML = en ? `<button type="button" class="pwa-help">For grown-ups</button>
+<dialog class="pwa-dialog" aria-labelledby="pwa-title">
+<h2 id="pwa-title" tabindex="-1" autofocus>For grown-ups</h2>
+<p>No account and no ads.</p>
+<h3>A good screen for playing</h3>
+<p>Right now MiniMig works best on a tablet, an iPad or a computer, with plenty of room for both the figure and the choices. A computer screen is even bigger – just open minimig.dk in the browser.</p>
+<p>On an iPhone, try turning the phone sideways if the screen feels cramped. It depends on the size of the screen – choose the direction that works best for you.</p>
+<h3>Add MiniMig to your home screen</h3>
+<p>Then you can open the game directly from the MiniMig icon.</p>
+<p class="pwa-installed" hidden><strong>✓ MiniMig is already on the home screen of this device.</strong> The instructions below can be used on your other devices.</p>
+<button type="button" class="pwa-install" hidden>Install MiniMig</button>
+<div class="pwa-instructions">
+<h3>iPhone and iPad</h3>
+<ol>
+<li>Open MiniMig in your browser, for example Safari or Chrome.</li>
+<li>Tap <strong>Share <svg class="pwa-share-icon" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M8 6l4-4 4 4M12 2v13M7 10H4v12h16V10h-3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></strong> — the symbol with a square and an up arrow — perhaps via the side menu, and choose <strong>Add to Home Screen</strong>.</li>
+<li>Keep <strong>Open as Web App</strong> turned on if the choice appears, and tap <strong>Add</strong>.</li>
+</ol>
+<h3>Android</h3>
+<p>Tap <strong>Install MiniMig</strong> if the button appears. Otherwise open the browser’s menu in Chrome and choose <strong>Install app</strong> or <strong>Add to Home screen</strong>. Confirm that you want to add it.</p>
+</div>
+<h3>Playing without internet</h3>
+<p>MiniMig keeps the essentials on this device – about 25 MB with the figure, the standard hair, the icons and the backgrounds – so you can also play without internet. That is why it takes a little longer the first time. Clothes, hair, hats, moves and pets are saved the first time your child uses them, so they may take a moment to appear. If your child uses everything, the game takes up about 120 MB.</p>
+<p>In the <strong>Message</strong> box below you can see whether the game is ready. Wait until it says <strong>“The game can now be used without internet”</strong> before you turn off your internet connection.</p>
+<div class="pwa-message" role="status" aria-live="polite" aria-atomic="true"><strong>Message</strong>
+<p class="pwa-status">The game is downloading. Please wait, and stay connected to the internet.</p></div>
+<p>The browser may later clear the saved files if the device is short of space. If so, open MiniMig with internet again, and the files can download again.</p>
+<h3>Pictures out of the game</h3>
+<p>With the camera, your child can save a picture of the figure or a profile picture and share it. Before the picture leaves the game, a grown-up has to solve a small math problem.</p>
+<p>After that you can choose to let your child share without asking for 1 hour, for the rest of the day or until you turn it off again (the last one needs a harder math problem). The camera then shows a small green padlock, and you can always turn it off with the <strong>Turn off again</strong> button when you tap the camera. The choice only applies to the device where it was turned on. A name on the top will be in the picture.</p>
+<h3>Your figure and privacy</h3>
+<p>The figures, names, stars and any recorded voice are kept in this browser only. The microphone is only used when your child taps 🎤 to record their name, and only once you have said yes. When MiniMig is added to the home screen, it may get its own separate storage, so the figure may not come along.</p>
+<h3>Brothers, sisters and sound</h3>
+<p>Under <strong>My figures → Children and players – for grown-ups</strong> each child gets their own MiniMig and their own stars. Under <strong>🔊 Sound</strong> you choose which sounds the game may make. Both are behind a small math problem.</p>
+<p>MiniMig uses no analytics tools or tracking.</p>
+<h3>Praise, complaints and good ideas</h3>
+<p>MiniMig is new, and we would love to hear from you – what your children like, what isn’t working and what you are missing. Write to <a href="mailto:supportogfeedback@minimig.dk">supportogfeedback@minimig.dk</a>.</p>
+<p><a class="pwa-support" target="_blank" rel="noopener">Help and support</a> · <a class="pwa-privacy" target="_blank" rel="noopener">Read about privacy</a></p>
+<form method="dialog"><button>Close</button></form></dialog>` : `<button type="button" class="pwa-help">Til voksne</button>
 <dialog class="pwa-dialog" aria-labelledby="pwa-title">
 <h2 id="pwa-title" tabindex="-1" autofocus>Til voksne</h2>
 <p>Uden konto og uden reklamer.</p>
@@ -46,8 +89,9 @@ panel.innerHTML = `<button type="button" class="pwa-help">Til voksne</button>
 document.body.append(panel);
 const dialog = panel.querySelector('dialog'), status = panel.querySelector('.pwa-status');
 const install = panel.querySelector('.pwa-install');
-panel.querySelector('.pwa-privacy').href = new URL('privatliv/', root);
-panel.querySelector('.pwa-support').href = new URL('support/', root);
+panel.querySelector('.pwa-privacy').href = new URL(say('privatliv/', 'en/privacy/'), root);
+panel.querySelector('.pwa-support').href = new URL(say('support/', 'en/support/'), root);
+const NOT_READY = say('Spillet er ikke klar til brug uden internet. Kontrollér internetforbindelsen, og åbn MiniMig igen.', 'The game isn’t ready to use without internet. Check your internet connection and open MiniMig again.');
 panel.querySelector('.pwa-help').onclick = () => dialog.showModal();
 const standalone = matchMedia('(display-mode: standalone)');
 let prompt, registration, reloading = false, touched = false;
@@ -63,9 +107,9 @@ install.onclick = async () => { const event = prompt; prompt = null; installUI()
 window.addEventListener('appinstalled', () => { prompt = null; installUI(); });
 standalone.addEventListener('change', installUI); installUI();
 function checkReady() { navigator.serviceWorker.controller?.postMessage({type:'CHECK_OFFLINE'}); }
-if (!('serviceWorker' in navigator) || !isSecureContext) { status.textContent = 'Denne browser kan ikke gøre spillet klar til brug uden internet. Prøv at åbne https://minimig.dk/ i en opdateret browser.'; return; }
+if (!('serviceWorker' in navigator) || !isSecureContext) { status.textContent = say('Denne browser kan ikke gøre spillet klar til brug uden internet. Prøv at åbne https://minimig.dk/ i en opdateret browser.', 'This browser can’t get the game ready to use without internet. Try opening https://minimig.dk/ in an up-to-date browser.'); return; }
 navigator.serviceWorker.addEventListener('message', event => {
- if(event.data?.type === 'OFFLINE_STATUS') status.textContent = event.data.ready ? 'Spillet kan nu bruges uden internet.' : 'Spillet er ikke klar til brug uden internet. Kontrollér internetforbindelsen, og åbn MiniMig igen.';
+ if(event.data?.type === 'OFFLINE_STATUS') status.textContent = event.data.ready ? say('Spillet kan nu bruges uden internet.', 'The game can now be used without internet.') : NOT_READY;
 });
 navigator.serviceWorker.addEventListener('controllerchange', () => { if(reloading) location.reload(); else checkReady(); });
 // A new version is fetched quietly in the background and then put in by itself, never in the middle of play: at once
@@ -83,8 +127,8 @@ navigator.serviceWorker.register(new URL('service-worker.js', root), {scope:root
  waiting(); checkReady();
  reg.addEventListener('updatefound', () => {
   const worker = reg.installing;
-  worker?.addEventListener('statechange', () => { waiting(); if(worker.state === 'redundant') status.textContent = 'Spillet er ikke klar til brug uden internet. Kontrollér internetforbindelsen, og åbn MiniMig igen.'; });
+  worker?.addEventListener('statechange', () => { waiting(); if(worker.state === 'redundant') status.textContent = NOT_READY; });
  });
  navigator.serviceWorker.ready.then(checkReady);
-}).catch(() => { status.textContent = 'Spillet er ikke klar til brug uden internet. Kontrollér internetforbindelsen, og åbn MiniMig igen.'; });
+}).catch(() => { status.textContent = NOT_READY; });
 })();
