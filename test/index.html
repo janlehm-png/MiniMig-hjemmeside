@@ -150,6 +150,7 @@
   .coin[disabled] { opacity: .3; cursor: default; }
   .coin-disk { min-height: 74px; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; justify-content: center; padding: 6px; border-radius: 16px; border: 2px dashed #C9C2E0; background: #FFF8E1; }
   .coin-disk:empty::before { content: "👇 Tryk på mønterne"; color: #6B6191; font: 700 .9rem/1.2 system-ui, sans-serif; }
+  html[lang="en"] .coin-disk:empty::before { content: "👇 Tap the coins"; }
   .coin-sum { text-align: center; font: 800 1.15rem/1.2 system-ui, sans-serif; }
   .coin-sum.ok { color: #1E9A5A; } .coin-sum.over { color: #E8384F; }
   .coin-tray { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: center; }
@@ -157,6 +158,7 @@
   /* (what the child has bought: a picture, the name, when, for how much) */
   .buy-log { display: grid; gap: 6px; }
   .buy-log:empty::before { content: "Ingenting endnu."; color: #6B6191; font-size: .9rem; }
+  html[lang="en"] .buy-log:empty::before { content: "Nothing yet."; }
   .buy-row { display: flex; align-items: center; gap: 8px; font-weight: 700; }
   .buy-row img { width: 40px; height: 40px; flex: none; border-radius: 10px; object-fit: cover; background: #FFF8E1; }
   .buy-row span { flex: 1; min-width: 0; }
@@ -342,6 +344,8 @@
     <button id="soundBtn"><span class="emo" aria-hidden="true">🔊</span><span>Lyd</span></button>
     <!-- (the coins are on the button too - the user, 04-11-2026) -->
     <button id="starBtn"><span class="emo emo-coins" aria-hidden="true">🏆<i class="mini-coin">5</i><i class="mini-coin gold">20</i></span><span>Stjerner og mønter</span></button>
+    <!-- (the language: the other language's flag and name, drawn here - a PC shows flag emoji as two letters) -->
+    <button id="langBtn"><span class="emo" aria-hidden="true"></span><span></span></button>
     <!-- (on minimig.dk only: the website's "Til voksne" - home screen, offline, privacy - from its pwa.js) -->
     <!-- (drawn here: an iPad shows the family emoji as a grey outline - the user, 04-11-2026) -->
     <button id="adultBtn" hidden><span class="emo" aria-hidden="true"><svg viewBox="0 0 32 32" width="30" height="30"><circle cx="11.5" cy="8" r="5" fill="#F2C09A"/><path d="M7 7a5 5 0 0 1 9-1.5C13 7 10 7.500 7 7z" fill="#6B4226"/><path d="M4 30V20a7.500 7.500 0 0 1 15 0v10z" fill="#4F7BE8"/><circle cx="23.500" cy="15" r="4" fill="#F7CFAE"/><path d="M19.500 14.500a4 4 0 0 1 8 0c-3-.2-5.500-.8-8 0z" fill="#E0A63A"/><path d="M18 30v-5a5.500 5.500 0 0 1 11 0v5z" fill="#F0628F"/></svg></span><span>Til voksne</span></button>
@@ -545,6 +549,63 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
 
+// ---- the language: Danish, or English on a device not set to Danish; the flag among the tabs changes it (the page is
+// loaded anew, the figure on the screen kept - see langBtn). Each text is written in Danish in the page and the code, and
+// EN holds the English for it; tr(text) gives it in the language chosen, T(da, en) is for texts with a number or name in ----
+const LANG = (() => { let l = null; try { l = localStorage.getItem('minimig-test.sprog'); } catch (e) {} return l || (/^da\b/i.test(navigator.language || '') ? 'da' : 'en'); })();
+const T = (da, en) => LANG === 'en' ? en : da, krTxt = n => T(`${n} kr`, n == 1 ? '1 coin' : `${n} coins`);
+const EN = {
+  // (the tabs)
+  'Hud': 'Skin', 'Hår': 'Hair', 'Øjne': 'Eyes', 'Bryn': 'Brows', 'Næse': 'Nose', 'Mund': 'Mouth', 'Ører': 'Ears', 'Pynt': 'Face art', 'Trøje': 'Top', 'Bukser': 'Trousers', 'Kjole': 'Dress', 'Strømper': 'Socks', 'Sko': 'Shoes', 'Hat': 'Hat', 'Briller': 'Glasses', 'Ting': 'Things', 'Navn': 'Name', 'Baggrund': 'Background',
+  'Gem': 'Save', 'Mine figurer': 'My figures', 'Ny figur': 'New figure', 'Send foto': 'Send photo', 'Lyd': 'Sound', 'Stjerner og mønter': 'Stars and coins', 'Til voksne': 'For grown-ups',
+  'Stå': 'Stand', 'Vink': 'Wave', 'Hop': 'Jump', 'Dans': 'Dance', 'Løb': 'Run', 'Jubel': 'Cheer', 'Kolbøtte': 'Roll', 'Spark': 'Kick', 'Drej rundt': 'Spin', 'Min dans': 'My dance',
+  'Hop over bolden': 'Jump the ball', 'Skateboard': 'Skateboard', 'Skattejagt': 'Treasure hunt', 'Svømmeverden': 'Swim world', 'Gemmeleg': 'Hide and seek', 'Straffespark': 'Penalty',
+  // (hair, face)
+  'Kort': 'Short', 'Krøller': 'Curls', 'Strit': 'Spiky', 'Fletninger': 'Plaits', 'Fletning': 'Plait',
+  'Naturlige': 'Natural', 'Tynde': 'Thin', 'Tykke': 'Thick', 'Høje': 'High', 'Sure': 'Cross', 'Triste': 'Sad', 'Ingen': 'None', 'Glade': 'Happy', 'Blink': 'Wink', 'Vipper': 'Lashes', 'Stjerner': 'Stars', 'Hjerter': 'Hearts',
+  'Smil': 'Smile', 'Grin': 'Grin', 'Tunge': 'Tongue', 'Åh': 'Oh', 'Kys': 'Kiss', 'Trist': 'Sad',
+  'Røde kinder': 'Rosy cheeks', 'Fregner': 'Freckles', 'Stjerne': 'Star', 'Glimmer': 'Glitter', 'Regnbue': 'Rainbow', 'Plaster': 'Plaster', 'Skønhedsplet': 'Beauty spot',
+  'Naturlig': 'Natural', 'Lille': 'Small', 'Bred': 'Wide', 'Spids': 'Pointy', 'Dyrenæse': 'Animal nose', 'Klovn': 'Clown',
+  'Små': 'Small', 'Store': 'Big', 'Udstående': 'Sticking out', 'Alfeører': 'Elf ears', 'Perler': 'Pearls', 'Guldringe': 'Gold rings',
+  // (clothes)
+  'Undertrøje': 'Vest', 'T-shirt': 'T-shirt', 'Hættetrøje': 'Hoodie', 'Fodboldtrøje': 'Football shirt', 'Undershorts': 'Underpants', 'Trusser': 'Briefs', 'Lange bukser': 'Long trousers', 'Shorts': 'Shorts', 'Cowboyshorts': 'Denim shorts', 'Fodboldbukser': 'Football shorts',
+  'Ingen kjole': 'No dress', 'Sommerkjole': 'Summer dress', 'Prinsessekjole': 'Princess dress', 'Havfruekjole': 'Mermaid dress', 'Ingen strømper': 'No socks', 'Ankelstrømper': 'Ankle socks', 'Fodboldstrømper': 'Football socks', 'Knæstrømper': 'Knee socks',
+  'Bare fødder': 'Bare feet', 'Sneakers': 'Trainers', 'Fodboldstøvler': 'Football boots', 'Gummistøvler': 'Wellies', 'Balletsko': 'Ballet shoes', 'Højhælede': 'High heels',
+  'Ingen hat': 'No hat', 'Kasket': 'Cap', 'Krone': 'Crown', 'Kaninører': 'Bunny ears', 'Sløjfe': 'Bow', 'Ingen briller': 'No glasses', 'Runde': 'Round', 'Solbriller': 'Sunglasses', 'Hjerte': 'Heart',
+  // (things, pets, backgrounds)
+  'Ballon': 'Balloon', 'Bamse': 'Teddy', 'Tryllestav': 'Magic wand', 'Is': 'Ice cream', 'Blomst': 'Flower', 'Bold': 'Ball', 'Fodbold': 'Football', 'Hulahopring': 'Hula hoop',
+  'Intet dyr': 'No pet', 'Kat': 'Cat', 'Hund': 'Dog', 'Kanin': 'Rabbit', 'Halsbånd': 'Collar', 'Madskål': 'Food bowl', 'Legebold': 'Play ball',
+  'Sol': 'Sun', 'Have': 'Garden', 'Strand': 'Beach', 'Skov': 'Forest', 'Slot': 'Palace', 'Ridderborg': 'Castle', 'Havbund': 'Seabed', 'Slikland': 'Candy land', 'Vinter': 'Winter', 'Rummet': 'Space', 'Fodboldbane': 'Football pitch', 'Gymnastiksal': 'Gym', 'Dansesal': 'Dance hall',
+  // (movements, games)
+  'Hænder i siden': 'Hands on hips', 'Glad hop': 'Happy jump', 'Højt hop': 'High jump', 'Lille løbehop': 'Small leap', 'Langt løbehop': 'Long leap', 'Hiphop': 'Hip hop', 'Hiphop 2': 'Hip hop 2', 'Fjollet': 'Silly', 'Armdans': 'Arm dance', 'Sjovt løb': 'Funny run', 'Løb stærkt': 'Run fast',
+  'Klap': 'Clap', 'Dyk og rul': 'Dive and roll', 'Snuble': 'Stumble', 'Falder på numsen': 'Fall on your bottom', 'Venstre fod': 'Left foot', 'Højre fod': 'Right foot',
+  'Meget let': 'Very easy', 'Let': 'Easy', 'Mellem': 'Medium', 'Svær': 'Hard', 'Meget svær': 'Very hard', 'Fra siden': 'From the side', 'Bagfra': 'From behind', 'Forfra': 'From the front',
+  '👈 Tryk i siden for at svinge 👉': '👈 Tap the side to turn 👉', '👆 Tryk hvor du vil gå hen': '👆 Tap where you want to go', '👆 Tryk eller træk – så svømmer du derhen': '👆 Tap or drag to swim there', '🔍 Hvor er jeg? Tryk på busken': '🔍 Where am I? Tap the bush', '👆 Tryk i målet, hvor bolden skal hen': '👆 Tap the goal where the ball should go', '👆 Tryk for at hoppe': '👆 Tap to jump',
+  '🏆 Ny rekord!': '🏆 New record!', 'Din rekord': 'Your record', 'Stop spillet': 'Stop the game', 'Stop spillet først': 'Stop the game first',
+  // (messages)
+  'Henter figuren …': 'Loading the figure …', 'Figuren kunne ikke hentes': 'The figure could not be loaded', 'Det kan ikke hentes lige nu 📶': 'That can’t be loaded right now 📶',
+  '⭐ Gemt!': '⭐ Saved!', 'Kunne ikke gemme': 'Could not save', '✨ Ny MiniMig!': '✨ New MiniMig!', '👋 Hej!': '👋 Hello!', '📷 Gemt som barnets MiniMig': '📷 Saved as the child’s MiniMig', 'Hvem køber?': 'Who is buying?', 'Hvem spiller?': 'Who is playing?', 'Hvem spiller? Tryk for at skifte': 'Who is playing? Tap to change', 'Slet?': 'Delete?',
+  'Der er plads til 5 – tryk ✕ for at tage en ud': 'There is room for 5 – tap ✕ to take one out', 'Vælg nogle bevægelser først': 'Choose some moves first', 'Tag ud': 'Take out', '▶ Dans!': '▶ Dance!', '⏹ Stop': '⏹ Stop',
+  'Din egen stemme siger navnet – tryk på navnet på trøjen for at høre det igen': 'Your own voice says the name – tap the name on the top to hear it again', 'Skriv dit navn først ✏️': 'Write your name first ✏️', 'Mikrofonen kunne ikke bruges': 'The microphone could not be used',
+  '🔓 Deling uden voksen er slået til': '🔓 Sharing without a grown-up is on', 'Din konto': 'Your account', 'Spil et af spillene for at samle stjerner.': 'Play one of the games to collect stars.', '⭐ giver': '⭐ gives',
+  'Navn': 'Name', 'Gem figuren på skærmen som barnets MiniMig': 'Save the figure on the screen as the child’s MiniMig', 'Slet spiller': 'Delete player',
+  // (the page's own texts)
+  '👆 Træk for at dreje figuren': '👆 Drag to turn the figure', '🤏 Knib for at zoome': '🤏 Pinch to zoom', '👕 Tryk på navnet på trøjen, så siger figuren det – med din egen indtalte stemme, hvis du har indtalt en': '👕 Tap the name on the top and the figure says it – in your own recorded voice, if you have recorded one',
+  'Indtal selv': 'Record yourself', 'Gem ✓': 'Save ✓', 'Farve': 'Colour', 'Styrke': 'Strength', 'Lys': 'Light', 'Gem billede': 'Save picture', 'Hele figuren': 'The whole figure', 'Profilbillede': 'Profile picture', 'Slå fra igen': 'Turn off again',
+  'Skal barnet kunne dele billeder uden at spørge?': 'May the child share pictures without asking?', 'Nej, spørg hver gang': 'No, ask every time', 'Ja, i 1 time': 'Yes, for 1 hour', 'Ja, resten af i dag': 'Yes, for the rest of today', 'Ja, indtil jeg slår det fra igen': 'Yes, until I turn it off', '(kræver et sværere regnestykke)': '(needs a harder sum)', 'Gælder kun på denne enhed. Et navn på trøjen kommer med på billedet.': 'Applies to this device only. A name on the top will be in the picture.',
+  'Spørg en voksen': 'Ask a grown-up', 'Stjernerne fra spillene bliver til kroner på din konto – jo sværere niveau, jo flere. For kronerne køber du ting i butikken.': 'The stars from the games become coins in your account – the harder the level, the more. With the coins you buy things in the shop.', '🏆 = din rekord i det spil på det niveau.': '🏆 = your record in that game at that level.', '🔒 Stjernebutik': '🔒 Star shop', 'Tryk på en ting med 🔒, og betal med mønter. Hvert barn køber for sig selv.': 'Tap a thing with 🔒 and pay with coins. Each child buys for themselves.', '🧾 Det har du købt': '🧾 What you have bought',
+  'Køb': 'Buy', '🤝 Hjælp': '🤝 Help', 'Betal ✓': 'Pay ✓', 'Børn og spillere': 'Children and players', 'Hvert barn har sin egen MiniMig og sine egne stjerner. Byg barnets figur, og tryk 📷 – så gemmes figuren på skærmen som barnets MiniMig. Under Mine figurer trykker barnet bare på sit billede. Gemmes kun på denne enhed.': 'Each child has their own MiniMig and their own stars. Build the child’s figure and tap 📷 – the figure on the screen is then saved as the child’s MiniMig. Under My figures the child just taps their picture. Kept on this device only.', '➕ Ny spiller': '➕ New player',
+  'For voksne: vælg hvilke lyde MiniMig må lave. Valget huskes på denne enhed.': 'For grown-ups: choose which sounds MiniMig may make. The choice is remembered on this device.', '🎮 Musik i spillene': '🎮 Music in the games', '💃 Musik til dansene': '💃 Music for the dances', '🔔 Lydeffekter – boing, bonk og ta-da': '🔔 Sound effects – boing, bonk and ta-da', '🗣️ Stemmen, der siger navnet': '🗣️ The voice saying the name', 'Slå al lyd fra': 'All sound off', 'Slå al lyd til': 'All sound on',
+  'Gem i Mine figurer': 'Save in My figures', 'Ny MiniMig': 'New MiniMig', 'Dreng': 'Boy', 'Pige': 'Girl', 'Den figur, du har nu, bliver gemt i Mine figurer 🖼️.': 'The figure you have now is saved in My figures 🖼️.', 'Børn': 'Children', '🖼️ Gemte figurer': '🖼️ Saved figures', 'Børn og spillere – for voksne': 'Children and players – for grown-ups',
+  'Dit billede': 'Your picture', 'Tryk og hold på billedet, og vælg': 'Press and hold the picture, and choose', 'Gem i Fotos': 'Save to Photos', 'eller': 'or', 'Del': 'Share', '💾 Gem billedet': '💾 Save the picture', 'Billedet gemmes i mappen Overførsler. Du kan også højreklikke på billedet og vælge': 'The picture is saved in your Downloads folder. You can also right-click the picture and choose', 'Gem billede som': 'Save image as',
+  'Sådan gør du': 'How it works', 'Musik til og fra': 'Music on and off', 'Skriv dit navn': 'Write your name', 'Navn på trøjen': 'Name on the top', 'Sig navnet': 'Say the name', 'Slet din egen stemme': 'Delete your own voice', 'Gem dansen': 'Save the dance', 'Start forfra': 'Start again', 'Navn på dansen': 'Name of the dance', 'Luk': 'Close', 'Slet': 'Delete', 'Mønterne på disken': 'The coins on the counter', 'Billedet af figuren': 'The picture of the figure', 'Min MiniMig': 'My MiniMig' };
+const tr = s => LANG === 'en' ? EN[String(s).replace(/­/g, '')] ?? s : s;
+document.documentElement.lang = LANG; if (LANG === 'en') document.title = document.title.replace(/version 2/, '').trim();
+// (the page's own texts and labels; a text's spaces round it are kept, as words sit beside the bold ones in a line)
+if (LANG === 'en') { const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT), nodes = []; while (walk.nextNode()) nodes.push(walk.currentNode);
+  for (const n of nodes) { const key = n.nodeValue.trim(); if (key) { const en = tr(key); if (en !== key) n.nodeValue = n.nodeValue.replace(key, en); } }
+  for (const el of document.querySelectorAll('[aria-label],[placeholder],[title]')) for (const a of ['aria-label', 'placeholder', 'title']) if (el.hasAttribute(a)) el.setAttribute(a, tr(el.getAttribute(a))); }
+
 const canvas = document.getElementById('scene');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
@@ -577,7 +638,7 @@ const CHOICES = [['skin', 'Hud', 'hud'], ['hair', 'Hår', 'haar'], ['eyes', 'Øj
 const picked = {}, START = { skin: '#EDB98A', hair: '#4A2C1D', eyes: '#7A4220', brows: '#4A2C1D', mouth: '#C0505A', pynt: '#FF5A6E', nose: '#EDB98A', shirt: '#FF7A2F', pants: '#2C3E8C', dress: '#3D8BFF', socks: '#3D8BFF', item: '#E8384F', shoe: '#3D8BFF', hat: '#3D8BFF', glasses: '#3D8BFF' }; let partNow = 'shirt';
 const apply = (part, c) => { picked[part] = c; recolour(part, c); if (part === 'shirt' || part === 'dress') chestName(); };
 const iconButton = (src, label) => { const b = document.createElement('button'), i = new Image(); i.src = src; i.alt = ''; i.onerror = () => i.remove();
-  const s = document.createElement('span'); s.textContent = label; b.append(i, s); return b; };
+  const s = document.createElement('span'); s.textContent = tr(label); b.append(i, s); return b; };
 // (the app's colours, as in version 2.5D)
 const PALETTES = { skin: ['#F6D0AE', '#EDB98A', '#D9965F', '#B5713F', '#8D5530', '#5A3520'], hair: ['#2A1C17', '#4A2C1D', '#7A4428', '#A8582E', '#D9A55C', '#F0D9A0', '#FF7EBB', '#5AA9FF'],
   eyes: ['#9C5A1E', '#6B3A1A', '#4A2814', '#2E1A10', '#1A110C', '#3B7BD4', '#3E9A5C', '#A0763A', '#7D8A99', '#8A5CE6'],
@@ -615,7 +676,7 @@ function renderStyles() { const all = typeof styleLists === 'undefined' ? null :
   if (box.hidden) continue; const [items, now, set] = list;
   // (now: the chosen one - or, for Pynt, the list of all chosen, Ingen lit when it is empty)
   for (const [n, label] of items) { const b = iconButton(`ikoner/valg-${n || 'ingen-' + none}.png`, label), locked = !owns(n);
-    if (locked) { b.classList.add('locked'); b.append(Object.assign(document.createElement('span'), { className: 'price', textContent: `🔒 ${SHOP[n]} kr` })); }
+    if (locked) { b.classList.add('locked'); b.append(Object.assign(document.createElement('span'), { className: 'price', textContent: `🔒 ${krTxt(SHOP[n])}` })); }
     b.classList.toggle('on', Array.isArray(now) ? (n.endsWith('-ingen') ? !now.length : now.includes(n)) : n === now); b.onclick = () => locked ? askBuy(n) : set(n); box.append(b); } } }
 // ---- the star shop (the user, 03-11-2026: "Særlige ting låses"): the most special things cost stars, the rest stays free.
 // Each child buys with their own stars and owns what they bought (score.owned); a thing worn already, or on a saved
@@ -637,13 +698,13 @@ let buying = null, onDisk = [];
 function showCoins() { const s = playerNow().score, have = krOf(s), price = SHOP[buying], sum = onDisk.reduce((a, b) => a + b, 0), out = document.getElementById('coinSum'), rest = have - sum;
   document.getElementById('coinDisk').innerHTML = onDisk.map(coinHtml).join('');
   document.getElementById('coinTray').innerHTML = COINS.map(coinHtml).join(''); document.querySelectorAll('#coinTray .coin').forEach(b => { b.disabled = +b.dataset.coin > rest; });
-  out.textContent = sum > price ? `${sum} kr – det er for meget! Tryk på en mønt for at tage den af` : `${sum} af ${price} kr`; out.className = 'coin-sum' + (sum === price ? ' ok' : sum > price ? ' over' : '');
+  out.textContent = sum > price ? T(`${sum} kr – det er for meget! Tryk på en mønt for at tage den af`, `${sum} coins – that is too much! Tap a coin to take it off`) : T(`${sum} af ${price} kr`, `${sum} of ${price} coins`); out.className = 'coin-sum' + (sum === price ? ' ok' : sum > price ? ' over' : '');
   document.getElementById('buyYes').disabled = sum !== price; }
-function askBuy(n, who) { if (who) setPlayer(who); else if (players.list.length > 1) { document.getElementById('whoTitle').textContent = 'Hvem køber?'; askWho(() => askBuy(n, players.now)); return; }
+function askBuy(n, who) { if (who) setPlayer(who); else if (players.list.length > 1) { document.getElementById('whoTitle').textContent = tr('Hvem køber?'); askWho(() => askBuy(n, players.now)); return; }
   const have = krOf(playerNow().score), price = SHOP[n]; buying = n; onDisk = []; soundOut()?.resume();
-  document.getElementById('buyImg').src = `ikoner/valg-${n}.png`; document.getElementById('buyTitle').textContent = shopThing(n).label;
-  document.getElementById('buyPrice').textContent = price + ' kr';
-  document.getElementById('buyNote').textContent = have >= price ? `Du har ${have} kr på din konto` : `Du har ${have} kr – du mangler ${price - have} kr. Spil et spil, og saml flere stjerner!`;
+  document.getElementById('buyImg').src = `ikoner/valg-${n}.png`; document.getElementById('buyTitle').textContent = tr(shopThing(n).label);
+  document.getElementById('buyPrice').textContent = krTxt(price);
+  document.getElementById('buyNote').textContent = have >= price ? T(`Du har ${have} kr på din konto`, `You have ${have} coins in your account`) : T(`Du har ${have} kr – du mangler ${price - have} kr. Spil et spil, og saml flere stjerner!`, `You have ${have} coins – you need ${price - have} more. Play a game and collect more stars!`);
   document.getElementById('coinPay').hidden = have < price; showCoins(); document.getElementById('buySheet').hidden = false; }
 document.getElementById('coinTray').addEventListener('click', e => { const b = e.target.closest('[data-coin]'); if (!b || b.disabled) return; onDisk.push(+b.dataset.coin); sfx('ding'); showCoins(); });
 document.getElementById('coinDisk').addEventListener('click', e => { const b = e.target.closest('[data-coin]'); if (!b) return; onDisk.splice(onDisk.indexOf(+b.dataset.coin), 1); sfx('swish'); showCoins(); });
@@ -652,7 +713,7 @@ document.getElementById('coinHelp').onclick = () => { onDisk = []; let left = SH
 document.getElementById('buyYes').onclick = () => { const s = playerNow().score, price = SHOP[buying]; if (!buying || onDisk.reduce((a, b) => a + b, 0) !== price || krOf(s) < price) return;
   s.kr -= price; (s.owned ??= []).push(buying); (s.history ??= []).unshift({ n: buying, kr: price, at: Date.now() }); savePlayers(); document.getElementById('buySheet').hidden = true; celebrate();
   const n = buying; buying = null; if (hairBase && !game.on) shopThing(n).set?.(n); renderStyles(); if (!document.getElementById('starSheet').hidden) showStarSheet(); };
-document.getElementById('whoSheet').addEventListener('click', () => setTimeout(() => { if (document.getElementById('whoSheet').hidden) document.getElementById('whoTitle').textContent = 'Hvem spiller?'; }, 0));
+document.getElementById('whoSheet').addEventListener('click', () => setTimeout(() => { if (document.getElementById('whoSheet').hidden) document.getElementById('whoTitle').textContent = tr('Hvem spiller?'); }, 0));
 // the sliders: colour (hue), strength (saturation) and light, set from the part's colour now; moving one colours it
 const S = { h: document.getElementById('s-h'), s: document.getElementById('s-s'), l: document.getElementById('s-l') };
 function slidersFrom(hexColour) { const hsl = {}; new THREE.Color().setStyle(hexColour, THREE.SRGBColorSpace).getHSL(hsl, THREE.SRGBColorSpace);
@@ -1433,10 +1494,10 @@ const md = { on: false, k: -1, cur: null, left: 0, spare: [] };
 const mdList = () => { try { return playerNow().dance ??= []; } catch (e) { return md.spare; } };
 function showMyDance() { const list = mdList(), row = document.getElementById('mdRow'); row.innerHTML = '';
   for (let i = 0; i < MD_MAX; i++) { const id = list[i], b = document.createElement('button');
-    if (id) { b.className = 'full' + (md.on && md.k === i ? ' now' : ''); b.innerHTML = `<img src="ikoner/valg-${id}.png" alt=""><span class="x">✕</span>`; b.setAttribute('aria-label', 'Tag ud');
+    if (id) { b.className = 'full' + (md.on && md.k === i ? ' now' : ''); b.innerHTML = `<img src="ikoner/valg-${id}.png" alt=""><span class="x">✕</span>`; b.setAttribute('aria-label', tr('Tag ud'));
       b.onclick = () => { list.splice(i, 1); savePlayers(); if (md.on) mdStop(); showMyDance(); }; }
     else { b.textContent = i + 1; b.disabled = true; } row.append(b); }
-  const play = document.getElementById('mdPlay'); play.disabled = !list.length; play.textContent = md.on ? '⏹ Stop' : '▶ Dans!'; play.classList.toggle('stop', md.on);
+  const play = document.getElementById('mdPlay'); play.disabled = !list.length; play.textContent = tr(md.on ? '⏹ Stop' : '▶ Dans!'); play.classList.toggle('stop', md.on);
   const pick = document.getElementById('mdPick'); if (!pick.childElementCount) for (const [id, label] of MD_PICK) { const b = iconButton(`ikoner/valg-${id}.png`, label); b.onclick = () => mdAdd(id); pick.append(b); } }
 // (a movement added: shown at once, unless the dance is going - then it joins it next time round)
 async function mdAdd(id) { const list = mdList(); if (list.length >= MD_MAX) { toast('Der er plads til 5 – tryk ✕ for at tage en ud'); return; }
@@ -1460,15 +1521,15 @@ function showSavedDances() { const box = document.getElementById('mdSaved'); box
   mdSaved().forEach((d, i) => { const b = document.createElement('button');
     b.innerHTML = `<span class="strip">${d.list.slice(0, 3).map(id => `<img src="ikoner/valg-${id}.png" alt="">`).join('')}</span><span class="name">${esc(d.name)}</span><span class="del" aria-label="Slet dansen">✕</span>`;
     b.onclick = e => { const del = e.target.closest('.del');
-      if (del) { if (!del.classList.contains('armed')) { del.classList.add('armed'); del.textContent = 'Slet?'; setTimeout(() => { del.classList.remove('armed'); del.textContent = '✕'; }, 2500); return; }
+      if (del) { if (!del.classList.contains('armed')) { del.classList.add('armed'); del.textContent = tr('Slet?'); setTimeout(() => { del.classList.remove('armed'); del.textContent = '✕'; }, 2500); return; }
         mdSaved().splice(i, 1); savePlayers(); showSavedDances(); return; }
       const list = mdList(); list.length = 0; list.push(...d.list); savePlayers(); if (md.on) mdStop(); mdStart(); };
     box.append(b); }); }
 document.getElementById('mdSave').onclick = () => { if (!mdList().length) { toast('Vælg nogle bevægelser først'); return; }
   const box = document.getElementById('mdName'), input = document.getElementById('mdNameInput'); box.hidden = !box.hidden; if (!box.hidden) { input.value = ''; input.focus(); } };
 function mdSaveNow() { const input = document.getElementById('mdNameInput'), list = mdList(); if (!list.length) return; const all = mdSaved();
-  const name = input.value.trim() || `Dans ${all.length + 1}`, same = all.findIndex(d => d.name.toLowerCase() === name.toLowerCase()), d = { name, list: [...list] };
-  if (same >= 0) all[same] = d; else all.push(d); savePlayers(); input.blur(); document.getElementById('mdName').hidden = true; showSavedDances(); toast(`💾 ${name} er gemt`); }
+  const name = input.value.trim() || T(`Dans ${all.length + 1}`, `Dance ${all.length + 1}`), same = all.findIndex(d => d.name.toLowerCase() === name.toLowerCase()), d = { name, list: [...list] };
+  if (same >= 0) all[same] = d; else all.push(d); savePlayers(); input.blur(); document.getElementById('mdName').hidden = true; showSavedDances(); toast(T(`💾 ${name} er gemt`, `💾 ${name} is saved`)); }
 document.getElementById('mdNameOk').onclick = mdSaveNow;
 document.getElementById('mdNameInput').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); mdSaveNow(); } });
 
@@ -2782,12 +2843,12 @@ const voiceFor = n => voices[n.trim().toLowerCase()];
 function sayName() { const n = nameInput.value.trim(); if (!n || !sound.voice) return; const own = voiceFor(n);
   if (own) { playOwn(own); return; }
   if (!window.speechSynthesis) return; speechSynthesis.cancel();
-  const da = speechSynthesis.getVoices().filter(v => /^da/i.test(v.lang)), v = da.find(v => /premium|enhanced|forbedret|neural|natural/i.test(v.name)) || da.find(v => !v.localService) || da[0];
-  const u = new SpeechSynthesisUtterance(`Hej! Jeg hedder ${n}.`); u.lang = 'da-DK'; if (v) u.voice = v; u.rate = .92; u.pitch = 1.4; speechSynthesis.speak(u); }
+  const da = speechSynthesis.getVoices().filter(v => (LANG === 'en' ? /^en/i : /^da/i).test(v.lang)), v = da.find(v => /premium|enhanced|forbedret|neural|natural/i.test(v.name)) || da.find(v => !v.localService) || da[0];
+  const u = new SpeechSynthesisUtterance(T(`Hej! Jeg hedder ${n}.`, `Hi! My name is ${n}.`)); u.lang = T('da-DK', 'en-GB'); if (v) u.voice = v; u.rate = .92; u.pitch = 1.4; speechSynthesis.speak(u); }
 // (recording one's own voice: a tap on the microphone, up to four seconds, a tap again stops it; kept in this browser
 // only, for the name written)
 const recBtn = document.getElementById('recBtn'), recDel = document.getElementById('recDel'), recNote = document.getElementById('recNote'); let recorder = null;
-function showRec(note) { const has = !!voiceFor(nameInput.value || ''); recDel.hidden = !has; recNote.textContent = note || (has ? 'Din egen stemme siger navnet – tryk på navnet på trøjen for at høre det igen' : ''); }
+function showRec(note) { const has = !!voiceFor(nameInput.value || ''); recDel.hidden = !has; recNote.textContent = tr(note || (has ? 'Din egen stemme siger navnet – tryk på navnet på trøjen for at høre det igen' : '')); }
 // (the own voice played through the page's sound - opened by the tap on the microphone - so it can be heard by itself
 // right after the recording: an iPad will not start a plain sound that no tap started, and the recording stops by
 // itself after four seconds; the user, 03-11-2026)
@@ -2807,7 +2868,7 @@ recBtn.onclick = async () => { soundOut()?.resume(); if (recorder) { recorder.st
         // (a moment's pause first: just after the microphone an iPad still plays quietly, as on a phone call)
         setTimeout(sayName, 350); };
       fr.readAsDataURL(new Blob(parts, { type: parts[0]?.type || type || 'audio/mp4' })); };
-    r.start(); r.timer = setTimeout(() => r.state === 'recording' && r.stop(), 4000); recBtn.classList.add('rec'); recBtn.firstChild.textContent = '⏹ '; showRec('Sig: Hej, jeg hedder ' + n + ' …');
+    r.start(); r.timer = setTimeout(() => r.state === 'recording' && r.stop(), 4000); recBtn.classList.add('rec'); recBtn.firstChild.textContent = '⏹ '; showRec(T('Sig: Hej, jeg hedder ' + n + ' …', 'Say: Hi, my name is ' + n + ' …'));
   } catch (e) { recorder = null; showRec('Mikrofonen kunne ikke bruges'); } };
 recDel.onclick = () => { delete voices[(nameInput.value || '').trim().toLowerCase()]; try { localStorage.setItem(VOICE_KEY, JSON.stringify(voices)); } catch (e) {} showRec(); };
 // (a tap - not a drag to turn it - on the figure's shirt says the name)
@@ -2877,7 +2938,7 @@ async function sharePicture(kind) {
   const c = picCache[kind], url = c.toDataURL('image/png'), name = kind === 'profil' ? 'minimig-profil.png' : 'minimig.png';
   const blob = await new Promise((res, rej) => c.toBlob(b => b ? res(b) : rej(new Error('png')), 'image/png'));
   const file = new File([blob], name, { type: 'image/png' });
-  try { if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: 'Min MiniMig' }); return; } }
+  try { if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: tr('Min MiniMig') }); return; } }
   catch (e) { if (e.name === 'AbortError') return; }
   // (if the browser cannot share: the picture shown, to press and hold - or, with a mouse, to save with the button)
   document.getElementById('picImg').src = url; const sv = document.getElementById('picSave'); sv.href = url; sv.download = name;
@@ -2886,7 +2947,7 @@ async function sharePicture(kind) {
 // child share until it is turned off)
 let gateAnswer = 0, gateEntry = '', gateThen = null, gateHard = false;
 function newGateSum() { const a = gateHard ? 11 + Math.floor(Math.random() * 9) : 3 + Math.floor(Math.random() * 7), b = 3 + Math.floor(Math.random() * 7); gateAnswer = a * b; gateEntry = '';
-  document.getElementById('gateQ').textContent = `Hvad er ${a} × ${b}?`; document.getElementById('gateA').textContent = ''; }
+  document.getElementById('gateQ').textContent = T(`Hvad er ${a} × ${b}?`, `What is ${a} × ${b}?`); document.getElementById('gateA').textContent = ''; }
 function askGrownUp(then, hard = false) { gateThen = then; gateHard = hard; newGateSum(); document.getElementById('gate').hidden = false; }
 document.getElementById('keypad').addEventListener('click', e => { const b = e.target.closest('[data-k]'); if (!b) return; const k = b.dataset.k, a = document.getElementById('gateA');
   if (k === 'del') gateEntry = gateEntry.slice(0, -1);
@@ -2903,7 +2964,7 @@ function setShare(until) { try { if (until) localStorage.setItem(SHARE_KEY, unti
 function showShareState() { const open = shareOpen(), u = shareUntil(); document.getElementById('lockBadge').hidden = !open; document.getElementById('shareOn').hidden = !open;
   if (!open) { if (u) setShare(0); return; }
   const t = new Date(u), at = `${t.getHours()}.${String(t.getMinutes()).padStart(2, '0')}`;
-  document.getElementById('shareOnText').textContent = u === Infinity ? '🔓 Deling uden voksen er slået til' : `🔓 Deling uden voksen er slået til, til kl. ${at}`; }
+  document.getElementById('shareOnText').textContent = u === Infinity ? tr('🔓 Deling uden voksen er slået til') : T(`🔓 Deling uden voksen er slået til, til kl. ${at}`, `🔓 Sharing without a grown-up is on, until ${at}`); }
 setInterval(showShareState, 30000); showShareState();
 let shareKind = 'hel';
 document.getElementById('saveBtn').addEventListener('click', () => { showShareState(); showPicChoice('picChoice'); });
@@ -2924,7 +2985,7 @@ const MAX_SAVED = 30, FIGS_KEY = 'minimig-test.figurer';
 const savedFigs = () => { try { const l = JSON.parse(localStorage.getItem(FIGS_KEY) || '[]'); return Array.isArray(l) ? l : []; } catch (e) { return []; } };
 // (if the device is full, the oldest are let go until the rest fit)
 const storeFigs = l => { if (!l.length) try { localStorage.setItem(FIGS_KEY, '[]'); return true; } catch (e) { return false; } for (let n = Math.min(l.length, MAX_SAVED); n > 0; n--) try { localStorage.setItem(FIGS_KEY, JSON.stringify(l.slice(0, n))); return true; } catch (e) {} return false; };
-function toast(msg) { const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 1700); }
+function toast(msg) { const t = document.createElement('div'); t.className = 'toast'; t.textContent = tr(msg); document.body.appendChild(t); setTimeout(() => t.remove(), 1700); }
 const thumb = c => { const k = 200 / c.width, t = document.createElement('canvas'); t.width = 200; t.height = Math.round(c.height * k);
   const g = t.getContext('2d'); g.imageSmoothingQuality = 'high'; g.drawImage(c, 0, 0, t.width, t.height); return t.toDataURL('image/jpeg', .82); };
 const keepFig = (view, pic) => { const l = savedFigs(); l.unshift({ fig: figureNow(), view, pic: thumb(pic) }); return storeFigs(l); };
@@ -2948,13 +3009,13 @@ document.getElementById('newChoice').addEventListener('click', async e => { cons
   if (![l[0]?.fig, newFig('dreng'), newFig('pige')].some(f => sameFig(f, now))) keepFig('hel', figurePicture('hel', .5));
   await wearFigure(newFig(b.dataset.new)); toast('✨ Ny MiniMig!'); });
 function renderGallery() { const l = savedFigs(), el = document.getElementById('gallery'); renderKids();
-  el.innerHTML = l.length ? l.map((s, i) => `<div class="saved"><button class="load" data-load="${i}" aria-label="Brug figur ${i + 1}"><img src="${s.pic}" alt=""></button><button class="del" data-del="${i}" aria-label="Slet figur ${i + 1}">✕</button></div>`).join('')
-    : '<p class="empty">Ingen figurer endnu.<br>Tryk på ⭐ for at gemme din figur her.</p>'; }
+  el.innerHTML = l.length ? l.map((s, i) => `<div class="saved"><button class="load" data-load="${i}" aria-label="${T('Brug figur', 'Use figure')} ${i + 1}"><img src="${s.pic}" alt=""></button><button class="del" data-del="${i}" aria-label="${T('Slet figur', 'Delete figure')} ${i + 1}">✕</button></div>`).join('')
+    : T('<p class="empty">Ingen figurer endnu.<br>Tryk på ⭐ for at gemme din figur her.</p>', '<p class="empty">No figures yet.<br>Tap ⭐ to save your figure here.</p>'); }
 document.getElementById('figsBtn').addEventListener('click', () => { document.getElementById('figSheet').hidden = false; renderGallery(); });
 document.getElementById('gallery').addEventListener('click', e => { const load = e.target.closest('[data-load]'), del = e.target.closest('[data-del]'), l = savedFigs();
   if (load) { const s = l[+load.dataset.load]; if (!s || !hairBase) return; if (game.on) { toast('Stop spillet først'); return; } document.getElementById('figSheet').hidden = true; wearFigure(s.fig); }
   else if (del) { // (a first tap asks "Slet?", only a second one deletes, so a figure is not lost by a stray tap)
-    if (!del.classList.contains('armed')) { del.classList.add('armed'); del.textContent = 'Slet?'; setTimeout(() => { del.classList.remove('armed'); del.textContent = '✕'; }, 2500); return; }
+    if (!del.classList.contains('armed')) { del.classList.add('armed'); del.textContent = tr('Slet?'); setTimeout(() => { del.classList.remove('armed'); del.textContent = '✕'; }, 2500); return; }
     l.splice(+del.dataset.del, 1); storeFigs(l); renderGallery(); } });
 for (const s of document.querySelectorAll('.sheet')) s.addEventListener('click', e => { if (e.target === s || e.target.closest('[data-close]')) s.hidden = true; });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') for (const s of document.querySelectorAll('.sheet')) s.hidden = true; });
@@ -3569,7 +3630,7 @@ function startGame(mode = game.mode) { if (game.on || !glb) return; game.mode = 
     useGameBall(BALL_ITEMS.includes(itemNow) ? itemNow : '');
     game.bigPool ??= [goldBall(), goldBall()]; Object.assign(game, { dive: false, sinceBig: 0 });
     const run = levelNow().run; Promise.all([run, GAME.jump, GAME.trip, GAME.cheer, GAME.dive].map(loadMove)).then(() => { if (game.on) runAnim(run); }); }
-  hintEl.textContent = mode === 'skate' ? '👈 Tryk i siden for at svinge 👉' : mode === 'island' ? '👆 Tryk hvor du vil gå hen' : mode === 'sea' ? '👆 Tryk eller træk – så svømmer du derhen' : mode === 'hide' ? '🔍 Hvor er jeg? Tryk på busken' : mode === 'pk' ? '👆 Tryk i målet, hvor bolden skal hen' : '👆 Tryk for at hoppe';
+  hintEl.textContent = tr(mode === 'skate' ? '👈 Tryk i siden for at svinge 👉' : mode === 'island' ? '👆 Tryk hvor du vil gå hen' : mode === 'sea' ? '👆 Tryk eller træk – så svømmer du derhen' : mode === 'hide' ? '🔍 Hvor er jeg? Tryk på busken' : mode === 'pk' ? '👆 Tryk i målet, hvor bolden skal hen' : '👆 Tryk for at hoppe');
   hud.hidden = false; hintEl.hidden = false; document.querySelector('.top').hidden = true; document.getElementById('stage').classList.add('playing'); showStars(); showRecord();
   if (MODES[mode].from) game.hopWay = mode; // (the way last chosen in Hop over bolden)
   document.querySelectorAll('[data-game]').forEach(b => b.classList.toggle('on', b.dataset.game === mode || b.dataset.game === 'hop' && !!MODES[mode].from)); prepScene(); }
@@ -4291,19 +4352,19 @@ let starShown = null;
 function showStarSheet(id = starShown || players.now) { starShown = id; const p = players.list.find(q => q.id === id) || playerNow(), s = p.score, have = krOf(s), many = players.list.length > 1;
   const who = document.getElementById('starWho'); who.hidden = !many;
   who.innerHTML = many ? players.list.map(q => `<button data-who="${q.id}" class="${q.id === p.id ? 'on' : ''}">${playerFace(q)}<span>${esc(q.name) || '&nbsp;'}</span></button>`).join('') : '';
-  document.getElementById('starTitle').textContent = p.name ? `${p.name}s konto` : 'Din konto';
-  document.getElementById('starTotal').textContent = `💰 ${have} kr`;
-  document.getElementById('starNote').textContent = s.games ? `⭐ ${s.total} stjerner samlet i ${s.games} spil på denne enhed.` : 'Spil et af spillene for at samle stjerner.';
-  document.getElementById('starTable').innerHTML = `<tr><th></th>${LEVELS.map(([id, name]) => `<th><img src="ikoner/valg-${id}.png" alt="${name}"></th>`).join('')}</tr><tr><td>⭐ giver</td>${LEVELS.map(([id]) => `<td>${starWorth(id)} kr</td>`).join('')}</tr>` +
+  document.getElementById('starTitle').textContent = p.name ? T(`${p.name}s konto`, `${p.name}’s account`) : tr('Din konto');
+  document.getElementById('starTotal').textContent = `💰 ${krTxt(have)}`;
+  document.getElementById('starNote').textContent = s.games ? T(`⭐ ${s.total} stjerner samlet i ${s.games} spil på denne enhed.`, `⭐ ${s.total} stars collected in ${s.games} games on this device.`) : tr('Spil et af spillene for at samle stjerner.');
+  document.getElementById('starTable').innerHTML = `<tr><th></th>${LEVELS.map(([id, name]) => `<th><img src="ikoner/valg-${id}.png" alt="${tr(name)}"></th>`).join('')}</tr><tr><td>${tr('⭐ giver')}</td>${LEVELS.map(([id]) => `<td>${krTxt(starWorth(id))}</td>`).join('')}</tr>` +
     // (Hop over bolden: its best of the three ways to see it)
-    GAME_NAMES.map(([g, name]) => `<tr><td>${name}</td>${LEVELS.map(([id]) => { const b = g === 'hop' ? Math.max(...HOP_WAYS.map(w => s.best[w[0]]?.[id] || 0)) : s.best[g]?.[id]; return b ? `<td>🏆 ${b}</td>` : '<td class="none">–</td>'; }).join('')}</tr>`).join('');
+    GAME_NAMES.map(([g, name]) => `<tr><td>${tr(name)}</td>${LEVELS.map(([id]) => { const b = g === 'hop' ? Math.max(...HOP_WAYS.map(w => s.best[w[0]]?.[id] || 0)) : s.best[g]?.[id]; return b ? `<td>🏆 ${b}</td>` : '<td class="none">–</td>'; }).join('')}</tr>`).join('');
   // (the shop: every special thing, ✓ when this child owns it, the lock and the price when not - tapping one buys it)
   const shop = document.getElementById('shopList'); shop.innerHTML = '';
   for (const [n, price] of Object.entries(SHOP)) { const b = iconButton(`ikoner/valg-${n}.png`, shopThing(n).label), own = s.owned?.includes(n);
-    b.classList.toggle('locked', !own); b.append(Object.assign(document.createElement('span'), { className: 'price' + (own ? ' own' : ''), textContent: own ? '✓' : `🔒 ${price} kr` }));
+    b.classList.toggle('locked', !own); b.append(Object.assign(document.createElement('span'), { className: 'price' + (own ? ' own' : ''), textContent: own ? '✓' : `🔒 ${krTxt(price)}` }));
     b.onclick = () => { if (!own) askBuy(n, p.id); }; shop.append(b); }
   // (what this child has bought, the newest first - a picture to go by, the name, the day and the price)
-  document.getElementById('buyLog').innerHTML = (s.history || []).map(h => `<div class="buy-row"><img src="ikoner/valg-${h.n}.png" alt=""><span>${esc(shopThing(h.n).label)}<small>${new Date(h.at).toLocaleDateString('da-DK')}</small></span><b>${h.kr} kr</b></div>`).join('');
+  document.getElementById('buyLog').innerHTML = (s.history || []).map(h => `<div class="buy-row"><img src="ikoner/valg-${h.n}.png" alt=""><span>${esc(tr(shopThing(h.n).label))}<small>${new Date(h.at).toLocaleDateString(T('da-DK', 'en-GB'))}</small></span><b>${krTxt(h.kr)}</b></div>`).join('');
   document.getElementById('starSheet').hidden = false; }
 const esc = t => String(t || '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 document.getElementById('starBtn').onclick = () => { starShown = null; showStarSheet(); };
@@ -4316,8 +4377,8 @@ function askWho(then) { if (players.list.length < 2) { if (!playerNow().pic && !
 document.getElementById('whoList').addEventListener('click', e => { const b = e.target.closest('[data-who]'); if (!b) return; document.getElementById('whoSheet').hidden = true; setPlayer(b.dataset.who); whoThen?.(); whoThen = null; });
 // (the grown-ups' list: a name to write, 📷 a new picture from the figure on the screen, 🗑 delete - asked twice)
 function showPlayers() { document.getElementById('playerList').innerHTML = players.list.map(q => `<div class="player-row" data-id="${q.id}">${playerFace(q)}
-    <div style="flex:1;min-width:0"><input value="${esc(q.name)}" maxlength="12" placeholder="Navn" aria-label="Navn" autocomplete="off" data-1p-ignore data-lpignore="true"><small>💰 ${krOf(q.score)} kr</small></div>
-    <button class="pic-p" aria-label="Gem figuren på skærmen som barnets MiniMig">📷</button>${players.list.length > 1 ? '<button class="del-p" aria-label="Slet spiller">🗑</button>' : ''}</div>`).join('');
+    <div style="flex:1;min-width:0"><input value="${esc(q.name)}" maxlength="12" placeholder="${tr('Navn')}" aria-label="${tr('Navn')}" autocomplete="off" data-1p-ignore data-lpignore="true"><small>💰 ${krTxt(krOf(q.score))}</small></div>
+    <button class="pic-p" aria-label="${tr('Gem figuren på skærmen som barnets MiniMig')}">📷</button>${players.list.length > 1 ? `<button class="del-p" aria-label="${tr('Slet spiller')}">🗑</button>` : ''}</div>`).join('');
   document.getElementById('playerSheet').hidden = false; }
 // (Til voksne: the website's dialog, if its pwa.js is on the page - not when the game runs on its own)
 const adultBtn = document.getElementById('adultBtn'), pwaDialog = () => document.querySelector('.pwa-dialog');
@@ -4330,7 +4391,7 @@ document.getElementById('playerList').addEventListener('click', e => { const row
   // from Mine figurer)
   if (e.target.closest('.pic-p')) { if (game.on) { toast('Stop spillet først'); return; } p.pic = playerPic() || p.pic; if (hairBase) p.fig = figureNow(); savePlayers(); showPlayers(); showPlayer(); toast('📷 Gemt som barnets MiniMig'); return; }
   const del = e.target.closest('.del-p'); if (!del) return;
-  if (!del.classList.contains('armed')) { del.classList.add('armed'); del.textContent = 'Slet?'; setTimeout(() => { del.classList.remove('armed'); del.textContent = '🗑'; }, 2500); return; }
+  if (!del.classList.contains('armed')) { del.classList.add('armed'); del.textContent = tr('Slet?'); setTimeout(() => { del.classList.remove('armed'); del.textContent = '🗑'; }, 2500); return; }
   players.list.splice(players.list.indexOf(p), 1); if (players.now === p.id) players.now = players.list[0].id; score = playerNow().score; starShown = null; savePlayers(); showPlayers(); showPlayer(); });
 // (closing the list: back to Mine figurer, where the children now are)
 document.getElementById('playerSheet').addEventListener('click', e => { if (e.target.id === 'playerSheet' || e.target.closest('[data-close]')) setTimeout(() => { document.getElementById('figSheet').hidden = false; renderGallery(); }, 0); });
@@ -4338,9 +4399,9 @@ document.getElementById('playerSheet').addEventListener('click', e => { if (e.ta
 // the player and puts on their MiniMig. Hidden while there is only one child with no MiniMig of their own yet)
 function renderKids() { const box = document.getElementById('figKids'), list = document.getElementById('kidList'), show = players.list.length > 1 || players.list.some(q => q.fig);
   box.hidden = !show; if (!show) return;
-  list.innerHTML = players.list.map(q => `<button data-kid="${q.id}" class="${q.id === players.now ? 'on' : ''}">${playerFace(q)}<span>${esc(q.name) || '&nbsp;'}</span><small>💰 ${krOf(q.score)} kr</small></button>`).join(''); }
+  list.innerHTML = players.list.map(q => `<button data-kid="${q.id}" class="${q.id === players.now ? 'on' : ''}">${playerFace(q)}<span>${esc(q.name) || '&nbsp;'}</span><small>💰 ${krTxt(krOf(q.score))}</small></button>`).join(''); }
 document.getElementById('kidList').addEventListener('click', e => { const b = e.target.closest('[data-kid]'), p = b && players.list.find(q => q.id === b.dataset.kid); if (!p) return;
-  if (game.on) { toast('Stop spillet først'); return; } setPlayer(p.id); document.getElementById('figSheet').hidden = true; if (p.fig && hairBase) wearFigure(p.fig); toast(p.name ? `Hej ${p.name}!` : '👋 Hej!'); });
+  if (game.on) { toast('Stop spillet først'); return; } setPlayer(p.id); document.getElementById('figSheet').hidden = true; if (p.fig && hairBase) wearFigure(p.fig); toast(p.name ? T(`Hej ${p.name}!`, `Hello ${p.name}!`) : '👋 Hej!'); });
 showPlayer();
 function showRecord() { const el = document.getElementById('record'); el.textContent = '🏆 ' + bestNow(); el.classList.toggle('beaten', !!game.record); document.getElementById('hudKr').textContent = `💰 ${krOf(score)}`; }
 document.getElementById('stage').addEventListener('pointerdown', e => { if (!game.on || e.target.closest('button')) return; e.preventDefault();
@@ -4449,16 +4510,23 @@ function sfx(kind, later = 0) { const ctx = game.audio; if (!sound.sfx || !ctx |
 musicBtn.onclick = () => { musicOn = !musicOn; try { localStorage.setItem('minimig-test.musik', musicOn ? 'til' : 'fra'); } catch (e) {} if (musicOn) soundOut()?.resume(); };
 // (once the figure is in, the hint goes into the i in the corner - on a touch screen and on a computer alike)
 const infoBtn = document.getElementById('infoBtn'), infoPop = document.getElementById('infoPop'); let infoTimer = 0;
+// (the flag: the page loaded anew in the other language, with the figure on the screen - not in a game)
+{ const b = document.getElementById('langBtn'), [ic, nm] = b.children; nm.textContent = T('English', 'Dansk');
+  ic.innerHTML = LANG === 'en' ? '<svg viewBox="0 0 37 28" width="32" height="24" style="vertical-align:middle;border-radius:4px"><rect width="37" height="28" fill="#C8102E"/><rect x="12" width="4" height="28" fill="#fff"/><rect y="12" width="37" height="4" fill="#fff"/></svg>'
+    : '<svg viewBox="0 0 60 40" width="32" height="24" style="vertical-align:middle;border-radius:4px"><rect width="60" height="40" fill="#012169"/><path d="M0 0L60 40M60 0L0 40" stroke="#fff" stroke-width="8"/><path d="M0 0L60 40M60 0L0 40" stroke="#C8102E" stroke-width="3"/><path d="M30 0V40M0 20H60" stroke="#fff" stroke-width="13"/><path d="M30 0V40M0 20H60" stroke="#C8102E" stroke-width="8"/></svg>';
+  b.onclick = () => { if (game.on) { toast('Stop spillet først'); return; } try { localStorage.setItem('minimig-test.sprog', T('en', 'da')); if (hairBase) sessionStorage.setItem('minimig-test.sprogskift', JSON.stringify(figureNow())); } catch (e) {} location.reload(); }; }
 // (on the test page only: a button with kroner, to try the shop without playing for them - the user, 04-11-2026)
 if (location.pathname.includes('/test/')) { const b = document.createElement('button'); b.textContent = '+100 kr'; b.style.cssText = 'position:fixed;top:28px;left:50%;transform:translateX(-50%);z-index:999;background:#FFC233;color:#5A3A00;border:0;border-radius:10px;padding:5px 12px;font:700 13px system-ui,sans-serif;cursor:pointer'; b.onclick = () => { krOf(score); score.kr += 100; saveScore(); showRecord(); toast(`💰 ${score.kr} kr`); if (!document.getElementById('starSheet').hidden) showStarSheet(); }; document.body.append(b); }
 // (one more line while the child isn't saved with a name yet - the user, 04-11-2026: how to keep one's own player)
-const infoSave = document.createElement('span'); infoSave.innerHTML = '<br>🙂 Gem dig selv som spiller: Byg din figur, og tryk på billedet nederst i højre hjørne. Vælg »Børn og spillere – for voksne«, og få en voksen til at løse regnestykket. Skriv navnet, og tryk 📷';
+const infoSave = document.createElement('span'); infoSave.innerHTML = T('<br>🙂 Gem dig selv som spiller: Byg din figur, og tryk på billedet nederst i højre hjørne. Vælg »Børn og spillere – for voksne«, og få en voksen til at løse regnestykket. Skriv navnet, og tryk 📷', '<br>🙂 Save yourself as a player: Build your figure and tap the picture in the bottom right corner. Choose “Children and players – for grown-ups” and get a grown-up to solve the sum. Write the name and tap 📷');
 const infoVersion = document.createElement('small'); infoVersion.style.cssText = 'display:block;margin-top:6px;opacity:.65;font-weight:600'; infoVersion.textContent = 'Version ' + document.querySelector('meta[name="minimig-version"]').content;
 infoBtn.onclick = () => { const p = playerNow(); infoSave.remove(); infoVersion.remove(); if (!p.name || !p.fig) infoPop.append(infoSave); infoPop.append(infoVersion); infoPop.hidden = !infoPop.hidden; infoBtn.setAttribute('aria-expanded', String(!infoPop.hidden)); clearTimeout(infoTimer); if (!infoPop.hidden) infoTimer = setTimeout(() => { infoPop.hidden = true; infoBtn.setAttribute('aria-expanded', 'false'); }, 16000); };
-loadFbx().then(ok => { const tag = document.getElementById('tag'); if (!ok) { tag.textContent = 'Figuren kunne ikke hentes'; return; }
+loadFbx().then(ok => { const tag = document.getElementById('tag'); if (!ok) { tag.textContent = tr('Figuren kunne ikke hentes'); return; }
   // (on a computer too, since 03-11-2026 - the user wanted it the same everywhere - in words for the mouse)
-  if (matchMedia('(hover: hover) and (pointer: fine)').matches) infoPop.innerHTML = '🖱️ Træk for at dreje figuren<br>🔍 Rul med musen for at zoome<br>👕 Klik på navnet på trøjen, så siger figuren det – med din egen indtalte stemme, hvis du har indtalt en';
-  tag.textContent = ''; infoBtn.hidden = false; }).catch(() => { document.getElementById('tag').textContent = 'Figuren kunne ikke hentes'; }); // (a dropped connection said "Henter figuren" for ever)
+  if (matchMedia('(hover: hover) and (pointer: fine)').matches) infoPop.innerHTML = T('🖱️ Træk for at dreje figuren<br>🔍 Rul med musen for at zoome<br>👕 Klik på navnet på trøjen, så siger figuren det – med din egen indtalte stemme, hvis du har indtalt en', '🖱️ Drag to turn the figure<br>🔍 Scroll with the mouse to zoom<br>👕 Click the name on the top and the figure says it – in your own recorded voice, if you have recorded one');
+  // (after a change of language: the figure that was on the screen)
+  try { const kept = sessionStorage.getItem('minimig-test.sprogskift'); if (kept) { sessionStorage.removeItem('minimig-test.sprogskift'); wearFigure(JSON.parse(kept)); } } catch (e) {}
+  tag.textContent = ''; infoBtn.hidden = false; }).catch(() => { document.getElementById('tag').textContent = tr('Figuren kunne ikke hentes'); }); // (a dropped connection said "Henter figuren" for ever)
 
 // ---- render loop ----
 const clock = new THREE.Clock();
@@ -4483,6 +4551,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.9.1 (54590e9)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.9.1 (e59482d)</div>
 </body>
 </html>
