@@ -195,6 +195,7 @@
   /* (the treasure hunt: a sky behind the island, and the parrot's task in pictures under the stars) */
   .stage.island { background: linear-gradient(#7FD3FF, #CDEFFF 55%, #E8F8FF); }
   /* (Svømmeverden: the sea seen from inside, light near the top, deep blue down by the sand) */
+  .quest .q-me { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; background: #FFF4D6; display: inline-grid; place-items: center; }
   .stage.sea { background: linear-gradient(#7FDBFF, #2FA3E0 35%, #1670B8 75%, #0E4F8E); }
   /* (Gemmeleg: green leaves over the picture while the figure hides, counting down) */
   .hide-cover { position: absolute; inset: 0; z-index: 3; display: grid; place-content: center; justify-items: center; gap: 8px; border-radius: inherit;
@@ -2270,7 +2271,8 @@ async function loadCloth(name, part) {
   // (a dress has no sleeves: blue Meshy put along an arm or round a hand is dropped)
   // (trousers are laid on the body alone too, not on the hands hanging by the hips: their waistband stood out at the sides)
   const arms = new Set(G.noArms || G.waist ? hairBase.body.skeleton.bones.flatMap((b, j) => /Arm|Hand/.test(b.name) ? [j] : []) : []), onArm = new Uint8Array(n), wp = new Float32Array(n * 3).fill(NaN);
-  const legs = part === 'dress', midX = (hairBase.box.min.x + hairBase.box.max.x) / 2, bones = hairBase.body.skeleton.bones;
+  const legs = part === 'dress', midX = (hairBase.box.min.x + hairBase.box.max.x) / 2, midZ = (hairBase.box.min.z + hairBase.box.max.z) / 2, bones = hairBase.body.skeleton.bones;
+  const skirtOn = legs && (G.items.find(it => it[0] === name)?.[2]?.skirt ?? G.skirt), skirtBones = skirtOn ? skirtSkeleton() : null;
   const lifts = new Set(G.noArms ? bones.flatMap((b, j) => /Shoulder|Arm|Hand/.test(b.name) ? [j] : []) : []), chest = Math.max(0, bones.findIndex(b => /Spine2$/.test(b.name)));
   // (snug: the top of a strapless dress laid close on the body, over the top twentieth of the figure's height down from
   // its edge - Meshy left it standing off the chest; the mermaid's, snug fifths of it, the whole bodice down to the hips)
@@ -2316,7 +2318,7 @@ async function loadCloth(name, part) {
     // (waist: the mermaid's sides taken in at the waist, a part of the width there - the child's body has none of its
     // own, and the dress went straight down like a tube; the body under it is hidden)
     if (opts.waist) { const b = Math.max(0, 1 - Math.abs(w.y - waistY) / (.08 * H)); w.x = midX + (w.x - midX) * (1 - opts.waist * b * b * (3 - 2 * b)); }
-    const wx = w.x, wy = w.y; wp.set([w.x, w.y, w.z], i * 3); w.applyMatrix4(inv); pos.setXYZ(i, w.x, w.y, w.z);
+    const wx = w.x, wy = w.y, wz = w.z; wp.set([w.x, w.y, w.z], i * 3); w.applyMatrix4(inv); pos.setXYZ(i, w.x, w.y, w.z);
     // (a skirt follows the legs mostly, a fifth the hips: a knee lifted in the dance takes the skirt with it instead
     // of coming through it, and it does not swing quite as far as the leg)
     // (a tight one - the mermaid dress - follows the legs alone, like trousers)
@@ -2325,9 +2327,17 @@ async function loadCloth(name, part) {
     const add = (j, f) => { for (let c = 0; c < 4; c++) { const b = bsi.getComponent(j, c), v = bsw.getComponent(j, c) * f; if (v && !lifts.has(b)) ws[b] = (ws[b] || 0) + v; } if (!Object.keys(ws).length) ws[chest] = f; };
     // (a dress between the legs follows both, more of the nearer one - it stretches as they part rather than tearing
     // down the middle, where one point followed the left leg and the next the right)
-    if (low && bl >= 0 && br >= 0) { const f = Math.min(1, Math.max(0, .5 - (wx - midX) / (.1 * H))); add(bl, f * (1 - hang)); add(br, (1 - f) * (1 - hang)); }
-    else add(best, 1 - hang);
-    if (hang) ws[hairBase.hips] = (ws[hairBase.hips] || 0) + hang;
+    // (a wide skirt's front and back follow their own joints at the hips most of the way - see skirtTick - which swing
+    // with the thigh lifted furthest forward or back: following both legs half each, its middle stayed behind and a
+    // knee came through it in a jump, a cheer or a roll, the user said 04-11-2026; the sides still follow the legs)
+    // (little at the top, by the hips, most down at the hem - swung from the hips its top bared the body hidden under it)
+    const down = Math.max(0, Math.min(1, (hairBase.hipY - wy) / (SKIRT.from * H))), fb = skirtOn && low ? Math.max(0, Math.min(1, Math.abs(wz - midZ) / (SKIRT.depth * H))) * SKIRT.follow * down * down * (3 - 2 * down) : 0, legW = (1 - hang) * (1 - fb);
+    if (low && bl >= 0 && br >= 0) { const f = Math.min(1, Math.max(0, .5 - (wx - midX) / (.1 * H))); add(bl, f * legW); add(br, (1 - f) * legW); }
+    else add(best, legW);
+    // (the share hanging from the hips too - the princess dress's half: following the thigh only half way, a knee made a
+    // round hole in its front)
+    if (fb) { const sb = wz > midZ ? skirtBones.front : skirtBones.back; ws[sb] = (ws[sb] || 0) + fb; }
+    if (hang) ws[hairBase.hips] = (ws[hairBase.hips] || 0) + hang * (1 - fb);
     Object.entries(ws).sort((p1, p2) => p2[1] - p1[1]).slice(0, 4).forEach(([b, v], c) => { skinIndex[i * 4 + c] = +b; skinWeight[i * 4 + c] = v; }); }
   // (trousers: the waistband - the top twenty-fifth - a little further out, over the vest's hem and the shorts' band,
   // which came out through it)
@@ -2357,7 +2367,7 @@ async function loadCloth(name, part) {
   // (flat: its light and dark that part of Meshy's, the rest the picked colour itself - the ballet shoes came out patchy,
   // lighter blotches on the slipper)
   if (part === 'shoe') Object.assign(G.texs.at(-1), { cap: 1.1, flat: opts.flat });
-  body.parent.add(cloth); cloth.bind(body.skeleton, body.bindMatrix); if (picked[part]) recolourHair(picked[part], G.texs);
+  body.parent.add(cloth); cloth.bind(skirtOn ? skirtBones.skeleton : body.skeleton, body.bindMatrix); if (picked[part]) recolourHair(picked[part], G.texs);
   // (trousers sit further out - their waistband most - and are looked for further out)
   cloth.userData.covered = coverBody(wp, ownIdx, H, opts.reach ?? (G.waist ? 3 : 2), opts.tail, G.waist || opts.snug ? cutTop : Infinity, G.waist, opts.solid); return cloth; }
 // (the body close under a garment is hidden, so it cannot poke through it when the figure moves - the white underwear
@@ -2371,6 +2381,27 @@ async function loadCloth(name, part) {
 // (feet: kept - under trousers the heel came near the inside of a leg and was hidden, a hole in it)
 // (solid: the foot hidden altogether up to that part of the figure's height over the shoe's sole - the toes came out
 // through the ballet slippers' tips)
+// ---- a wide skirt's own joints (the user, 04-11-2026: legs came out through the dresses in the cheers, the rolls and the
+// hop games). Two joints at the hips, the front and the back of the skirt, shared by every wide dress: each moment the
+// front turns forward as far as the thigh lifted furthest forward, the back as far as the one furthest back, about the
+// line from hip to hip. depth: how far in front of or behind the body's middle a point is fully the front's or back's
+// (a part of the figure's height); follow: how much of it then goes with them rather than the legs; lift: how far
+// they turn for each degree the thigh does ----
+const SKIRT = { depth: .045, follow: .85, lift: .9, from: .14 }; // (from: how far below the hips, in the figure's height, they have it all)
+function skirtSkeleton() { if (hairBase.skirt) return hairBase.skirt; const sk = hairBase.body.skeleton, hips = sk.bones[hairBase.hips];
+  const fj = new THREE.Bone(), bj = new THREE.Bone(); fj.name = 'SkirtFront'; bj.name = 'SkirtBack'; hips.add(fj, bj);
+  // (both at the hips' own place and turn when still: so they stand where the hips stand in the figure's first pose)
+  const inv = sk.boneInverses[hairBase.hips];
+  return hairBase.skirt = { skeleton: new THREE.Skeleton([...sk.bones, fj, bj], [...sk.boneInverses, inv.clone(), inv.clone()]), front: sk.bones.length, back: sk.bones.length + 1, fj, bj }; }
+const stA = new THREE.Vector3(), stB = new THREE.Vector3(), stUp = new THREE.Vector3(), stLat = new THREE.Vector3(), stFwd = new THREE.Vector3(), stT = new THREE.Vector3(), stP = new THREE.Quaternion(), stQ = new THREE.Quaternion();
+function skirtTick() { const s = hairBase?.skirt; if (!s) return; const hips = bone('Hips'), sp = bone('Spine'), lu = bone('LeftUpLeg'), ll = bone('LeftLeg'), ru = bone('RightUpLeg'), rl = bone('RightLeg');
+  if (!hips || !sp || !lu || !ll || !ru || !rl) return; glb.updateMatrixWorld(true);
+  hips.getWorldPosition(stA); sp.getWorldPosition(stUp).sub(stA).normalize(); ru.getWorldPosition(stLat).sub(lu.getWorldPosition(stB)).normalize(); stFwd.crossVectors(stUp, stLat).normalize();
+  // (a thigh's angle forward of straight down the body - backwards below nought)
+  const angle = (u, k) => { stT.copy(k.getWorldPosition(stB)).sub(u.getWorldPosition(stA)).normalize(); return Math.atan2(stT.dot(stFwd), -stT.dot(stUp)); };
+  const aL = angle(lu, ll), aR = angle(ru, rl), front = Math.max(0, aL, aR) * SKIRT.lift, back = Math.min(0, aL, aR) * SKIRT.lift;
+  hips.getWorldQuaternion(stP); const Pi = stP.clone().invert();
+  for (const [j, a] of [[s.fj, front], [s.bj, back]]) { stQ.setFromAxisAngle(stLat, a); j.quaternion.copy(Pi).multiply(stQ).multiply(stP); } }
 function coverBody(wp, idx, H, reach, tail, cutTop = Infinity, feet = false, solid = 0) {
   const pts = hairBase.whole.pts, tol = .01 * H, cell = reach * tol, n = wp.length / 3;
   let solidY = -Infinity; if (solid) { solidY = Infinity; for (const i of idx) solidY = Math.min(solidY, wp[i * 3 + 1]); solidY += solid * H; }
@@ -3760,8 +3791,10 @@ function hideStart() { islandBuild(); hideBuild(); scene.add(il.world); il.world
   Object.assign(hd, { phase: 'ready', t: 1.4, at: null, pop: 1 }); hideQuest(); }
 function hideStop() { if (!hd.group?.parent) return; il.world.remove(hd.group); il.rig.visible = true; il.rig.scale.setScalar(1); hd.phase = ''; document.getElementById('hideCover').hidden = true;
   for (const s of hd.spots) s.obj.rotation.z = 0; }
-// (the task in pictures at the top: hiding - 🙈; seeking - 🔍; found - 🎉)
-function hideQuest() { const q = document.getElementById('quest'); q.hidden = false; q.innerHTML = `<span class="q-bird">🦜</span><span class="q-arrow">${{ run: '🙈', cover: '🙈', seek: '🔍', found: '🎉' }[hd.phase] || '🙈'}</span>`; }
+// (the task in pictures at the top: hiding - 🙈; seeking - 🔍 and the child's own figure, "find me"; found - 🎉 and the
+// figure. The parrot belongs to Skattejagt, where it gives the task - here it meant nothing, the user asked 04-11-2026)
+function hideQuest() { const q = document.getElementById('quest'); q.hidden = false; const p = playerNow(), me = p.pic ? `<img class="q-me" src="${p.pic}" alt="">` : '<span class="q-me">🙂</span>';
+  q.innerHTML = hd.phase === 'seek' ? `<span class="q-arrow">🔍</span>${me}` : hd.phase === 'found' ? `${me}<span class="q-arrow">🎉</span>` : '<span class="q-arrow">🙈</span>'; }
 // (a new round: the figure back in front, a place chosen - not the last one - and it runs there, or hides under the leaves)
 function hideRound() { const L = hideLevel(), [sx, , sz] = HIDE.start, near = hd.spots.slice().sort((a, b) => Math.hypot(a.x - sx, a.z - sz) - Math.hypot(b.x - sx, b.z - sz)).slice(0, Math.min(L.spots, hd.spots.length));
   let s; do s = near[Math.floor(Math.random() * near.length)]; while (s === hd.at && near.length > 1);
@@ -4071,6 +4104,6 @@ addEventListener('resize', resize); resize(); new ResizeObserver(resize).observe
 renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElapsedTime();
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
-  try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } armsOut(); try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
+  try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } armsOut(); try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
 </body>
 </html>
