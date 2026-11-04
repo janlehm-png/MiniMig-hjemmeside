@@ -1320,7 +1320,8 @@ function recolourHair(hexColour, list = hairTexs) {
   hairTex.ctx.putImageData(out, 0, 0); hairTex.texture.needsUpdate = true; } }
 function recolour(part, hexColour) {
   if (part === 'socks') return paintSocks(); if (part === 'item') return paintItem();
-  if (part === 'shoe' && typeof GARMENTS !== 'undefined' && GARMENTS.shoe.meshes[GARMENTS.shoe.shown]?.userData.sock) { paintSocks(); paintHeels(); return; }
+  // (all the shoes, the ones not on too: back in the high heels after the sneakers had a new colour, they had the old one)
+  if (part === 'shoe' && typeof GARMENTS !== 'undefined') { paintSocks(); paintHeels(); recolourHair(hexColour, GARMENTS.shoe.texs); return; }
   if (part === 'hair') recolourHair(hexColour); if (typeof GARMENTS !== 'undefined' && GARMENTS[part]) recolourHair(hexColour, GARMENTS[part].texs);
   // (the picked colour read straight from its #rrggbb code: a THREE.Color would hold it in linear light, too dark here)
   if (!tex) return; const n = parseInt(hexColour.slice(1), 16); tex.colours[PARTS[part]] = { r: (n >> 16 & 255) / 255, g: (n >> 8 & 255) / 255, b: (n & 255) / 255 };
@@ -1739,7 +1740,7 @@ async function loadHair(name, list = hairTexs, colourPart = 'hair', extra = {}) 
   const opts = HAIRS.find(h => h[0] === name)?.[2] || extra;
   if (!hairBase || !(await exists(`${name}.json${FIGUR_V}`))) return null;
   const [d, img] = await Promise.all([fetch(`${name}.json${FIGUR_V}`).then(r => r.json()),
-    new Promise(ok => { const i = new Image(); i.onload = () => ok(i); i.src = `${name}.jpg${FIGUR_V}`; })]);
+    new Promise((ok, bad) => { const i = new Image(); i.onload = () => ok(i); i.onerror = bad; i.src = `${name}.jpg${FIGUR_V}`; })]);
   const mine = hairBase.eyes, theirs = d.eyes.map(e => new THREE.Vector3(...e)), scale = mine[0].distanceTo(mine[1]) / theirs[0].distanceTo(theirs[1]) * (opts.grow || 1);
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(d.position, 3));
   g.setAttribute('normal', new THREE.Float32BufferAttribute(d.normal, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(d.uv, 2)); g.setIndex(d.index);
@@ -1791,9 +1792,12 @@ async function loadHair(name, list = hairTexs, colourPart = 'hair', extra = {}) 
 var styleLists = () => ({ hair: [HAIRS, hairNow, setHair], eyes: [EYES, eyesNow, setEyes], brows: [BROWS, browsNow, setBrows], mouth: [MOUTHS, mouthNow, setMouth], pynt: [PYNT, pyntNow.map(k => 'pynt-' + k), setPynt], nose: [NOSES, noseNow, setNose], item: [ITEMS, itemNow, n => { petPick = false; setItem(n); showSwatches(); }, [PETS, petNow, n => { petPick = true; setPet(n); showSwatches(); }, 'dyr', petNow ? PET_TOYS_LIST() : null]], bg: [BGS, bgNow, setBg], ears: [EARS, earsNow, setEars, [EARRINGS, earringsNow, setEarrings, 'oerering']],
   ...Object.fromEntries(Object.entries(GARMENTS).map(([part, G]) => [part, [G.items, G.now, n => setGarment(part, n)]])),
   ...Object.fromEntries(Object.entries(MOVES).map(([g, list]) => ['move-' + g, [list, moveNow[g], playMove]])), 'game-hop': gameList() });
+// (a style being fetched is fetched once: two taps on it made two heads of hair, and the first stayed on for good. One
+// that cannot come - no internet the first time - is tried again the next time it is chosen)
+const hairLoads = {};
 async function setHair(name) {
   hairNow = name; renderStyles();
-  if (name && !hairMeshes[name]) hairMeshes[name] = await loadHair(name);
+  if (name && !hairMeshes[name]) { hairMeshes[name] = await (hairLoads[name] ??= loadHair(name).catch(() => null)); if (!hairMeshes[name]) { delete hairLoads[name]; toast(NO_NET); } }
   for (const [n, m] of Object.entries(hairMeshes)) if (m) m.visible = n === hairNow; hatHair(); }
 // (a crown set on what is under it - the hair, or the bald head - its lowest ring sunk into it by sink eyes' distances:
 // one height for all, it hung in the air over the bald head and the braids and sank into the bob)
@@ -1962,7 +1966,7 @@ const GARMENTS = {
     ['briller-hjerte', 'Hjerte', { lens: .1, fwd: .1, cap: 1.15 }], ['briller-stjerne', 'Stjerne', { lens: .1, cap: 1.15 }]], texs: [], head: true } };
 // (now: what is chosen, shown: what the figure has on - the same once all of it is loaded)
 for (const G of Object.values(GARMENTS)) { G.now = G.shown = ''; G.meshes = {}; G.loading = {}; }
-let dressing = 0;
+let dressing = 0; const NO_NET = 'Det kan ikke hentes lige nu 📶';
 async function setGarment(part, name) { const G = GARMENTS[part], ask = ++dressing;
   // (a dress is worn instead of a top and trousers, and the other way round; taking the dress off puts back the top and
   // trousers worn before it - the white vest came back instead)
@@ -1974,7 +1978,9 @@ async function setGarment(part, name) { const G = GARMENTS[part], ask = ++dressi
   // while a new one loaded; a choice made meanwhile wins)
   for (const [p, g] of Object.entries(GARMENTS)) if (g.now && !g.meshes[g.now]) { const n = g.now;
     g.loading[n] ??= g.head ? loadHair(n, g.texs, p, g.items.find(i => i[0] === n)?.[2] || {})
-      : g.items.find(i => i[0] === n)?.[2]?.made ? Promise.resolve(makeCloth(n, p, g.items.find(i => i[0] === n)[2])) : loadCloth(n, p); g.meshes[n] = await g.loading[n]; }
+      : g.items.find(i => i[0] === n)?.[2]?.made ? Promise.resolve(makeCloth(n, p, g.items.find(i => i[0] === n)[2])) : loadCloth(n, p);
+    // (one that cannot come - no internet the first time - holds nothing else up, and is tried again the next time)
+    g.meshes[n] = await g.loading[n].catch(() => null); if (!g.meshes[n]) { delete g.loading[n]; if (p === part && ask === dressing) toast(NO_NET); } }
   if (ask !== dressing) return;
   for (const g of Object.values(GARMENTS)) g.shown = g.now;
   const shirt = !!(GARMENTS.dress.now || GARMENTS.shirt.now), pants = !!(GARMENTS.dress.now || GARMENTS.pants.now);
@@ -2035,7 +2041,7 @@ function slimThighs() { if (hairBase.slim) return hairBase.slim; const { pts, in
   return hairBase.slim = { orig: P.array.slice(), slim, on: false, legPix: [...legPix], thighPix: [...thighPix], band, turn }; }
 function thighLight(off) { const S = hairBase?.slim; if (!S || !S.on && !off) return; const N = hairBase.body.geometry.attributes.normal, a = N.array;
   for (const t of S.turn) { let x = t.was[0], y = t.was[1], z = t.was[2]; if (!off) { x += (t.x - x) * t.k; y += (t.y - y) * t.k; z += (t.z - z) * t.k; const l = Math.hypot(x, y, z) || 1; x /= l; y /= l; z /= l; } a[t.j * 3] = x; a[t.j * 3 + 1] = y; a[t.j * 3 + 2] = z; } N.needsUpdate = true; }
-function setSlim(on) { if (!hairBase || !tex || (!on && !hairBase.slim)) return; const S = slimThighs(); if (S.on === on) return; S.on = on; hairBase.body.geometry.attributes.position.array.set(on ? S.slim : S.orig); hairBase.body.geometry.attributes.position.needsUpdate = true; if (!on) thighLight(true); redrawBody(); }
+function setSlim(on) { if (!hairBase || !tex || (!on && !hairBase.slim)) return; const S = slimThighs(); if (S.on === on) return; S.on = on; hairBase.body.geometry.attributes.position.array.set(on ? S.slim : S.orig); hairBase.body.geometry.attributes.position.needsUpdate = true; if (!on) thighLight(true); shapeEars(); redrawBody(); } // (the ears as chosen: the shape put back was the body's when first measured)
 // (the thighs' paint made the same as the leg just under them, colour for colour)
 function matchThighs(o) { const S = hairBase?.slim; if (!S?.on || !tex.covered[PARTS.pants]) return; const mean = l => { const m = [0, 0, 0]; for (const p of l) for (let c = 0; c < 3; c++) m[c] += o[p * 4 + c]; return m.map(v => v / Math.max(1, l.length)); }, A = mean(S.legPix), B = mean(S.thighPix), f = A.map((v, c) => v / Math.max(1, B[c]));
   for (let p = 0; p < tex.w * tex.h; p++) if (tex.label[p] === PARTS.pants || tex.seam[p] === PARTS.pants) for (let c = 0; c < 3; c++) o[p * 4 + c] = Math.min(255, o[p * 4 + c] * f[c]);
@@ -2288,7 +2294,7 @@ async function loadCloth(name, part) {
   const G = GARMENTS[part], file = G.items.find(it => it[0] === name)?.[2]?.file || name; // (file: made from another one's files)
   if (!hairBase || !(await exists(`${file}.json${FIGUR_V}`))) return null;
   const [d, img] = await Promise.all([fetch(`${file}.json${FIGUR_V}`).then(r => r.json()),
-    new Promise(ok => { const i = new Image(); i.onload = () => ok(i); i.src = `${file}.jpg${FIGUR_V}`; })]);
+    new Promise((ok, bad) => { const i = new Image(); i.onload = () => ok(i); i.onerror = bad; i.src = `${file}.jpg${FIGUR_V}`; })]);
   const B = hairBase.box, [x0, y0, z0, x1, y1, z1] = d.box, s = (B.max.y - B.min.y) / (y1 - y0);
   const off = new THREE.Vector3((B.min.x + B.max.x) / 2 - s * (x0 + x1) / 2, B.min.y - s * y0, (B.min.z + B.max.z) / 2 - s * (z0 + z1) / 2);
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(d.position, 3));
@@ -2925,7 +2931,7 @@ const newFig = kind => ({ picked: {}, hair: kind === 'pige' ? 'haar-fletninger' 
 const sameFig = (a, b) => !!a && !!b && JSON.stringify(a) === JSON.stringify(b);
 document.getElementById('newBtn').addEventListener('click', () => { document.getElementById('newChoice').hidden = false; });
 document.getElementById('newChoice').addEventListener('click', async e => { const b = e.target.closest('[data-new]'); if (!b || !hairBase) return;
-  document.getElementById('newChoice').hidden = true;
+  document.getElementById('newChoice').hidden = true; if (game.on) { toast('Stop spillet først'); return; }
   // (the figure there was first goes into Mine figurer, so it is never lost - not when it is already the newest one
   // there, or a new figure nobody has changed yet)
   const now = figureNow(), l = savedFigs();
@@ -3358,7 +3364,7 @@ function hideBody() { if (!hairBase) return; const geo = hairBase.body.geometry,
 const FIGUR_V = '?v=10';
 async function loadFbx() { if (!(await exists('figur.fbx' + FIGUR_V))) return false;
   const loader = new FBXLoader(), load = u => new Promise((ok, bad) => loader.load(u + FIGUR_V, ok, undefined, bad));
-  const fbx = await load('figur.fbx'), map = await new Promise(ok => new THREE.TextureLoader().load('figur-farve.jpg' + FIGUR_V, ok));
+  const fbx = await load('figur.fbx'), map = await new Promise((ok, bad) => new THREE.TextureLoader().load('figur-farve.jpg' + FIGUR_V, ok, undefined, bad));
   map.colorSpace = THREE.SRGBColorSpace; const coloured = setupTexture(map);
   // (both sides drawn: through the ear's small opening one saw right through the head - the hair on the far side as a
   // dark spike in the ear)
@@ -4441,7 +4447,7 @@ infoBtn.onclick = () => { const p = playerNow(); infoSave.remove(); infoVersion.
 loadFbx().then(ok => { const tag = document.getElementById('tag'); if (!ok) { tag.textContent = 'Figuren kunne ikke hentes'; return; }
   // (on a computer too, since 03-11-2026 - the user wanted it the same everywhere - in words for the mouse)
   if (matchMedia('(hover: hover) and (pointer: fine)').matches) infoPop.innerHTML = '🖱️ Træk for at dreje figuren<br>🔍 Rul med musen for at zoome<br>👕 Klik på navnet på trøjen, så siger figuren det – med din egen indtalte stemme, hvis du har indtalt en';
-  tag.textContent = ''; infoBtn.hidden = false; });
+  tag.textContent = ''; infoBtn.hidden = false; }).catch(() => { document.getElementById('tag').textContent = 'Figuren kunne ikke hentes'; }); // (a dropped connection said "Henter figuren" for ever)
 
 // ---- render loop ----
 const clock = new THREE.Clock();
@@ -4466,6 +4472,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.9.1 (08008bd)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.9.1 (71aa51f)</div>
 </body>
 </html>
