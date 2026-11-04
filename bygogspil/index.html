@@ -338,10 +338,10 @@
     <button id="keepBtn"><span class="emo" aria-hidden="true">⭐</span><span>Gem</span></button>
     <button id="figsBtn"><span class="emo" aria-hidden="true">🖼️</span><span>Mine figurer</span></button>
     <button id="newBtn"><span class="emo" aria-hidden="true">✨</span><span>Ny figur</span></button>
-    <button id="saveBtn"><span class="emo" aria-hidden="true">📷</span><span>Billede</span><span class="lock-badge" id="lockBadge" hidden aria-hidden="true">🔓</span></button>
+    <button id="saveBtn"><span class="emo" aria-hidden="true">📷</span><span>Send foto</span><span class="lock-badge" id="lockBadge" hidden aria-hidden="true">🔓</span></button>
     <button id="soundBtn"><span class="emo" aria-hidden="true">🔊</span><span>Lyd</span></button>
     <!-- (the coins are on the button too - the user, 04-11-2026) -->
-    <button id="starBtn"><span class="emo emo-coins" aria-hidden="true">🏆<i class="mini-coin">5</i><i class="mini-coin gold">20</i></span><span>Stjerner</span></button>
+    <button id="starBtn"><span class="emo emo-coins" aria-hidden="true">🏆<i class="mini-coin">5</i><i class="mini-coin gold">20</i></span><span>Stjerner og mønter</span></button>
     <!-- (on minimig.dk only: the website's "Til voksne" - home screen, offline, privacy - from its pwa.js) -->
     <!-- (drawn here: an iPad shows the family emoji as a grey outline - the user, 04-11-2026) -->
     <button id="adultBtn" hidden><span class="emo" aria-hidden="true"><svg viewBox="0 0 32 32" width="30" height="30"><circle cx="11.5" cy="8" r="5" fill="#F2C09A"/><path d="M7 7a5 5 0 0 1 9-1.5C13 7 10 7.500 7 7z" fill="#6B4226"/><path d="M4 30V20a7.500 7.500 0 0 1 15 0v10z" fill="#4F7BE8"/><circle cx="23.500" cy="15" r="4" fill="#F7CFAE"/><path d="M19.500 14.500a4 4 0 0 1 8 0c-3-.2-5.500-.8-8 0z" fill="#E0A63A"/><path d="M18 30v-5a5.500 5.500 0 0 1 11 0v5z" fill="#F0628F"/></svg></span><span>Til voksne</span></button>
@@ -1395,7 +1395,7 @@ function smoothUnder() {
 
 // the movements: a tab for each kind, and its kinds in the box as the hairstyles are under Hår (the user, 03-11-2026).
 // Each a figur-<id>.json taken out of a Mixamo file (see LÆS-MIG), fetched the first time it is chosen
-const MOVES = { staa: [['staa', 'Stå']], vink: [['vink', 'Vink']],
+const MOVES = { staa: [['staa', 'Stå'], ['staa-hofter', 'Hænder i siden']], vink: [['vink', 'Vink']],
   hop: [['hop', 'Glad hop'], ['hop-hoejt', 'Højt hop'], ['hop-lille', 'Lille løbehop'], ['loebehop', 'Langt løbehop']],
   dans: [['dans', 'Hiphop'], ['dans-hiphop', 'Hiphop 2'], ['dans-fjollet', 'Fjollet'], ['dans-arme', 'Armdans'], ['dans-break', 'Breakdance'], ['dans-flair', 'Flair'], ['dans-flair2', 'Flair 2']],
   loeb: [['loeb', 'Sjovt løb'], ['loeb-a', 'Løb stærkt'], ['loeb-b', 'Løb']],
@@ -3083,19 +3083,20 @@ function makePet(kind) { const g = new THREE.Group(), C = { 'dyr-kat': ['#F2994A
   else { const pts = (kind === 'dyr-kat' ? [[0, -.03, .05], [0, .02, -.04], [0, .14, -.11], [0, .27, -.13], [0, .36, -.08]] : [[0, -.03, .05], [0, .02, -.05], [0, .1, -.12], [0, .17, -.15]]).map(p => new THREE.Vector3(...p));
     ilMesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 16, kind === 'dyr-kat' ? .03 : .036, 10), fur, 0, 0, 0, tail); S(kind === 'dyr-kat' ? .03 : .036, fur, pts.at(-1).x, pts.at(-1).y, pts.at(-1).z, tail); }
   g.visible = false; scene.add(g); const me = { group: g, head, legs, tail, t: 0, walk: 0, face: .5, hop: 0, snap: true };
-  // (the cat is the one rigged at Meshy - the user, 04-11-2026. Until its file has come, or if it can't, the simple one stands in)
-  if (kind === 'dyr-kat') loadGlbPet('dyr-kat.glb', 'dyr-kat.jpg', .72).then(m => { g.children.forEach(c => { c.visible = false; }); g.add(m.group); me.model = m; }).catch(() => {});
+  // (the cat is the one rigged at Meshy - the user, 04-11-2026. It shows when both its file and its fur have come - a black
+  // cat flashed by before the fur - and only if they can't come, the simple one stands in)
+  if (kind === 'dyr-kat') { const simple = [...g.children]; simple.forEach(c => { c.visible = false; }); loadGlbPet('dyr-kat.glb', 'dyr-kat.jpg', .72).then(m => { g.add(m.group); me.model = m; }).catch(() => simple.forEach(c => { c.visible = true; })); }
   return me; }
 function setPet(name) { if (!PETS.some(p => p[0] === name)) name = ''; petNow = name; if (pet) pet.group.visible = false; pet = name && glb ? pets[name] ??= makePet(name) : null; if (pet) pet.snap = true; renderStyles(); }
 // (an animal rigged at Meshy: a GLB file with one skinned mesh, its bones and a walk. Meshy's rigged file leaves out the
 // texture, so that comes separately. Standing on the floor, facing forward, as tall as asked)
-async function loadGlbPet(url, texUrl, height) { const buf = await (await fetch(url)).arrayBuffer(), jl = new DataView(buf).getUint32(12, true), j = JSON.parse(new TextDecoder().decode(new Uint8Array(buf, 20, jl))), binAt = 20 + jl + 8;
+async function loadGlbPet(url, texUrl, height) { const tex = await new THREE.TextureLoader().loadAsync(texUrl), buf = await (await fetch(url)).arrayBuffer(), jl = new DataView(buf).getUint32(12, true), j = JSON.parse(new TextDecoder().decode(new Uint8Array(buf, 20, jl))), binAt = 20 + jl + 8;
   const SIZE = { SCALAR: 1, VEC2: 2, VEC3: 3, VEC4: 4, MAT4: 16 }, TYPE = { 5121: Uint8Array, 5123: Uint16Array, 5125: Uint32Array, 5126: Float32Array };
   const read = i => { const a = j.accessors[i], v = j.bufferViews[a.bufferView], C = TYPE[a.componentType], n = SIZE[a.type], at = binAt + (v.byteOffset || 0) + (a.byteOffset || 0); return { n, data: new C(buf.slice(at, at + a.count * n * C.BYTES_PER_ELEMENT)) }; };
   const attr = i => { const a = read(i); return new THREE.BufferAttribute(a.data, a.n); }, skin = j.skins[0], joints = new Set(skin.joints);
   const nodes = j.nodes.map((n, i) => { const o = joints.has(i) ? new THREE.Bone() : n.mesh !== undefined ? null : new THREE.Object3D(); if (o) o.name = n.name; return o; });
   j.nodes.forEach((n, i) => { if (n.mesh === undefined) return; const p = j.meshes[n.mesh].primitives[0], a = p.attributes, geo = new THREE.BufferGeometry(); geo.setAttribute('position', attr(a.POSITION)); geo.setAttribute('normal', attr(a.NORMAL)); geo.setAttribute('uv', attr(a.TEXCOORD_0)); geo.setAttribute('skinIndex', attr(a.JOINTS_0)); geo.setAttribute('skinWeight', attr(a.WEIGHTS_0)); geo.setIndex(attr(p.indices));
-    const tex = new THREE.TextureLoader().load(texUrl); tex.flipY = false; tex.colorSpace = THREE.SRGBColorSpace; const m = new THREE.SkinnedMesh(geo, new THREE.MeshStandardMaterial({ map: tex, roughness: .8, side: THREE.DoubleSide })); m.castShadow = true; m.frustumCulled = false; m.name = n.name; nodes[i] = m; });
+    tex.flipY = false; tex.colorSpace = THREE.SRGBColorSpace; const m = new THREE.SkinnedMesh(geo, new THREE.MeshStandardMaterial({ map: tex, roughness: .8, side: THREE.DoubleSide })); m.castShadow = true; m.frustumCulled = false; m.name = n.name; nodes[i] = m; });
   j.nodes.forEach((n, i) => { const o = nodes[i]; if (n.translation) o.position.fromArray(n.translation); if (n.rotation) o.quaternion.fromArray(n.rotation); if (n.scale) o.scale.fromArray(n.scale); (n.children || []).forEach(c => o.add(nodes[c])); });
   const inner = new THREE.Group(); j.scenes[0].nodes.forEach(i => inner.add(nodes[i])); inner.updateMatrixWorld(true);
   const bones = skin.joints.map(i => nodes[i]), ibm = read(skin.inverseBindMatrices).data, inverses = bones.map((_, i) => new THREE.Matrix4().fromArray(ibm, i * 16)), mesh = nodes.find(o => o.isSkinnedMesh); mesh.bind(new THREE.Skeleton(bones, inverses), new THREE.Matrix4());
@@ -3105,26 +3106,37 @@ async function loadGlbPet(url, texUrl, height) { const buf = await (await fetch(
   const box = new THREE.Box3().setFromObject(mesh, true), k = height / (box.max.y - box.min.y); turn.scale.setScalar(k); turn.position.y = -box.min.y * k;
   const mixer = new THREE.AnimationMixer(inner), walk = mixer.clipAction(clip); walk.setEffectiveWeight(0); walk.play(); const swing = ['head', 'tail1', 'tail2', 'tail3'].map(n => ({ b: bone(n), rest: bone(n).quaternion.clone() }));
   group.updateMatrixWorld(true); const part = n => ({ b: bone(n), rest: bone(n).quaternion.clone() }), chain = pre => ['', '0', '1'].map(x => part(pre + x)), legH = bone('backleg').getWorldPosition(new THREE.Vector3()).y;
-  return { group, mixer, walk, swing, walkW: 0, idle: 0, hopping: false, hopT: 0, legH, rear: ['backleg', 'R_backleg'].map(chain), front: ['frontleg', 'R_frontleg'].map(chain), tail: swing.slice(1) }; }
+  return { group, mixer, walk, swing, walkW: 0, idle: 0, hopping: false, hopT: 0, sitW: 0, still: 0, legH, chest: part('chest'), head: swing[0], rear: ['backleg', 'R_backleg'].map(chain), front: ['frontleg', 'R_frontleg'].map(chain), tail: swing.slice(1) }; }
 const petUp = new THREE.Vector3(0, 1, 0), petSide = new THREE.Vector3(), petQ = new THREE.Quaternion(), petQ2 = new THREE.Quaternion(), petQ3 = new THREE.Quaternion();
 const petBend = (e, axis, a) => { e.b.parent.getWorldQuaternion(petQ); e.b.quaternion.premultiply(petQ2.copy(petQ).invert().multiply(petQ3.setFromAxisAngle(axis, a)).multiply(petQ)); };
 // (a real cat's jump - the user, 04-11-2026: it hopped stiffly. It sinks on bent legs, pushes off with the hind legs
 // stretching back while the front ones reach forward, nose up; in the air the legs draw in; it comes down front paws
 // first, nose down, and takes the landing in bent legs. One whole jump at a time, its height the y it gives back)
-function petHop(m, dt, on, g) { if (m.walkW) on = false; if (!m.hopping && !on) return 0; m.hopping = true; m.hopT += dt / .85;
-  if (m.hopT >= 1) { m.hopT -= 1; if (!on) { m.hopping = false; m.hopT = 0; for (const e of [...m.rear, ...m.front].flat()) e.b.quaternion.copy(e.rest); m.group.position.y = 0; m.group.rotation.x = 0; return 0; } }
+function petHop(m, dt, on, g) { if (m.walkW || m.sitW > .02) on = false; if (!m.hopping && !on) return 0; m.hopping = true; m.hopT += dt / .85;
+  if (m.hopT >= 1) { m.hopT -= 1; if (!on) { m.hopping = false; m.hopT = 0; for (const e of [...m.rear, ...m.front, m.chest].flat()) e.b.quaternion.copy(e.rest); m.group.position.y = 0; m.group.rotation.x = 0; return 0; } }
   const p = m.hopT, ss = (a, b) => { const x = Math.max(0, Math.min(1, (p - a) / (b - a))); return x * x * (3 - 2 * x); };
   const crouch = ss(0, .2) * (1 - ss(.2, .32)) + ss(.8, .88) * (1 - ss(.88, 1)), air = ss(.28, .36) * (1 - ss(.76, .84)), stretch = ss(.2, .32) * (1 - ss(.42, .6)), reach = ss(.58, .76) * (1 - ss(.84, .94));
   const C = .62 * crouch + .3 * air * (1 - stretch), rearSwing = .6 * stretch - .22 * reach, frontSwing = -.75 * stretch - .4 * reach, pitch = -.38 * stretch + .32 * reach + .08 * crouch;
   g.updateWorldMatrix(true, false); petSide.set(1, 0, 0).transformDirection(g.matrixWorld);
+  // (the back curved up as it pushes off, straight again by the landing - the user, 04-11-2026; head and front legs turned
+  // back so they keep their way)
+  const arch = .5 * ss(.14, .3) * (1 - ss(.55, .92)); m.chest.b.quaternion.copy(m.chest.rest); petBend(m.chest, petSide, arch); petBend(m.head, petSide, -arch);
   for (const [a, b, c] of m.rear) { for (const e of [a, b, c]) e.b.quaternion.copy(e.rest); petBend(a, petSide, -C + rearSwing); petBend(b, petSide, 2 * C); petBend(c, petSide, -C); }
-  for (const [a, b, c] of m.front) { for (const e of [a, b, c]) e.b.quaternion.copy(e.rest); petBend(a, petSide, C + frontSwing); petBend(b, petSide, -2 * C); petBend(c, petSide, C); }
+  for (const [a, b, c] of m.front) { for (const e of [a, b, c]) e.b.quaternion.copy(e.rest); petBend(a, petSide, C + frontSwing - arch); petBend(b, petSide, -2 * C); petBend(c, petSide, C); }
   m.tail.forEach((e, i) => petBend(e, petSide, (.34 * reach - .3 * stretch) * (1 + i * .3)));
   m.group.rotation.x = pitch; m.group.position.y = .32 * Math.abs(Math.sin(pitch)) - m.legH * (1 - Math.cos(.62 * crouch)) * (1 - air);
   const u = Math.max(0, Math.min(1, (p - .3) / .52)); return 4 * .3 * u * (1 - u); }
+// (sitting on its hind legs - the user, 04-11-2026 - body tipped up, front legs straight down, hind legs folded on the
+// floor, tail on the floor behind. During a kolbøtte, and when it has stood still a while)
+const PET_SIT = { tip: .72, thigh: -.5, shin: 2.3, foot: -2.35, front: .72, y: -.07, z: .14, tail: .55 };
+function petSit(m, dt, want, g) { if (!want && !m.sitW) return; m.sitW += ((want ? 1 : 0) - m.sitW) * Math.min(1, dt * (want ? 3.5 : 8)); if (!want && m.sitW < .02) { m.sitW = 0; for (const e of [...m.rear, ...m.front].flat()) e.b.quaternion.copy(e.rest); m.group.rotation.x = 0; m.group.position.set(0, 0, 0); return; }
+  const w = m.sitW * m.sitW * (3 - 2 * m.sitW), S = PET_SIT; g.updateWorldMatrix(true, false); petSide.set(1, 0, 0).transformDirection(g.matrixWorld); m.group.rotation.x = -S.tip * w; m.group.position.set(0, S.y * w, S.z * w); m.group.updateMatrixWorld(true);
+  for (const [a, b, c] of m.rear) { for (const e of [a, b, c]) e.b.quaternion.copy(e.rest); petBend(a, petSide, S.thigh * w); petBend(b, petSide, S.shin * w); petBend(c, petSide, S.foot * w); }
+  for (const [a, b, c] of m.front) { for (const e of [a, b, c]) e.b.quaternion.copy(e.rest); petBend(a, petSide, S.front * w); }
+  petBend(m.head, petSide, S.tip * w); m.tail.forEach(e => petBend(e, petSide, S.tail * w * .5)); }
 // (the walk fades in when it moves. Standing still it looks about and swishes its tail - its own bones turned about the
 // world's up - and only then, for the walk's mixer leaves a bone alone when the walk has nothing new to say)
-function petModelTick(m, dt, moving, running, t) { m.idle += ((!moving && !m.walkW ? 1 : 0) - m.idle) * Math.min(1, dt * (moving ? 12 : 2)); m.walkW += ((moving && m.idle < .03 && !m.hopping ? 1 : 0) - m.walkW) * Math.min(1, dt * 8); if (m.walkW < .01 && !moving) m.walkW = 0;
+function petModelTick(m, dt, moving, running, t) { m.idle += ((!moving && !m.walkW ? 1 : 0) - m.idle) * Math.min(1, dt * (moving ? 12 : 2)); m.walkW += ((moving && m.idle < .03 && !m.hopping && m.sitW < .02 ? 1 : 0) - m.walkW) * Math.min(1, dt * 8); if (m.walkW < .01 && !moving) m.walkW = 0;
   m.walk.setEffectiveWeight(m.walkW); m.mixer.update(dt * (running ? 1.8 : 1.1)); if (m.walkW) return;
   m.swing.forEach(({ b, rest }, i) => { const a = (i ? Math.sin(t * 5 - i * .6) * .22 : Math.sin(t * .7) * .3) * m.idle; b.parent.getWorldQuaternion(petQ); b.quaternion.copy(rest).premultiply(petQ2.copy(petQ).invert().multiply(new THREE.Quaternion().setFromAxisAngle(petUp, a)).multiply(petQ)); }); }
 const petAt = new THREE.Vector3();
@@ -3132,8 +3144,11 @@ const petAt = new THREE.Vector3();
 // (outside the games it keeps to where the figure stands, not to its hips - the user, 04-11-2026: a kolbøtte's hips moving
 // about sent it walking and turning)
 function petTick(dt) { if (!pet) return; const hb = bone('Hips'), g = pet.group, mode = game.on ? game.mode : ''; if (!hb) return; (mode ? hb : holder).getWorldPosition(petAt);
-  const behind = mode === 'sea' ? -Math.sign(Math.sin(game.rotY ?? 0)) || -1 : 1, [ox, oz, face] = { '': [.62, .5, .5], side: [pet.model ? -.73 : -.9, .35, Math.PI / 2], back: [.75, .35, Math.PI], front: [.75, -.15, 0], skate: [0, 1.25, Math.PI], sea: [behind * 1, .2, null], island: [-.75, .5, null], hide: [.85, .5, 0], pk: [-.8, .3, Math.PI] }[mode] ?? [.62, .5, .5];
-  const running = ['side', 'back', 'front', 'skate'].includes(mode), floorY = mode === 'sea' ? petAt.y - .45 : 0, tx = petAt.x + ox, tz = petAt.z + oz; g.visible = holder.visible && mode !== 'sea' && !(mode === 'hide' && !il.rig.visible); // (not in the sea - the user, 04-11-2026)
+  // (it runs along when the figure runs on the spot. It stands on the figure's right: the kolbøtte reaches far out to the
+  // other side - it rolled over the cat - and during one it goes a little further off and sits looking on; the user, 04-11-2026)
+  const rolling = !mode && MOVES.kolboette.some(m => m[0] === anim), runMove = !mode && MOVES.loeb.some(m => m[0] === anim);
+  const behind = mode === 'sea' ? -Math.sign(Math.sin(game.rotY ?? 0)) || -1 : 1, [ox, oz, face] = { '': rolling ? [-.88, .15, .45] : [-.62, .5, .5], side: [pet.model ? -.73 : -.9, .35, Math.PI / 2], back: [.75, .35, Math.PI], front: [.75, -.15, 0], skate: [0, 1.25, Math.PI], sea: [behind * 1, .2, null], island: [-.75, .5, null], hide: [.85, .5, 0], pk: [-.8, .3, Math.PI] }[mode] ?? [.62, .5, .5];
+  const running = runMove || ['side', 'back', 'front', 'skate'].includes(mode), floorY = mode === 'sea' ? petAt.y - .45 : 0, tx = petAt.x + ox, tz = petAt.z + oz; g.visible = holder.visible && mode !== 'sea' && !(mode === 'hide' && !il.rig.visible); // (not in the sea - the user, 04-11-2026)
   if (pet.snap) { g.position.set(tx, floorY, tz); pet.snap = false; } const x0 = g.position.x, z0 = g.position.z, k = 1 - Math.exp(-dt * (running ? 9 : 4)); g.position.x += (tx - x0) * k; g.position.z += (tz - z0) * k; pet.y = (pet.y ?? floorY) + (floorY - (pet.y ?? floorY)) * k;
   const vx = g.position.x - x0, vz = g.position.z - z0, speed = dt ? Math.hypot(vx, vz) / dt : 0, moving = running || speed > .35, t = performance.now() / 1000;
   const faceTo = !running && speed > .35 ? Math.atan2(vx, vz) : face ?? pet.face; let d = faceTo - pet.face; d = Math.atan2(Math.sin(d), Math.cos(d)); pet.face += d * Math.min(1, dt * 7); g.rotation.y = pet.face;
@@ -3141,7 +3156,9 @@ function petTick(dt) { if (!pet) return; const hb = bone('Hips'), g = pet.group,
   if (pet.model) petModelTick(pet.model, dt, moving, running, t);
   pet.tail.rotation.y = Math.sin(t * (moving ? 15 : 6)) * .5; pet.tail.rotation.x = -.5; pet.head.rotation.x = Math.sin(t * 2) * .05 + (moving ? Math.sin(pet.t * 2) * .05 : 0); pet.head.rotation.y = moving ? 0 : Math.sin(t * .7) * .3;
   // (a little hop in the cheers and dances - and while running; in the water bobbing)
-  const happy = (typeof game.cheer === 'number' && game.cheer > 0) || MOVES.jubel.some(m => m[0] === anim) || MOVES.hop.some(m => m[0] === anim) || isDance(anim) || md.on, catHop = pet.model ? petHop(pet.model, dt, happy && !moving, g) : 0; g.position.y = pet.y + (mode === 'sea' ? Math.sin(t * 2) * .05 : pet.model?.hopping ? catHop : happy ? Math.abs(Math.sin(t * 6)) * .2 : running ? Math.abs(Math.sin(pet.t)) * .06 : 0); }
+  const happy = (typeof game.cheer === 'number' && game.cheer > 0) || MOVES.jubel.some(m => m[0] === anim) || MOVES.hop.some(m => m[0] === anim) || isDance(anim) || md.on, catHop = pet.model ? petHop(pet.model, dt, happy && !moving, g) : 0;
+  if (pet.model) { const m = pet.model, quiet = !moving && !happy && !m.hopping && !m.walkW; m.still = quiet ? m.still + dt : 0; petSit(m, dt, quiet && (rolling || m.still > 6), g); }
+  g.position.y = pet.y + (mode === 'sea' ? Math.sin(t * 2) * .05 : pet.model?.hopping ? catHop : happy ? Math.abs(Math.sin(t * 6)) * .2 : running ? Math.abs(Math.sin(pet.t)) * .06 : 0); }
 // (a saved figure's dropped thing - the umbrella - becomes none)
 function setItem(name) { if (!ITEMS.some(i => i[0] === name)) name = ''; itemNow = name;
   // (in the game Bold and Fodbold are the balls rolling in - not one in the hand and one more in the game - and Ingen
@@ -3406,10 +3423,21 @@ function kickBall(dt) { if (!kick.ball) return; const k = kicks[anim], a = glbAc
 // (the arms go with the kick - the user, 04-11-2026: they just hung down. A little out from the body from the start;
 // in the kick the arm on the kicking side swings back and the other forward, as a body keeps its balance)
 const kaS = new THREE.Vector3(), kaO = new THREE.Vector3(), kaD = new THREE.Vector3(), kaQ = new THREE.Quaternion();
-function kickArms(t, contact, side) { const w = Math.min(1, t / .4) * Math.max(0, Math.min(1, 1 - (t - contact - .8) / .4)); if (w <= 0) return; holder.getWorldQuaternion(kaQ); if (glb) kaQ.multiply(glb.quaternion);
+function kickArms(t, contact, side) { const w = Math.min(1, t / .4) * Math.max(0, Math.min(1, 1 - (t - contact - .8) / .4)); if (w <= 0) return; glb.getWorldQuaternion(kaQ);
   const s = Math.exp(-(((t - contact) / .38) ** 2));
   kaS.set(side * (.5 + .25 * s), -.86 + .5 * s, .12 - .72 * s); kaO.set(-side * (.5 - .1 * s), -.86 + .55 * s, .12 + .75 * s);
   [[side > 0 ? 'Left' : 'Right', kaS], [side > 0 ? 'Right' : 'Left', kaO]].forEach(([n, v]) => { kaD.copy(v).normalize().applyQuaternion(kaQ); aimBone(n + 'Arm', n + 'ForeArm', kaD, .9 * w); kaD.copy(v).add(ssBack.set(0, .35, .35)).normalize().applyQuaternion(kaQ); aimBone(n + 'ForeArm', n + 'Hand', kaD, .9 * w); }); }
+// (hands on the hips, chin a little up - "se her, jeg" - the user, 04-11-2026: the plain standing movement with the arms
+// worked out over it. Each hand is placed on its hip and the elbow goes out to the side and a little back)
+const hhT = new THREE.Vector3(), hhS = new THREE.Vector3(), hhU = new THREE.Vector3(), hhE = new THREE.Vector3(), hhP = new THREE.Vector3(), hhQ = new THREE.Quaternion(); let hhW = 0;
+function handsOnHips(dt) { hhW += ((anim === 'staa-hofter' && !game.on ? 1 : 0) - hhW) * Math.min(1, dt * 6); if (hhW < .01 || !bone('LeftArm') || !glb) return; glb.updateMatrixWorld(true); glb.getWorldQuaternion(hhQ);
+  for (const [n, s] of [['Left', 1], ['Right', -1]]) { const up = bone(n + 'Arm'), fore = bone(n + 'ForeArm'), hand = bone(n + 'Hand'); up.getWorldPosition(hhS); fore.getWorldPosition(hhE); hand.getWorldPosition(hhT); const a = hhS.distanceTo(hhE), b = hhE.distanceTo(hhT);
+    bone(n + 'UpLeg').getWorldPosition(hhT); hhT.add(hhP.set(s * HANDS.out, HANDS.up, HANDS.front).applyQuaternion(hhQ));
+    hhU.subVectors(hhT, hhS); const d = Math.min(hhU.length(), (a + b) * .985); hhU.normalize(); const x = (a * a - b * b + d * d) / (2 * d), h = Math.sqrt(Math.max(0, a * a - x * x)); hhP.set(s, .05, -HANDS.back).applyQuaternion(hhQ); hhP.addScaledVector(hhU, -hhP.dot(hhU)).normalize();
+    hhE.copy(hhS).addScaledVector(hhU, x).addScaledVector(hhP, h); kaD.subVectors(hhE, hhS).normalize(); aimBone(n + 'Arm', n + 'ForeArm', kaD, hhW); glb.updateMatrixWorld(true); fore.getWorldPosition(hhE); kaD.subVectors(hhT, hhE).normalize(); aimBone(n + 'ForeArm', n + 'Hand', kaD, hhW);
+    if (bone(n + 'HandMiddle1')) { kaD.set(-s * .3, -.8, .5).normalize().applyQuaternion(hhQ); aimBone(n + 'Hand', n + 'HandMiddle1', kaD, hhW); } }
+  turnBone('Head', hhP.set(1, 0, 0).applyQuaternion(hhQ).clone(), -.07 * hhW); }
+const HANDS = { out: .17, up: .2, front: .03, back: .4 };
 
 // ---- Hop over bolden: the first little game (03-11-2026) ----
 // The figure runs on the spot, seen from the side; footballs roll in from the right. A tap on the figure's picture (or
@@ -4152,7 +4180,9 @@ function pkTick(dt) { const t = performance.now() / 1000, L = pkLevel(), kp = pk
     // (saved: the ball drops in front of the bear and rolls a little; goal: the net bulges back and settles)
     if (pk.saved) { b.position.y = Math.max(kick.r, b.position.y - dt * 2.5); b.position.z = Math.min(PK.goalZ + 1.2, b.position.z + dt * 1.2); b.rotation.x += dt * 5; }
     else { pk.netBack.position.z = -1 - .35 * Math.exp(-pk.t * 3) * Math.abs(Math.cos(pk.t * 8)); b.position.z = Math.max(PK.goalZ - .85, b.position.z - dt * 1.5); b.position.y = Math.max(kick.r, b.position.y - dt * 2); }
-    if (pk.t > 2.4) { pk.foot++; runAnim('staa'); pkReady(); } } }
+    if (pk.t > 2.4) { pk.foot++; runAnim('staa'); pkReady(); } }
+  // (the arms go with the kick and the eyes follow the ball up to the goal - the user, 04-11-2026)
+  if (pk.phase === 'kick' || pk.phase === 'fly' || (pk.phase === 'after' && pk.saved && pk.t < 1)) { const a = glbActions[pkKick()], k = kicks[pkKick()]; if (a?.isRunning() && k) { const after = a.time - k.contact; kickArms(a.time + .4, k.contact + .4, k.side); lookAtBall(b, .85 * Math.max(0, Math.min(1, 1 - (after - 1) / .4))); } } }
 const GAME_NAMES = [['hop', 'Hop over bolden'], ['skate', 'Skateboard'], ['island', 'Skattejagt'], ['sea', 'Svømmeverden'], ['hide', 'Gemmeleg'], ['pk', 'Straffespark']];
 // (with two players or more: their pictures on top, the one shown marked - tapping another shows that child's stars)
 let starShown = null;
@@ -4347,6 +4377,6 @@ addEventListener('resize', resize); resize(); new ResizeObserver(resize).observe
 renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElapsedTime();
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
-  try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
+  try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
 </body>
 </html>
