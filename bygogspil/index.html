@@ -371,7 +371,7 @@
   </div>
   <!-- (opened right under the group of the tab tapped - see placeBox) -->
   <div class="box" id="optBox" hidden>
-    <div class="choices" id="styles" hidden></div><div class="choices" id="styles2" hidden></div>
+    <div class="choices" id="styles" hidden></div><div class="choices" id="styles2" hidden></div><div class="choices" id="styles3" hidden></div>
     <div class="namebox" id="nameBox" hidden><div class="namerow"><input id="nameInput" name="mm-troeje-tekst" type="text" maxlength="10" autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false" enterkeyhint="done" data-1p-ignore data-lpignore="true" placeholder="Skriv dit navn" aria-label="Navn på trøjen"><button id="sayBtn" aria-label="Sig navnet">🔊</button></div>
       <div class="namerow"><button id="recBtn" class="rec-btn">🎤 <span>Indtal selv</span></button><button id="recDel" class="rec-del" aria-label="Slet din egen stemme" hidden>🗑</button></div>
       <p class="rec-note" id="recNote"></p>
@@ -609,8 +609,8 @@ function tapTab(part, then) { if (boxOpen && partNow === part) { boxOpen = false
 // (the styles as buttons above the colours: hairstyles while Hår is chosen, tops while Trøje is; none before the figure -
 // each with a little picture of the figure wearing it, ikoner/valg-<name>.png, made by the page itself: see LÆS-MIG)
 // (a second row in the same tab, as the app's earrings under the ears: a fourth entry, [items, now, set, ingen-name])
-function renderStyles() { const all = typeof styleLists === 'undefined' ? null : styleLists()[partNow], second = all?.[3];
-  for (const [id, list, none] of [['styles', all, partNow], ['styles2', second, second?.[3]]]) { const box = document.getElementById(id);
+function renderStyles() { const all = typeof styleLists === 'undefined' ? null : styleLists()[partNow], second = all?.[3], third = second?.[4];
+  for (const [id, list, none] of [['styles', all, partNow], ['styles2', second, second?.[3]], ['styles3', third, 'dyr-ting']]) { const box = document.getElementById(id);
   box.innerHTML = ''; box.hidden = !list || !hairBase;
   if (box.hidden) continue; const [items, now, set] = list;
   // (now: the chosen one - or, for Pynt, the list of all chosen, Ingen lit when it is empty)
@@ -623,11 +623,11 @@ function renderStyles() { const all = typeof styleLists === 'undefined' ? null :
 // (prices in kroner since 04-11-2026, paid in coins - see askBuy; the child's account: score.kr, the stars won become
 // kroner by the level - starWorth - and what there was before, one krone to a star)
 const SHOP = { 'hat-krone': 40, 'kjole-prinsesse': 60, 'kjole-havfrue': 60, 'sko-hoej': 30, 'briller-hjerte': 20, 'briller-stjerne': 20,
-  'ting-tryllestav': 30, 'bg-slot': 30, 'bg-slikland': 40, 'bg-rummet': 40, 'dyr-kat': 100, 'dyr-hund': 100, 'dyr-kanin': 100 };
+  'ting-tryllestav': 30, 'bg-slot': 30, 'bg-slikland': 40, 'bg-rummet': 40, 'dyr-kat': 100, 'dyr-hund': 100, 'dyr-kanin': 100, 'dyr-halsbaand': 30, 'dyr-skaal': 40, 'dyr-bold': 40 };
 const krOf = s => s.kr ??= Math.max(0, (s.total || 0) - (s.spent || 0));
 function owns(n) { if (!SHOP[n]) return true; try { return !!playerNow().score.owned?.includes(n); } catch (e) { return true; } }
 // (the tab a shop thing belongs to: its name and how to put it on)
-function shopThing(n) { for (const top of Object.values(styleLists())) for (const l of [top, top?.[3]]) { const it = Array.isArray(l?.[0]) && l[0].find(i => i[0] === n); if (it) return { label: it[1], set: l[2] }; } return { label: '', set: null }; }
+function shopThing(n) { for (const top of Object.values(styleLists())) for (const l of [top, top?.[3], top?.[3]?.[4], PET_TOYS_LIST()]) { const it = Array.isArray(l?.[0]) && l[0].find(i => i[0] === n); if (it) return { label: it[1], set: l[2] }; } return { label: '', set: null }; }
 // (tapping a locked thing: with two players or more, who buys first; then its picture and price, and the coins - the user,
 // 04-11-2026: tapped up on to the counter until they make the price, one on the counter tapped takes it off again. The
 // account changes money by itself: any coin may be used as long as the kroner are there. 🤝 lays them out for the
@@ -1789,7 +1789,7 @@ async function loadHair(name, list = hairTexs, colourPart = 'hair', extra = {}) 
   // (cap: no lighter than that over the middle - the glasses' frames had white smears inside, by the glass)
   if (opts.cap) list.at(-1).cap = opts.cap;
   body.parent.add(hair); hair.bind(body.skeleton, body.bindMatrix); scalpCap(hair, g, W, earLines, apart, eyeY); if (picked[colourPart]) recolourHair(picked[colourPart], list); return hair; }
-var styleLists = () => ({ hair: [HAIRS, hairNow, setHair], eyes: [EYES, eyesNow, setEyes], brows: [BROWS, browsNow, setBrows], mouth: [MOUTHS, mouthNow, setMouth], pynt: [PYNT, pyntNow.map(k => 'pynt-' + k), setPynt], nose: [NOSES, noseNow, setNose], item: [ITEMS, itemNow, n => { petPick = false; setItem(n); showSwatches(); }, [PETS, petNow, n => { petPick = true; setPet(n); showSwatches(); }, 'dyr']], bg: [BGS, bgNow, setBg], ears: [EARS, earsNow, setEars, [EARRINGS, earringsNow, setEarrings, 'oerering']],
+var styleLists = () => ({ hair: [HAIRS, hairNow, setHair], eyes: [EYES, eyesNow, setEyes], brows: [BROWS, browsNow, setBrows], mouth: [MOUTHS, mouthNow, setMouth], pynt: [PYNT, pyntNow.map(k => 'pynt-' + k), setPynt], nose: [NOSES, noseNow, setNose], item: [ITEMS, itemNow, n => { petPick = false; setItem(n); showSwatches(); }, [PETS, petNow, n => { petPick = true; setPet(n); showSwatches(); }, 'dyr', petNow ? PET_TOYS_LIST() : null]], bg: [BGS, bgNow, setBg], ears: [EARS, earsNow, setEars, [EARRINGS, earringsNow, setEarrings, 'oerering']],
   ...Object.fromEntries(Object.entries(GARMENTS).map(([part, G]) => [part, [G.items, G.now, n => setGarment(part, n)]])),
   ...Object.fromEntries(Object.entries(MOVES).map(([g, list]) => ['move-' + g, [list, moveNow[g], playMove]])), 'game-hop': gameList() });
 async function setHair(name) {
@@ -2815,7 +2815,7 @@ showBadges();
 // saved out of the page (the camera, behind a grown-up's sum) ----
 // (a figure: its choices - the colours picked, the hair, the face, what it wears, the name)
 const figureNow = () => ({ picked: { ...picked }, hair: hairNow, eyes: eyesNow, brows: browsNow, mouth: mouthNow, nose: noseNow, pynt: [...pyntNow],
-  wear: Object.fromEntries(Object.entries(GARMENTS).map(([p, G]) => [p, G.now])), name: nameNow, badge: badgeNow, item: itemNow, pet: petNow, ears: earsNow, earrings: earringsNow, bg: bgNow });
+  wear: Object.fromEntries(Object.entries(GARMENTS).map(([p, G]) => [p, G.now])), name: nameNow, badge: badgeNow, item: itemNow, pet: petNow, petToys: [...petToys], ears: earsNow, earrings: earringsNow, bg: bgNow });
 // (a part's own colour back: the figure's painted one, the hair's and the garments' as made)
 const unpaint = list => { for (const t of list) { const im = t.ctx.createImageData(t.w, t.h); im.data.set(t.src); t.ctx.putImageData(im, 0, 0); t.texture.needsUpdate = true; } };
 function unpick(part) { delete picked[part]; if (part === 'socks' || part === 'shoe') { paintSocks(); paintHeels(); } if (part === 'item') paintItem(); if (part === 'hair') unpaint(hairTexs); if (GARMENTS[part]) unpaint(GARMENTS[part].texs);
@@ -2826,7 +2826,7 @@ async function wearFigure(f) { const ask = ++dressingUp;
   for (const [part] of CHOICES) if (part !== 'hair') { if (f.picked[part]) { picked[part] = f.picked[part]; recolour(part, f.picked[part]); } else unpick(part); }
   if (f.picked.hair) { picked.hair = f.picked.hair; recolour('hair', f.picked.hair); } else unpick('hair');
   eyesNow = f.eyes; browsNow = f.brows; mouthNow = f.mouth; noseNow = f.nose; pyntNow = [...f.pynt]; nameNow = f.name; badgeNow = f.badge;
-  nameInput.value = nameNow; showRec(); showBadges(); redrawBody(); showSwatches(); setItem(f.item || ''); setPet(f.pet || ''); earringsNow = f.earrings || ''; setEars(f.ears || 'oerer-naturlig'); setBg(f.bg || 'bg-sol');
+  nameInput.value = nameNow; showRec(); showBadges(); redrawBody(); showSwatches(); setItem(f.item || ''); petToys = [...(f.petToys || [])]; setPet(f.pet || ''); earringsNow = f.earrings || ''; setEars(f.ears || 'oerer-naturlig'); setBg(f.bg || 'bg-sol');
   if (f.hair !== hairNow) await setHair(f.hair); if (ask !== dressingUp) return;
   // (a dress last: it takes off the top and trousers. No dress: taken off at once - a new MiniMig in just its underwear
   // kept the dress on before, as only a top or trousers put on took it off; the user, 03-11-2026)
@@ -3062,7 +3062,19 @@ let itemNow = '', item = null; const items = {};
 // hides with it. Chosen under Ting, under the things; bought for stars, kept with the figure ----
 const PETS = [['', 'Intet dyr'], ['dyr-kat', 'Kat'], ['dyr-hund', 'Hund'], ['dyr-kanin', 'Kanin']];
 let petNow = '', pet = null; const pets = {};
+// (things for the pet, the user, 04-11-2026: a collar, a food bowl it goes to and eats from, and a ball to tap: it runs
+// after it and brings it back. Chosen in a third row under Ting, any of them or all; the bowl and the ball only outside the games)
+var petToys = []; const PET_TOYS = [['dyr-halsbaand', 'Halsbånd'], ['dyr-skaal', 'Madskål'], ['dyr-bold', 'Legebold']];
+function PET_TOYS_LIST() { return [PET_TOYS, petToys, n => { petPick = true; petToys = petToys.includes(n) ? petToys.filter(x => x !== n) : [...petToys, n]; renderStyles(); showSwatches(); }]; }
+const toyBowl = { x: -.78, z: 1 }, toyRest = { x: .6, z: .95 }, petJob = { kind: '', t: 0, wait: 6, bx: 0, bz: 0, from: new THREE.Vector3(), flying: 0, eat: 0 };
+let bowl = null, ball = null; const toyRay = new THREE.Raycaster(), toyAt = new THREE.Vector2();
+function makeBowl() { const g = new THREE.Group(), blue = ilM('#3D8BFF', .45); const cup = ilMesh(new THREE.CylinderGeometry(.19, .14, .09, 28), blue, 0, .045, 0, g); cup.material.side = THREE.DoubleSide; ilMesh(new THREE.TorusGeometry(.185, .018, 10, 32), ilM('#FFFFFF', .4), 0, .092, 0, g).rotation.x = Math.PI / 2; ilMesh(new THREE.CylinderGeometry(.165, .165, .012, 24), ilM('#7A4A26', .9), 0, .083, 0, g); for (let k = 0; k < 14; k++) { const a = k * 2.4, r = .03 + k * .009; ilMesh(new THREE.SphereGeometry(.026, 8, 6), ilM(k % 3 ? '#9C6233' : '#C98B4F', .9), Math.cos(a) * r, .092, Math.sin(a) * r, g); } g.visible = false; scene.add(g); return g; }
+function makePetBall() { const cv = document.createElement('canvas'); cv.width = 128; cv.height = 64; const c = cv.getContext('2d'); ['#E8384F', '#FFD23F', '#3D8BFF', '#FFFFFF'].forEach((col, k) => { c.fillStyle = col; c.fillRect(k * 32, 0, 32, 64); }); const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; const m = new THREE.Mesh(new THREE.SphereGeometry(.11, 24, 16), new THREE.MeshStandardMaterial({ map: tex, roughness: .4 })); m.castShadow = true; m.visible = false; scene.add(m); return m; }
+function makeCollar(radius) { const g = new THREE.Group(); ilMesh(new THREE.TorusGeometry(radius, radius * .13, 10, 30), ilM('#E8384F', .5), 0, 0, 0, g); const bell = ilMesh(new THREE.SphereGeometry(radius * .24, 14, 10), new THREE.MeshStandardMaterial({ color: '#FFC233', roughness: .25, metalness: .7 }), 0, -radius * 1.1, radius * .1, g); ilMesh(new THREE.SphereGeometry(radius * .06, 8, 6), ilM('#5A3A00', .6), 0, -radius * .2, radius * .22, bell); g.visible = false; return g; }
+// (a tap on the ball throws it, a tap on the bowl sends the pet to eat)
+renderer.domElement.addEventListener('pointerdown', e => { if (game.on || !pet || (!bowl?.visible && !ball?.visible)) return; const r = renderer.domElement.getBoundingClientRect(); toyAt.set((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1); toyRay.setFromCamera(toyAt, camera); if (ball?.visible && petJob.kind !== 'ball' && toyRay.intersectObject(ball).length) { petJob.kind = 'ball'; petJob.t = 0; petJob.flying = .55; petJob.from.copy(ball.position); petJob.bx = -.9 + Math.random() * 1.3; petJob.bz = .6 + Math.random() * .55; sfx('boing'); return; } if (bowl?.visible && toyRay.intersectObject(bowl, true).length && petJob.kind !== 'ball') { petJob.kind = 'eat'; petJob.t = 0; } });
 function makePet(kind) { const g = new THREE.Group(), C = { 'dyr-kat': ['#F2994A', '#FFE9CF', '#E8627A'], 'dyr-hund': ['#B57F4A', '#F3DDBB', '#2A1C17'], 'dyr-kanin': ['#F6F3EC', '#FFD3E2', '#E8627A'] }[kind], fur = ilM(C[0], .8), pale = ilM(C[1], .8), nose = ilM(C[2], .4), dark = ilM('#1C1A22', .25), S = (r, m, x, y, z, p = g) => ilMesh(new THREE.SphereGeometry(r, 18, 14), m, x, y, z, p);
+  const simpleCollar = makeCollar(.115); simpleCollar.rotation.x = Math.PI / 2 - .35; simpleCollar.position.set(0, .34, .17); g.add(simpleCollar);
   S(.2, fur, 0, .24, 0).scale.set(.9, .85, 1.2); S(.15, pale, 0, .2, .08).scale.set(.75, .7, 1.05);
   const head = new THREE.Group(); head.position.set(0, .45, .24); head.scale.setScalar(1.22); g.add(head);
   S(.17, fur, 0, 0, 0, head);
@@ -3082,10 +3094,10 @@ function makePet(kind) { const g = new THREE.Group(), C = { 'dyr-kat': ['#F2994A
   if (kind === 'dyr-kanin') S(.08, ilM('#FFFFFF', .9), 0, 0, -.07, tail);
   else { const pts = (kind === 'dyr-kat' ? [[0, -.03, .05], [0, .02, -.04], [0, .14, -.11], [0, .27, -.13], [0, .36, -.08]] : [[0, -.03, .05], [0, .02, -.05], [0, .1, -.12], [0, .17, -.15]]).map(p => new THREE.Vector3(...p));
     ilMesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 16, kind === 'dyr-kat' ? .03 : .036, 10), fur, 0, 0, 0, tail); S(kind === 'dyr-kat' ? .03 : .036, fur, pts.at(-1).x, pts.at(-1).y, pts.at(-1).z, tail); }
-  g.visible = false; scene.add(g); const me = { group: g, head, legs, tail, t: 0, walk: 0, face: .5, hop: 0, snap: true };
+  g.visible = false; scene.add(g); const me = { group: g, head, legs, tail, t: 0, walk: 0, face: .5, hop: 0, snap: true, collar: simpleCollar, still: 0 };
   // (the cat is the one rigged at Meshy - the user, 04-11-2026. It shows when both its file and its fur have come - a black
   // cat flashed by before the fur - and only if they can't come, the simple one stands in)
-  if (kind === 'dyr-kat') { const simple = [...g.children]; simple.forEach(c => { c.visible = false; }); loadGlbPet('dyr-kat.glb', 'dyr-kat.jpg', .72).then(m => { g.add(m.group); me.model = m; }).catch(() => simple.forEach(c => { c.visible = true; })); }
+  if (kind === 'dyr-kat') { const simple = [...g.children]; simple.forEach(c => { c.visible = false; }); loadGlbPet('dyr-kat.glb', 'dyr-kat.jpg', .72).then(m => { g.add(m.group); me.model = m; me.collar = m.collar; }).catch(() => simple.forEach(c => { c.visible = true; })); }
   return me; }
 function setPet(name) { if (!PETS.some(p => p[0] === name)) name = ''; petNow = name; if (pet) pet.group.visible = false; pet = name && glb ? pets[name] ??= makePet(name) : null; if (pet) pet.snap = true; renderStyles(); }
 // (an animal rigged at Meshy: a GLB file with one skinned mesh, its bones and a walk. Meshy's rigged file leaves out the
@@ -3108,7 +3120,9 @@ async function loadGlbPet(url, texUrl, height) { const { inner, bones, mesh, cli
   const box = new THREE.Box3().setFromObject(mesh, true), k = height / (box.max.y - box.min.y); turn.scale.setScalar(k); turn.position.y = -box.min.y * k;
   const mixer = new THREE.AnimationMixer(inner), walk = mixer.clipAction(clip); walk.setEffectiveWeight(0); walk.play(); const swing = ['head', 'tail1', 'tail2', 'tail3'].map(n => ({ b: bone(n), rest: bone(n).quaternion.clone() }));
   group.updateMatrixWorld(true); const part = n => ({ b: bone(n), rest: bone(n).quaternion.clone() }), chain = pre => ['', '0', '1'].map(x => part(pre + x)), legH = bone('backleg').getWorldPosition(new THREE.Vector3()).y;
-  return { group, mixer, walk, swing, walkW: 0, idle: 0, hopping: false, hopT: 0, sitW: 0, still: 0, legH, chest: part('chest'), head: swing[0], rear: ['backleg', 'R_backleg'].map(chain), front: ['frontleg', 'R_frontleg'].map(chain), tail: swing.slice(1) }; }
+  // (the collar, on the chest bone where the neck is, across the way from chest to head; its size as far as the mesh goes there)
+  const ch = bone('chest'), hd = bone('head'), hw = hd.getWorldPosition(new THREE.Vector3()), cw = ch.getWorldPosition(new THREE.Vector3()), along = hw.clone().sub(cw).normalize(), collar = makeCollar(height * .155), cm = new THREE.Matrix4().compose(hw.clone().addScaledVector(along, -height * .03), new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), along), new THREE.Vector3(1, 1, 1)); group.updateMatrixWorld(true); cm.premultiply(ch.matrixWorld.clone().invert()); cm.decompose(collar.position, collar.quaternion, collar.scale); ch.add(collar);
+  return { group, mixer, walk, swing, collar, walkW: 0, idle: 0, hopping: false, hopT: 0, sitW: 0, still: 0, legH, chest: part('chest'), head: swing[0], rear: ['backleg', 'R_backleg'].map(chain), front: ['frontleg', 'R_frontleg'].map(chain), tail: swing.slice(1) }; }
 const petUp = new THREE.Vector3(0, 1, 0), petSide = new THREE.Vector3(), petQ = new THREE.Quaternion(), petQ2 = new THREE.Quaternion(), petQ3 = new THREE.Quaternion();
 const petBend = (e, axis, a) => { e.b.parent.getWorldQuaternion(petQ); e.b.quaternion.premultiply(petQ2.copy(petQ).invert().multiply(petQ3.setFromAxisAngle(axis, a)).multiply(petQ)); };
 // (a real cat's jump - the user, 04-11-2026: it hopped stiffly. It sinks on bent legs, pushes off with the hind legs
@@ -3149,9 +3163,14 @@ function petTick(dt) { if (!pet) return; const hb = bone('Hips'), g = pet.group,
   // (it runs along when the figure runs on the spot. It stands on the figure's right: the kolbøtte reaches far out to the
   // other side - it rolled over the cat - and during one it goes a little further off and sits looking on; the user, 04-11-2026)
   const rolling = !mode && MOVES.kolboette.some(m => m[0] === anim), runMove = !mode && MOVES.loeb.some(m => m[0] === anim);
-  const behind = mode === 'sea' ? -Math.sign(Math.sin(game.rotY ?? 0)) || -1 : 1, [ox, oz, face] = { '': rolling ? [-.88, .15, .45] : [-.62, .5, .5], side: [pet.model ? -.73 : -.9, .35, Math.PI / 2], back: [.75, .35, Math.PI], front: [.75, -.15, 0], skate: [0, 1.25, Math.PI], sea: [behind * 1, .2, null], island: [-.75, .5, null], hide: [.85, .5, 0], pk: [-.8, .3, Math.PI] }[mode] ?? [.62, .5, .5];
-  const running = runMove || ['side', 'back', 'front', 'skate'].includes(mode), floorY = mode === 'sea' ? petAt.y - .45 : 0, tx = petAt.x + ox, tz = petAt.z + oz; g.visible = holder.visible && mode !== 'sea' && !(mode === 'hide' && !il.rig.visible); // (not in the sea - the user, 04-11-2026)
-  if (pet.snap) { g.position.set(tx, floorY, tz); pet.snap = false; } const x0 = g.position.x, z0 = g.position.z, k = 1 - Math.exp(-dt * (running ? 9 : 4)); g.position.x += (tx - x0) * k; g.position.z += (tz - z0) * k; pet.y = (pet.y ?? floorY) + (floorY - (pet.y ?? floorY)) * k;
+  // (the things: the collar with it everywhere; the bowl and the ball by the figure outside the games, and its errands to them)
+  const hasBowl = petToys.includes('dyr-skaal'), hasBall = petToys.includes('dyr-bold'), toysOut = !mode && holder.visible && !rolling; if (pet.collar) pet.collar.visible = petToys.includes('dyr-halsbaand'); if (hasBowl && !bowl) { bowl = makeBowl(); bowl.position.set(toyBowl.x, 0, toyBowl.z); } if (hasBall && !ball) { ball = makePetBall(); ball.position.set(toyRest.x, .11, toyRest.z); } if (bowl) bowl.visible = hasBowl && toysOut; if (ball) ball.visible = hasBall && toysOut; if (!toysOut || runMove) petJob.kind = ''; if (!hasBowl && petJob.kind === 'eat' || !hasBall && petJob.kind === 'ball') petJob.kind = '';
+  let behind = mode === 'sea' ? -Math.sign(Math.sin(game.rotY ?? 0)) || -1 : 1, [ox, oz, face] = { '': rolling ? [-.88, .15, .45] : [-.62, .5, .5], side: [pet.model ? -.73 : -.9, .35, Math.PI / 2], back: [.75, .35, Math.PI], front: [.75, -.15, 0], skate: [0, 1.25, Math.PI], sea: [behind * 1, .2, null], island: [-.75, .5, null], hide: [.85, .5, 0], pk: [-.8, .3, Math.PI] }[mode] ?? [.62, .5, .5];
+  const running = runMove || ['side', 'back', 'front', 'skate'].includes(mode), floorY = mode === 'sea' ? petAt.y - .45 : 0; let tx = petAt.x + ox, tz = petAt.z + oz; const J = petJob;
+  if (J.kind === 'eat') { tx = toyBowl.x + .1; tz = toyBowl.z - .3; face = Math.atan2(toyBowl.x - tx, toyBowl.z - tz); }
+  else if (J.kind === 'ball') { if (J.flying > 0) { J.flying -= dt; const u = 1 - Math.max(0, J.flying) / .55; ball.position.set(J.from.x + (J.bx - J.from.x) * u, .11 + Math.sin(u * Math.PI) * .45, J.from.z + (J.bz - J.from.z) * u); ball.rotation.x += dt * 12; tx = J.bx; tz = J.bz; } else if (J.t === 0) { tx = J.bx; tz = J.bz; if (Math.hypot(g.position.x - tx, g.position.z - tz) < .3) { J.t = 1; sfx('ding'); } } else { tx = toyRest.x; tz = toyRest.z - .3; const fx = Math.sin(pet.face), fz = Math.cos(pet.face); ball.position.set(g.position.x + fx * .36, .11, g.position.z + fz * .36); if (Math.hypot(g.position.x - tx, g.position.z - tz) < .1) { J.kind = ''; ball.position.set(toyRest.x, .11, toyRest.z); } } }
+  g.visible = holder.visible && mode !== 'sea' && !(mode === 'hide' && !il.rig.visible); // (not in the sea - the user, 04-11-2026)
+  if (pet.snap) { g.position.set(tx, floorY, tz); pet.snap = false; } const x0 = g.position.x, z0 = g.position.z, k = 1 - Math.exp(-dt * (running ? 9 : J.kind === 'ball' ? (J.t ? 2.6 : 5) : 3.2)); g.position.x += (tx - x0) * k; g.position.z += (tz - z0) * k; pet.y = (pet.y ?? floorY) + (floorY - (pet.y ?? floorY)) * k;
   const vx = g.position.x - x0, vz = g.position.z - z0, speed = dt ? Math.hypot(vx, vz) / dt : 0, moving = running || speed > .35, t = performance.now() / 1000;
   const faceTo = !running && speed > .35 ? Math.atan2(vx, vz) : face ?? pet.face; let d = faceTo - pet.face; d = Math.atan2(Math.sin(d), Math.cos(d)); pet.face += d * Math.min(1, dt * 7); g.rotation.y = pet.face;
   pet.walk += ((moving ? 1 : 0) - pet.walk) * Math.min(1, dt * 8); pet.t += dt * (running ? 13 : 9); pet.legs.forEach((l, i) => { l.rotation.x = Math.sin(pet.t + (i === 0 || i === 3 ? 0 : Math.PI)) * .75 * pet.walk; });
@@ -3159,7 +3178,11 @@ function petTick(dt) { if (!pet) return; const hb = bone('Hips'), g = pet.group,
   pet.tail.rotation.y = Math.sin(t * (moving ? 15 : 6)) * .5; pet.tail.rotation.x = -.5; pet.head.rotation.x = Math.sin(t * 2) * .05 + (moving ? Math.sin(pet.t * 2) * .05 : 0); pet.head.rotation.y = moving ? 0 : Math.sin(t * .7) * .3;
   // (a little hop in the cheers and dances - and while running; in the water bobbing)
   const happy = (typeof game.cheer === 'number' && game.cheer > 0) || MOVES.jubel.some(m => m[0] === anim) || MOVES.hop.some(m => m[0] === anim) || isDance(anim) || md.on, catHop = pet.model ? petHop(pet.model, dt, happy && !moving, g) : 0;
-  if (pet.model) { const m = pet.model, quiet = !moving && !happy && !m.hopping && !m.walkW; m.still = quiet ? m.still + dt : 0; petSit(m, dt, quiet && (rolling || m.still > 6), g); }
+  // (it goes to the bowl by itself now and then when standing still, eats a while with its head down, and goes back)
+  const near = !moving && Math.hypot(g.position.x - tx, g.position.z - tz) < .08; pet.still = !moving && !happy && !J.kind ? (pet.still || 0) + dt : 0; J.wait -= dt; if (hasBowl && toysOut && !J.kind && !happy && pet.still > 2.5 && J.wait <= 0) { J.kind = 'eat'; J.t = 0; }
+  if (J.kind === 'eat' && near) { J.t += dt; if (J.t > 4.5) { J.kind = ''; J.wait = 22; } } J.eat += ((J.kind === 'eat' && near ? 1 : 0) - J.eat) * Math.min(1, dt * 5);
+  if (pet.model) { const m = pet.model, quiet = !moving && !happy && !m.hopping && !m.walkW && !J.kind; m.still = quiet ? m.still + dt : 0; petSit(m, dt, quiet && (rolling || m.still > 6), g); if (J.eat > .01 && !m.walkW && !m.hopping) { g.updateWorldMatrix(true, false); petSide.set(1, 0, 0).transformDirection(g.matrixWorld); m.chest.b.quaternion.copy(m.chest.rest); petBend(m.chest, petSide, .3 * J.eat); petBend(m.head, petSide, .95 * J.eat); J.bent = true; } else if (J.bent && !m.hopping) { m.chest.b.quaternion.copy(m.chest.rest); J.bent = false; } }
+  else pet.head.rotation.x += .85 * J.eat;
   g.position.y = pet.y + (mode === 'sea' ? Math.sin(t * 2) * .05 : pet.model?.hopping ? catHop : happy ? Math.abs(Math.sin(t * 6)) * .2 : running ? Math.abs(Math.sin(pet.t)) * .06 : 0); }
 // (a saved figure's dropped thing - the umbrella - becomes none)
 function setItem(name) { if (!ITEMS.some(i => i[0] === name)) name = ''; itemNow = name;
