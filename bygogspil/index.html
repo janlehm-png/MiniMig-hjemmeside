@@ -3104,16 +3104,34 @@ async function loadGlbPet(url, texUrl, height) { const buf = await (await fetch(
   const a = bone('head').getWorldPosition(new THREE.Vector3()), b = bone('Hips').getWorldPosition(new THREE.Vector3()); turn.rotation.y = -Math.atan2(a.x - b.x, a.z - b.z); group.updateMatrixWorld(true);
   const box = new THREE.Box3().setFromObject(mesh, true), k = height / (box.max.y - box.min.y); turn.scale.setScalar(k); turn.position.y = -box.min.y * k;
   const mixer = new THREE.AnimationMixer(inner), walk = mixer.clipAction(clip); walk.setEffectiveWeight(0); walk.play(); const swing = ['head', 'tail1', 'tail2', 'tail3'].map(n => ({ b: bone(n), rest: bone(n).quaternion.clone() }));
-  return { group, mixer, walk, swing, walkW: 0, idle: 0 }; }
-const petUp = new THREE.Vector3(0, 1, 0), petQ = new THREE.Quaternion(), petQ2 = new THREE.Quaternion();
+  group.updateMatrixWorld(true); const part = n => ({ b: bone(n), rest: bone(n).quaternion.clone() }), chain = pre => ['', '0', '1'].map(x => part(pre + x)), legH = bone('backleg').getWorldPosition(new THREE.Vector3()).y;
+  return { group, mixer, walk, swing, walkW: 0, idle: 0, hopping: false, hopT: 0, legH, rear: ['backleg', 'R_backleg'].map(chain), front: ['frontleg', 'R_frontleg'].map(chain), tail: swing.slice(1) }; }
+const petUp = new THREE.Vector3(0, 1, 0), petSide = new THREE.Vector3(), petQ = new THREE.Quaternion(), petQ2 = new THREE.Quaternion(), petQ3 = new THREE.Quaternion();
+const petBend = (e, axis, a) => { e.b.parent.getWorldQuaternion(petQ); e.b.quaternion.premultiply(petQ2.copy(petQ).invert().multiply(petQ3.setFromAxisAngle(axis, a)).multiply(petQ)); };
+// (a real cat's jump - the user, 04-11-2026: it hopped stiffly. It sinks on bent legs, pushes off with the hind legs
+// stretching back while the front ones reach forward, nose up; in the air the legs draw in; it comes down front paws
+// first, nose down, and takes the landing in bent legs. One whole jump at a time, its height the y it gives back)
+function petHop(m, dt, on, g) { if (m.walkW) on = false; if (!m.hopping && !on) return 0; m.hopping = true; m.hopT += dt / .85;
+  if (m.hopT >= 1) { m.hopT -= 1; if (!on) { m.hopping = false; m.hopT = 0; for (const e of [...m.rear, ...m.front].flat()) e.b.quaternion.copy(e.rest); m.group.position.y = 0; m.group.rotation.x = 0; return 0; } }
+  const p = m.hopT, ss = (a, b) => { const x = Math.max(0, Math.min(1, (p - a) / (b - a))); return x * x * (3 - 2 * x); };
+  const crouch = ss(0, .2) * (1 - ss(.2, .32)) + ss(.8, .88) * (1 - ss(.88, 1)), air = ss(.28, .36) * (1 - ss(.76, .84)), stretch = ss(.2, .32) * (1 - ss(.42, .6)), reach = ss(.58, .76) * (1 - ss(.84, .94));
+  const C = .62 * crouch + .3 * air * (1 - stretch), rearSwing = .6 * stretch - .22 * reach, frontSwing = -.75 * stretch - .4 * reach, pitch = -.38 * stretch + .32 * reach + .08 * crouch;
+  g.updateWorldMatrix(true, false); petSide.set(1, 0, 0).transformDirection(g.matrixWorld);
+  for (const [a, b, c] of m.rear) { for (const e of [a, b, c]) e.b.quaternion.copy(e.rest); petBend(a, petSide, -C + rearSwing); petBend(b, petSide, 2 * C); petBend(c, petSide, -C); }
+  for (const [a, b, c] of m.front) { for (const e of [a, b, c]) e.b.quaternion.copy(e.rest); petBend(a, petSide, C + frontSwing); petBend(b, petSide, -2 * C); petBend(c, petSide, C); }
+  m.tail.forEach((e, i) => petBend(e, petSide, (.34 * reach - .3 * stretch) * (1 + i * .3)));
+  m.group.rotation.x = pitch; m.group.position.y = .32 * Math.abs(Math.sin(pitch)) - m.legH * (1 - Math.cos(.62 * crouch)) * (1 - air);
+  const u = Math.max(0, Math.min(1, (p - .3) / .52)); return 4 * .3 * u * (1 - u); }
 // (the walk fades in when it moves. Standing still it looks about and swishes its tail - its own bones turned about the
 // world's up - and only then, for the walk's mixer leaves a bone alone when the walk has nothing new to say)
-function petModelTick(m, dt, moving, running, t) { m.idle += ((!moving && !m.walkW ? 1 : 0) - m.idle) * Math.min(1, dt * (moving ? 12 : 2)); m.walkW += ((moving && m.idle < .03 ? 1 : 0) - m.walkW) * Math.min(1, dt * 8); if (m.walkW < .01 && !moving) m.walkW = 0;
+function petModelTick(m, dt, moving, running, t) { m.idle += ((!moving && !m.walkW ? 1 : 0) - m.idle) * Math.min(1, dt * (moving ? 12 : 2)); m.walkW += ((moving && m.idle < .03 && !m.hopping ? 1 : 0) - m.walkW) * Math.min(1, dt * 8); if (m.walkW < .01 && !moving) m.walkW = 0;
   m.walk.setEffectiveWeight(m.walkW); m.mixer.update(dt * (running ? 1.8 : 1.1)); if (m.walkW) return;
   m.swing.forEach(({ b, rest }, i) => { const a = (i ? Math.sin(t * 5 - i * .6) * .22 : Math.sin(t * .7) * .3) * m.idle; b.parent.getWorldQuaternion(petQ); b.quaternion.copy(rest).premultiply(petQ2.copy(petQ).invert().multiply(new THREE.Quaternion().setFromAxisAngle(petUp, a)).multiply(petQ)); }); }
 const petAt = new THREE.Vector3();
 // (each moment: to its place beside the figure - a place of its own in each game - legs going when it moves)
-function petTick(dt) { if (!pet) return; const hb = bone('Hips'), g = pet.group, mode = game.on ? game.mode : ''; if (!hb) return; hb.getWorldPosition(petAt);
+// (outside the games it keeps to where the figure stands, not to its hips - the user, 04-11-2026: a kolbøtte's hips moving
+// about sent it walking and turning)
+function petTick(dt) { if (!pet) return; const hb = bone('Hips'), g = pet.group, mode = game.on ? game.mode : ''; if (!hb) return; (mode ? hb : holder).getWorldPosition(petAt);
   const behind = mode === 'sea' ? -Math.sign(Math.sin(game.rotY ?? 0)) || -1 : 1, [ox, oz, face] = { '': [.62, .5, .5], side: [pet.model ? -.73 : -.9, .35, Math.PI / 2], back: [.75, .35, Math.PI], front: [.75, -.15, 0], skate: [0, 1.25, Math.PI], sea: [behind * 1, .2, null], island: [-.75, .5, null], hide: [.85, .5, 0], pk: [-.8, .3, Math.PI] }[mode] ?? [.62, .5, .5];
   const running = ['side', 'back', 'front', 'skate'].includes(mode), floorY = mode === 'sea' ? petAt.y - .45 : 0, tx = petAt.x + ox, tz = petAt.z + oz; g.visible = holder.visible && mode !== 'sea' && !(mode === 'hide' && !il.rig.visible); // (not in the sea - the user, 04-11-2026)
   if (pet.snap) { g.position.set(tx, floorY, tz); pet.snap = false; } const x0 = g.position.x, z0 = g.position.z, k = 1 - Math.exp(-dt * (running ? 9 : 4)); g.position.x += (tx - x0) * k; g.position.z += (tz - z0) * k; pet.y = (pet.y ?? floorY) + (floorY - (pet.y ?? floorY)) * k;
@@ -3123,7 +3141,7 @@ function petTick(dt) { if (!pet) return; const hb = bone('Hips'), g = pet.group,
   if (pet.model) petModelTick(pet.model, dt, moving, running, t);
   pet.tail.rotation.y = Math.sin(t * (moving ? 15 : 6)) * .5; pet.tail.rotation.x = -.5; pet.head.rotation.x = Math.sin(t * 2) * .05 + (moving ? Math.sin(pet.t * 2) * .05 : 0); pet.head.rotation.y = moving ? 0 : Math.sin(t * .7) * .3;
   // (a little hop in the cheers and dances - and while running; in the water bobbing)
-  const happy = (typeof game.cheer === 'number' && game.cheer > 0) || MOVES.jubel.some(m => m[0] === anim) || isDance(anim) || md.on; g.position.y = pet.y + (mode === 'sea' ? Math.sin(t * 2) * .05 : happy ? Math.abs(Math.sin(t * 6)) * .2 : running ? Math.abs(Math.sin(pet.t)) * .06 : 0); }
+  const happy = (typeof game.cheer === 'number' && game.cheer > 0) || MOVES.jubel.some(m => m[0] === anim) || MOVES.hop.some(m => m[0] === anim) || isDance(anim) || md.on, catHop = pet.model ? petHop(pet.model, dt, happy && !moving, g) : 0; g.position.y = pet.y + (mode === 'sea' ? Math.sin(t * 2) * .05 : pet.model?.hopping ? catHop : happy ? Math.abs(Math.sin(t * 6)) * .2 : running ? Math.abs(Math.sin(pet.t)) * .06 : 0); }
 // (a saved figure's dropped thing - the umbrella - becomes none)
 function setItem(name) { if (!ITEMS.some(i => i[0] === name)) name = ''; itemNow = name;
   // (in the game Bold and Fodbold are the balls rolling in - not one in the hand and one more in the game - and Ingen
@@ -3308,7 +3326,7 @@ async function loadFbx() { if (!(await exists('figur.fbx' + FIGUR_V))) return fa
   mixer = new THREE.AnimationMixer(fbx);
   // (set on the floor as it stands - Mixamo moves the hips in its own units, the T-pose's box says little)
   if (await loadMove('staa')) { sample('staa', 0); fbx.position.y -= new THREE.Box3().setFromObject(fbx, true).min.y; fbx.updateMatrixWorld(true); }
-  kick.baseY = fbx.position.y; if (glbActions.staa) { sample('staa', 0); kick.floor = underFloor(); } kick.ready = true;
+  kick.baseY = fbx.position.y; if (glbActions.staa) { sample('staa', 0); kick.floor = underFloor(); if (bone('LeftLeg')) kick.r = bone('LeftLeg').getWorldPosition(new THREE.Vector3()).y * .36; } kick.ready = true;
   const a = await loadMove(anim) || await loadMove('staa'); mixer.stopAllAction(); a?.reset().play(); holder.visible = true; return true; }
 // (each movement as figur-<id>.json: only the movement, taken out of Mixamo's file - a few hundred KB where the .fbx,
 // the whole figure again, is 13-19 MB. Kept on the spot: the hips may go up and down, not off to the side or away)
@@ -3356,8 +3374,9 @@ function kickSetup(id) { const clip = glbActions[id].getClip();
   for (let k = 0; k <= n; k++) { sample(id, kick.pre + len * k / n); toes.forEach((b, i) => track[i].push(holder.worldToLocal(b.getWorldPosition(new THREE.Vector3())))); }
   const foot = track.reduce((a, b) => Math.max(...b.map(p => p.z)) > Math.max(...a.map(p => p.z)) ? b : a);
   let best = 1, speed = -1; for (let k = 1; k <= n; k++) { const v = foot[k].z - foot[k - 1].z; if (v > speed) { speed = v; best = k; } }
-  // (a ball as high as half the sock, from the floor to the knee - the user, 04-11-2026: it was far too small)
-  if (!kick.ball) { if (bone('LeftLeg') && glbActions.staa) { sample('staa', 0); kick.r = holder.worldToLocal(bone('LeftLeg').getWorldPosition(new THREE.Vector3())).y * .3; } kick.ball = makeItem('fodbold'); kick.ball.group.scale.setScalar(kick.r / .158); scene.remove(kick.ball.group); holder.add(kick.ball.group); }
+  // (a ball higher than half the way from the floor to the knee, kick.r measured when the figure came - the user,
+  // 04-11-2026: it was far too small, then 20 % more)
+  if (!kick.ball) { kick.ball = makeItem('fodbold'); kick.ball.group.scale.setScalar(kick.r / .158); scene.remove(kick.ball.group); holder.add(kick.ball.group); }
   kicks[id] = { contact: kick.pre + len * best / n, rest: new THREE.Vector3(foot[best].x, kick.r, foot[best].z + kick.r * .6), side: Math.sign(foot[best].x) || 1 };
   // (which way the head looks, in its own turn: measured standing straight, looking ahead - the kick's own start looks down)
   if (!kick.headFwd && bone('Head') && glbActions.staa) { sample('staa', 0); kick.headFwd = new THREE.Vector3(0, 0, 1).applyQuaternion(bone('Head').getWorldQuaternion(new THREE.Quaternion()).invert()); } }
