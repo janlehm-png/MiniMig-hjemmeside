@@ -772,7 +772,7 @@ function nearSkin(q) { const w = tex.w, x = q % w, y = (q - x) / w, s = tex.src;
 // front - in eyes' distances from between the eyes - so a brow drawn there lies right across the pieces. The old brows
 // are measured there - how high and thick at each spot along them - and the new ones made from that: thinner, thicker,
 // higher, tilted; the old ones painted over in the skin round them)
-const BROWS = [['bryn-naturlige', 'Naturlige'], ['bryn-tynde', 'Tynde', { thick: .5 }], ['bryn-tykke', 'Tykke', { thick: 1.45 }],
+const BROWS = [['bryn-naturlige', 'Naturlige'], ['bryn-tynde', 'Tynde', { thick: .5, cut: .77 }], ['bryn-tykke', 'Tykke', { thick: 1.45 }],
   ['bryn-hoeje', 'Høje', { lift: .14 }], ['bryn-sure', 'Sure', { tilt: -1, thick: 1.15 }], ['bryn-triste', 'Triste', { tilt: 1 }], ['bryn-ingen', 'Ingen', { none: true }]];
 let browsNow = 'bryn-naturlige';
 function setBrows(name) { browsNow = name; redrawBody(); renderStyles(); }
@@ -867,7 +867,8 @@ function drawBrows(o) {
     // (its middle line: the old one, raised, and tilted about its middle - Sure lower between the eyes, Triste higher)
     const c = B.mid(Math.min(B.x1, Math.max(B.x0, ax))) + (opts.lift || 0) + (opts.tilt || 0) * .22 * (.5 - Math.min(1, Math.max(0, t)));
     // (as thick as the old one at that spot, times thick - rounded at its ends)
-    const half = B.thick(Math.min(B.x1, Math.max(B.x0, ax))) / 2 * (opts.thick || 1), out = Math.max(0, B.x0 - ax, ax - B.x1);
+    // (cut: where it stops towards the hair - its last thin tail left out, the user 04-11-2026)
+    const xe = opts.cut || B.x1, half = B.thick(Math.min(xe, Math.max(B.x0, ax))) / 2 * (opts.thick || 1), out = Math.max(0, B.x0 - ax, ax - xe);
     const d = Math.hypot(Y - c, out), a = Math.max(0, Math.min(1, (half - d) / edge + .5)); if (!a) continue;
     for (const [m, ch] of [[0, 'r'], [1, 'g'], [2, 'b']]) o[i + m] = o[i + m] * (1 - a) + brow[ch] * 255 * (tex.colours[PARTS.brows] ? .9 : 1) * a; } }
 // ---- the eyes' shapes, drawn as the brows are: in the face seen from the front ----
@@ -1272,7 +1273,7 @@ function shapeNose() { const Z = tex && tex.nose; if (!Z) return; const opts = (
   if (Z.ball) Z.ball.visible = !!opts.clown; }
 // (Dyrenæse: a dark oval on the nose's tip, lit as a dome - lightest at its top, with a small shine)
 function drawNose(o) { const Z = tex.nose, P = tex.pynt, opts = (NOSES.find(m => m[0] === noseNow) || [])[2]; if (!Z || !P || !opts || !opts.animal) return;
-  const T = P.texels, cy0 = Z.tipY - .015, rx = .135, ry = .092, darkC = { r: .2, g: .11, b: .09 }, lightC = { r: .55, g: .38, b: .34 };
+  const T = P.texels, cy0 = Z.tipY - .015, rx = .165, ry = .092, darkC = { r: .2, g: .11, b: .09 }, lightC = { r: .55, g: .38, b: .34 };
   for (let j = 0; j < T.length; j += 3) { const X = T[j + 1], Y = T[j + 2], ux = X / rx, uy = (Y - cy0) / ry, r = Math.hypot(ux, uy * (uy < 0 ? 1.15 : 1)); if (r > 1.1) continue;
     const a = Math.max(0, Math.min(1, (1 - r) * ry / .008 + .5)), nz = Math.sqrt(Math.max(0, 1 - r * r)), d = Math.max(0, Math.min(1, .25 + .35 * nz + .35 * uy));
     const shine = .7 * Math.exp(-(((ux + .3) / .2) ** 2 + ((uy - .35) / .18) ** 2)), i = T[j] * 4;
@@ -1951,7 +1952,7 @@ const GARMENTS = {
     ['toej-haette', 'Hættetrøje', { made: true, sleeve: 1.06, length: .04, hood: true, pocket: true, cloth: 'smooth' }],
     ['toej-fodbold', 'Fodboldtrøje', { made: true, sleeve: .32, length: .01, tuck: true, trim: true, cloth: 'smooth' }]], texs: clothTexs },
   // (the folds lower than at first - the user - and the long trousers turned up a little too)
-  pants: { items: [['', 'Undershorts'], ['bukser-trusser', 'Trusser', { made: true, hem: .41, brief: .07, rise: .012, noBand: true, white: true }], ['bukser-lange', 'Lange bukser', { made: true, hem: .06, loose: .004, cuff: .014 }], ['bukser-shorts', 'Shorts', { made: true, hem: .3, cuff: .018 }],
+  pants: { items: [['', 'Undershorts'], ['bukser-trusser', 'Trusser', { made: true, hem: .41, brief: .07, under: .012, rise: .012, noBand: true, white: true }], ['bukser-lange', 'Lange bukser', { made: true, hem: .06, loose: .004, cuff: .014 }], ['bukser-shorts', 'Shorts', { made: true, hem: .3, cuff: .018 }],
     ['bukser-cowboy', 'Cowboyshorts', { made: true, hem: .24, cuff: .02, cloth: 'denim' }], ['bukser-fodbold', 'Fodboldbukser', { made: true, hem: .295, loose: .004, loops: false, cloth: 'smooth' }]], texs: [], waist: true },
   dress: { items: [['', 'Ingen kjole'], ['kjole-sommer', 'Sommerkjole'], ['kjole-prinsesse', 'Prinsessekjole', { hang: .5, armsOut: 12 }], ['kjole-havfrue', 'Havfruekjole', { skirt: false, margin: .012, reach: 8, tail: true, snug: .2, waist: .15 }]], texs: [], skirt: true, noArms: true },
   // (socks made from the body too: low ones for sneakers, football socks with a stripe at the top, and knee socks)
@@ -2156,7 +2157,8 @@ function makeCloth(name, part, opts) {
   if (socks) { const top = opts.top * H; edges = [{ f: p => p[1] - top, bare: .008 * H }]; out = () => (opts.out || .0035) * H; }
   else if (pants) { const hem = opts.hem * H;
     // (briefs: the leg openings on the slant, from the crotch up over the hips)
-    const hemAt = opts.brief ? p => crotch - .004 * H + clamp(side(p) / (.1 * H)) * opts.brief * H : () => hem;
+    // (under: in the middle that much further down, in under the crotch - the user, 04-11-2026)
+    const hemAt = opts.brief ? p => crotch - .004 * H + clamp(side(p) / (.1 * H)) * opts.brief * H - (opts.under || 0) * H * clamp(1 - side(p) / (.05 * H)) : () => hem;
     edges = [{ f: p => hemAt(p) - p[1], fold: (opts.cuff || 0) * H, bare: .012 * H }, { f: p => p[1] - top, bare: .003 * H }];
     // (loose: the legs that much further out all the way down, from just under the crotch - long trousers sat like tights)
     out = p => { const s = clamp((crotch - p[1]) / (crotch - hem)); return (.006 + (opts.flare || 0) * s * s + (opts.loose || 0) * clamp((crotch - p[1]) / (.06 * H))) * H; }; }
@@ -3763,7 +3765,8 @@ const playerFace = (p, cls = '') => p.pic ? `<img class="${cls}" src="${p.pic}" 
 // in the games too; a child without a MiniMig of their own has the figure on the screen as their picture, kept up to date)
 function showPlayer() { const p = playerNow(), b = document.getElementById('whoBadge'); b.innerHTML = playerFace(p) + (p.name ? `<span class="nm">${esc(p.name)}</span>` : ''); b.classList.toggle('only', !p.name); }
 document.getElementById('whoBadge').onclick = () => { document.getElementById('figSheet').hidden = false; renderGallery(); };
-let picOf = ''; setInterval(() => { try { const p = playerNow(); if (p.fig || !hairBase || game.on || document.hidden) return; const f = JSON.stringify(figureNow()); if (f === picOf && p.pic) return; picOf = f; p.pic = playerPic() || p.pic; savePlayers(); showPlayer(); } catch (e) {} }, 4000);
+// (not before the figure is in sight and has all of it on - the user, 04-11-2026: taken while it loaded, the picture was the empty yellow background, and stayed)
+let picOf = ''; setInterval(() => { try { const p = playerNow(); if (p.fig || !hairBase || !holder.visible || game.on || document.hidden || Object.values(GARMENTS).some(g => g.shown !== g.now)) return; const f = JSON.stringify(figureNow()); if (f === picOf && p.pic) return; picOf = f; p.pic = playerPic() || p.pic; savePlayers(); showPlayer(); } catch (e) {} }, 4000);
 const bestNow = () => score.best[game.mode]?.[game.level] || 0;
 // (a star's worth in kroner: one on the easiest level, five on the hardest - the user, 04-11-2026: harder is worth more)
 const starWorth = (level = game.level) => LEVELS.findIndex(l => l[0] === level) + 1;
@@ -4474,6 +4477,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.9.1 (ec437ab)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.9.1 (2d0768a)</div>
 </body>
 </html>
