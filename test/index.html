@@ -4258,10 +4258,12 @@ function pkTick(dt) { const t = performance.now() / 1000, L = pkLevel(), kp = pk
       else { sfx('boing'); sfx('ding', .1); addStars(1); celebrate(); runAnim(GAME.cheer); } } }
   if (pk.abe && pk.saved && (pk.phase === 'after' || pk.phase === 'return')) pkAbeSaved(dt, b);
   else if (pk.phase === 'after') { pk.t += dt;
+    // (a goal: when it has landed, the monkey stands bent over with its hands on its knees and is sorry - the user, 04-11-2026)
+    if (pk.abe && !pk.saved && pk.abe.now !== 'aergre' && pk.t > .75) pkAbePlay('aergre', .95, true, .45);
     // (saved: the ball drops in front of the bear and rolls a little; goal: the net bulges back and settles)
     if (pk.saved) { b.position.y = Math.max(kick.r, b.position.y - dt * 2.5); b.position.z = Math.min(PK.goalZ + 1.2, b.position.z + dt * 1.2); b.rotation.x += dt * 5; }
     else { pk.netBack.position.z = -1 - .35 * Math.exp(-pk.t * 3) * Math.abs(Math.cos(pk.t * 8)); b.position.z = Math.max(PK.goalZ - .85, b.position.z - dt * 1.5); b.position.y = Math.max(kick.r, b.position.y - dt * 2); }
-    if (pk.t > 2.4) { pk.foot++; runAnim('staa'); pkReady(); } }
+    if (pk.t > (pk.abe ? 2.9 : 2.4)) { pk.foot++; runAnim('staa'); pkReady(); } }
   // (the arms go with the kick and the eyes follow the ball up to the goal - the user, 04-11-2026)
   if (pk.phase === 'kick' || pk.phase === 'fly' || (pk.phase === 'after' && pk.saved && pk.t < 1)) { const a = glbActions[pkKick()], k = kicks[pkKick()]; if (a?.isRunning() && k) { const after = a.time - k.contact; kickArms(a.time + .4, k.contact + .4, k.side); const w = Math.max(0, Math.min(1, 1 - (after - 1) / .4)); lookAtBall(b, .85 * w);
     // (head up once it has kicked, to follow the ball - it is seen from behind, so it takes a clear lift - the user, 04-11-2026)
@@ -4430,6 +4432,8 @@ function sfx(kind, later = 0) { const ctx = game.audio; if (!sound.sfx || !ctx |
 musicBtn.onclick = () => { musicOn = !musicOn; try { localStorage.setItem('minimig-test.musik', musicOn ? 'til' : 'fra'); } catch (e) {} if (musicOn) soundOut()?.resume(); };
 // (once the figure is in, the hint goes into the i in the corner - on a touch screen and on a computer alike)
 const infoBtn = document.getElementById('infoBtn'), infoPop = document.getElementById('infoPop'); let infoTimer = 0;
+// (on the test page only: a button with kroner, to try the shop without playing for them - the user, 04-11-2026)
+if (location.pathname.includes('/test/')) { const b = document.createElement('button'); b.textContent = '+100 kr'; b.style.cssText = 'position:fixed;top:28px;left:50%;transform:translateX(-50%);z-index:999;background:#FFC233;color:#5A3A00;border:0;border-radius:10px;padding:5px 12px;font:700 13px system-ui,sans-serif;cursor:pointer'; b.onclick = () => { krOf(score); score.kr += 100; saveScore(); showRecord(); toast(`💰 ${score.kr} kr`); if (!document.getElementById('starSheet').hidden) showStarSheet(); }; document.body.append(b); }
 // (one more line while the child isn't saved with a name yet - the user, 04-11-2026: how to keep one's own player)
 const infoSave = document.createElement('span'); infoSave.innerHTML = '<br>🙂 Gem dig selv som spiller: Byg din figur, og tryk på billedet nederst i højre hjørne. Vælg »Børn og spillere – for voksne«, og få en voksen til at løse regnestykket. Skriv navnet, og tryk 📷';
 const infoVersion = document.createElement('small'); infoVersion.style.cssText = 'display:block;margin-top:6px;opacity:.65;font-weight:600'; infoVersion.textContent = 'Version ' + document.querySelector('meta[name="minimig-version"]').content;
@@ -4462,6 +4466,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.9.1 (9af4554)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.9.1 (8db21ee)</div>
 </body>
 </html>
