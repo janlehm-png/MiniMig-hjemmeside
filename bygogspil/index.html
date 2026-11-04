@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>MiniMig &ndash; byg og spil</title>
+<meta name="minimig-version" content="0.9.1">
+<!-- (the number of this version, shown under the i - see VERSIONER.md - raised for each package and each fix put out) -->
 <!-- (the same icon as version 1 on a home screen, under the name MiniMig 2 - the icons lie in the website's billeder/;
      the user, 03-11-2026, sharing version 2 with testers) -->
 <link rel="icon" href="../billeder/ikon-180.png">
@@ -148,6 +150,7 @@
   .coin[disabled] { opacity: .3; cursor: default; }
   .coin-disk { min-height: 74px; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; justify-content: center; padding: 6px; border-radius: 16px; border: 2px dashed #C9C2E0; background: #FFF8E1; }
   .coin-disk:empty::before { content: "👇 Tryk på mønterne"; color: #6B6191; font: 700 .9rem/1.2 system-ui, sans-serif; }
+  html[lang="en"] .coin-disk:empty::before { content: "👇 Tap the coins"; }
   .coin-sum { text-align: center; font: 800 1.15rem/1.2 system-ui, sans-serif; }
   .coin-sum.ok { color: #1E9A5A; } .coin-sum.over { color: #E8384F; }
   .coin-tray { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: center; }
@@ -155,6 +158,7 @@
   /* (what the child has bought: a picture, the name, when, for how much) */
   .buy-log { display: grid; gap: 6px; }
   .buy-log:empty::before { content: "Ingenting endnu."; color: #6B6191; font-size: .9rem; }
+  html[lang="en"] .buy-log:empty::before { content: "Nothing yet."; }
   .buy-row { display: flex; align-items: center; gap: 8px; font-weight: 700; }
   .buy-row img { width: 40px; height: 40px; flex: none; border-radius: 10px; object-fit: cover; background: #FFF8E1; }
   .buy-row span { flex: 1; min-width: 0; }
@@ -233,6 +237,7 @@
   /* (Straffespark: a summer sky over the pitch) */
   .stage.pitch { background: linear-gradient(#6EC8FF, #BDE7FF 60%, #E6F6FF); }
   .quest { position: absolute; top: 64px; left: 50%; transform: translateX(-50%); display: flex; gap: 4px; align-items: center; padding: 4px 12px; border-radius: 999px; background: rgba(255, 255, 255, .85); box-shadow: 0 2px 10px rgba(58, 46, 92, .18); font-size: 26px; line-height: 1.2; pointer-events: none; z-index: 2; }
+  .quest[hidden] { display: none; }
   .quest .q-shell { opacity: .3; filter: grayscale(1); transition: opacity .3s, transform .3s; }
   .quest .q-shell.got { opacity: 1; filter: none; transform: scale(1.15); }
   .quest .q-chest, .quest .q-arrow { animation: questPulse 1s ease-in-out infinite alternate; }
@@ -342,6 +347,8 @@
     <button id="soundBtn"><span class="emo" aria-hidden="true">🔊</span><span>Lyd</span></button>
     <!-- (the coins are on the button too - the user, 04-11-2026) -->
     <button id="starBtn"><span class="emo emo-coins" aria-hidden="true">🏆<i class="mini-coin">5</i><i class="mini-coin gold">20</i></span><span>Stjerner og mønter</span></button>
+    <!-- (the language: a globe and the other language's name - no flag, English being spoken under many - the user, 04-11-2026) -->
+    <button id="langBtn"><span class="emo" aria-hidden="true"></span><span></span></button>
     <!-- (on minimig.dk only: the website's "Til voksne" - home screen, offline, privacy - from its pwa.js) -->
     <!-- (drawn here: an iPad shows the family emoji as a grey outline - the user, 04-11-2026) -->
     <button id="adultBtn" hidden><span class="emo" aria-hidden="true"><svg viewBox="0 0 32 32" width="30" height="30"><circle cx="11.5" cy="8" r="5" fill="#F2C09A"/><path d="M7 7a5 5 0 0 1 9-1.5C13 7 10 7.500 7 7z" fill="#6B4226"/><path d="M4 30V20a7.500 7.500 0 0 1 15 0v10z" fill="#4F7BE8"/><circle cx="23.500" cy="15" r="4" fill="#F7CFAE"/><path d="M19.500 14.500a4 4 0 0 1 8 0c-3-.2-5.500-.8-8 0z" fill="#E0A63A"/><path d="M18 30v-5a5.500 5.500 0 0 1 11 0v5z" fill="#F0628F"/></svg></span><span>Til voksne</span></button>
@@ -545,6 +552,64 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
 
+// ---- the language: Danish, or English on a device not set to Danish; the globe among the tabs changes it (the page is
+// loaded anew, the figure on the screen kept - see langBtn). Each text is written in Danish in the page and the code, and
+// EN holds the English for it; tr(text) gives it in the language chosen, T(da, en) is for texts with a number or name in ----
+// (?lang=en: the way in from the website's English pages, kept from then on)
+const LANG = (() => { let l = new URLSearchParams(location.search).get('lang'); l = l === 'en' || l === 'da' ? l : null; try { if (l) localStorage.setItem('minimig3d.sprog', l); else l = localStorage.getItem('minimig3d.sprog'); } catch (e) {} return l || (/^da\b/i.test(navigator.language || '') ? 'da' : 'en'); })(); // (American English - the user, 04-11-2026)
+const T = (da, en) => LANG === 'en' ? en : da, krTxt = n => T(`${n} kr`, n == 1 ? '1 coin' : `${n} coins`);
+const EN = {
+  // (the tabs)
+  'Hud': 'Skin', 'Hår': 'Hair', 'Øjne': 'Eyes', 'Bryn': 'Brows', 'Næse': 'Nose', 'Mund': 'Mouth', 'Ører': 'Ears', 'Pynt': 'Face art', 'Trøje': 'Top', 'Bukser': 'Pants', 'Kjole': 'Dress', 'Strømper': 'Socks', 'Sko': 'Shoes', 'Hat': 'Hat', 'Briller': 'Glasses', 'Ting': 'Things', 'Navn': 'Name', 'Baggrund': 'Back­ground',
+  'Gem': 'Save', 'Mine figurer': 'My figures', 'Ny figur': 'New figure', 'Send foto': 'Send photo', 'Lyd': 'Sound', 'Stjerner og mønter': 'Stars and coins', 'Til voksne': 'For grown-ups',
+  'Stå': 'Stand', 'Vink': 'Wave', 'Hop': 'Jump', 'Dans': 'Dance', 'Løb': 'Run', 'Jubel': 'Cheer', 'Kolbøtte': 'Roll', 'Spark': 'Kick', 'Drej rundt': 'Spin', 'Min dans': 'My dance',
+  'Hop over bolden': 'Jump the ball', 'Skateboard': 'Skate­board', 'Skattejagt': 'Treasure hunt', 'Svømmeverden': 'Swim world', 'Gemmeleg': 'Hide and seek', 'Straffespark': 'Penalty kick',
+  // (hair, face)
+  'Kort': 'Short', 'Krøller': 'Curls', 'Strit': 'Spiky', 'Fletninger': 'Braids', 'Fletning': 'Braid',
+  'Naturlige': 'Natural', 'Tynde': 'Thin', 'Tykke': 'Thick', 'Høje': 'High', 'Sure': 'Angry', 'Triste': 'Sad', 'Ingen': 'None', 'Glade': 'Happy', 'Blink': 'Wink', 'Vipper': 'Lashes', 'Stjerner': 'Stars', 'Hjerter': 'Hearts',
+  'Smil': 'Smile', 'Grin': 'Grin', 'Tunge': 'Tongue', 'Åh': 'Oh', 'Kys': 'Kiss', 'Trist': 'Sad',
+  'Røde kinder': 'Rosy cheeks', 'Fregner': 'Freckles', 'Stjerne': 'Star', 'Glimmer': 'Glitter', 'Regnbue': 'Rainbow', 'Plaster': 'Bandage', 'Skønhedsplet': 'Beauty mark',
+  'Naturlig': 'Natural', 'Lille': 'Small', 'Bred': 'Wide', 'Spids': 'Pointy', 'Dyrenæse': 'Animal nose', 'Klovn': 'Clown',
+  'Små': 'Small', 'Store': 'Big', 'Udstående': 'Sticking out', 'Alfeører': 'Elf ears', 'Perler': 'Pearls', 'Guldringe': 'Gold rings',
+  // (clothes)
+  'Undertrøje': 'Tank top', 'T-shirt': 'T-shirt', 'Hættetrøje': 'Hoodie', 'Fodboldtrøje': 'Soccer jersey', 'Undershorts': 'Underwear', 'Trusser': 'Briefs', 'Lange bukser': 'Long pants', 'Shorts': 'Shorts', 'Cowboyshorts': 'Denim shorts', 'Fodboldbukser': 'Soccer shorts',
+  'Ingen kjole': 'No dress', 'Sommerkjole': 'Summer dress', 'Prinsessekjole': 'Princess dress', 'Havfruekjole': 'Mermaid dress', 'Ingen strømper': 'No socks', 'Ankelstrømper': 'Ankle socks', 'Fodboldstrømper': 'Soccer socks', 'Knæstrømper': 'Knee socks',
+  'Bare fødder': 'Bare feet', 'Sneakers': 'Sneakers', 'Fodboldstøvler': 'Soccer cleats', 'Gummistøvler': 'Rain boots', 'Balletsko': 'Ballet shoes', 'Højhælede': 'High heels',
+  'Ingen hat': 'No hat', 'Kasket': 'Cap', 'Krone': 'Crown', 'Kaninører': 'Bunny ears', 'Sløjfe': 'Bow', 'Ingen briller': 'No glasses', 'Runde': 'Round', 'Solbriller': 'Sunglasses', 'Hjerte': 'Heart',
+  // (things, pets, backgrounds)
+  'Ballon': 'Balloon', 'Bamse': 'Teddy bear', 'Tryllestav': 'Magic wand', 'Is': 'Ice cream', 'Blomst': 'Flower', 'Bold': 'Ball', 'Fodbold': 'Soccer ball', 'Hulahopring': 'Hula hoop',
+  'Intet dyr': 'No pet', 'Kat': 'Cat', 'Hund': 'Dog', 'Kanin': 'Rabbit', 'Halsbånd': 'Collar', 'Madskål': 'Food bowl', 'Legebold': 'Play ball',
+  'Sol': 'Sun', 'Have': 'Garden', 'Strand': 'Beach', 'Skov': 'Forest', 'Slot': 'Palace', 'Ridderborg': 'Castle', 'Havbund': 'Ocean floor', 'Slikland': 'Candy world', 'Vinter': 'Winter', 'Rummet': 'Space', 'Fodboldbane': 'Soccer field', 'Gymnastiksal': 'Gym', 'Dansesal': 'Dance studio',
+  // (movements, games)
+  'Hænder i siden': 'Hands on hips', 'Glad hop': 'Happy jump', 'Højt hop': 'High jump', 'Lille løbehop': 'Small leap', 'Langt løbehop': 'Long leap', 'Hiphop': 'Hip hop', 'Hiphop 2': 'Hip hop 2', 'Fjollet': 'Silly', 'Armdans': 'Arm dance', 'Sjovt løb': 'Funny run', 'Løb stærkt': 'Run fast',
+  'Klap': 'Clap', 'Dyk og rul': 'Dive and roll', 'Snuble': 'Stumble', 'Falder på numsen': 'Fall on your bottom', 'Venstre fod': 'Left foot', 'Højre fod': 'Right foot',
+  'Meget let': 'Very easy', 'Let': 'Easy', 'Mellem': 'Medium', 'Svær': 'Hard', 'Meget svær': 'Very hard', 'Fra siden': 'From the side', 'Bagfra': 'From behind', 'Forfra': 'From the front',
+  '👈 Tryk i siden for at svinge 👉': '👈 Tap the side to turn 👉', '👆 Tryk hvor du vil gå hen': '👆 Tap where you want to go', '👆 Tryk eller træk – så svømmer du derhen': '👆 Tap or drag to swim there', '🔍 Hvor er jeg? Tryk på busken': '🔍 Where am I? Tap the bush', '👆 Tryk i målet, hvor bolden skal hen': '👆 Tap the goal where the ball should go', '👆 Tryk for at hoppe': '👆 Tap to jump',
+  '🏆 Ny rekord!': '🏆 New record!', 'Din rekord': 'Your record', 'Stop spillet': 'Stop the game', 'Stop spillet først': 'Stop the game first',
+  // (messages)
+  'Henter figuren …': 'Loading the figure …', 'Figuren kunne ikke hentes': 'The figure could not be loaded', 'Det kan ikke hentes lige nu 📶': 'That can’t be loaded right now 📶',
+  '⭐ Gemt!': '⭐ Saved!', 'Kunne ikke gemme': 'Could not save', '✨ Ny MiniMig!': '✨ New MiniMig!', '👋 Hej!': '👋 Hello!', '📷 Gemt som barnets MiniMig': '📷 Saved as the child’s MiniMig', 'Hvem køber?': 'Who is buying?', 'Hvem spiller?': 'Who is playing?', 'Hvem spiller? Tryk for at skifte': 'Who is playing? Tap to change', 'Slet?': 'Delete?',
+  'Der er plads til 5 – tryk ✕ for at tage en ud': 'There is room for 5 – tap ✕ to take one out', 'Vælg nogle bevægelser først': 'Choose some moves first', 'Tag ud': 'Take out', '▶ Dans!': '▶ Dance!', '⏹ Stop': '⏹ Stop',
+  'Din egen stemme siger navnet – tryk på navnet på trøjen for at høre det igen': 'Your own voice says the name – tap the name on the top to hear it again', 'Skriv dit navn først ✏️': 'Write your name first ✏️', 'Mikrofonen kunne ikke bruges': 'The microphone could not be used',
+  '🔓 Deling uden voksen er slået til': '🔓 Sharing without a grown-up is on', 'Din konto': 'Your account', 'Spil et af spillene for at samle stjerner.': 'Play one of the games to collect stars.', '⭐ giver': '⭐ gives',
+  'Navn': 'Name', 'Gem figuren på skærmen som barnets MiniMig': 'Save the figure on the screen as the child’s MiniMig', 'Slet spiller': 'Delete player',
+  // (the page's own texts)
+  '👆 Træk for at dreje figuren': '👆 Drag to turn the figure', '🤏 Knib for at zoome': '🤏 Pinch to zoom', '👕 Tryk på navnet på trøjen, så siger figuren det – med din egen indtalte stemme, hvis du har indtalt en': '👕 Tap the name on the top and the figure says it – in your own recorded voice, if you have recorded one',
+  'Indtal selv': 'Record yourself', 'Gem ✓': 'Save ✓', 'Farve': 'Color', 'Styrke': 'Strength', 'Lys': 'Light', 'Gem billede': 'Save picture', 'Hele figuren': 'The whole figure', 'Profilbillede': 'Profile picture', 'Slå fra igen': 'Turn off again',
+  'Skal barnet kunne dele billeder uden at spørge?': 'May the child share pictures without asking?', 'Nej, spørg hver gang': 'No, ask every time', 'Ja, i 1 time': 'Yes, for 1 hour', 'Ja, resten af i dag': 'Yes, for the rest of today', 'Ja, indtil jeg slår det fra igen': 'Yes, until I turn it off', '(kræver et sværere regnestykke)': '(needs a harder math problem)', 'Gælder kun på denne enhed. Et navn på trøjen kommer med på billedet.': 'Applies to this device only. A name on the top will be in the picture.',
+  'Spørg en voksen': 'Ask a grown-up', 'Stjernerne fra spillene bliver til kroner på din konto – jo sværere niveau, jo flere. For kronerne køber du ting i butikken.': 'The stars from the games become coins in your account – the harder the level, the more. With the coins you buy things in the shop.', '🏆 = din rekord i det spil på det niveau.': '🏆 = your record in that game at that level.', '🔒 Stjernebutik': '🔒 Star shop', 'Tryk på en ting med 🔒, og betal med mønter. Hvert barn køber for sig selv.': 'Tap a thing with 🔒 and pay with coins. Each child buys for themselves.', '🧾 Det har du købt': '🧾 What you have bought',
+  'Køb': 'Buy', '🤝 Hjælp': '🤝 Help', 'Betal ✓': 'Pay ✓', 'Børn og spillere': 'Children and players', 'Hvert barn har sin egen MiniMig og sine egne stjerner. Byg barnets figur, og tryk 📷 – så gemmes figuren på skærmen som barnets MiniMig. Under Mine figurer trykker barnet bare på sit billede. Gemmes kun på denne enhed.': 'Each child has their own MiniMig and their own stars. Build the child’s figure and tap 📷 – the figure on the screen is then saved as the child’s MiniMig. Under My figures the child just taps their picture. Kept on this device only.', '➕ Ny spiller': '➕ New player',
+  'For voksne: vælg hvilke lyde MiniMig må lave. Valget huskes på denne enhed.': 'For grown-ups: choose which sounds MiniMig may make. The choice is remembered on this device.', '🎮 Musik i spillene': '🎮 Music in the games', '💃 Musik til dansene': '💃 Music for the dances', '🔔 Lydeffekter – boing, bonk og ta-da': '🔔 Sound effects – boing, bonk and ta-da', '🗣️ Stemmen, der siger navnet': '🗣️ The voice saying the name', 'Slå al lyd fra': 'All sound off', 'Slå al lyd til': 'All sound on',
+  'Gem i Mine figurer': 'Save in My figures', 'Ny MiniMig': 'New MiniMig', 'Dreng': 'Boy', 'Pige': 'Girl', 'Den figur, du har nu, bliver gemt i Mine figurer 🖼️.': 'The figure you have now is saved in My figures 🖼️.', 'Børn': 'Children', '🖼️ Gemte figurer': '🖼️ Saved figures', 'Børn og spillere – for voksne': 'Children and players – for grown-ups',
+  'Dit billede': 'Your picture', 'Tryk og hold på billedet, og vælg': 'Press and hold the picture, and choose', 'Gem i Fotos': 'Save to Photos', 'eller': 'or', 'Del': 'Share', '💾 Gem billedet': '💾 Save the picture', 'Billedet gemmes i mappen Overførsler. Du kan også højreklikke på billedet og vælge': 'The picture is saved in your Downloads folder. You can also right-click the picture and choose', 'Gem billede som': 'Save image as',
+  'Sådan gør du': 'How it works', 'Musik til og fra': 'Music on and off', 'Skriv dit navn': 'Write your name', 'Navn på trøjen': 'Name on the top', 'Sig navnet': 'Say the name', 'Slet din egen stemme': 'Delete your own voice', 'Gem dansen': 'Save the dance', 'Start forfra': 'Start again', 'Navn på dansen': 'Name of the dance', 'Luk': 'Close', 'Slet': 'Delete', 'Mønterne på disken': 'The coins on the counter', 'Billedet af figuren': 'The picture of the figure', 'Min MiniMig': 'My MiniMig' };
+const tr = s => LANG === 'en' ? EN[String(s).replace(/­/g, '')] ?? s : s;
+document.documentElement.lang = LANG; if (LANG === 'en') document.title = 'MiniMig – build and play';
+// (the page's own texts and labels; a text's spaces round it are kept, as words sit beside the bold ones in a line)
+if (LANG === 'en') { const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT), nodes = []; while (walk.nextNode()) nodes.push(walk.currentNode);
+  for (const n of nodes) { const key = n.nodeValue.trim(); if (key) { const en = tr(key); if (en !== key) n.nodeValue = n.nodeValue.replace(key, en); } }
+  for (const el of document.querySelectorAll('[aria-label],[placeholder],[title]')) for (const a of ['aria-label', 'placeholder', 'title']) if (el.hasAttribute(a)) el.setAttribute(a, tr(el.getAttribute(a))); }
+
 const canvas = document.getElementById('scene');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
@@ -577,7 +642,7 @@ const CHOICES = [['skin', 'Hud', 'hud'], ['hair', 'Hår', 'haar'], ['eyes', 'Øj
 const picked = {}, START = { skin: '#EDB98A', hair: '#4A2C1D', eyes: '#7A4220', brows: '#4A2C1D', mouth: '#C0505A', pynt: '#FF5A6E', nose: '#EDB98A', shirt: '#FF7A2F', pants: '#2C3E8C', dress: '#3D8BFF', socks: '#3D8BFF', item: '#E8384F', shoe: '#3D8BFF', hat: '#3D8BFF', glasses: '#3D8BFF' }; let partNow = 'shirt';
 const apply = (part, c) => { picked[part] = c; recolour(part, c); if (part === 'shirt' || part === 'dress') chestName(); };
 const iconButton = (src, label) => { const b = document.createElement('button'), i = new Image(); i.src = src; i.alt = ''; i.onerror = () => i.remove();
-  const s = document.createElement('span'); s.textContent = label; b.append(i, s); return b; };
+  const s = document.createElement('span'); s.textContent = tr(label); b.append(i, s); return b; };
 // (the app's colours, as in version 2.5D)
 const PALETTES = { skin: ['#F6D0AE', '#EDB98A', '#D9965F', '#B5713F', '#8D5530', '#5A3520'], hair: ['#2A1C17', '#4A2C1D', '#7A4428', '#A8582E', '#D9A55C', '#F0D9A0', '#FF7EBB', '#5AA9FF'],
   eyes: ['#9C5A1E', '#6B3A1A', '#4A2814', '#2E1A10', '#1A110C', '#3B7BD4', '#3E9A5C', '#A0763A', '#7D8A99', '#8A5CE6'],
@@ -615,7 +680,7 @@ function renderStyles() { const all = typeof styleLists === 'undefined' ? null :
   if (box.hidden) continue; const [items, now, set] = list;
   // (now: the chosen one - or, for Pynt, the list of all chosen, Ingen lit when it is empty)
   for (const [n, label] of items) { const b = iconButton(`ikoner/valg-${n || 'ingen-' + none}.png`, label), locked = !owns(n);
-    if (locked) { b.classList.add('locked'); b.append(Object.assign(document.createElement('span'), { className: 'price', textContent: `🔒 ${SHOP[n]} kr` })); }
+    if (locked) { b.classList.add('locked'); b.append(Object.assign(document.createElement('span'), { className: 'price', textContent: `🔒 ${krTxt(SHOP[n])}` })); }
     b.classList.toggle('on', Array.isArray(now) ? (n.endsWith('-ingen') ? !now.length : now.includes(n)) : n === now); b.onclick = () => locked ? askBuy(n) : set(n); box.append(b); } } }
 // ---- the star shop (the user, 03-11-2026: "Særlige ting låses"): the most special things cost stars, the rest stays free.
 // Each child buys with their own stars and owns what they bought (score.owned); a thing worn already, or on a saved
@@ -637,13 +702,13 @@ let buying = null, onDisk = [];
 function showCoins() { const s = playerNow().score, have = krOf(s), price = SHOP[buying], sum = onDisk.reduce((a, b) => a + b, 0), out = document.getElementById('coinSum'), rest = have - sum;
   document.getElementById('coinDisk').innerHTML = onDisk.map(coinHtml).join('');
   document.getElementById('coinTray').innerHTML = COINS.map(coinHtml).join(''); document.querySelectorAll('#coinTray .coin').forEach(b => { b.disabled = +b.dataset.coin > rest; });
-  out.textContent = sum > price ? `${sum} kr – det er for meget! Tryk på en mønt for at tage den af` : `${sum} af ${price} kr`; out.className = 'coin-sum' + (sum === price ? ' ok' : sum > price ? ' over' : '');
+  out.textContent = sum > price ? T(`${sum} kr – det er for meget! Tryk på en mønt for at tage den af`, `${sum} coins – that is too much! Tap a coin to take it off`) : T(`${sum} af ${price} kr`, `${sum} of ${price} coins`); out.className = 'coin-sum' + (sum === price ? ' ok' : sum > price ? ' over' : '');
   document.getElementById('buyYes').disabled = sum !== price; }
-function askBuy(n, who) { if (who) setPlayer(who); else if (players.list.length > 1) { document.getElementById('whoTitle').textContent = 'Hvem køber?'; askWho(() => askBuy(n, players.now)); return; }
+function askBuy(n, who) { if (who) setPlayer(who); else if (players.list.length > 1) { document.getElementById('whoTitle').textContent = tr('Hvem køber?'); askWho(() => askBuy(n, players.now)); return; }
   const have = krOf(playerNow().score), price = SHOP[n]; buying = n; onDisk = []; soundOut()?.resume();
-  document.getElementById('buyImg').src = `ikoner/valg-${n}.png`; document.getElementById('buyTitle').textContent = shopThing(n).label;
-  document.getElementById('buyPrice').textContent = price + ' kr';
-  document.getElementById('buyNote').textContent = have >= price ? `Du har ${have} kr på din konto` : `Du har ${have} kr – du mangler ${price - have} kr. Spil et spil, og saml flere stjerner!`;
+  document.getElementById('buyImg').src = `ikoner/valg-${n}.png`; document.getElementById('buyTitle').textContent = tr(shopThing(n).label);
+  document.getElementById('buyPrice').textContent = krTxt(price);
+  document.getElementById('buyNote').textContent = have >= price ? T(`Du har ${have} kr på din konto`, `You have ${have} coins in your account`) : T(`Du har ${have} kr – du mangler ${price - have} kr. Spil et spil, og saml flere stjerner!`, `You have ${have} coins – you need ${price - have} more. Play a game and collect more stars!`);
   document.getElementById('coinPay').hidden = have < price; showCoins(); document.getElementById('buySheet').hidden = false; }
 document.getElementById('coinTray').addEventListener('click', e => { const b = e.target.closest('[data-coin]'); if (!b || b.disabled) return; onDisk.push(+b.dataset.coin); sfx('ding'); showCoins(); });
 document.getElementById('coinDisk').addEventListener('click', e => { const b = e.target.closest('[data-coin]'); if (!b) return; onDisk.splice(onDisk.indexOf(+b.dataset.coin), 1); sfx('swish'); showCoins(); });
@@ -652,7 +717,7 @@ document.getElementById('coinHelp').onclick = () => { onDisk = []; let left = SH
 document.getElementById('buyYes').onclick = () => { const s = playerNow().score, price = SHOP[buying]; if (!buying || onDisk.reduce((a, b) => a + b, 0) !== price || krOf(s) < price) return;
   s.kr -= price; (s.owned ??= []).push(buying); (s.history ??= []).unshift({ n: buying, kr: price, at: Date.now() }); savePlayers(); document.getElementById('buySheet').hidden = true; celebrate();
   const n = buying; buying = null; if (hairBase && !game.on) shopThing(n).set?.(n); renderStyles(); if (!document.getElementById('starSheet').hidden) showStarSheet(); };
-document.getElementById('whoSheet').addEventListener('click', () => setTimeout(() => { if (document.getElementById('whoSheet').hidden) document.getElementById('whoTitle').textContent = 'Hvem spiller?'; }, 0));
+document.getElementById('whoSheet').addEventListener('click', () => setTimeout(() => { if (document.getElementById('whoSheet').hidden) document.getElementById('whoTitle').textContent = tr('Hvem spiller?'); }, 0));
 // the sliders: colour (hue), strength (saturation) and light, set from the part's colour now; moving one colours it
 const S = { h: document.getElementById('s-h'), s: document.getElementById('s-s'), l: document.getElementById('s-l') };
 function slidersFrom(hexColour) { const hsl = {}; new THREE.Color().setStyle(hexColour, THREE.SRGBColorSpace).getHSL(hsl, THREE.SRGBColorSpace);
@@ -773,7 +838,9 @@ function nearSkin(q) { const w = tex.w, x = q % w, y = (q - x) / w, s = tex.src;
 // front - in eyes' distances from between the eyes - so a brow drawn there lies right across the pieces. The old brows
 // are measured there - how high and thick at each spot along them - and the new ones made from that: thinner, thicker,
 // higher, tilted; the old ones painted over in the skin round them)
-const BROWS = [['bryn-naturlige', 'Naturlige'], ['bryn-tynde', 'Tynde', { thick: .5 }], ['bryn-tykke', 'Tykke', { thick: 1.45 }],
+// (own: the figure's own brows as painted, only their tail taken off; BROW_END: where every brow stops towards the hair -
+// the last thin tail left out, the user 04-11-2026)
+const BROW_END = .77, BROWS = [['bryn-naturlige', 'Naturlige', { own: true }], ['bryn-tynde', 'Tynde', { thick: .5 }], ['bryn-tykke', 'Tykke', { thick: 1.45 }],
   ['bryn-hoeje', 'Høje', { lift: .14 }], ['bryn-sure', 'Sure', { tilt: -1, thick: 1.15 }], ['bryn-triste', 'Triste', { tilt: 1 }], ['bryn-ingen', 'Ingen', { none: true }]];
 let browsNow = 'bryn-naturlige';
 function setBrows(name) { browsNow = name; redrawBody(); renderStyles(); }
@@ -862,13 +929,17 @@ function setupBrows(body) {
 function drawBrows(o) {
   const B = tex.brows, opts = (BROWS.find(b => b[0] === browsNow) || [])[2]; if (!B || !opts) return;
   const skin = tex.colours[PARTS.skin] || tex.skin, brow = tex.colours[PARTS.brows] || B.colour, T = B.texels, len = B.x1 - B.x0, edge = .025;
-  for (let j = 0; j < T.length; j += 4) { const p = T[j], X = T[j + 1], Y = T[j + 2], k = T[j + 3], i = p * 4;
+  for (let j = 0; j < T.length; j += 4) { const p = T[j], X = T[j + 1], Y = T[j + 2], i = p * 4;
+    // (the tail's palest end, taken for skin when the brows were measured, painted over with the rest of it)
+    const k = T[j + 3] || (Math.abs(X) > BROW_END && Math.abs(X) < B.x1 + .1 && Math.abs(Y - B.mid(Math.min(B.x1, Math.abs(X)))) < .08 ? 1 : 0);
+    if (opts.own) { const ax = Math.abs(X); if (!k || ax <= BROW_END) continue; const a = Math.max(0, Math.min(1, (Math.hypot(Y - B.mid(BROW_END), ax - BROW_END) - B.thick(BROW_END) / 2) / edge + .5));
+      o[i] += (Math.min(255, skin.r * 255 * k) - o[i]) * a; o[i + 1] += (Math.min(255, skin.g * 255 * k) - o[i + 1]) * a; o[i + 2] += (Math.min(255, skin.b * 255 * k) - o[i + 2]) * a; continue; }
     if (k) { o[i] = Math.min(255, skin.r * 255 * k); o[i + 1] = Math.min(255, skin.g * 255 * k); o[i + 2] = Math.min(255, skin.b * 255 * k); }
     if (opts.none) continue; const ax = Math.abs(X), t = (ax - B.x0) / len;
     // (its middle line: the old one, raised, and tilted about its middle - Sure lower between the eyes, Triste higher)
     const c = B.mid(Math.min(B.x1, Math.max(B.x0, ax))) + (opts.lift || 0) + (opts.tilt || 0) * .22 * (.5 - Math.min(1, Math.max(0, t)));
     // (as thick as the old one at that spot, times thick - rounded at its ends)
-    const half = B.thick(Math.min(B.x1, Math.max(B.x0, ax))) / 2 * (opts.thick || 1), out = Math.max(0, B.x0 - ax, ax - B.x1);
+    const xe = BROW_END, half = B.thick(Math.min(xe, Math.max(B.x0, ax))) / 2 * (opts.thick || 1), out = Math.max(0, B.x0 - ax, ax - xe);
     const d = Math.hypot(Y - c, out), a = Math.max(0, Math.min(1, (half - d) / edge + .5)); if (!a) continue;
     for (const [m, ch] of [[0, 'r'], [1, 'g'], [2, 'b']]) o[i + m] = o[i + m] * (1 - a) + brow[ch] * 255 * (tex.colours[PARTS.brows] ? .9 : 1) * a; } }
 // ---- the eyes' shapes, drawn as the brows are: in the face seen from the front ----
@@ -1273,7 +1344,7 @@ function shapeNose() { const Z = tex && tex.nose; if (!Z) return; const opts = (
   if (Z.ball) Z.ball.visible = !!opts.clown; }
 // (Dyrenæse: a dark oval on the nose's tip, lit as a dome - lightest at its top, with a small shine)
 function drawNose(o) { const Z = tex.nose, P = tex.pynt, opts = (NOSES.find(m => m[0] === noseNow) || [])[2]; if (!Z || !P || !opts || !opts.animal) return;
-  const T = P.texels, cy0 = Z.tipY - .015, rx = .135, ry = .092, darkC = { r: .2, g: .11, b: .09 }, lightC = { r: .55, g: .38, b: .34 };
+  const T = P.texels, cy0 = Z.tipY - .015, rx = .165, ry = .092, darkC = { r: .2, g: .11, b: .09 }, lightC = { r: .55, g: .38, b: .34 };
   for (let j = 0; j < T.length; j += 3) { const X = T[j + 1], Y = T[j + 2], ux = X / rx, uy = (Y - cy0) / ry, r = Math.hypot(ux, uy * (uy < 0 ? 1.15 : 1)); if (r > 1.1) continue;
     const a = Math.max(0, Math.min(1, (1 - r) * ry / .008 + .5)), nz = Math.sqrt(Math.max(0, 1 - r * r)), d = Math.max(0, Math.min(1, .25 + .35 * nz + .35 * uy));
     const shine = .7 * Math.exp(-(((ux + .3) / .2) ** 2 + ((uy - .35) / .18) ** 2)), i = T[j] * 4;
@@ -1321,7 +1392,8 @@ function recolourHair(hexColour, list = hairTexs) {
   hairTex.ctx.putImageData(out, 0, 0); hairTex.texture.needsUpdate = true; } }
 function recolour(part, hexColour) {
   if (part === 'socks') return paintSocks(); if (part === 'item') return paintItem();
-  if (part === 'shoe' && typeof GARMENTS !== 'undefined' && GARMENTS.shoe.meshes[GARMENTS.shoe.shown]?.userData.sock) { paintSocks(); paintHeels(); return; }
+  // (all the shoes, the ones not on too: back in the high heels after the sneakers had a new colour, they had the old one)
+  if (part === 'shoe' && typeof GARMENTS !== 'undefined') { paintSocks(); paintHeels(); recolourHair(hexColour, GARMENTS.shoe.texs); return; }
   if (part === 'hair') recolourHair(hexColour); if (typeof GARMENTS !== 'undefined' && GARMENTS[part]) recolourHair(hexColour, GARMENTS[part].texs);
   // (the picked colour read straight from its #rrggbb code: a THREE.Color would hold it in linear light, too dark here)
   if (!tex) return; const n = parseInt(hexColour.slice(1), 16); tex.colours[PARTS[part]] = { r: (n >> 16 & 255) / 255, g: (n >> 8 & 255) / 255, b: (n & 255) / 255 };
@@ -1426,10 +1498,10 @@ const md = { on: false, k: -1, cur: null, left: 0, spare: [] };
 const mdList = () => { try { return playerNow().dance ??= []; } catch (e) { return md.spare; } };
 function showMyDance() { const list = mdList(), row = document.getElementById('mdRow'); row.innerHTML = '';
   for (let i = 0; i < MD_MAX; i++) { const id = list[i], b = document.createElement('button');
-    if (id) { b.className = 'full' + (md.on && md.k === i ? ' now' : ''); b.innerHTML = `<img src="ikoner/valg-${id}.png" alt=""><span class="x">✕</span>`; b.setAttribute('aria-label', 'Tag ud');
+    if (id) { b.className = 'full' + (md.on && md.k === i ? ' now' : ''); b.innerHTML = `<img src="ikoner/valg-${id}.png" alt=""><span class="x">✕</span>`; b.setAttribute('aria-label', tr('Tag ud'));
       b.onclick = () => { list.splice(i, 1); savePlayers(); if (md.on) mdStop(); showMyDance(); }; }
     else { b.textContent = i + 1; b.disabled = true; } row.append(b); }
-  const play = document.getElementById('mdPlay'); play.disabled = !list.length; play.textContent = md.on ? '⏹ Stop' : '▶ Dans!'; play.classList.toggle('stop', md.on);
+  const play = document.getElementById('mdPlay'); play.disabled = !list.length; play.textContent = tr(md.on ? '⏹ Stop' : '▶ Dans!'); play.classList.toggle('stop', md.on);
   const pick = document.getElementById('mdPick'); if (!pick.childElementCount) for (const [id, label] of MD_PICK) { const b = iconButton(`ikoner/valg-${id}.png`, label); b.onclick = () => mdAdd(id); pick.append(b); } }
 // (a movement added: shown at once, unless the dance is going - then it joins it next time round)
 async function mdAdd(id) { const list = mdList(); if (list.length >= MD_MAX) { toast('Der er plads til 5 – tryk ✕ for at tage en ud'); return; }
@@ -1453,21 +1525,23 @@ function showSavedDances() { const box = document.getElementById('mdSaved'); box
   mdSaved().forEach((d, i) => { const b = document.createElement('button');
     b.innerHTML = `<span class="strip">${d.list.slice(0, 3).map(id => `<img src="ikoner/valg-${id}.png" alt="">`).join('')}</span><span class="name">${esc(d.name)}</span><span class="del" aria-label="Slet dansen">✕</span>`;
     b.onclick = e => { const del = e.target.closest('.del');
-      if (del) { if (!del.classList.contains('armed')) { del.classList.add('armed'); del.textContent = 'Slet?'; setTimeout(() => { del.classList.remove('armed'); del.textContent = '✕'; }, 2500); return; }
+      if (del) { if (!del.classList.contains('armed')) { del.classList.add('armed'); del.textContent = tr('Slet?'); setTimeout(() => { del.classList.remove('armed'); del.textContent = '✕'; }, 2500); return; }
         mdSaved().splice(i, 1); savePlayers(); showSavedDances(); return; }
       const list = mdList(); list.length = 0; list.push(...d.list); savePlayers(); if (md.on) mdStop(); mdStart(); };
     box.append(b); }); }
 document.getElementById('mdSave').onclick = () => { if (!mdList().length) { toast('Vælg nogle bevægelser først'); return; }
   const box = document.getElementById('mdName'), input = document.getElementById('mdNameInput'); box.hidden = !box.hidden; if (!box.hidden) { input.value = ''; input.focus(); } };
 function mdSaveNow() { const input = document.getElementById('mdNameInput'), list = mdList(); if (!list.length) return; const all = mdSaved();
-  const name = input.value.trim() || `Dans ${all.length + 1}`, same = all.findIndex(d => d.name.toLowerCase() === name.toLowerCase()), d = { name, list: [...list] };
-  if (same >= 0) all[same] = d; else all.push(d); savePlayers(); input.blur(); document.getElementById('mdName').hidden = true; showSavedDances(); toast(`💾 ${name} er gemt`); }
+  const name = input.value.trim() || T(`Dans ${all.length + 1}`, `Dance ${all.length + 1}`), same = all.findIndex(d => d.name.toLowerCase() === name.toLowerCase()), d = { name, list: [...list] };
+  if (same >= 0) all[same] = d; else all.push(d); savePlayers(); input.blur(); document.getElementById('mdName').hidden = true; showSavedDances(); toast(T(`💾 ${name} er gemt`, `💾 ${name} is saved`)); }
 document.getElementById('mdNameOk').onclick = mdSaveNow;
 document.getElementById('mdNameInput').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); mdSaveNow(); } });
 
 // ---- the figure ----
 let glb = null, mixer = null; const glbActions = {};
-const exists = async u => { try { return (await fetch(u, { method: 'HEAD' })).ok; } catch (e) { return false; } };
+// (no answer - no internet - says nothing about the file: this kind of asking never reaches the files kept on the device, so
+// without internet the whole game said "Figuren kunne ikke hentes". Then it is simply fetched, from there if it is kept)
+const exists = async u => { try { return (await fetch(u, { method: 'HEAD' })).ok; } catch (e) { return true; } };
 // a figure with a skeleton made in Mixamo: figur.fbx (the figure, its skeleton and its first movement,
 // the waving) and figur-staa/hop/dans.fbx (more movements for the same skeleton). Mixamo leaves the figure grey: its
 // colours come from figur-farve.jpg, Meshy's painted texture. Buttons without a movement are hidden.
@@ -1740,7 +1814,7 @@ async function loadHair(name, list = hairTexs, colourPart = 'hair', extra = {}) 
   const opts = HAIRS.find(h => h[0] === name)?.[2] || extra;
   if (!hairBase || !(await exists(`${name}.json${FIGUR_V}`))) return null;
   const [d, img] = await Promise.all([fetch(`${name}.json${FIGUR_V}`).then(r => r.json()),
-    new Promise(ok => { const i = new Image(); i.onload = () => ok(i); i.src = `${name}.jpg${FIGUR_V}`; })]);
+    new Promise((ok, bad) => { const i = new Image(); i.onload = () => ok(i); i.onerror = bad; i.src = `${name}.jpg${FIGUR_V}`; })]);
   const mine = hairBase.eyes, theirs = d.eyes.map(e => new THREE.Vector3(...e)), scale = mine[0].distanceTo(mine[1]) / theirs[0].distanceTo(theirs[1]) * (opts.grow || 1);
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(d.position, 3));
   g.setAttribute('normal', new THREE.Float32BufferAttribute(d.normal, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(d.uv, 2)); g.setIndex(d.index);
@@ -1792,9 +1866,12 @@ async function loadHair(name, list = hairTexs, colourPart = 'hair', extra = {}) 
 var styleLists = () => ({ hair: [HAIRS, hairNow, setHair], eyes: [EYES, eyesNow, setEyes], brows: [BROWS, browsNow, setBrows], mouth: [MOUTHS, mouthNow, setMouth], pynt: [PYNT, pyntNow.map(k => 'pynt-' + k), setPynt], nose: [NOSES, noseNow, setNose], item: [ITEMS, itemNow, n => { petPick = false; setItem(n); showSwatches(); }, [PETS, petNow, n => { petPick = true; setPet(n); showSwatches(); }, 'dyr', petNow ? PET_TOYS_LIST() : null]], bg: [BGS, bgNow, setBg], ears: [EARS, earsNow, setEars, [EARRINGS, earringsNow, setEarrings, 'oerering']],
   ...Object.fromEntries(Object.entries(GARMENTS).map(([part, G]) => [part, [G.items, G.now, n => setGarment(part, n)]])),
   ...Object.fromEntries(Object.entries(MOVES).map(([g, list]) => ['move-' + g, [list, moveNow[g], playMove]])), 'game-hop': gameList() });
+// (a style being fetched is fetched once: two taps on it made two heads of hair, and the first stayed on for good. One
+// that cannot come - no internet the first time - is tried again the next time it is chosen)
+const hairLoads = {};
 async function setHair(name) {
   hairNow = name; renderStyles();
-  if (name && !hairMeshes[name]) hairMeshes[name] = await loadHair(name);
+  if (name && !hairMeshes[name]) { hairMeshes[name] = await (hairLoads[name] ??= loadHair(name).catch(() => null)); if (!hairMeshes[name]) { delete hairLoads[name]; toast(NO_NET); } }
   for (const [n, m] of Object.entries(hairMeshes)) if (m) m.visible = n === hairNow; hatHair(); }
 // (a crown set on what is under it - the hair, or the bald head - its lowest ring sunk into it by sink eyes' distances:
 // one height for all, it hung in the air over the bald head and the braids and sank into the bob)
@@ -1946,7 +2023,7 @@ const GARMENTS = {
     ['toej-haette', 'Hættetrøje', { made: true, sleeve: 1.06, length: .04, hood: true, pocket: true, cloth: 'smooth' }],
     ['toej-fodbold', 'Fodboldtrøje', { made: true, sleeve: .32, length: .01, tuck: true, trim: true, cloth: 'smooth' }]], texs: clothTexs },
   // (the folds lower than at first - the user - and the long trousers turned up a little too)
-  pants: { items: [['', 'Undershorts'], ['bukser-trusser', 'Trusser', { made: true, hem: .41, brief: .07, rise: .012, noBand: true, white: true }], ['bukser-lange', 'Lange bukser', { made: true, hem: .06, loose: .004, cuff: .014 }], ['bukser-shorts', 'Shorts', { made: true, hem: .3, cuff: .018 }],
+  pants: { items: [['', 'Undershorts'], ['bukser-trusser', 'Trusser', { made: true, hem: .41, brief: .07, under: .012, rise: .012, noBand: true, white: true }], ['bukser-lange', 'Lange bukser', { made: true, hem: .06, loose: .004, cuff: .014 }], ['bukser-shorts', 'Shorts', { made: true, hem: .3, cuff: .018 }],
     ['bukser-cowboy', 'Cowboyshorts', { made: true, hem: .24, cuff: .02, cloth: 'denim' }], ['bukser-fodbold', 'Fodboldbukser', { made: true, hem: .295, loose: .004, loops: false, cloth: 'smooth' }]], texs: [], waist: true },
   dress: { items: [['', 'Ingen kjole'], ['kjole-sommer', 'Sommerkjole'], ['kjole-prinsesse', 'Prinsessekjole', { hang: .5, armsOut: 12 }], ['kjole-havfrue', 'Havfruekjole', { skirt: false, margin: .012, reach: 8, tail: true, snug: .2, waist: .15 }]], texs: [], skirt: true, noArms: true },
   // (socks made from the body too: low ones for sneakers, football socks with a stripe at the top, and knee socks)
@@ -1963,7 +2040,7 @@ const GARMENTS = {
     ['briller-hjerte', 'Hjerte', { lens: .1, fwd: .1, cap: 1.15 }], ['briller-stjerne', 'Stjerne', { lens: .1, cap: 1.15 }]], texs: [], head: true } };
 // (now: what is chosen, shown: what the figure has on - the same once all of it is loaded)
 for (const G of Object.values(GARMENTS)) { G.now = G.shown = ''; G.meshes = {}; G.loading = {}; }
-let dressing = 0;
+let dressing = 0; const NO_NET = 'Det kan ikke hentes lige nu 📶';
 async function setGarment(part, name) { const G = GARMENTS[part], ask = ++dressing;
   // (a dress is worn instead of a top and trousers, and the other way round; taking the dress off puts back the top and
   // trousers worn before it - the white vest came back instead)
@@ -1975,7 +2052,9 @@ async function setGarment(part, name) { const G = GARMENTS[part], ask = ++dressi
   // while a new one loaded; a choice made meanwhile wins)
   for (const [p, g] of Object.entries(GARMENTS)) if (g.now && !g.meshes[g.now]) { const n = g.now;
     g.loading[n] ??= g.head ? loadHair(n, g.texs, p, g.items.find(i => i[0] === n)?.[2] || {})
-      : g.items.find(i => i[0] === n)?.[2]?.made ? Promise.resolve(makeCloth(n, p, g.items.find(i => i[0] === n)[2])) : loadCloth(n, p); g.meshes[n] = await g.loading[n]; }
+      : g.items.find(i => i[0] === n)?.[2]?.made ? Promise.resolve(makeCloth(n, p, g.items.find(i => i[0] === n)[2])) : loadCloth(n, p);
+    // (one that cannot come - no internet the first time - holds nothing else up, and is tried again the next time)
+    g.meshes[n] = await g.loading[n].catch(() => null); if (!g.meshes[n]) { delete g.loading[n]; if (p === part && ask === dressing) toast(NO_NET); } }
   if (ask !== dressing) return;
   for (const g of Object.values(GARMENTS)) g.shown = g.now;
   const shirt = !!(GARMENTS.dress.now || GARMENTS.shirt.now), pants = !!(GARMENTS.dress.now || GARMENTS.pants.now);
@@ -2036,7 +2115,7 @@ function slimThighs() { if (hairBase.slim) return hairBase.slim; const { pts, in
   return hairBase.slim = { orig: P.array.slice(), slim, on: false, legPix: [...legPix], thighPix: [...thighPix], band, turn }; }
 function thighLight(off) { const S = hairBase?.slim; if (!S || !S.on && !off) return; const N = hairBase.body.geometry.attributes.normal, a = N.array;
   for (const t of S.turn) { let x = t.was[0], y = t.was[1], z = t.was[2]; if (!off) { x += (t.x - x) * t.k; y += (t.y - y) * t.k; z += (t.z - z) * t.k; const l = Math.hypot(x, y, z) || 1; x /= l; y /= l; z /= l; } a[t.j * 3] = x; a[t.j * 3 + 1] = y; a[t.j * 3 + 2] = z; } N.needsUpdate = true; }
-function setSlim(on) { if (!hairBase || !tex || (!on && !hairBase.slim)) return; const S = slimThighs(); if (S.on === on) return; S.on = on; hairBase.body.geometry.attributes.position.array.set(on ? S.slim : S.orig); hairBase.body.geometry.attributes.position.needsUpdate = true; if (!on) thighLight(true); redrawBody(); }
+function setSlim(on) { if (!hairBase || !tex || (!on && !hairBase.slim)) return; const S = slimThighs(); if (S.on === on) return; S.on = on; hairBase.body.geometry.attributes.position.array.set(on ? S.slim : S.orig); hairBase.body.geometry.attributes.position.needsUpdate = true; if (!on) thighLight(true); shapeEars(); redrawBody(); } // (the ears as chosen: the shape put back was the body's when first measured)
 // (the thighs' paint made the same as the leg just under them, colour for colour)
 function matchThighs(o) { const S = hairBase?.slim; if (!S?.on || !tex.covered[PARTS.pants]) return; const mean = l => { const m = [0, 0, 0]; for (const p of l) for (let c = 0; c < 3; c++) m[c] += o[p * 4 + c]; return m.map(v => v / Math.max(1, l.length)); }, A = mean(S.legPix), B = mean(S.thighPix), f = A.map((v, c) => v / Math.max(1, B[c]));
   for (let p = 0; p < tex.w * tex.h; p++) if (tex.label[p] === PARTS.pants || tex.seam[p] === PARTS.pants) for (let c = 0; c < 3; c++) o[p * 4 + c] = Math.min(255, o[p * 4 + c] * f[c]);
@@ -2149,7 +2228,8 @@ function makeCloth(name, part, opts) {
   if (socks) { const top = opts.top * H; edges = [{ f: p => p[1] - top, bare: .008 * H }]; out = () => (opts.out || .0035) * H; }
   else if (pants) { const hem = opts.hem * H;
     // (briefs: the leg openings on the slant, from the crotch up over the hips)
-    const hemAt = opts.brief ? p => crotch - .004 * H + clamp(side(p) / (.1 * H)) * opts.brief * H : () => hem;
+    // (under: in the middle that much further down, in under the crotch - the user, 04-11-2026)
+    const hemAt = opts.brief ? p => crotch - .004 * H + clamp(side(p) / (.1 * H)) * opts.brief * H - (opts.under || 0) * H * clamp(1 - side(p) / (.05 * H)) : () => hem;
     edges = [{ f: p => hemAt(p) - p[1], fold: (opts.cuff || 0) * H, bare: .012 * H }, { f: p => p[1] - top, bare: .003 * H }];
     // (loose: the legs that much further out all the way down, from just under the crotch - long trousers sat like tights)
     out = p => { const s = clamp((crotch - p[1]) / (crotch - hem)); return (.006 + (opts.flare || 0) * s * s + (opts.loose || 0) * clamp((crotch - p[1]) / (.06 * H))) * H; }; }
@@ -2289,7 +2369,7 @@ async function loadCloth(name, part) {
   const G = GARMENTS[part], file = G.items.find(it => it[0] === name)?.[2]?.file || name; // (file: made from another one's files)
   if (!hairBase || !(await exists(`${file}.json${FIGUR_V}`))) return null;
   const [d, img] = await Promise.all([fetch(`${file}.json${FIGUR_V}`).then(r => r.json()),
-    new Promise(ok => { const i = new Image(); i.onload = () => ok(i); i.src = `${file}.jpg${FIGUR_V}`; })]);
+    new Promise((ok, bad) => { const i = new Image(); i.onload = () => ok(i); i.onerror = bad; i.src = `${file}.jpg${FIGUR_V}`; })]);
   const B = hairBase.box, [x0, y0, z0, x1, y1, z1] = d.box, s = (B.max.y - B.min.y) / (y1 - y0);
   const off = new THREE.Vector3((B.min.x + B.max.x) / 2 - s * (x0 + x1) / 2, B.min.y - s * y0, (B.min.z + B.max.z) / 2 - s * (z0 + z1) / 2);
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(d.position, 3));
@@ -2767,12 +2847,15 @@ const voiceFor = n => voices[n.trim().toLowerCase()];
 function sayName() { const n = nameInput.value.trim(); if (!n || !sound.voice) return; const own = voiceFor(n);
   if (own) { playOwn(own); return; }
   if (!window.speechSynthesis) return; speechSynthesis.cancel();
-  const da = speechSynthesis.getVoices().filter(v => /^da/i.test(v.lang)), v = da.find(v => /premium|enhanced|forbedret|neural|natural/i.test(v.name)) || da.find(v => !v.localService) || da[0];
-  const u = new SpeechSynthesisUtterance(`Hej! Jeg hedder ${n}.`); u.lang = 'da-DK'; if (v) u.voice = v; u.rate = .92; u.pitch = 1.4; speechSynthesis.speak(u); }
+  // (English as near a child's as a device can: none has a child's voice, so an American woman's voice - the lightest there
+  // are - raised far up, the user 04-11-2026)
+  const light = /samantha|zira|jenny|aria|ava|allison|susan|nicky|shelley|flo|sandy|google us english/i, all = speechSynthesis.getVoices(), da = all.filter(v => (LANG === 'en' ? /^en/i : /^da/i).test(v.lang)), us = da.filter(v => /^en[-_]US/i.test(v.lang));
+  const v = LANG === 'en' ? us.find(v => light.test(v.name)) || da.find(v => light.test(v.name)) || us[0] || da[0] : da.find(v => /premium|enhanced|forbedret|neural|natural/i.test(v.name)) || da.find(v => !v.localService) || da[0];
+  const u = new SpeechSynthesisUtterance(T(`Hej! Jeg hedder ${n}.`, `Hi! My name is ${n}.`)); u.lang = T('da-DK', 'en-US'); if (v) u.voice = v; u.rate = T(.92, 1); u.pitch = T(1.4, 1.8); speechSynthesis.speak(u); }
 // (recording one's own voice: a tap on the microphone, up to four seconds, a tap again stops it; kept in this browser
 // only, for the name written)
 const recBtn = document.getElementById('recBtn'), recDel = document.getElementById('recDel'), recNote = document.getElementById('recNote'); let recorder = null;
-function showRec(note) { const has = !!voiceFor(nameInput.value || ''); recDel.hidden = !has; recNote.textContent = note || (has ? 'Din egen stemme siger navnet – tryk på navnet på trøjen for at høre det igen' : ''); }
+function showRec(note) { const has = !!voiceFor(nameInput.value || ''); recDel.hidden = !has; recNote.textContent = tr(note || (has ? 'Din egen stemme siger navnet – tryk på navnet på trøjen for at høre det igen' : '')); }
 // (the own voice played through the page's sound - opened by the tap on the microphone - so it can be heard by itself
 // right after the recording: an iPad will not start a plain sound that no tap started, and the recording stops by
 // itself after four seconds; the user, 03-11-2026)
@@ -2792,7 +2875,7 @@ recBtn.onclick = async () => { soundOut()?.resume(); if (recorder) { recorder.st
         // (a moment's pause first: just after the microphone an iPad still plays quietly, as on a phone call)
         setTimeout(sayName, 350); };
       fr.readAsDataURL(new Blob(parts, { type: parts[0]?.type || type || 'audio/mp4' })); };
-    r.start(); r.timer = setTimeout(() => r.state === 'recording' && r.stop(), 4000); recBtn.classList.add('rec'); recBtn.firstChild.textContent = '⏹ '; showRec('Sig: Hej, jeg hedder ' + n + ' …');
+    r.start(); r.timer = setTimeout(() => r.state === 'recording' && r.stop(), 4000); recBtn.classList.add('rec'); recBtn.firstChild.textContent = '⏹ '; showRec(T('Sig: Hej, jeg hedder ' + n + ' …', 'Say: Hi, my name is ' + n + ' …'));
   } catch (e) { recorder = null; showRec('Mikrofonen kunne ikke bruges'); } };
 recDel.onclick = () => { delete voices[(nameInput.value || '').trim().toLowerCase()]; try { localStorage.setItem(VOICE_KEY, JSON.stringify(voices)); } catch (e) {} showRec(); };
 // (a tap - not a drag to turn it - on the figure's shirt says the name)
@@ -2862,7 +2945,7 @@ async function sharePicture(kind) {
   const c = picCache[kind], url = c.toDataURL('image/png'), name = kind === 'profil' ? 'minimig-profil.png' : 'minimig.png';
   const blob = await new Promise((res, rej) => c.toBlob(b => b ? res(b) : rej(new Error('png')), 'image/png'));
   const file = new File([blob], name, { type: 'image/png' });
-  try { if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: 'Min MiniMig' }); return; } }
+  try { if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: tr('Min MiniMig') }); return; } }
   catch (e) { if (e.name === 'AbortError') return; }
   // (if the browser cannot share: the picture shown, to press and hold - or, with a mouse, to save with the button)
   document.getElementById('picImg').src = url; const sv = document.getElementById('picSave'); sv.href = url; sv.download = name;
@@ -2871,7 +2954,7 @@ async function sharePicture(kind) {
 // child share until it is turned off)
 let gateAnswer = 0, gateEntry = '', gateThen = null, gateHard = false;
 function newGateSum() { const a = gateHard ? 11 + Math.floor(Math.random() * 9) : 3 + Math.floor(Math.random() * 7), b = 3 + Math.floor(Math.random() * 7); gateAnswer = a * b; gateEntry = '';
-  document.getElementById('gateQ').textContent = `Hvad er ${a} × ${b}?`; document.getElementById('gateA').textContent = ''; }
+  document.getElementById('gateQ').textContent = T(`Hvad er ${a} × ${b}?`, `What is ${a} × ${b}?`); document.getElementById('gateA').textContent = ''; }
 function askGrownUp(then, hard = false) { gateThen = then; gateHard = hard; newGateSum(); document.getElementById('gate').hidden = false; }
 document.getElementById('keypad').addEventListener('click', e => { const b = e.target.closest('[data-k]'); if (!b) return; const k = b.dataset.k, a = document.getElementById('gateA');
   if (k === 'del') gateEntry = gateEntry.slice(0, -1);
@@ -2888,7 +2971,7 @@ function setShare(until) { try { if (until) localStorage.setItem(SHARE_KEY, unti
 function showShareState() { const open = shareOpen(), u = shareUntil(); document.getElementById('lockBadge').hidden = !open; document.getElementById('shareOn').hidden = !open;
   if (!open) { if (u) setShare(0); return; }
   const t = new Date(u), at = `${t.getHours()}.${String(t.getMinutes()).padStart(2, '0')}`;
-  document.getElementById('shareOnText').textContent = u === Infinity ? '🔓 Deling uden voksen er slået til' : `🔓 Deling uden voksen er slået til, til kl. ${at}`; }
+  document.getElementById('shareOnText').textContent = u === Infinity ? tr('🔓 Deling uden voksen er slået til') : T(`🔓 Deling uden voksen er slået til, til kl. ${at}`, `🔓 Sharing without a grown-up is on, until ${at}`); }
 setInterval(showShareState, 30000); showShareState();
 let shareKind = 'hel';
 document.getElementById('saveBtn').addEventListener('click', () => { showShareState(); showPicChoice('picChoice'); });
@@ -2909,7 +2992,7 @@ const MAX_SAVED = 30, FIGS_KEY = 'minimig3d.figurer';
 const savedFigs = () => { try { const l = JSON.parse(localStorage.getItem(FIGS_KEY) || '[]'); return Array.isArray(l) ? l : []; } catch (e) { return []; } };
 // (if the device is full, the oldest are let go until the rest fit)
 const storeFigs = l => { if (!l.length) try { localStorage.setItem(FIGS_KEY, '[]'); return true; } catch (e) { return false; } for (let n = Math.min(l.length, MAX_SAVED); n > 0; n--) try { localStorage.setItem(FIGS_KEY, JSON.stringify(l.slice(0, n))); return true; } catch (e) {} return false; };
-function toast(msg) { const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 1700); }
+function toast(msg) { const t = document.createElement('div'); t.className = 'toast'; t.textContent = tr(msg); document.body.appendChild(t); setTimeout(() => t.remove(), 1700); }
 const thumb = c => { const k = 200 / c.width, t = document.createElement('canvas'); t.width = 200; t.height = Math.round(c.height * k);
   const g = t.getContext('2d'); g.imageSmoothingQuality = 'high'; g.drawImage(c, 0, 0, t.width, t.height); return t.toDataURL('image/jpeg', .82); };
 const keepFig = (view, pic) => { const l = savedFigs(); l.unshift({ fig: figureNow(), view, pic: thumb(pic) }); return storeFigs(l); };
@@ -2922,24 +3005,24 @@ document.getElementById('keepChoice').addEventListener('click', e => { const c =
 // all-white vest and shorts and nothing else, no name, every colour the figure's own; a boy with short hair or a girl
 // with plaits. The user dropped the app's pink and blue underwear)
 const newFig = kind => ({ picked: {}, hair: kind === 'pige' ? 'haar-fletninger' : 'haar-kort',
-  eyes: 'oejne-naturlige', brows: 'bryn-naturlige', mouth: 'mund-smil', nose: 'naese-naturlig', pynt: [], wear: Object.fromEntries(Object.keys(GARMENTS).map(p => [p, ''])), name: '', badge: 'ingen', item: '', ears: 'oerer-naturlig', earrings: '', bg: 'bg-sol' });
+  eyes: 'oejne-naturlige', brows: 'bryn-naturlige', mouth: 'mund-smil', nose: 'naese-naturlig', pynt: [], wear: Object.fromEntries(Object.keys(GARMENTS).map(p => [p, ''])), name: '', badge: 'ingen', item: '', pet: '', petToys: [], ears: 'oerer-naturlig', earrings: '', bg: 'bg-sol' });
 const sameFig = (a, b) => !!a && !!b && JSON.stringify(a) === JSON.stringify(b);
 document.getElementById('newBtn').addEventListener('click', () => { document.getElementById('newChoice').hidden = false; });
 document.getElementById('newChoice').addEventListener('click', async e => { const b = e.target.closest('[data-new]'); if (!b || !hairBase) return;
-  document.getElementById('newChoice').hidden = true;
+  document.getElementById('newChoice').hidden = true; if (game.on) { toast('Stop spillet først'); return; }
   // (the figure there was first goes into Mine figurer, so it is never lost - not when it is already the newest one
   // there, or a new figure nobody has changed yet)
   const now = figureNow(), l = savedFigs();
   if (![l[0]?.fig, newFig('dreng'), newFig('pige')].some(f => sameFig(f, now))) keepFig('hel', figurePicture('hel', .5));
   await wearFigure(newFig(b.dataset.new)); toast('✨ Ny MiniMig!'); });
 function renderGallery() { const l = savedFigs(), el = document.getElementById('gallery'); renderKids();
-  el.innerHTML = l.length ? l.map((s, i) => `<div class="saved"><button class="load" data-load="${i}" aria-label="Brug figur ${i + 1}"><img src="${s.pic}" alt=""></button><button class="del" data-del="${i}" aria-label="Slet figur ${i + 1}">✕</button></div>`).join('')
-    : '<p class="empty">Ingen figurer endnu.<br>Tryk på ⭐ for at gemme din figur her.</p>'; }
+  el.innerHTML = l.length ? l.map((s, i) => `<div class="saved"><button class="load" data-load="${i}" aria-label="${T('Brug figur', 'Use figure')} ${i + 1}"><img src="${s.pic}" alt=""></button><button class="del" data-del="${i}" aria-label="${T('Slet figur', 'Delete figure')} ${i + 1}">✕</button></div>`).join('')
+    : T('<p class="empty">Ingen figurer endnu.<br>Tryk på ⭐ for at gemme din figur her.</p>', '<p class="empty">No figures yet.<br>Tap ⭐ to save your figure here.</p>'); }
 document.getElementById('figsBtn').addEventListener('click', () => { document.getElementById('figSheet').hidden = false; renderGallery(); });
 document.getElementById('gallery').addEventListener('click', e => { const load = e.target.closest('[data-load]'), del = e.target.closest('[data-del]'), l = savedFigs();
-  if (load) { const s = l[+load.dataset.load]; if (!s || !hairBase) return; document.getElementById('figSheet').hidden = true; wearFigure(s.fig); }
+  if (load) { const s = l[+load.dataset.load]; if (!s || !hairBase) return; if (game.on) { toast('Stop spillet først'); return; } document.getElementById('figSheet').hidden = true; wearFigure(s.fig); }
   else if (del) { // (a first tap asks "Slet?", only a second one deletes, so a figure is not lost by a stray tap)
-    if (!del.classList.contains('armed')) { del.classList.add('armed'); del.textContent = 'Slet?'; setTimeout(() => { del.classList.remove('armed'); del.textContent = '✕'; }, 2500); return; }
+    if (!del.classList.contains('armed')) { del.classList.add('armed'); del.textContent = tr('Slet?'); setTimeout(() => { del.classList.remove('armed'); del.textContent = '✕'; }, 2500); return; }
     l.splice(+del.dataset.del, 1); storeFigs(l); renderGallery(); } });
 for (const s of document.querySelectorAll('.sheet')) s.addEventListener('click', e => { if (e.target === s || e.target.closest('[data-close]')) s.hidden = true; });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') for (const s of document.querySelectorAll('.sheet')) s.hidden = true; });
@@ -3098,7 +3181,7 @@ function makePet(kind) { const g = new THREE.Group(), C = { 'dyr-kat': ['#F2994A
   // (the animals are the ones rigged at Meshy - the user, 04-11-2026. One shows when both its file and its fur have come - a
   // black cat flashed by before the fur - and only if they can't come, the simple one stands in. [height, collar's size and how far under the head bone it sits, how low it sits down, how far its hind legs and feet fold, how far it tips up - measured so all four paws reach the floor;
   // the user, 04-11-2026: the front paws hung in the air - how far its head turns])
-  const RIG = { 'dyr-kat': [.72, .11, .022, -.106, 1, .8, .6, .25], 'dyr-hund': [.74, .12, .022, -.084, 1, 1, .4, .2], 'dyr-kanin': [.98, .125, .14, -.089, 1, .8, .5, .12] }[kind]; if (RIG) { const simple = [...g.children]; simple.forEach(c => { c.visible = false; }); loadGlbPet(kind + '.glb', kind + '.jpg', RIG[0], RIG[1], RIG[2]).then(m => { g.add(m.group); me.model = m; me.collar = m.collar; m.sitY = RIG[3]; m.sitLeg = RIG[4]; m.sitFoot = RIG[5]; m.sitTip = RIG[6]; m.headTurn = RIG[7]; }).catch(() => simple.forEach(c => { c.visible = true; })); }
+  const RIG = { 'dyr-kat': [.72, .11, .022, -.106, 1, .8, .6, .25], 'dyr-hund': [.74, .12, .022, -.084, 1, 1, .4, .2], 'dyr-kanin': [.98, .125, .14, -.089, 1, .8, .5, .12] }[kind]; if (RIG) { const simple = [...g.children]; simple.forEach(c => { c.visible = false; }); me.collar = null; loadGlbPet(kind + '.glb', kind + '.jpg', RIG[0], RIG[1], RIG[2]).then(m => { g.add(m.group); me.model = m; me.collar = m.collar; m.sitY = RIG[3]; m.sitLeg = RIG[4]; m.sitFoot = RIG[5]; m.sitTip = RIG[6]; m.headTurn = RIG[7]; }).catch(() => { simple.forEach(c => { c.visible = true; }); me.collar = simpleCollar; }); }
   return me; }
 function setPet(name) { if (!PETS.some(p => p[0] === name)) name = ''; petNow = name; if (pet) pet.group.visible = false; pet = name && glb ? pets[name] ??= makePet(name) : null; if (pet) pet.snap = true; renderStyles(); }
 // (an animal rigged at Meshy: a GLB file with one skinned mesh, its bones and a walk. Meshy's rigged file leaves out the
@@ -3162,12 +3245,12 @@ const petAt = new THREE.Vector3();
 // (each moment: to its place beside the figure - a place of its own in each game - legs going when it moves)
 // (outside the games it keeps to where the figure stands, not to its hips - the user, 04-11-2026: a kolbøtte's hips moving
 // about sent it walking and turning)
-function petTick(dt) { if (!pet) return; const hb = bone('Hips'), g = pet.group, mode = game.on ? game.mode : ''; if (!hb) return; (mode ? hb : holder).getWorldPosition(petAt);
+function petTick(dt) { if (!pet) { if (bowl) bowl.visible = false; if (ball) ball.visible = false; petJob.kind = ''; return; } const hb = bone('Hips'), g = pet.group, mode = game.on ? game.mode : ''; if (!hb) return; (mode ? hb : holder).getWorldPosition(petAt);
   // (it runs along when the figure runs on the spot. It stands on the figure's right: the kolbøtte reaches far out to the
   // other side - it rolled over the cat - and during one it goes a little further off and sits looking on; the user, 04-11-2026)
   const rolling = !mode && MOVES.kolboette.some(m => m[0] === anim), runMove = !mode && MOVES.loeb.some(m => m[0] === anim);
   // (the things: the collar with it everywhere; the bowl and the ball by the figure outside the games, and its errands to them)
-  const hasBowl = petToys.includes('dyr-skaal'), hasBall = petToys.includes('dyr-bold'), toysOut = !mode && holder.visible && !rolling; if (pet.collar) pet.collar.visible = petToys.includes('dyr-halsbaand'); if (hasBowl && !bowl) { bowl = makeBowl(); bowl.position.set(toyBowl.x, 0, toyBowl.z); } if (hasBall && !ball) { ball = makePetBall(); ball.position.set(toyRest.x, .11, toyRest.z); } if (bowl) bowl.visible = hasBowl && toysOut; if (ball) ball.visible = hasBall && toysOut; if (!toysOut || runMove) petJob.kind = ''; if (!hasBowl && petJob.kind === 'eat' || !hasBall && petJob.kind === 'ball') petJob.kind = '';
+  const hasBowl = petToys.includes('dyr-skaal'), hasBall = petToys.includes('dyr-bold'), toysOut = !mode && holder.visible && !rolling; if (pet.collar) pet.collar.visible = petToys.includes('dyr-halsbaand'); if (hasBowl && !bowl) { bowl = makeBowl(); bowl.position.set(toyBowl.x, 0, toyBowl.z); } if (hasBall && !ball) { ball = makePetBall(); ball.position.set(toyRest.x, .11, toyRest.z); } if (bowl) bowl.visible = hasBowl && toysOut; if (ball) ball.visible = hasBall && toysOut; if (!toysOut || runMove) { if (petJob.kind === 'ball') ball?.position.set(toyRest.x, .11, toyRest.z); petJob.kind = ''; } if (!hasBowl && petJob.kind === 'eat' || !hasBall && petJob.kind === 'ball') petJob.kind = '';
   let behind = mode === 'sea' ? -Math.sign(Math.sin(game.rotY ?? 0)) || -1 : 1, [ox, oz, face] = { '': rolling ? [-.88, .15, .45] : [-.62, .5, .5], side: [pet.model ? -.73 : -.9, .35, Math.PI / 2], back: [.75, .35, Math.PI], front: [.75, -.15, 0], skate: [0, 1.25, Math.PI], sea: [behind * 1, .2, null], island: [-.75, .5, null], hide: [.85, .5, 0], pk: [-.8, .3, Math.PI] }[mode] ?? [.62, .5, .5];
   const running = runMove || ['side', 'back', 'front', 'skate'].includes(mode), floorY = mode === 'sea' ? petAt.y - .45 : 0; let tx = petAt.x + ox, tz = petAt.z + oz; const J = petJob;
   if (J.kind === 'eat') { tx = toyBowl.x + .1; tz = toyBowl.z - .3; face = Math.atan2(toyBowl.x - tx, toyBowl.z - tz); }
@@ -3359,7 +3442,7 @@ function hideBody() { if (!hairBase) return; const geo = hairBase.body.geometry,
 const FIGUR_V = '?v=10';
 async function loadFbx() { if (!(await exists('figur.fbx' + FIGUR_V))) return false;
   const loader = new FBXLoader(), load = u => new Promise((ok, bad) => loader.load(u + FIGUR_V, ok, undefined, bad));
-  const fbx = await load('figur.fbx'), map = await new Promise(ok => new THREE.TextureLoader().load('figur-farve.jpg' + FIGUR_V, ok));
+  const fbx = await load('figur.fbx'), map = await new Promise((ok, bad) => new THREE.TextureLoader().load('figur-farve.jpg' + FIGUR_V, ok, undefined, bad));
   map.colorSpace = THREE.SRGBColorSpace; const coloured = setupTexture(map);
   // (both sides drawn: through the ear's small opening one saw right through the head - the hair on the far side as a
   // dark spike in the ear)
@@ -3554,7 +3637,7 @@ function startGame(mode = game.mode) { if (game.on || !glb) return; game.mode = 
     useGameBall(BALL_ITEMS.includes(itemNow) ? itemNow : '');
     game.bigPool ??= [goldBall(), goldBall()]; Object.assign(game, { dive: false, sinceBig: 0 });
     const run = levelNow().run; Promise.all([run, GAME.jump, GAME.trip, GAME.cheer, GAME.dive].map(loadMove)).then(() => { if (game.on) runAnim(run); }); }
-  hintEl.textContent = mode === 'skate' ? '👈 Tryk i siden for at svinge 👉' : mode === 'island' ? '👆 Tryk hvor du vil gå hen' : mode === 'sea' ? '👆 Tryk eller træk – så svømmer du derhen' : mode === 'hide' ? '🔍 Hvor er jeg? Tryk på busken' : mode === 'pk' ? '👆 Tryk i målet, hvor bolden skal hen' : '👆 Tryk for at hoppe';
+  hintEl.textContent = tr(mode === 'skate' ? '👈 Tryk i siden for at svinge 👉' : mode === 'island' ? '👆 Tryk hvor du vil gå hen' : mode === 'sea' ? '👆 Tryk eller træk – så svømmer du derhen' : mode === 'hide' ? '🔍 Hvor er jeg? Tryk på busken' : mode === 'pk' ? '👆 Tryk i målet, hvor bolden skal hen' : '👆 Tryk for at hoppe');
   hud.hidden = false; hintEl.hidden = false; document.querySelector('.top').hidden = true; document.getElementById('stage').classList.add('playing'); showStars(); showRecord();
   if (MODES[mode].from) game.hopWay = mode; // (the way last chosen in Hop over bolden)
   document.querySelectorAll('[data-game]').forEach(b => b.classList.toggle('on', b.dataset.game === mode || b.dataset.game === 'hop' && !!MODES[mode].from)); prepScene(); }
@@ -3756,7 +3839,8 @@ const playerFace = (p, cls = '') => p.pic ? `<img class="${cls}" src="${p.pic}" 
 // in the games too; a child without a MiniMig of their own has the figure on the screen as their picture, kept up to date)
 function showPlayer() { const p = playerNow(), b = document.getElementById('whoBadge'); b.innerHTML = playerFace(p) + (p.name ? `<span class="nm">${esc(p.name)}</span>` : ''); b.classList.toggle('only', !p.name); }
 document.getElementById('whoBadge').onclick = () => { document.getElementById('figSheet').hidden = false; renderGallery(); };
-let picOf = ''; setInterval(() => { try { const p = playerNow(); if (p.fig || !hairBase || game.on || document.hidden) return; const f = JSON.stringify(figureNow()); if (f === picOf && p.pic) return; picOf = f; p.pic = playerPic() || p.pic; savePlayers(); showPlayer(); } catch (e) {} }, 4000);
+// (not before the figure is in sight and has all of it on - the user, 04-11-2026: taken while it loaded, the picture was the empty yellow background, and stayed)
+let picOf = ''; setInterval(() => { try { const p = playerNow(); if (p.fig || !hairBase || !holder.visible || game.on || document.hidden || Object.values(GARMENTS).some(g => g.shown !== g.now)) return; const f = JSON.stringify(figureNow()); if (f === picOf && p.pic) return; picOf = f; p.pic = playerPic() || p.pic; savePlayers(); showPlayer(); } catch (e) {} }, 4000);
 const bestNow = () => score.best[game.mode]?.[game.level] || 0;
 // (a star's worth in kroner: one on the easiest level, five on the hardest - the user, 04-11-2026: harder is worth more)
 const starWorth = (level = game.level) => LEVELS.findIndex(l => l[0] === level) + 1;
@@ -4215,13 +4299,17 @@ function pkStop() { if (!pk.world?.parent) return; scene.remove(pk.world); holde
 // (the ball back on the spot - where the next kicking foot meets it - the bear back in the middle of its goal)
 function pkReady() { pk.phase = 'aim'; pk.saved = false; pk.stood = false; if (pk.abe) { pk.back = pk.keeper.position.x - pk.kx; pk.abe.group.scale.x = 1; pk.abe.hold = 0; pkAbeGrip(pk.abe, 1, 0); pkAbePlay('klar', 0, false, .35); } pk.keeper.position.set(0, 0, PK.goalZ + .35); pk.keeper.rotation.set(0, 0, 0); pk.netBack.position.z = -1; pk.ball.group.position.copy(pkRest()); pk.ball.group.rotation.set(0, 0, 0); }
 const pkKick = () => ['spark', 'spark-hoejre'][pk.foot % 2];
-function pkRest() { const k = kicks[pkKick()]; return k ? new THREE.Vector3(-k.rest.x, kick.r, -k.rest.z) : new THREE.Vector3(0, kick.r, -.35); }
+// (the ball always on the white spot, and the figure standing where its kicking foot meets it - the other foot next time,
+// a step to the side - the user, 04-11-2026: the ball lay beside the spot)
+function pkRest() { return new THREE.Vector3(0, kick.r, 0); }
+const pkStand = v => { const k = kicks[pkKick()]; return v.set(k ? k.rest.x : 0, 0, k ? k.rest.z : .35); }, pkWant = new THREE.Vector3();
 // (a tap anywhere: aimed at the goal where the finger is, kept inside the posts and under the bar)
 function pkTap(e) { if (pk.phase !== 'aim' || !kicks.spark || !kicks['spark-hoejre']) return; const r = renderer.domElement.getBoundingClientRect();
   ilAt.set((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1); ilRay.setFromCamera(ilAt, camera); if (!ilRay.ray.intersectPlane(pkPlane, pkHit)) return;
   game.hint = 0; pk.aim.set(Math.max(-PK.halfW + .3, Math.min(PK.halfW - .3, pkHit.x)), Math.max(.18, Math.min(PK.top - .22, pkHit.y)), PK.goalZ - .15);
-  const id = pkKick(), a = glbActions[id]; pk.ball.group.position.copy(pkRest()); runAnim(id, true); a.time = Math.max(0, kicks[id].contact - .55); pk.phase = 'kick'; }
+  const id = pkKick(), a = glbActions[id]; pk.ball.group.position.copy(pkRest()); pkStand(pk.rig.position); runAnim(id, true); a.time = Math.max(0, kicks[id].contact - .55); pk.phase = 'kick'; }
 function pkTick(dt) { const t = performance.now() / 1000, L = pkLevel(), kp = pk.keeper, b = pk.ball.group;
+  if (pk.phase === 'aim' || pk.phase === 'return') pk.rig.position.lerp(pkStand(pkWant), Math.min(1, dt * 5));
   // (the camera far enough back that the whole goal is in the picture, however narrow it is)
   // (never nearer than 13 m from the goal: on a wide picture it came so close the figure hid the goal again)
   const tanH = Math.tan(camera.fov * Math.PI / 360), D = Math.max(13, (PK.halfW + 1) / (tanH * camera.aspect));
@@ -4259,10 +4347,12 @@ function pkTick(dt) { const t = performance.now() / 1000, L = pkLevel(), kp = pk
       else { sfx('boing'); sfx('ding', .1); addStars(1); celebrate(); runAnim(GAME.cheer); } } }
   if (pk.abe && pk.saved && (pk.phase === 'after' || pk.phase === 'return')) pkAbeSaved(dt, b);
   else if (pk.phase === 'after') { pk.t += dt;
+    // (a goal: when it has landed, the monkey stands bent over with its hands on its knees and is sorry - the user, 04-11-2026)
+    if (pk.abe && !pk.saved && pk.abe.now !== 'aergre' && pk.t > .75) pkAbePlay('aergre', .95, true, .45);
     // (saved: the ball drops in front of the bear and rolls a little; goal: the net bulges back and settles)
     if (pk.saved) { b.position.y = Math.max(kick.r, b.position.y - dt * 2.5); b.position.z = Math.min(PK.goalZ + 1.2, b.position.z + dt * 1.2); b.rotation.x += dt * 5; }
     else { pk.netBack.position.z = -1 - .35 * Math.exp(-pk.t * 3) * Math.abs(Math.cos(pk.t * 8)); b.position.z = Math.max(PK.goalZ - .85, b.position.z - dt * 1.5); b.position.y = Math.max(kick.r, b.position.y - dt * 2); }
-    if (pk.t > 2.4) { pk.foot++; runAnim('staa'); pkReady(); } }
+    if (pk.t > (pk.abe ? 2.9 : 2.4)) { pk.foot++; runAnim('staa'); pkReady(); } }
   // (the arms go with the kick and the eyes follow the ball up to the goal - the user, 04-11-2026)
   if (pk.phase === 'kick' || pk.phase === 'fly' || (pk.phase === 'after' && pk.saved && pk.t < 1)) { const a = glbActions[pkKick()], k = kicks[pkKick()]; if (a?.isRunning() && k) { const after = a.time - k.contact; kickArms(a.time + .4, k.contact + .4, k.side); const w = Math.max(0, Math.min(1, 1 - (after - 1) / .4)); lookAtBall(b, .85 * w);
     // (head up once it has kicked, to follow the ball - it is seen from behind, so it takes a clear lift - the user, 04-11-2026)
@@ -4273,19 +4363,19 @@ let starShown = null;
 function showStarSheet(id = starShown || players.now) { starShown = id; const p = players.list.find(q => q.id === id) || playerNow(), s = p.score, have = krOf(s), many = players.list.length > 1;
   const who = document.getElementById('starWho'); who.hidden = !many;
   who.innerHTML = many ? players.list.map(q => `<button data-who="${q.id}" class="${q.id === p.id ? 'on' : ''}">${playerFace(q)}<span>${esc(q.name) || '&nbsp;'}</span></button>`).join('') : '';
-  document.getElementById('starTitle').textContent = p.name ? `${p.name}s konto` : 'Din konto';
-  document.getElementById('starTotal').textContent = `💰 ${have} kr`;
-  document.getElementById('starNote').textContent = s.games ? `⭐ ${s.total} stjerner samlet i ${s.games} spil på denne enhed.` : 'Spil et af spillene for at samle stjerner.';
-  document.getElementById('starTable').innerHTML = `<tr><th></th>${LEVELS.map(([id, name]) => `<th><img src="ikoner/valg-${id}.png" alt="${name}"></th>`).join('')}</tr><tr><td>⭐ giver</td>${LEVELS.map(([id]) => `<td>${starWorth(id)} kr</td>`).join('')}</tr>` +
+  document.getElementById('starTitle').textContent = p.name ? T(`${p.name}s konto`, `${p.name}’s account`) : tr('Din konto');
+  document.getElementById('starTotal').textContent = `💰 ${krTxt(have)}`;
+  document.getElementById('starNote').textContent = s.games ? T(`⭐ ${s.total} stjerner samlet i ${s.games} spil på denne enhed.`, `⭐ ${s.total} stars collected in ${s.games} games on this device.`) : tr('Spil et af spillene for at samle stjerner.');
+  document.getElementById('starTable').innerHTML = `<tr><th></th>${LEVELS.map(([id, name]) => `<th><img src="ikoner/valg-${id}.png" alt="${tr(name)}"></th>`).join('')}</tr><tr><td>${tr('⭐ giver')}</td>${LEVELS.map(([id]) => `<td>${krTxt(starWorth(id))}</td>`).join('')}</tr>` +
     // (Hop over bolden: its best of the three ways to see it)
-    GAME_NAMES.map(([g, name]) => `<tr><td>${name}</td>${LEVELS.map(([id]) => { const b = g === 'hop' ? Math.max(...HOP_WAYS.map(w => s.best[w[0]]?.[id] || 0)) : s.best[g]?.[id]; return b ? `<td>🏆 ${b}</td>` : '<td class="none">–</td>'; }).join('')}</tr>`).join('');
+    GAME_NAMES.map(([g, name]) => `<tr><td>${tr(name)}</td>${LEVELS.map(([id]) => { const b = g === 'hop' ? Math.max(...HOP_WAYS.map(w => s.best[w[0]]?.[id] || 0)) : s.best[g]?.[id]; return b ? `<td>🏆 ${b}</td>` : '<td class="none">–</td>'; }).join('')}</tr>`).join('');
   // (the shop: every special thing, ✓ when this child owns it, the lock and the price when not - tapping one buys it)
   const shop = document.getElementById('shopList'); shop.innerHTML = '';
   for (const [n, price] of Object.entries(SHOP)) { const b = iconButton(`ikoner/valg-${n}.png`, shopThing(n).label), own = s.owned?.includes(n);
-    b.classList.toggle('locked', !own); b.append(Object.assign(document.createElement('span'), { className: 'price' + (own ? ' own' : ''), textContent: own ? '✓' : `🔒 ${price} kr` }));
+    b.classList.toggle('locked', !own); b.append(Object.assign(document.createElement('span'), { className: 'price' + (own ? ' own' : ''), textContent: own ? '✓' : `🔒 ${krTxt(price)}` }));
     b.onclick = () => { if (!own) askBuy(n, p.id); }; shop.append(b); }
   // (what this child has bought, the newest first - a picture to go by, the name, the day and the price)
-  document.getElementById('buyLog').innerHTML = (s.history || []).map(h => `<div class="buy-row"><img src="ikoner/valg-${h.n}.png" alt=""><span>${esc(shopThing(h.n).label)}<small>${new Date(h.at).toLocaleDateString('da-DK')}</small></span><b>${h.kr} kr</b></div>`).join('');
+  document.getElementById('buyLog').innerHTML = (s.history || []).map(h => `<div class="buy-row"><img src="ikoner/valg-${h.n}.png" alt=""><span>${esc(tr(shopThing(h.n).label))}<small>${new Date(h.at).toLocaleDateString(T('da-DK', 'en-US'))}</small></span><b>${krTxt(h.kr)}</b></div>`).join('');
   document.getElementById('starSheet').hidden = false; }
 const esc = t => String(t || '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 document.getElementById('starBtn').onclick = () => { starShown = null; showStarSheet(); };
@@ -4298,8 +4388,8 @@ function askWho(then) { if (players.list.length < 2) { if (!playerNow().pic && !
 document.getElementById('whoList').addEventListener('click', e => { const b = e.target.closest('[data-who]'); if (!b) return; document.getElementById('whoSheet').hidden = true; setPlayer(b.dataset.who); whoThen?.(); whoThen = null; });
 // (the grown-ups' list: a name to write, 📷 a new picture from the figure on the screen, 🗑 delete - asked twice)
 function showPlayers() { document.getElementById('playerList').innerHTML = players.list.map(q => `<div class="player-row" data-id="${q.id}">${playerFace(q)}
-    <div style="flex:1;min-width:0"><input value="${esc(q.name)}" maxlength="12" placeholder="Navn" aria-label="Navn" autocomplete="off" data-1p-ignore data-lpignore="true"><small>💰 ${krOf(q.score)} kr</small></div>
-    <button class="pic-p" aria-label="Gem figuren på skærmen som barnets MiniMig">📷</button>${players.list.length > 1 ? '<button class="del-p" aria-label="Slet spiller">🗑</button>' : ''}</div>`).join('');
+    <div style="flex:1;min-width:0"><input value="${esc(q.name)}" maxlength="12" placeholder="${tr('Navn')}" aria-label="${tr('Navn')}" autocomplete="off" data-1p-ignore data-lpignore="true"><small>💰 ${krTxt(krOf(q.score))}</small></div>
+    <button class="pic-p" aria-label="${tr('Gem figuren på skærmen som barnets MiniMig')}">📷</button>${players.list.length > 1 ? `<button class="del-p" aria-label="${tr('Slet spiller')}">🗑</button>` : ''}</div>`).join('');
   document.getElementById('playerSheet').hidden = false; }
 // (Til voksne: the website's dialog, if its pwa.js is on the page - not when the game runs on its own)
 const adultBtn = document.getElementById('adultBtn'), pwaDialog = () => document.querySelector('.pwa-dialog');
@@ -4312,7 +4402,7 @@ document.getElementById('playerList').addEventListener('click', e => { const row
   // from Mine figurer)
   if (e.target.closest('.pic-p')) { if (game.on) { toast('Stop spillet først'); return; } p.pic = playerPic() || p.pic; if (hairBase) p.fig = figureNow(); savePlayers(); showPlayers(); showPlayer(); toast('📷 Gemt som barnets MiniMig'); return; }
   const del = e.target.closest('.del-p'); if (!del) return;
-  if (!del.classList.contains('armed')) { del.classList.add('armed'); del.textContent = 'Slet?'; setTimeout(() => { del.classList.remove('armed'); del.textContent = '🗑'; }, 2500); return; }
+  if (!del.classList.contains('armed')) { del.classList.add('armed'); del.textContent = tr('Slet?'); setTimeout(() => { del.classList.remove('armed'); del.textContent = '🗑'; }, 2500); return; }
   players.list.splice(players.list.indexOf(p), 1); if (players.now === p.id) players.now = players.list[0].id; score = playerNow().score; starShown = null; savePlayers(); showPlayers(); showPlayer(); });
 // (closing the list: back to Mine figurer, where the children now are)
 document.getElementById('playerSheet').addEventListener('click', e => { if (e.target.id === 'playerSheet' || e.target.closest('[data-close]')) setTimeout(() => { document.getElementById('figSheet').hidden = false; renderGallery(); }, 0); });
@@ -4320,9 +4410,9 @@ document.getElementById('playerSheet').addEventListener('click', e => { if (e.ta
 // the player and puts on their MiniMig. Hidden while there is only one child with no MiniMig of their own yet)
 function renderKids() { const box = document.getElementById('figKids'), list = document.getElementById('kidList'), show = players.list.length > 1 || players.list.some(q => q.fig);
   box.hidden = !show; if (!show) return;
-  list.innerHTML = players.list.map(q => `<button data-kid="${q.id}" class="${q.id === players.now ? 'on' : ''}">${playerFace(q)}<span>${esc(q.name) || '&nbsp;'}</span><small>💰 ${krOf(q.score)} kr</small></button>`).join(''); }
+  list.innerHTML = players.list.map(q => `<button data-kid="${q.id}" class="${q.id === players.now ? 'on' : ''}">${playerFace(q)}<span>${esc(q.name) || '&nbsp;'}</span><small>💰 ${krTxt(krOf(q.score))}</small></button>`).join(''); }
 document.getElementById('kidList').addEventListener('click', e => { const b = e.target.closest('[data-kid]'), p = b && players.list.find(q => q.id === b.dataset.kid); if (!p) return;
-  if (game.on) { toast('Stop spillet først'); return; } setPlayer(p.id); document.getElementById('figSheet').hidden = true; if (p.fig && hairBase) wearFigure(p.fig); toast(p.name ? `Hej ${p.name}!` : '👋 Hej!'); });
+  if (game.on) { toast('Stop spillet først'); return; } setPlayer(p.id); document.getElementById('figSheet').hidden = true; if (p.fig && hairBase) wearFigure(p.fig); toast(p.name ? T(`Hej ${p.name}!`, `Hello ${p.name}!`) : '👋 Hej!'); });
 showPlayer();
 function showRecord() { const el = document.getElementById('record'); el.textContent = '🏆 ' + bestNow(); el.classList.toggle('beaten', !!game.record); document.getElementById('hudKr').textContent = `💰 ${krOf(score)}`; }
 document.getElementById('stage').addEventListener('pointerdown', e => { if (!game.on || e.target.closest('button')) return; e.preventDefault();
@@ -4332,7 +4422,7 @@ document.getElementById('stage').addEventListener('pointermove', e => { if (game
 for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) document.getElementById('stage').addEventListener(ev, () => { sea.held = false; });
 addEventListener('keydown', e => { if (!game.on || /INPUT/.test(e.target.tagName)) return;
   if (game.mode === 'skate' && (e.code === 'ArrowLeft' || e.code === 'ArrowRight')) { e.preventDefault(); steer(e.code === 'ArrowLeft' ? -1 : 1); }
-  else if (game.mode !== 'skate' && e.code === 'Space') { e.preventDefault(); jump(); } });
+  else if (MODES[game.mode].from && e.code === 'Space') { e.preventDefault(); jump(); } });
 document.getElementById('gameExit').onclick = () => stopGame();
 // (no menu from a long press anywhere but in the name box)
 document.querySelector('.main').addEventListener('contextmenu', e => { if (e.target.tagName !== 'INPUT') e.preventDefault(); });
@@ -4431,13 +4521,30 @@ function sfx(kind, later = 0) { const ctx = game.audio; if (!sound.sfx || !ctx |
 musicBtn.onclick = () => { musicOn = !musicOn; try { localStorage.setItem('minimig3d.musik', musicOn ? 'til' : 'fra'); } catch (e) {} if (musicOn) soundOut()?.resume(); };
 // (once the figure is in, the hint goes into the i in the corner - on a touch screen and on a computer alike)
 const infoBtn = document.getElementById('infoBtn'), infoPop = document.getElementById('infoPop'); let infoTimer = 0;
+// (the globe: the page loaded anew in the other language, with the figure on the screen - not in a game)
+{ const b = document.getElementById('langBtn'), [ic, nm] = b.children; nm.textContent = T('English', 'Dansk');
+  ic.innerHTML = '<svg viewBox="0 0 32 32" width="30" height="30" style="vertical-align:middle"><circle cx="16" cy="16" r="14" fill="#7CC4F5" stroke="#3B82C4" stroke-width="2"/><path d="M16 2c-5 4-7.500 9-7.500 14S11 26 16 30c5-4 7.500-9 7.500-14S21 6 16 2zM2 16h28M4.500 9h23M4.500 23h23" fill="none" stroke="#3B82C4" stroke-width="1.800"/></svg>';
+  b.onclick = () => { if (game.on) { toast('Stop spillet først'); return; } try { localStorage.setItem('minimig3d.sprog', T('en', 'da')); } catch (e) {} keepLast(); location.reload(); }; }
+// (on the test page only: a button with kroner, to try the shop without playing for them - the user, 04-11-2026)
+if (location.pathname.includes('/test/')) { const b = document.createElement('button'); b.textContent = '+100 kr'; b.style.cssText = 'position:fixed;top:28px;left:50%;transform:translateX(-50%);z-index:999;background:#FFC233;color:#5A3A00;border:0;border-radius:10px;padding:5px 12px;font:700 13px system-ui,sans-serif;cursor:pointer'; b.onclick = () => { krOf(score); score.kr += 100; saveScore(); showRecord(); toast(`💰 ${score.kr} kr`); if (!document.getElementById('starSheet').hidden) showStarSheet(); }; document.body.append(b); }
 // (one more line while the child isn't saved with a name yet - the user, 04-11-2026: how to keep one's own player)
-const infoSave = document.createElement('span'); infoSave.innerHTML = '<br>🙂 Gem dig selv som spiller: Byg din figur, og tryk på billedet nederst i højre hjørne. Vælg »Børn og spillere – for voksne«, og få en voksen til at løse regnestykket. Skriv navnet, og tryk 📷';
-infoBtn.onclick = () => { const p = playerNow(); infoSave.remove(); if (!p.name || !p.fig) infoPop.append(infoSave); infoPop.hidden = !infoPop.hidden; infoBtn.setAttribute('aria-expanded', String(!infoPop.hidden)); clearTimeout(infoTimer); if (!infoPop.hidden) infoTimer = setTimeout(() => { infoPop.hidden = true; infoBtn.setAttribute('aria-expanded', 'false'); }, 16000); };
-loadFbx().then(ok => { const tag = document.getElementById('tag'); if (!ok) { tag.textContent = 'Figuren kunne ikke hentes'; return; }
+const infoSave = document.createElement('span'); infoSave.innerHTML = T('<br>🙂 Gem dig selv som spiller: Byg din figur, og tryk på billedet nederst i højre hjørne. Vælg »Børn og spillere – for voksne«, og få en voksen til at løse regnestykket. Skriv navnet, og tryk 📷', '<br>🙂 Save yourself as a player: Build your figure and tap the picture in the bottom right corner. Choose “Children and players – for grown-ups” and get a grown-up to solve the math problem. Write the name and tap 📷');
+const infoVersion = document.createElement('small'); infoVersion.style.cssText = 'display:block;margin-top:6px;opacity:.65;font-weight:600'; infoVersion.textContent = 'Version ' + document.querySelector('meta[name="minimig-version"]').content;
+infoBtn.onclick = () => { const p = playerNow(); infoSave.remove(); infoVersion.remove(); if (!p.name || !p.fig) infoPop.append(infoSave); infoPop.append(infoVersion); infoPop.hidden = !infoPop.hidden; infoBtn.setAttribute('aria-expanded', String(!infoPop.hidden)); clearTimeout(infoTimer); if (!infoPop.hidden) infoTimer = setTimeout(() => { infoPop.hidden = true; infoBtn.setAttribute('aria-expanded', 'false'); }, 16000); };
+// (the figure on the screen remembered on this device, and put on again when the game opens - the pages promised it, and
+// a new version comes in by itself when the game is put away; never while it is being put on, nor in a game. A child with
+// a MiniMig of their own and nothing remembered yet gets that)
+const LAST_KEY = 'minimig3d.seneste'; let lastOn = false, lastSaved = '';
+function keepLast() { if (!lastOn || game.on) return; try { const f = JSON.stringify(figureNow()); if (f !== lastSaved) { localStorage.setItem(LAST_KEY, f); lastSaved = f; } } catch (e) {} }
+setInterval(keepLast, 3000); addEventListener('pagehide', keepLast); document.addEventListener('visibilitychange', () => { if (document.hidden) keepLast(); });
+async function wearLast() { let f = null; try { f = JSON.parse(localStorage.getItem(LAST_KEY)); } catch (e) {} f ||= playerNow().fig; if (!f) return; lastSaved = JSON.stringify(f);
+  // (out of sight until it is dressed, but not for long if something can't be fetched)
+  holder.visible = false; try { await Promise.race([wearFigure(f), new Promise(ok => setTimeout(ok, 8000))]); } catch (e) {} holder.visible = true; }
+loadFbx().then(async ok => { const tag = document.getElementById('tag'); if (!ok) { tag.textContent = tr('Figuren kunne ikke hentes'); return; }
   // (on a computer too, since 03-11-2026 - the user wanted it the same everywhere - in words for the mouse)
-  if (matchMedia('(hover: hover) and (pointer: fine)').matches) infoPop.innerHTML = '🖱️ Træk for at dreje figuren<br>🔍 Rul med musen for at zoome<br>👕 Klik på navnet på trøjen, så siger figuren det – med din egen indtalte stemme, hvis du har indtalt en';
-  tag.textContent = ''; infoBtn.hidden = false; });
+  if (matchMedia('(hover: hover) and (pointer: fine)').matches) infoPop.innerHTML = T('🖱️ Træk for at dreje figuren<br>🔍 Rul med musen for at zoome<br>👕 Klik på navnet på trøjen, så siger figuren det – med din egen indtalte stemme, hvis du har indtalt en', '🖱️ Drag to turn the figure<br>🔍 Scroll with the mouse to zoom<br>👕 Click the name on the top and the figure says it – in your own recorded voice, if you have recorded one');
+  await wearLast(); lastOn = true;
+  tag.textContent = ''; infoBtn.hidden = false; }).catch(() => { document.getElementById('tag').textContent = tr('Figuren kunne ikke hentes'); }); // (a dropped connection said "Henter figuren" for ever)
 
 // ---- render loop ----
 const clock = new THREE.Clock();
