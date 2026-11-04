@@ -2921,7 +2921,7 @@ document.getElementById('keepChoice').addEventListener('click', e => { const c =
 // all-white vest and shorts and nothing else, no name, every colour the figure's own; a boy with short hair or a girl
 // with plaits. The user dropped the app's pink and blue underwear)
 const newFig = kind => ({ picked: {}, hair: kind === 'pige' ? 'haar-fletninger' : 'haar-kort',
-  eyes: 'oejne-naturlige', brows: 'bryn-naturlige', mouth: 'mund-smil', nose: 'naese-naturlig', pynt: [], wear: Object.fromEntries(Object.keys(GARMENTS).map(p => [p, ''])), name: '', badge: 'ingen', item: '', ears: 'oerer-naturlig', earrings: '', bg: 'bg-sol' });
+  eyes: 'oejne-naturlige', brows: 'bryn-naturlige', mouth: 'mund-smil', nose: 'naese-naturlig', pynt: [], wear: Object.fromEntries(Object.keys(GARMENTS).map(p => [p, ''])), name: '', badge: 'ingen', item: '', pet: '', petToys: [], ears: 'oerer-naturlig', earrings: '', bg: 'bg-sol' });
 const sameFig = (a, b) => !!a && !!b && JSON.stringify(a) === JSON.stringify(b);
 document.getElementById('newBtn').addEventListener('click', () => { document.getElementById('newChoice').hidden = false; });
 document.getElementById('newChoice').addEventListener('click', async e => { const b = e.target.closest('[data-new]'); if (!b || !hairBase) return;
@@ -2936,7 +2936,7 @@ function renderGallery() { const l = savedFigs(), el = document.getElementById('
     : '<p class="empty">Ingen figurer endnu.<br>Tryk på ⭐ for at gemme din figur her.</p>'; }
 document.getElementById('figsBtn').addEventListener('click', () => { document.getElementById('figSheet').hidden = false; renderGallery(); });
 document.getElementById('gallery').addEventListener('click', e => { const load = e.target.closest('[data-load]'), del = e.target.closest('[data-del]'), l = savedFigs();
-  if (load) { const s = l[+load.dataset.load]; if (!s || !hairBase) return; document.getElementById('figSheet').hidden = true; wearFigure(s.fig); }
+  if (load) { const s = l[+load.dataset.load]; if (!s || !hairBase) return; if (game.on) { toast('Stop spillet først'); return; } document.getElementById('figSheet').hidden = true; wearFigure(s.fig); }
   else if (del) { // (a first tap asks "Slet?", only a second one deletes, so a figure is not lost by a stray tap)
     if (!del.classList.contains('armed')) { del.classList.add('armed'); del.textContent = 'Slet?'; setTimeout(() => { del.classList.remove('armed'); del.textContent = '✕'; }, 2500); return; }
     l.splice(+del.dataset.del, 1); storeFigs(l); renderGallery(); } });
@@ -4333,7 +4333,7 @@ document.getElementById('stage').addEventListener('pointermove', e => { if (game
 for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) document.getElementById('stage').addEventListener(ev, () => { sea.held = false; });
 addEventListener('keydown', e => { if (!game.on || /INPUT/.test(e.target.tagName)) return;
   if (game.mode === 'skate' && (e.code === 'ArrowLeft' || e.code === 'ArrowRight')) { e.preventDefault(); steer(e.code === 'ArrowLeft' ? -1 : 1); }
-  else if (game.mode !== 'skate' && e.code === 'Space') { e.preventDefault(); jump(); } });
+  else if (MODES[game.mode].from && e.code === 'Space') { e.preventDefault(); jump(); } });
 document.getElementById('gameExit').onclick = () => stopGame();
 // (no menu from a long press anywhere but in the name box)
 document.querySelector('.main').addEventListener('contextmenu', e => { if (e.target.tagName !== 'INPUT') e.preventDefault(); });
@@ -4466,6 +4466,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.9.1 (8db21ee)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.9.1 (08008bd)</div>
 </body>
 </html>
