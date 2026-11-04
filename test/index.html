@@ -601,7 +601,7 @@ const EN = {
   'Dit billede': 'Your picture', 'Tryk og hold på billedet, og vælg': 'Press and hold the picture, and choose', 'Gem i Fotos': 'Save to Photos', 'eller': 'or', 'Del': 'Share', '💾 Gem billedet': '💾 Save the picture', 'Billedet gemmes i mappen Overførsler. Du kan også højreklikke på billedet og vælge': 'The picture is saved in your Downloads folder. You can also right-click the picture and choose', 'Gem billede som': 'Save image as',
   'Sådan gør du': 'How it works', 'Musik til og fra': 'Music on and off', 'Skriv dit navn': 'Write your name', 'Navn på trøjen': 'Name on the top', 'Sig navnet': 'Say the name', 'Slet din egen stemme': 'Delete your own voice', 'Gem dansen': 'Save the dance', 'Start forfra': 'Start again', 'Navn på dansen': 'Name of the dance', 'Luk': 'Close', 'Slet': 'Delete', 'Mønterne på disken': 'The coins on the counter', 'Billedet af figuren': 'The picture of the figure', 'Min MiniMig': 'My MiniMig' };
 const tr = s => LANG === 'en' ? EN[String(s).replace(/­/g, '')] ?? s : s;
-document.documentElement.lang = LANG; if (LANG === 'en') document.title = document.title.replace(/version 2/, '').trim();
+document.documentElement.lang = LANG; if (LANG === 'en') document.title = 'MiniMig – build and play';
 // (the page's own texts and labels; a text's spaces round it are kept, as words sit beside the bold ones in a line)
 if (LANG === 'en') { const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT), nodes = []; while (walk.nextNode()) nodes.push(walk.currentNode);
   for (const n of nodes) { const key = n.nodeValue.trim(); if (key) { const en = tr(key); if (en !== key) n.nodeValue = n.nodeValue.replace(key, en); } }
@@ -4559,6 +4559,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.9.1 (ac9a4f8)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.9.1 (d149143)</div>
 </body>
 </html>
