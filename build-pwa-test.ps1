@@ -23,4 +23,7 @@ $sha = [Security.Cryptography.SHA256]::Create()
 $version = ([BitConverter]::ToString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes(($hashes.Values -join ''))))).Replace('-', '').Substring(0, 16)
 $out = "self.MINIMIG_VERSION = '$version';`nself.MINIMIG_GAME = 'test';`nself.MINIMIG_FILES = $(ConvertTo-Json -InputObject $must -Compress);`nself.MINIMIG_REST = $(ConvertTo-Json -InputObject $rest -Compress);`nself.MINIMIG_HASHES = $(ConvertTo-Json -InputObject $hashes -Compress);`n"
 [IO.File]::WriteAllText((Join-Path $root 'precache-manifest.js'), $out, $utf8)
+# (Safari ser kun paa selve service-worker.js, naar den leder efter en ny version - ikke paa filer den henter ind - saa iPad'en
+# fik aldrig den nye. Versionsnummeret i dens foerste linje goer den til en ny fil hver gang)
+$sw = Join-Path $root 'service-worker.js'; [IO.File]::WriteAllText($sw, [IO.File]::ReadAllText($sw).Replace("importScripts('./precache-manifest.js');", "importScripts('./precache-manifest.js?v=$version');"), $utf8)
 Write-Host ("Testside: {0} filer foerst ({1:N1} MB), {2} bagefter, version {3}" -f $must.Count, ($mustSize / 1MB), $rest.Count, $version)
