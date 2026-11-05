@@ -1105,7 +1105,7 @@ const MOUTHS = [['mund-smil', 'Smil', { mid: [-.036, .0685], hw: .27, open: [0, 
   // (Tunge: a cheeky child's, after the user's picture of 05-11-2026 - a narrow dark opening, corners well up, no teeth,
   // a broad tongue lying out over the lower lip; dimple: how dark the corners' soft crease)
   ['mund-tunge', 'Tunge', { mid: [-.015, .1], hw: .28, open: [.02, .065], lip: [.02, .04], solid: true, lipTint: .3, lip3d: [.026, .05], lipH: [.02, .036], dimple: .8, tongue3d: { w: .125, th: .028, down: .075, out: .06 } }],
-  ['mund-o', 'Åh', { o: 1.2, solid: true, lipTint: .3, lipH: [.056], inside: true, tongueIn: { w: .085, h: .035, d: .12, y: .02, z: .12 } }], ['mund-kys', 'Kys', { kiss: 1.25, solid: true, closed: true, lipH: [.09] }],
+  ['mund-o', 'Åh', { o: 1.2, solid: true, lipTint: .3, lipH: [.056], inside: true, tongueIn: { w: .085, h: .035, d: .12, y: .02, z: .12 } }], ['mund-kys', 'Kys', { kiss: 1.25, kw: [.14, .105, .125], solid: true, closed: true, lipH: [.042] }],
   ['mund-trist', 'Trist', { mid: [.05, -.1], hw: .28, open: [0, 0], lip: [.044, .056], round: .3, closed: true, solid: true, lipTint: .28, lip3d: [.036, .062], lipH: [.022, .036] }]];
 let mouthNow = 'mund-smil';
 function setMouth(name) { mouthNow = name; redrawBody(); renderStyles(); }
@@ -1217,9 +1217,9 @@ function drawMouth(o) {
     // (Kys: the lips gathered and pushed forward into a round pucker - a dome, its top edge with a little bow, lit from
     // above and in front: lightest where it sticks out most, deep red round its rim; creases run out from a small dark
     // pucker in the middle, and a short seam either side of it)
-    if (opts.kiss) { const sc = opts.kiss, cy = my - .03, rx = .085 * sc, ry = .075 * sc, ux = X / rx;
+    if (opts.kiss) { const sc = opts.kiss, cy = my - .03, rx = opts.kw ? opts.kw[0] : .085 * sc, ry = opts.kw ? opts.kw[2] / 1.08 : .075 * sc, ux = X / rx;
       const top = cy + ry * (1 - .22 * Math.exp(-((ux / .28) ** 2))), uy = Y > cy ? (Y - cy) / (top - cy) : (Y - cy) / (ry * 1.08), r = Math.hypot(ux, uy);
-      if (r < 1.25) { under(i, k, (r - 1) * ry, ux * .8); if (opts.solid) continue;
+      if (r < 1.25) { if (opts.solid) { if (Y < cy) under(i, k, (r - 1) * ry, ux * .8); continue; } under(i, k, (r - 1) * ry, ux * .8);
         const a = cl((1 - r) * ry / .012 + .5);
         if (a > 0) { const nz = Math.sqrt(Math.max(0, 1 - r * r)), d = cl(.3 + .55 * nz + .25 * uy * (1 - nz) - .06 * ux);
           let c = d < .5 ? mix(kissShade, kissC, d / .5) : mix(kissC, kissLight, (d - .5) / .5 * .75);
@@ -1497,19 +1497,20 @@ function buildSolid(M, o) { M.solid = M.solid || []; const fz = faceHeight(M), a
     // (the winding depends on the lip's direction: the upper lip's faces turned out)
     if (!lower) { const ix = g.index.array; for (let k = 0; k < ix.length; k += 3) { const t = ix[k + 1]; ix[k + 1] = ix[k + 2]; ix[k + 2] = t; } g.computeVertexNormals(); }
     const m = holdByHead(M, g, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .62, side: THREE.DoubleSide, transparent: true })); m.castShadow = false; }
-  // (Åh: one round ring of lip, fuller below. Kys: a dome pushed forward, a short groove across it between its two lips)
+  // (Åh: one round ring of lip, fuller below. Kys: two lips pushed forward, a groove across between them)
   else { const ringAt = (a, b) => { const an = b * Math.PI * 2, c = Math.cos(an), sn = Math.sin(an), sc = o.o, t = a * 1.3 - .3, f = .89 - .11 * sn, wx = .055 * sc, wy = (.047 - .0075 * sn) * sc, rx0 = .1 * sc, ry0 = .09 * sc;
       if (t >= 0) { const p = t < .35 ? .6 + .4 * Math.sin(Math.PI / 2 * t / .35) : Math.pow(Math.cos(Math.PI / 2 * (t - .35) / .65), 2.4), X = c * (rx0 + wx * t), Y = cyR + sn * (ry0 + wy * t); return B(X, Y, fz(X, Y) + H[0] * ap * f * p - .004 * ap * t * t); }
       const v = -t / .3, X = c * (rx0 - wx * .3 * Math.sin(v * Math.PI / 2)), Y = cyR + sn * (ry0 - wy * .3 * Math.sin(v * Math.PI / 2)); return B(X, Y, fz(c * rx0, cyR + sn * ry0) + H[0] * ap * f * .6 * Math.cos(v * Math.PI / 2) - .1 * ap * v * v); };
-    const domeAt = (a, b) => { const an = b * Math.PI * 2, sc = o.kiss, ux = a * Math.cos(an), uy = a * Math.sin(an), rx0 = .085 * sc, ry0 = .075 * sc, top = cyR + ry0 * (1 - .22 * Math.exp(-((ux / .28) ** 2))), X = ux * rx0, Y = uy > 0 ? cyR + uy * (top - cyR) : cyR + uy * ry0 * 1.08, cr = Math.max(0, 1 - Math.abs(Math.sin(an * 4.5)) / .22) * Math.min(1, Math.max(0, (a - .18) / .12)) * Math.min(1, Math.max(0, (.85 - a) / .15));
-      return B(X, Y, fz(X, Y) + H[0] * ap * Math.pow(Math.cos(a * Math.PI / 2), .6) * (1 - .05 * cr) - .02 * ap * Math.exp(-((uy / .09) ** 2)) * Math.max(0, 1 - Math.abs(ux) / .8) - .004 * ap); };
+    // (kw: half width, height of the upper lip and of the lower, after the user's picture of 05-11-2026 - the upper lip's top with a deep bow, two peaks either side of it; pointed corners; two lips, each its own roll, the lower the fuller)
+    const domeAt = (a, b) => { const an = b * Math.PI * 2, ux = a * Math.cos(an), uy = a * Math.sin(an), [kx, ku, kl] = o.kw, corner = Math.pow(Math.max(0, 1 - ux * ux), .28), X = ux * kx, Y = cyR - .012 * Math.exp(-((ux / .2) ** 2)) * (1 - Math.abs(uy)) + (uy > 0 ? uy * ku * corner * (1 - .36 * Math.exp(-Math.abs(ux) / .1)) : uy * kl * corner), roll = Math.pow(Math.cos(a * Math.PI / 2), .55) * (uy > 0 ? .55 : 1);
+      return B(X, Y, fz(X, Y) + H[0] * ap * roll - .02 * ap * Math.exp(-((uy / .1) ** 2)) * Math.max(0, 1 - Math.abs(ux) / .95) - .004 * ap); };
     const g = gridGeo(22, 64, o.o ? ringAt : domeAt, () => ({ r: 1, g: 1, b: 1 }), true); M.lipT.push(g); g.setAttribute('color', new THREE.Float32BufferAttribute(new Float32Array(23 * 65 * 4).fill(1), 4));
     holdByHead(M, g, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .5, side: THREE.DoubleSide, transparent: true })).castShadow = false; } }
 // (the lips' colour from the skin's: the skin's own at the outer edge, so they melt into the face; deeper, warmer in the middle)
 function colourLips(M, o) { const skin = tex.colours[PARTS.skin] || tex.skin, T = M.texels; let k = 0, c = 0; for (let j = 0; j < T.length; j += 4) if (Math.hypot(T[j + 1], (T[j + 2] - M.my) / .8) < .45) { k += T[j + 3]; c++; } k = c ? k / c : 1;
-  const mix = (a, b, t) => ({ r: a.r * (1 - t) + b.r * t, g: a.g * (1 - t) + b.g * t, b: a.b * (1 - t) + b.b * t }), lip = mix(skin, { r: .78, g: .32, b: .36 }, o.lipTint || .36), S = linear(Math.min(1, skin.r * k), Math.min(1, skin.g * k), Math.min(1, skin.b * k)), Lp = linear(lip.r, lip.g, lip.b), rim = o.closed ? linear(lip.r * .55, lip.g * .4, lip.b * .4) : linear(lip.r * .3, lip.g * .17, lip.b * .17), kl = mix(skin, { r: .74, g: .29, b: .34 }, .5), kd = mix(kl, { r: .4, g: .09, b: .12 }, .68), KL = linear(kl.r, kl.g, kl.b), KD = linear(kd.r, kd.g, kd.b), KH = linear(1, .88, .88);
+  const mix = (a, b, t) => ({ r: a.r * (1 - t) + b.r * t, g: a.g * (1 - t) + b.g * t, b: a.b * (1 - t) + b.b * t }), lip = mix(skin, { r: .78, g: .32, b: .36 }, o.lipTint || .36), S = linear(Math.min(1, skin.r * k), Math.min(1, skin.g * k), Math.min(1, skin.b * k)), Lp = linear(lip.r, lip.g, lip.b), rim = o.closed ? linear(lip.r * .55, lip.g * .4, lip.b * .4) : linear(lip.r * .3, lip.g * .17, lip.b * .17), kl = mix(skin, { r: .72, g: .34, b: .4 }, .5), kd = mix(kl, { r: .4, g: .12, b: .14 }, .62), KL = linear(kl.r, kl.g, kl.b), KD = linear(kd.r, kd.g, kd.b), KH = linear(1, .88, .88);
   for (const g of M.lipT) { const C = g.attributes.color; for (let i = 0; i <= 22; i++) { const a = i / 22, t = a * 1.3 - .3, col = t < .2 ? rim.clone().lerp(Lp, Math.max(0, (t + .3) / .5)) : Lp.clone().lerp(S, Math.min(1, Math.max(0, (t - .55) / .45)) ** 1.3); for (let j = 0; j <= 64; j++) { const sm = v => { v = Math.min(1, Math.max(0, v)); return v * v * (3 - 2 * v); }, au = Math.abs(j / 32 - 1), at = (i * 65 + j) * 4;
-        if (o.kiss) { const an = j / 32 * Math.PI, cr = Math.max(0, 1 - Math.abs(Math.sin(an * 4.5)) / .22) * sm((a - .18) / .12) * sm((.85 - a) / .15), sx = Math.abs(a * Math.cos(an)), sy = Math.abs(a * Math.sin(an)), seam = sm((.04 - sy) / .035) * sm((.62 - sx) / .2); KL.clone().lerp(KH, .35 * (1 - a) * (1 - a)).lerp(KD, Math.max(.14 * cr, .85 * seam, .55 * sm((a - .7) / .3))).toArray(C.array, at); C.array[at + 3] = 1 - sm((a - .82) / .18); continue; }
+        if (o.kiss) { const an = j / 32 * Math.PI, sx = a * Math.cos(an), sy = a * Math.sin(an), seam = sm((.05 - Math.abs(sy)) / .045) * sm((.97 - Math.abs(sx)) / .2), shine = Math.exp(-(((sy + .5) / .22) ** 2 + (sx / .45) ** 2)); KL.clone().lerp(KH, .38 * shine).lerp(KD, Math.max(.8 * seam, .3 * sm((a - .72) / .28))).toArray(C.array, at); C.array[at + 3] = 1 - sm((a - .86) / .14); continue; }
         col.toArray(C.array, at); C.array[at + 3] = (1 - sm((t - .4) / .55)) * (o.hw ? 1 - (o.closed ? sm((au - .5) / .42) : sm((au - .93) / .065)) : 1); } } C.needsUpdate = true; } }
 
 function redrawBody() {
@@ -4687,6 +4688,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.9.1 (43399cb)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.9.1 (131a9b6)</div>
 </body>
 </html>
