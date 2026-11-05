@@ -1100,7 +1100,7 @@ function drawEyes(o) {
 const MOUTHS = [['mund-smil', 'Smil'],
 // (all about as big as each other - the user found Grin much the biggest)
   ['mund-grin', 'Grin', { mid: [-.02, .09], hw: .32, open: [.025, .19], lip: [.024, .03], teeth: .065, teethW: 1.05, tongue: .055, crease: true, bulge: [.06, .065] }],
-  ['mund-tunge', 'Tunge', { mid: [0, .06], hw: .32, open: [.022, .13], lip: [.026, .032], teeth: .05, out: true, crease: true, solid: true, lip3d: [.036, .048], lipH: [.024, .032], teeth3d: [10, .058, .064, .72], tongue3d: { w: .118, th: .024, down: .118 } }],
+  ['mund-tunge', 'Tunge', { mid: [0, .06], hw: .32, open: [.022, .13], lip: [.026, .032], teeth: .05, out: true, crease: true, solid: true, lip3d: [.036, .048], lipH: [.024, .032], teeth3d: [10, .058, .064, .68], tongue3d: { w: .118, th: .024, down: .118 } }],
   ['mund-o', 'Åh', { o: 1.2 }], ['mund-kys', 'Kys', { kiss: 1.25 }],
   ['mund-trist', 'Trist', { mid: [.035, -.07], hw: .3, open: [0, 0], lip: [.044, .056], round: .3 }]];
 let mouthNow = 'mund-smil';
@@ -1461,7 +1461,7 @@ function buildSolid(M, o) { M.solid = M.solid || []; const fz = faceHeight(M), a
   holdByHead(M, cav, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .75, side: THREE.DoubleSide }));
   // (the upper teeth: small rounded blocks along the curve of the jaw, behind the upper lip)
   const pos = [], nrm = [], idx = [], TN = o.teeth3d[0], tw = o.teeth3d[1], th0 = o.teeth3d[2];
-  for (let k = 0; k < TN; k++) { const th = Math.min(k, TN - 1 - k) < 2 ? th0 * o.teeth3d[3] : th0, X = (k - (TN - 1) / 2) * tw, u = X / hw, e = edge(u), zm = fz(0, e.top), zs = (fz(hw * .72, e.top) + fz(-hw * .72, e.top)) / 2, z0 = zm + (zs - zm) * (u / .72) ** 2 - .085 * ap, y0 = e.top + .002 - th / 2, g = new THREE.SphereGeometry(1, 14, 10), P = g.attributes.position, base = pos.length / 3;
+  for (let k = 0; k < TN; k++) { const th = th0 * (1 - (1 - o.teeth3d[3]) * (Math.abs(k - (TN - 1) / 2) / ((TN - 1) / 2)) ** 2), X = (k - (TN - 1) / 2) * tw, u = X / hw, e = edge(u), zm = fz(0, e.top), zs = (fz(hw * .72, e.top) + fz(-hw * .72, e.top)) / 2, z0 = zm + (zs - zm) * (u / .72) ** 2 - (.085 + .035 * (u / .84) ** 2) * ap, y0 = e.top + .002 + .016 * (u / .84) ** 2 - th / 2, g = new THREE.SphereGeometry(1, 14, 10), P = g.attributes.position, base = pos.length / 3;
     for (let i = 0; i < P.count; i++) { const sx = P.getX(i), sy = P.getY(i), sz = P.getZ(i), sup = (v, e2) => Math.sign(v) * Math.pow(Math.abs(v), e2);
       pos.push(M.cx + (X + sup(sx, .5) * tw * .515) * ap, M.cy + (y0 + sup(sy, .55) * th * .5) * ap, z0 + sup(sz, .7) * .026 * ap - Math.abs(u) * .012 * ap); }
     for (const q of g.index.array) idx.push(base + q); g.dispose(); }
@@ -4662,6 +4662,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.9.1 (67e7505)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.9.1 (7f327cb)</div>
 </body>
 </html>
