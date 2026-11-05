@@ -126,7 +126,10 @@ navigator.serviceWorker.addEventListener('message', event => {
  if(total === undefined) { status.textContent = READY; return; } // (the previous version's service worker, until the new one takes over)
  showRest(total - missing.length, total); getRest(missing, total);
 });
-navigator.serviceWorker.addEventListener('controllerchange', () => { if(reloading) location.reload(); else checkReady(); });
+// (reloading the page lets a waiting version take over by itself, but the page it shows is still the old one - it took two
+// reloads to see a new version. A page just opened and not yet touched goes straight on to the new one)
+const hadController = !!navigator.serviceWorker.controller;
+navigator.serviceWorker.addEventListener('controllerchange', () => { if(reloading || (hadController && !touched && performance.now() < 15000)) { reloading = true; location.reload(); } else checkReady(); });
 // A new version is fetched quietly in the background and then put in by itself, never in the middle of play: at once
 // if MiniMig has only just been opened and nobody has touched it yet, otherwise when it is put away (the app closed,
 // another app opened, the screen locked). The figure is kept in local storage, so the reload loses nothing.
@@ -141,10 +144,11 @@ navigator.serviceWorker.register(new URL('service-worker.js', root), {scope:root
  registration = reg;
  const waiting = applyUpdate;
  waiting(); checkReady();
- reg.addEventListener('updatefound', () => {
-  const worker = reg.installing;
-  worker?.addEventListener('statechange', () => { waiting(); if(worker.state === 'redundant') status.textContent = NOT_READY; });
- });
+ const watch = () => { const worker = reg.installing;
+  worker?.addEventListener('statechange', () => { waiting(); if(worker.state === 'redundant') status.textContent = NOT_READY; }); };
+ // (one may already be on its way: opening the page starts it before this runs, and it then waited till the page was closed)
+ watch(); reg.addEventListener('updatefound', watch);
+ reg.update().catch(() => {}); // (the browser looks by itself only now and then: the page kept showing the old version when reloaded)
  navigator.serviceWorker.ready.then(checkReady);
 }).catch(() => { status.textContent = NOT_READY; });
 })();
