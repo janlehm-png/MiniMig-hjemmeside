@@ -1105,7 +1105,7 @@ const MOUTHS = [['mund-smil', 'Smil', { mid: [-.036, .0685], hw: .27, open: [0, 
   // (Tunge: a cheeky child's, after the user's picture of 05-11-2026 - a narrow dark opening, corners well up, no teeth,
   // a broad tongue lying out over the lower lip; dimple: how dark the corners' soft crease)
   ['mund-tunge', 'Tunge', { mid: [-.015, .1], hw: .28, open: [.02, .065], lip: [.02, .04], solid: true, lipTint: .3, lip3d: [.026, .05], lipH: [.02, .036], dimple: .8, tongue3d: { w: .125, th: .028, down: .075, out: .06 } }],
-  ['mund-o', 'Åh', { o: 1.2, solid: true, lipTint: .3, lipH: [.056], inside: true, tongueIn: { w: .085, h: .035, d: .12, y: .02, z: .12 } }], ['mund-kys', 'Kys', { kiss: 1.25, kw: [.14, .105, .125], solid: true, closed: true, lipH: [.042] }],
+  ['mund-o', 'Åh', { o: 1, ow: [.095, .082, .045], solid: true, lipTint: .42, lipH: [.05], inside: true, tongueIn: { w: .08, h: .028, d: .1, y: .022, z: .115 } }], ['mund-kys', 'Kys', { kiss: 1.25, kw: [.14, .105, .125], solid: true, closed: true, lipH: [.042] }],
   ['mund-trist', 'Trist', { mid: [.05, -.1], hw: .28, open: [0, 0], lip: [.044, .056], round: .3, closed: true, solid: true, lipTint: .28, lip3d: [.036, .062], lipH: [.022, .036] }]];
 let mouthNow = 'mund-smil';
 function setMouth(name) { mouthNow = name; redrawBody(); renderStyles(); }
@@ -1206,10 +1206,10 @@ function drawMouth(o) {
         put(i, skin, k * .8, .6 * cl(1 - Math.abs(dc - .045) / .006) * cl((ang + .9) / .3) * cl((.9 - ang) / .3) * cl((Math.abs(X) - cx2 + .02) / .02)); } }
     // (Åh: a round open mouth, its lips all round - fuller below - the inside dark with the tongue's tip at its foot)
     // (Åh and Kys drawn at their size times opts.o / opts.kiss, about their middle)
-    if (opts.o) { const cy = my - .03, sc = opts.o, x = X / sc, y = cy + (Y - cy) / sc, ei = Math.hypot(x / .1, (y - cy) / .09), eo = Math.hypot(x / .148, (y - cy + .008) / (y > cy ? .13 : .145));
+    if (opts.o) { const cy = my - (opts.ow ? opts.ow[2] : .03), sc = opts.o, x = X / sc, y = cy + (Y - cy) / sc, ei = opts.ow ? Math.hypot(X / opts.ow[0], (Y - cy) / opts.ow[1]) : Math.hypot(x / .1, (y - cy) / .09), eo = Math.hypot(x / .148, (y - cy + .008) / (y > cy ? .13 : .145));
       // (how far across the lip: 0 at the opening, 1 at its outer edge - ei / eo is the outer edge's size against the inner's)
+      if (opts.solid) { if (ei < 1.08) o[i + 3] = 0; continue; }
       under(i, k, (eo - 1) * .12 * sc, x / .12);
-      if (opts.solid) { if (ei < .97) o[i + 3] = 0; continue; }
       lip(i, k, (ei - 1) * .08 * sc, (1 - eo) * .1 * sc, (ei - 1) / ((ei / eo - 1) || 1), cl((cy + .03 - y) / .06), x / .1);
       put(i, insideC, .6 + .45 * cl((cy + .09 - y) / .18), cov((1 - ei) * .08 * sc));
       const te = Math.hypot(x / .08, (y - cy + .095) / .05); put(i, tongueC, .75 + .3 * (1 - te), cov((1 - ei) * .08 * sc) * cov((1 - te) * .05 * sc));
@@ -1460,12 +1460,12 @@ function buildSolid(M, o) { M.solid = M.solid || []; const fz = faceHeight(M), a
     else { const v = -t / tMin; Y = inner - wide * .3 * Math.sin(v * Math.PI / 2); z = fz(X, inner) + h * .6 * Math.cos(v * Math.PI / 2) - .1 * ap * v * v; }
     return B(X, Y, z); };
   // (the opening's inside: a rim round the opening, under the skin and following it, from there back into a dark hollow)
-  const cyR = my - .03, rO = o.o || o.kiss || 1, mid = o.hw ? edge(0) : { top: cyR + .09 * rO, bot: cyR - .09 * rO }, cyy = (mid.top + mid.bot) / 2, ry = (mid.top - mid.bot) / 2 + .07 + (o.mid ? o.mid[1] * 1.1 : 0), rx = o.hw ? hw * 1.12 : .15 * rO, zRef = fz(0, cyy), deep = .42 * ap;
+  const cyR = my - (o.ow ? o.ow[2] : .03), rO = o.o || o.kiss || 1, mid = o.hw ? edge(0) : o.ow ? { top: cyR + o.ow[1], bot: cyR - o.ow[1] } : { top: cyR + .09 * rO, bot: cyR - .09 * rO }, cyy = (mid.top + mid.bot) / 2, ry = (mid.top - mid.bot) / 2 + .07 + (o.mid ? o.mid[1] * 1.1 : 0), rx = o.hw ? hw * 1.12 : .15 * rO, zRef = fz(0, cyy), deep = .42 * ap;
   if (!o.closed) {
   const cav = gridGeo(12, 48, (a, b) => { const an = b * Math.PI * 2, k = Math.sqrt(Math.max(0, 1 - a * a)), rimX = Math.cos(an) * rx, rimY = cyy + Math.sin(an) * ry, rimZ = fz(rimX, rimY);
       const zr = isFinite(rimZ) ? rimZ - .02 * ap : zRef - .2 * ap; return B(rimX * k, cyy + Math.sin(an) * ry * k, zr + (zRef - .3 * ap - deep - zr) * a * a * (3 - 2 * a) ); },
-    a => { const d = 1 - a; return o.inside ? linear(.3 + (o.o ? .03 : .25) * d, .05 + .05 * d, .06 + .05 * d) : linear(.08 + .2 * d, .015 + .05 * d, .02 + .05 * d); }, true);
-  holdByHead(M, cav, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .75, side: THREE.DoubleSide }));
+    a => { const d = 1 - a; return o.o ? linear(.13, .03, .035) : o.inside ? linear(.3 + .25 * d, .05 + .05 * d, .06 + .05 * d) : linear(.08 + .2 * d, .015 + .05 * d, .02 + .05 * d); }, true);
+  holdByHead(M, cav, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: o.o ? 1 : .75, side: THREE.DoubleSide }));
   // (the upper teeth: small rounded blocks along the curve of the jaw, behind the upper lip)
   if (o.teeth3d) { const pos = [], nrm = [], idx = [], TN = o.teeth3d[0], tw = o.teeth3d[1], th0 = o.teeth3d[2];
   for (let k = 0; k < TN; k++) { const th = th0 * (1 - (1 - o.teeth3d[3]) * (Math.abs(k - (TN - 1) / 2) / ((TN - 1) / 2)) ** 2), X = (k - (TN - 1) / 2) * tw, u = X / hw, e = edge(u), zm = fz(0, e.top), zs = (fz(hw * .72, e.top) + fz(-hw * .72, e.top)) / 2, z0 = zm + (zs - zm) * (u / .72) ** 2 - (.085 + .035 * (u / .84) ** 2) * ap, y0 = e.top + .002 + .016 * (u / .84) ** 2 - th / 2, g = new THREE.SphereGeometry(1, 14, 10), P = g.attributes.position, base = pos.length / 3;
@@ -1497,21 +1497,25 @@ function buildSolid(M, o) { M.solid = M.solid || []; const fz = faceHeight(M), a
     // (the winding depends on the lip's direction: the upper lip's faces turned out)
     if (!lower) { const ix = g.index.array; for (let k = 0; k < ix.length; k += 3) { const t = ix[k + 1]; ix[k + 1] = ix[k + 2]; ix[k + 2] = t; } g.computeVertexNormals(); }
     const m = holdByHead(M, g, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .62, side: THREE.DoubleSide, transparent: true })); m.castShadow = false; }
-  // (Åh: one round ring of lip, fuller below. Kys: two lips pushed forward, a groove across between them)
-  else { const ringAt = (a, b) => { const an = b * Math.PI * 2, c = Math.cos(an), sn = Math.sin(an), sc = o.o, t = a * 1.3 - .3, f = .89 - .11 * sn, wx = .055 * sc, wy = (.047 - .0075 * sn) * sc, rx0 = .1 * sc, ry0 = .09 * sc;
-      if (t >= 0) { const p = t < .35 ? .6 + .4 * Math.sin(Math.PI / 2 * t / .35) : Math.pow(Math.cos(Math.PI / 2 * (t - .35) / .65), 2.4), X = c * (rx0 + wx * t), Y = cyR + sn * (ry0 + wy * t); return B(X, Y, fz(X, Y) + H[0] * ap * f * p - .004 * ap * t * t); }
-      const v = -t / .3, X = c * (rx0 - wx * .3 * Math.sin(v * Math.PI / 2)), Y = cyR + sn * (ry0 - wy * .3 * Math.sin(v * Math.PI / 2)); return B(X, Y, fz(c * rx0, cyR + sn * ry0) + H[0] * ap * f * .6 * Math.cos(v * Math.PI / 2) - .1 * ap * v * v); };
+  // (Åh, after the user's picture of 05-11-2026: an oval, ow its half width, half height and how far below the mouth's
+  // middle - one ring of lip, thin above with a little bow, full below. Kys: two lips pushed forward, a groove between)
+  // (the figure's own face has the old smile's crease in its shape, running through Åh's sides: the ring lies on the face
+  // evened out up and down, as base - followed point by point it bulged there, the user 05-11-2026)
+  else { const wAt = sn => [.016, .066 - .034 * sn], base = o.o ? Array.from({ length: 65 }, (_, j) => { const an = j / 32 * Math.PI, c = Math.cos(an), sn = Math.sin(an), [wx, wy] = wAt(sn), even = (X, Y) => { let s = 0, n = 0; for (let d = -3; d <= 3; d++) { const v = fz(X, Y + d * .027); if (isFinite(v)) { s += v; n++; } } return s / n; }; return [even(c * o.ow[0], cyR + sn * o.ow[1]), even(c * (o.ow[0] + wx), cyR + sn * (o.ow[1] + wy))]; }) : null;
+    const ringAt = (a, b) => { const an = b * Math.PI * 2, c = Math.cos(an), sn = Math.sin(an), t = a * 1.3 - .3, f = (.68 - .32 * sn) * (.18 + .82 * sn * sn), [wx, wy] = wAt(sn), rx0 = o.ow[0], ry0 = o.ow[1], [zIn, zOut] = base[Math.round(b * 64)], lift = .015 * ap * (1 - sn * sn);
+      if (t >= 0) { const p = t < .35 ? .6 + .4 * Math.sin(Math.PI / 2 * t / .35) : Math.pow(Math.cos(Math.PI / 2 * (t - .35) / .65), 2.4), X = c * (rx0 + wx * t), Y = cyR + sn * (ry0 + wy * t) - .008 * t * Math.max(0, sn) * Math.exp(-((c / .22) ** 2)); return B(X, Y, zIn + (zOut - zIn) * t + lift * (1 - t) + H[0] * ap * f * p - .004 * ap * t * t); }
+      const v = -t / .3, X = c * (rx0 - wx * .3 * Math.sin(v * Math.PI / 2)), Y = cyR + sn * (ry0 - wy * .3 * Math.sin(v * Math.PI / 2)); return B(X, Y, zIn + lift + H[0] * ap * f * .6 * Math.cos(v * Math.PI / 2) - .1 * ap * v * v); };
     // (kw: half width, height of the upper lip and of the lower, after the user's picture of 05-11-2026 - the upper lip's top with a deep bow, two peaks either side of it; pointed corners; two lips, each its own roll, the lower the fuller)
     const domeAt = (a, b) => { const an = b * Math.PI * 2, ux = a * Math.cos(an), uy = a * Math.sin(an), [kx, ku, kl] = o.kw, corner = Math.pow(Math.max(0, 1 - ux * ux), .28), X = ux * kx, Y = cyR - .012 * Math.exp(-((ux / .2) ** 2)) * (1 - Math.abs(uy)) + (uy > 0 ? uy * ku * corner * (1 - .36 * Math.exp(-Math.abs(ux) / .1)) : uy * kl * corner), roll = Math.pow(Math.cos(a * Math.PI / 2), .55) * (uy > 0 ? .55 : 1);
       return B(X, Y, fz(X, Y) + H[0] * ap * roll - .02 * ap * Math.exp(-((uy / .1) ** 2)) * Math.max(0, 1 - Math.abs(ux) / .95) - .004 * ap); };
     const g = gridGeo(22, 64, o.o ? ringAt : domeAt, () => ({ r: 1, g: 1, b: 1 }), true); M.lipT.push(g); g.setAttribute('color', new THREE.Float32BufferAttribute(new Float32Array(23 * 65 * 4).fill(1), 4));
-    holdByHead(M, g, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .5, side: THREE.DoubleSide, transparent: true })).castShadow = false; } }
+    holdByHead(M, g, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: o.o ? .9 : .5, side: THREE.DoubleSide, transparent: true })).castShadow = false; } }
 // (the lips' colour from the skin's: the skin's own at the outer edge, so they melt into the face; deeper, warmer in the middle)
 function colourLips(M, o) { const skin = tex.colours[PARTS.skin] || tex.skin, T = M.texels; let k = 0, c = 0; for (let j = 0; j < T.length; j += 4) if (Math.hypot(T[j + 1], (T[j + 2] - M.my) / .8) < .45) { k += T[j + 3]; c++; } k = c ? k / c : 1;
   const mix = (a, b, t) => ({ r: a.r * (1 - t) + b.r * t, g: a.g * (1 - t) + b.g * t, b: a.b * (1 - t) + b.b * t }), lip = mix(skin, { r: .78, g: .32, b: .36 }, o.lipTint || .36), S = linear(Math.min(1, skin.r * k), Math.min(1, skin.g * k), Math.min(1, skin.b * k)), Lp = linear(lip.r, lip.g, lip.b), rim = o.closed ? linear(lip.r * .55, lip.g * .4, lip.b * .4) : linear(lip.r * .3, lip.g * .17, lip.b * .17), kl = mix(skin, { r: .72, g: .34, b: .4 }, .5), kd = mix(kl, { r: .4, g: .12, b: .14 }, .62), KL = linear(kl.r, kl.g, kl.b), KD = linear(kd.r, kd.g, kd.b), KH = linear(1, .88, .88);
   for (const g of M.lipT) { const C = g.attributes.color; for (let i = 0; i <= 22; i++) { const a = i / 22, t = a * 1.3 - .3, col = t < .2 ? rim.clone().lerp(Lp, Math.max(0, (t + .3) / .5)) : Lp.clone().lerp(S, Math.min(1, Math.max(0, (t - .55) / .45)) ** 1.3); for (let j = 0; j <= 64; j++) { const sm = v => { v = Math.min(1, Math.max(0, v)); return v * v * (3 - 2 * v); }, au = Math.abs(j / 32 - 1), at = (i * 65 + j) * 4;
         if (o.kiss) { const an = j / 32 * Math.PI, sx = a * Math.cos(an), sy = a * Math.sin(an), seam = sm((.05 - Math.abs(sy)) / .045) * sm((.97 - Math.abs(sx)) / .2), shine = Math.exp(-(((sy + .5) / .22) ** 2 + (sx / .45) ** 2)); KL.clone().lerp(KH, .38 * shine).lerp(KD, Math.max(.8 * seam, .3 * sm((a - .72) / .28))).toArray(C.array, at); C.array[at + 3] = 1 - sm((a - .86) / .14); continue; }
-        col.toArray(C.array, at); C.array[at + 3] = (1 - sm((t - .4) / .55)) * (o.hw ? 1 - (o.closed ? sm((au - .5) / .42) : sm((au - .93) / .065)) : 1); } } C.needsUpdate = true; } }
+        col.toArray(C.array, at); C.array[at + 3] = (1 - (o.o ? sm((t - .62) / .38) : sm((t - .4) / .55))) * (o.hw ? 1 - (o.closed ? sm((au - .5) / .42) : sm((au - .93) / .065)) : 1); } } C.needsUpdate = true; } }
 
 function redrawBody() {
   if (!tex) return; const out = tex.ctx.createImageData(tex.w, tex.h), o = out.data, s = tex.src;
@@ -4688,6 +4692,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.9.1 (131a9b6)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.9.1 (89e19cb)</div>
 </body>
 </html>
