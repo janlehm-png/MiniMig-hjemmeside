@@ -27,7 +27,7 @@ if ($html -notmatch 'src="\.\./pwa\.js"') { # (the page's own comments speak of 
 $core = '^bygogspil/(index\.html|three/.*|ikoner/.*|baggrund/.*|figur\.fbx|figur-farve\.jpg|figur-staa\.json|haar-kort\.(json|jpg))$'
 $files = @(Get-ChildItem -LiteralPath $root -Recurse -File | Where-Object {
   $rel = $_.FullName.Substring($root.Length + 1).Replace('\', '/')
-  $rel -notmatch '^(\.git|\.claude|tests|test|version1|version2|proev|3d-forsoeg)/' -and $_.Name -notin 'service-worker.js', 'precache-manifest.js' -and
+  $rel -notmatch '^(\.git|\.claude|tests|test|pwa-naeste|version1|version2|proev|3d-forsoeg)/' -and $_.Name -notin 'service-worker.js', 'precache-manifest.js' -and
   ($(if ($rel -like 'bygogspil/*') { $rel -match $core } else { $_.Extension -in '.html', '.css', '.png', '.jpg', '.webmanifest', '.js' }))
 } | Sort-Object FullName)
 $paths = @($files | ForEach-Object { $_.FullName.Substring($root.Length + 1).Replace('\','/') })

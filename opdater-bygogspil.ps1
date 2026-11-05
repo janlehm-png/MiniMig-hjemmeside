@@ -46,7 +46,7 @@ try {
 
   $version = & $git -C $App log -1 --format='%h %s' $Ref
   if ($Test) {
-    # (testsiden: et TEST-maerke, sine egne gemte figurer og stjerner - ikke boernenes - og ingen soegemaskiner eller offline)
+    # (testsiden: et TEST-maerke, sine egne gemte figurer og stjerner - ikke boernenes - og ingen soegemaskiner)
     $side = Join-Path $maal 'index.html'; $html = [IO.File]::ReadAllText($side)
     $html = $html.Replace('minimig3d.', 'minimig-test.').Replace('minimig2.deling', 'minimig-test.deling').Replace('<title>MiniMig version 2</title>', '<title>TEST MiniMig</title>')
     if ($html -notmatch 'name="robots"') { $html = $html.Replace('</head>', '<meta name="robots" content="noindex, nofollow">' + "`n</head>") }
@@ -54,6 +54,7 @@ try {
     $tal = [regex]::Match($html, 'name="minimig-version" content="([^"]+)"').Groups[1].Value
     $html = $html.Replace('</body>', "<div style=`"position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none`">TEST $tal ($kort)</div>`n</body>")
     [IO.File]::WriteAllText($side, $html, (New-Object Text.UTF8Encoding $false))
+    & (Join-Path $PSScriptRoot 'build-pwa-test.ps1')
     Write-Host "test/ opdateret: $version ($($filer.Count + 1) filer)"
   } else {
     & (Join-Path $PSScriptRoot 'build-pwa.ps1')
