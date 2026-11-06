@@ -1306,9 +1306,10 @@ function drawPynt(o) { const P = tex.pynt; if (!P || !pyntNow.length) return;
 // scaled across (x), up and down (y) and outwards (z), the more the nearer the middle of the nose, so it melts into the
 // face round it. Dyrenæse: a dark, shiny animal's nose painted on its tip. Klovn: a shiny red ball on its tip, held by
 // the head as the hair is)
-const NOSES = [['naese-naturlig', 'Naturlig'], ['naese-lille', 'Lille', { s: [.8, .85, .5] }], ['naese-bred', 'Bred', { s: [1.55, 1, 1.35] }],
-  // (outwards counted from the bridge, not the cheeks; Spids an ordinary pointed nose, not a Pinocchio's)
-  ['naese-lang', 'Spids', { s: [.88, 1.06, 1.9], down: .01 }], ['naese-dyr', 'Dyrenæse', { animal: true }], ['naese-klovn', 'Klovn', { clown: true }]];
+const NOSES = [['naese-naturlig', 'Naturlig'], ['naese-lille', 'Lille', { s: [.8, .85, .5] }], ['naese-bred', 'Bred', { s: [1.55, 1, 1.1], holes: [.024, .02] }],
+  // (outwards counted from the bridge, not the cheeks; only a hint longer from Naturlig to Bred to Spids, the user
+  // 06-11-2026. holes: the nostrils' size as painted, drawn out by the reshaping)
+  ['naese-lang', 'Spids', { s: [.88, 1.06, 1.22], down: .01, holes: [.03, .02] }], ['naese-dyr', 'Dyrenæse', { animal: true }], ['naese-klovn', 'Klovn', { clown: true }]];
 let noseNow = 'naese-naturlig';
 function setNose(name) { noseNow = name; redrawBody(); renderStyles(); }
 function setupNose(body, P, n, cx, cy, cz, apart) {
@@ -1353,10 +1354,11 @@ function shapeNose() { const Z = tex && tex.nose; if (!Z) return; const opts = (
 // (Dyrenæse: a dark oval on the nose's tip, lit as a dome - lightest at its top, with a small shine)
 function drawNose(o) { const Z = tex.nose, P = tex.pynt, opts = (NOSES.find(m => m[0] === noseNow) || [])[2]; if (!Z || !P) return;
   // (Naturlig: two nostrils and a soft line round each wing, a darker shade of the skin itself, whatever its colour - the
-  // nose hardly showed on the face, the user 05-11-2026)
-  if (noseNow === 'naese-naturlig') { const T = P.texels, y0 = Z.tipY - .062;
+  // nose hardly showed on the face, the user 05-11-2026. Lille, Bred and Spids the same: painted on the skin, they follow
+  // the nose as it is reshaped; without them these looked like blurry mounds)
+  if (noseNow === 'naese-naturlig' || opts && opts.s) { const T = P.texels, y0 = Z.tipY - .062, H = opts && opts.holes || [.032, .018];
     for (let j = 0; j < T.length; j += 3) { const X = Math.abs(T[j + 1]), Y = T[j + 2] - y0; if (X > .2 || Math.abs(Y) > .14) continue;
-      const hole = Math.max(0, Math.min(1, (1 - Math.hypot((X - .062) / .032, Y / .018)) / .35)), a = Math.atan2(Y - .025, X - .09), wing = a > -1.15 && a < 1.25 ? Math.max(0, 1 - Math.abs(Math.hypot(X - .09, Y - .025) - .058) / .011) * Math.min(1, (1.25 - a) / .5) : 0;
+      const hole = Math.max(0, Math.min(1, (1 - Math.hypot((X - .062) / H[0], Y / H[1])) / .35)), a = Math.atan2(Y - .025, X - .09), wing = a > -1.15 && a < 1.25 ? Math.max(0, 1 - Math.abs(Math.hypot(X - .09, Y - .025) - .058) / .011) * Math.min(1, (1.25 - a) / .5) : 0;
       const k = 1 - Math.max(hole * .62, wing * .26), i = T[j] * 4; for (let m = 0; m < 3; m++) o[i + m] *= k; }
     return; }
   if (!opts || !opts.animal) return;
@@ -4700,6 +4702,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.9.1 (ba424c3)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.9.1 (92964f4)</div>
 </body>
 </html>
