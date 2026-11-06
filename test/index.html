@@ -1102,9 +1102,9 @@ function drawEyes(o) {
 const MOUTHS = [['mund-smil', 'Smil', { mid: [-.036, .0685], hw: .27, open: [0, 0], lip: [.02, .06], closed: true, keep: true, solid: true, lipTint: .2, lip3d: [.026, .07], lipH: [.012, .022] }],
 // (all about as big as each other - the user found Grin much the biggest)
   ['mund-grin', 'Grin', { mid: [-.02, .09], hw: .32, open: [.025, .19], lip: [.024, .03], solid: true, lipTint: .3, lip3d: [.026, .046], lipH: [.02, .034], dimple: .8, inside: true, teeth3d: { n: 8, h: .078, end: .6, ua: .92 }, tongueIn: { w: .2, h: .05, d: .2, y: .04, z: .2 } }],
-  // (Tunge: a cheeky child's, after the user's picture of 05-11-2026 - a narrow dark opening, corners well up, a little
-  // of the upper teeth, a broad tongue lying out over the lower lip; dimple: how dark the corners' soft crease)
-  ['mund-tunge', 'Tunge', { mid: [-.015, .1], hw: .28, open: [.02, .065], lip: [.02, .04], solid: true, lipTint: .3, lip3d: [.026, .05], lipH: [.02, .036], dimple: .8, teeth3d: { n: 8, h: .04, end: .6, ua: .9 }, tongue3d: { w: .125, th: .028, down: .075, out: .06 } }],
+  // (Tunge: a cheeky child's, after the user's two pictures of 06-11-2026 - the mouth closed round the tongue: Smil's own
+  // line and lips, the upper lip pushed out over the tongue (pout), the lower lip pressed flat under it, a broad tongue)
+  ['mund-tunge', 'Tunge', { mid: [-.036, .0685], hw: .27, open: [0, 0], lip: [.02, .06], closed: true, keep: true, solid: true, lipTint: .2, lip3d: [.026, .07], lipH: [.012, .022], pout: { up: .03, arch: .012, w: .4, flat: .6, wide: .05 }, tongue3d: { w: .12, th: .055, down: .088, out: .08 } }],
   ['mund-o', 'Åh', { o: 1, ow: [.095, .082, .045], solid: true, lipTint: .42, lipH: [.05], inside: true, tongueIn: { w: .08, h: .028, d: .1, y: .022, z: .115 } }], ['mund-kys', 'Kys', { kiss: 1.25, kw: [.14, .105, .125], solid: true, closed: true, lipH: [.042] }],
   ['mund-trist', 'Trist', { mid: [.05, -.1], hw: .28, open: [0, 0], lip: [.044, .056], round: .3, closed: true, even: true, solid: true, lipTint: .28, lip3d: [.036, .062], lipH: [.022, .036] }]];
 let mouthNow = 'mund-smil';
@@ -1139,7 +1139,9 @@ function smoothLight(a, stride, at) {
   return out; }
 // (the chosen mouth, drawn into the body's colour picture as it is redrawn: o its pixels)
 function drawMouth(o) {
-  const M = tex.mouth, opts = (MOUTHS.find(m => m[0] === mouthNow) || [])[2]; if (!M || !opts || opts.keep) return;
+  const M = tex.mouth, opts = (MOUTHS.find(m => m[0] === mouthNow) || [])[2]; if (!M || !opts) return;
+  // (Smil's own line left as it is; Tunge's drawn crisper along it, thin and dark as in the user's picture)
+  if (opts.keep) { if (opts.pout) for (let j = 0; j < M.texels.length; j += 4) { const i = M.texels[j] * 4, u = M.texels[j + 1] / opts.hw, a = .75 * Math.max(0, Math.min(1, (1 - Math.abs(u)) / .15)) * Math.max(0, Math.min(1, (.0065 - Math.abs(M.texels[j + 2] - (M.my + opts.mid[0] + opts.mid[1] * u * u))) / .004)); if (a > 0) { o[i] = o[i] * (1 - a) + 92 * a; o[i + 1] = o[i + 1] * (1 - a) + 48 * a; o[i + 2] = o[i + 2] * (1 - a) + 38 * a; } } return; }
   const T = M.texels, skin = tex.colours[PARTS.skin] || tex.skin, edge = .007;
   // (the colours: lips a soft pink, a third the skin's own; the mouth's inside a deep red; teeth off-white; the tongue pink)
   const mix = (a, b, t) => ({ r: a.r * (1 - t) + b.r * t, g: a.g * (1 - t) + b.g * t, b: a.b * (1 - t) + b.b * t });
@@ -1458,7 +1460,7 @@ function buildSolid(M, o) { M.solid = M.solid || []; const fz = faceHeight(M), a
   const faceAt = (lower, b, X, inner, wide, t) => { if (!o.even) return fz(X, t >= 0 ? inner + wide * t : inner); const k = (lower ? 1000 : 0) + Math.round(b * 64), v = evened[k] || (evened[k] = [even(X, inner), even(X, inner + wide)]); return t >= 0 ? v[0] + (v[1] - v[0]) * t : v[0]; };
   const L = o.lip3d, H = o.lipH; M.lipT = [];
   const lipAt = lower => (a, b) => { const u = (b * 2 - 1) * .995, e = edge(u), rd = o.round || .45, su = Math.pow(e.s, rd), tMin = .3, t = a * (1 + tMin) - tMin;
-    const inner = lower ? e.bot : e.top, wide = (lower ? -L[1] * Math.pow(e.s, rd + .05) : L[0] * su * (1 - .28 * Math.exp(-((u / .13) ** 2)))), h = (lower ? H[1] : H[0]) * ap * Math.pow(e.s, .8), X = u * hw;
+    const pw = o.pout ? Math.exp(-((u / o.pout.w) ** 2)) : 0, inner = lower ? e.bot : e.top + (o.pout ? o.pout.arch * pw : 0), wide = (lower ? -L[1] * Math.pow(e.s, rd + .05) : L[0] * su * (1 - .28 * Math.exp(-((u / .13) ** 2))) + (o.pout ? o.pout.wide * pw : 0)), h = (lower ? H[1] * (1 - (o.pout ? o.pout.flat * Math.exp(-((u / o.pout.flat) ** 4)) : 0)) : H[0] + (o.pout ? o.pout.up * pw : 0)) * ap * Math.pow(e.s, .8), X = u * hw;
     let Y, z;
     if (t >= 0) { const p = t < .35 ? .6 + .4 * Math.sin(Math.PI / 2 * t / .35) : Math.pow(Math.cos(Math.PI / 2 * (t - .35) / .65), 2.4); Y = inner + wide * t; z = faceAt(lower, b, X, inner, wide, t) + h * p - .004 * ap * t * t; }
     else { const v = -t / tMin; Y = inner - wide * .3 * Math.sin(v * Math.PI / 2); z = faceAt(lower, b, X, inner, wide, t) + h * .6 * Math.cos(v * Math.PI / 2) - .1 * ap * v * v; }
@@ -1487,16 +1489,16 @@ function buildSolid(M, o) { M.solid = M.solid || []; const fz = faceHeight(M), a
   if (o.tongueIn) { const ti = o.tongueIn, g = new THREE.SphereGeometry(1, 24, 14), P = g.attributes.position, col = [], fr = linear(.85, .38, .4), bk = linear(.45, .15, .17); for (let i = 0; i < P.count; i++) { fr.clone().lerp(bk, Math.max(0, Math.min(1, .7 - P.getZ(i)))).toArray(col, i * 3); P.setXYZ(i, M.cx + P.getX(i) * ti.w * ap, M.cy + (mid.bot + ti.y + P.getY(i) * ti.h) * ap, zRef - ti.z * ap + P.getZ(i) * ti.d * ap); } g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.computeVertexNormals();
     holdByHead(M, g, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .55 })); }
   if (o.tongue3d) {
-  // (the tongue: from deep in the mouth, out over the lower lip, down to a round tip - a groove down its middle)
+  // (the tongue: from under the skin, out between the lips, down to a round tip - a groove down its middle)
   const chin = o.tongue3d.down, far = o.tongue3d.out, lipZ = fz(0, mid.bot);
-  const spine = new THREE.CatmullRomCurve3([[mid.top - .01, lipZ - .12 * ap], [mid.top - .03, lipZ - .01 * ap], [mid.bot - chin * .25, lipZ + far * .75 * ap], [mid.bot - chin * .7, lipZ + far * ap], [mid.bot - chin, lipZ + far * .88 * ap]].map(([y, z]) => new THREE.Vector3(0, M.cy + y * ap, z)));
+  const spine = new THREE.CatmullRomCurve3([[mid.top + .004, lipZ - .12 * ap], [mid.top - .002, lipZ], [mid.bot - chin * .35, lipZ + far * .55 * ap], [mid.bot - chin * .72, lipZ + far * .85 * ap], [mid.bot - chin, lipZ + far * 1.05 * ap]].map(([y, z]) => new THREE.Vector3(0, M.cy + y * ap, z)));
   const W = o.tongue3d.w, TH = o.tongue3d.th, tc = linear(.9, .5, .52), back = linear(.4, .14, .16), deep = linear(.1, .03, .035), n = new THREE.Vector3(), tan = new THREE.Vector3(), pt = new THREE.Vector3();
   const tongue = gridGeo(40, 32, (a, b) => { spine.getPoint(a, pt); spine.getTangent(a, tan); n.set(0, -tan.z, tan.y).normalize(); if (n.z < 0) n.negate();
-      const r = a > .45 ? Math.sqrt(Math.max(.0004, 1 - ((a - .45) / .55) ** 2)) : Math.min(1, .6 + a * .9), an = b * Math.PI * 2, x = Math.cos(an) * W * r, ss = Math.sin(an), groove = ss > 0 ? .005 * Math.exp(-((x / W / .2) ** 2)) * Math.min(1, a * 3) * Math.max(0, Math.min(1, (.72 - a) / .3)) : 0, nn = ss * TH * Math.pow(r, .8) - groove;
+      const r = a > .25 ? (1 - .64 * (a - .25) / .75) * Math.sqrt(Math.max(0, 1 - ((a - .25) / .75) ** 5)) : 1, an = b * Math.PI * 2, x = Math.cos(an) * W * r, ss = Math.sin(an), groove = ss > 0 ? .005 * Math.exp(-((x / W / .2) ** 2)) * Math.min(1, a * 3) * Math.max(0, Math.min(1, (.72 - a) / .3)) : 0, nn = ss * TH * Math.pow(r, .8) - groove;
       return [M.cx + x * ap, pt.y + n.y * nn * ap, pt.z + n.z * nn * ap]; },
-    (a, b) => { const an = b * Math.PI * 2, line = Math.sin(an) > 0 ? Math.exp(-((Math.cos(an) / .05) ** 2)) * Math.min(1, a * 2.5) * Math.max(0, Math.min(1, (.72 - a) / .25)) : 0; return tc.clone().lerp(back, Math.max(0, 1 - a / .8)).lerp(back, .35 * line).lerp(deep, Math.max(0, 1 - a / .3)); }, true);
+    (a, b) => { const an = b * Math.PI * 2, line = Math.sin(an) > 0 ? Math.exp(-((Math.cos(an) / .05) ** 2)) * Math.min(1, a * 2.5) * Math.max(0, Math.min(1, (.72 - a) / .25)) : 0; return tc.clone().lerp(back, .75 * Math.max(0, 1 - (a - .25) / .45)).lerp(back, .35 * line).lerp(deep, Math.max(0, 1 - a / .2)); }, true);
   { const N = tongue.attributes.normal, v = 20 * 33 + 8; if (N.getZ(v) < 0) { const ix = tongue.index.array; for (let k = 0; k < ix.length; k += 3) { const t = ix[k + 1]; ix[k + 1] = ix[k + 2]; ix[k + 2] = t; } tongue.computeVertexNormals(); M.flipped = true; } }
-  holdByHead(M, tongue, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .42 }));
+  holdByHead(M, tongue, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .55 }));
   }
   // (the lips last, their colours in colourLips)
   if (o.hw) for (const lower of [false, true]) { const g = gridGeo(22, 64, lipAt(lower), () => ({ r: 1, g: 1, b: 1 })); M.lipT.push(g);
@@ -1518,10 +1520,10 @@ function buildSolid(M, o) { M.solid = M.solid || []; const fz = faceHeight(M), a
     holdByHead(M, g, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: o.o ? .9 : .5, side: THREE.DoubleSide, transparent: true })).castShadow = false; } }
 // (the lips' colour from the skin's: the skin's own at the outer edge, so they melt into the face; deeper, warmer in the middle)
 function colourLips(M, o) { const skin = tex.colours[PARTS.skin] || tex.skin, T = M.texels; let k = 0, c = 0; for (let j = 0; j < T.length; j += 4) if (Math.hypot(T[j + 1], (T[j + 2] - M.my) / .8) < .45) { k += T[j + 3]; c++; } k = c ? k / c : 1;
-  const mix = (a, b, t) => ({ r: a.r * (1 - t) + b.r * t, g: a.g * (1 - t) + b.g * t, b: a.b * (1 - t) + b.b * t }), lip = mix(skin, { r: .78, g: .32, b: .36 }, o.lipTint || .36), S = linear(Math.min(1, skin.r * k), Math.min(1, skin.g * k), Math.min(1, skin.b * k)), Lp = linear(lip.r, lip.g, lip.b), rim = o.closed ? linear(lip.r * .55, lip.g * .4, lip.b * .4) : linear(lip.r * .3, lip.g * .17, lip.b * .17), kl = mix(skin, { r: .72, g: .34, b: .4 }, .5), kd = mix(kl, { r: .4, g: .12, b: .14 }, .62), KL = linear(kl.r, kl.g, kl.b), KD = linear(kd.r, kd.g, kd.b), KH = linear(1, .88, .88);
+  const mix = (a, b, t) => ({ r: a.r * (1 - t) + b.r * t, g: a.g * (1 - t) + b.g * t, b: a.b * (1 - t) + b.b * t }), lip = mix(skin, { r: .78, g: .32, b: .36 }, o.lipTint || .36), S = linear(Math.min(1, skin.r * k), Math.min(1, skin.g * k), Math.min(1, skin.b * k)), Lp = linear(lip.r, lip.g, lip.b), rim = o.pout ? linear(lip.r * .32, lip.g * .2, lip.b * .2) : o.closed ? linear(lip.r * .55, lip.g * .4, lip.b * .4) : linear(lip.r * .3, lip.g * .17, lip.b * .17), kl = mix(skin, { r: .72, g: .34, b: .4 }, .5), kd = mix(kl, { r: .4, g: .12, b: .14 }, .62), KL = linear(kl.r, kl.g, kl.b), KD = linear(kd.r, kd.g, kd.b), KH = linear(1, .88, .88);
   for (const g of M.lipT) { const C = g.attributes.color; for (let i = 0; i <= 22; i++) { const a = i / 22, t = a * 1.3 - .3, col = t < .2 ? rim.clone().lerp(Lp, Math.max(0, (t + .3) / .5)) : Lp.clone().lerp(S, Math.min(1, Math.max(0, (t - .55) / .45)) ** 1.3); for (let j = 0; j <= 64; j++) { const sm = v => { v = Math.min(1, Math.max(0, v)); return v * v * (3 - 2 * v); }, au = Math.abs(j / 32 - 1), at = (i * 65 + j) * 4;
         if (o.kiss) { const an = j / 32 * Math.PI, sx = a * Math.cos(an), sy = a * Math.sin(an), seam = sm((.05 - Math.abs(sy)) / .045) * sm((.97 - Math.abs(sx)) / .2), shine = Math.exp(-(((sy + .5) / .22) ** 2 + (sx / .45) ** 2)); KL.clone().lerp(KH, .38 * shine).lerp(KD, Math.max(.8 * seam, .3 * sm((a - .72) / .28))).toArray(C.array, at); C.array[at + 3] = 1 - sm((a - .86) / .14); continue; }
-        col.toArray(C.array, at); C.array[at + 3] = (1 - (o.o ? sm((t - .62) / .38) : sm((t - .4) / .55))) * (o.hw ? 1 - (o.closed ? sm((au - .5) / .42) : sm((au - .93) / .065)) : 1); } } C.needsUpdate = true; } }
+        col.toArray(C.array, at); const pu = o.pout ? Math.exp(-(((j / 32 - 1) * .995 / o.pout.w) ** 2)) : 0; if (pu) { col.clone().lerp(S, pu * sm((t - .02) / .3)).toArray(C.array, at); } C.array[at + 3] = (1 - (o.o ? sm((t - .62) / .38) : sm((t - .4) / .55) * (1 - pu) + sm((t - .78) / .22) * pu)) * (o.hw ? 1 - (o.closed ? sm((au - .5) / .42) : sm((au - .93) / .065)) : 1); } } C.needsUpdate = true; } }
 
 function redrawBody() {
   if (!tex) return; const out = tex.ctx.createImageData(tex.w, tex.h), o = out.data, s = tex.src;
@@ -4698,6 +4700,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.9.1 (006a407)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.9.1 (ba424c3)</div>
 </body>
 </html>
