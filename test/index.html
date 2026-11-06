@@ -1101,10 +1101,10 @@ function drawEyes(o) {
 // lips, which lie on its measured curve; dimple, inside, tongueIn, teeth3d and the rest as buildSolid reads them)
 const MOUTHS = [['mund-smil', 'Smil', { mid: [-.036, .0685], hw: .27, open: [0, 0], lip: [.02, .06], closed: true, keep: true, solid: true, lipTint: .2, lip3d: [.026, .07], lipH: [.012, .022] }],
 // (all about as big as each other - the user found Grin much the biggest)
-  ['mund-grin', 'Grin', { mid: [-.02, .09], hw: .32, open: [.025, .19], lip: [.024, .03], solid: true, lipTint: .3, lip3d: [.026, .046], lipH: [.02, .034], dimple: .8, inside: true, teeth3d: [10, .066, .07, .72], tongueIn: { w: .2, h: .05, d: .2, y: .04, z: .2 } }],
-  // (Tunge: a cheeky child's, after the user's picture of 05-11-2026 - a narrow dark opening, corners well up, no teeth,
-  // a broad tongue lying out over the lower lip; dimple: how dark the corners' soft crease)
-  ['mund-tunge', 'Tunge', { mid: [-.015, .1], hw: .28, open: [.02, .065], lip: [.02, .04], solid: true, lipTint: .3, lip3d: [.026, .05], lipH: [.02, .036], dimple: .8, tongue3d: { w: .125, th: .028, down: .075, out: .06 } }],
+  ['mund-grin', 'Grin', { mid: [-.02, .09], hw: .32, open: [.025, .19], lip: [.024, .03], solid: true, lipTint: .3, lip3d: [.026, .046], lipH: [.02, .034], dimple: .8, inside: true, teeth3d: { n: 8, h: .078, end: .6, ua: .92 }, tongueIn: { w: .2, h: .05, d: .2, y: .04, z: .2 } }],
+  // (Tunge: a cheeky child's, after the user's picture of 05-11-2026 - a narrow dark opening, corners well up, a little
+  // of the upper teeth, a broad tongue lying out over the lower lip; dimple: how dark the corners' soft crease)
+  ['mund-tunge', 'Tunge', { mid: [-.015, .1], hw: .28, open: [.02, .065], lip: [.02, .04], solid: true, lipTint: .3, lip3d: [.026, .05], lipH: [.02, .036], dimple: .8, teeth3d: { n: 8, h: .04, end: .6, ua: .9 }, tongue3d: { w: .125, th: .028, down: .075, out: .06 } }],
   ['mund-o', 'Åh', { o: 1, ow: [.095, .082, .045], solid: true, lipTint: .42, lipH: [.05], inside: true, tongueIn: { w: .08, h: .028, d: .1, y: .022, z: .115 } }], ['mund-kys', 'Kys', { kiss: 1.25, kw: [.14, .105, .125], solid: true, closed: true, lipH: [.042] }],
   ['mund-trist', 'Trist', { mid: [.05, -.1], hw: .28, open: [0, 0], lip: [.044, .056], round: .3, closed: true, even: true, solid: true, lipTint: .28, lip3d: [.036, .062], lipH: [.022, .036] }]];
 let mouthNow = 'mund-smil';
@@ -1471,13 +1471,17 @@ function buildSolid(M, o) { M.solid = M.solid || []; const fz = faceHeight(M), a
     a => { const d = 1 - a; return o.o ? linear(.13, .03, .035) : o.inside ? linear(.3 + .25 * d, .05 + .05 * d, .06 + .05 * d) : linear(.08 + .2 * d, .015 + .05 * d, .02 + .05 * d); }, true);
   holdByHead(M, cav, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: o.o ? 1 : .75, side: THREE.DoubleSide }));
   // (the upper teeth: small rounded blocks along the curve of the jaw, behind the upper lip)
-  if (o.teeth3d) { const pos = [], nrm = [], idx = [], TN = o.teeth3d[0], tw = o.teeth3d[1], th0 = o.teeth3d[2];
-  for (let k = 0; k < TN; k++) { const th = th0 * (1 - (1 - o.teeth3d[3]) * (Math.abs(k - (TN - 1) / 2) / ((TN - 1) / 2)) ** 2), X = (k - (TN - 1) / 2) * tw, u = X / hw, e = edge(u), zm = fz(0, e.top), zs = (fz(hw * .72, e.top) + fz(-hw * .72, e.top)) / 2, z0 = zm + (zs - zm) * (u / .72) ** 2 - (.085 + .035 * (u / .84) ** 2) * ap, y0 = e.top + .002 + .016 * (u / .84) ** 2 - th / 2, g = new THREE.SphereGeometry(1, 14, 10), P = g.attributes.position, base = pos.length / 3;
-    for (let i = 0; i < P.count; i++) { const sx = P.getX(i), sy = P.getY(i), sz = P.getZ(i), sup = (v, e2) => Math.sign(v) * Math.pow(Math.abs(v), e2);
-      pos.push(M.cx + (X + sup(sx, .5) * tw * .515) * ap, M.cy + (y0 + sup(sy, .55) * th * .5) * ap, z0 + sup(sz, .7) * .026 * ap - Math.abs(u) * .012 * ap); }
-    for (const q of g.index.array) idx.push(base + q); g.dispose(); }
-  const tg = new THREE.BufferGeometry(); tg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); tg.setIndex(idx); tg.computeVertexNormals();
-  holdByHead(M, tg, new THREE.MeshStandardMaterial({ color: linear(.97, .96, .92), roughness: .3 })); }
+  // (the upper teeth: one band along the curve of the jaw, behind the upper lip, its lower edge gliding - after the user's
+  // picture of 06-11-2026 - with n broad teeth told apart only by a faint groove and the slightest dip between them)
+  if (o.teeth3d) { const T = o.teeth3d, pos = [], col = [], idx = [], NU = T.n * 12, NV = 16, ua = T.ua, th0 = T.h, zm = fz(0, edge(0).top), zs = (fz(hw * .72, edge(.72).top) + fz(-hw * .72, edge(.72).top)) / 2, white = linear(1, .99, .96);
+  for (let i = 0; i <= NU; i++) { const u = (i / NU * 2 - 1) * ua, e = edge(u), su = Math.abs(u / ua), p = (u / ua + 1) * T.n / 2, dn = Math.abs(p - Math.round(p)), line = Math.exp(-((dn / .06) ** 2)), dip = Math.exp(-((dn / .16) ** 2));
+    const top = e.top + .002 + .016 * (u / .84) ** 2, th = th0 * (1 - (1 - T.end) * su * su) * (1 - .04 * dip), z0 = zm + (zs - zm) * (u / .72) ** 2 - (.085 + .035 * (u / .84) ** 2) * ap - su * .012 * ap, thick = .026 * ap * Math.pow(Math.max(0, 1 - su ** 8), .5);
+    for (let j = 0; j <= NV; j++) { const t = j / NV, front = t <= .75, v = front ? t / .75 : 1 - (t - .75) / .25, side = Math.pow(Math.max(0, 1 - v ** 4), .5) * (front ? 1 : -1), shade = (.84 + .16 * Math.min(1, v / .35)) * (1 - .1 * line * (.4 + .6 * v));
+      pos.push(M.cx + u * hw * ap, M.cy + (top - th * v) * ap, z0 + thick * side - .004 * ap * line * v * (front ? 1 : 0));
+      col.push(white.r * shade, white.g * shade, white.b * shade); } }
+  for (let i = 0; i < NU; i++) for (let j = 0; j < NV; j++) { const a = i * (NV + 1) + j, b = a + NV + 1; idx.push(a, a + 1, b, b, a + 1, b + 1); }
+  const tg = new THREE.BufferGeometry(); tg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); tg.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); tg.setIndex(idx); tg.computeVertexNormals();
+  holdByHead(M, tg, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .3, side: THREE.DoubleSide })); }
   }
   // (a tongue lying inside the mouth)
   if (o.tongueIn) { const ti = o.tongueIn, g = new THREE.SphereGeometry(1, 24, 14), P = g.attributes.position, col = [], fr = linear(.85, .38, .4), bk = linear(.45, .15, .17); for (let i = 0; i < P.count; i++) { fr.clone().lerp(bk, Math.max(0, Math.min(1, .7 - P.getZ(i)))).toArray(col, i * 3); P.setXYZ(i, M.cx + P.getX(i) * ti.w * ap, M.cy + (mid.bot + ti.y + P.getY(i) * ti.h) * ap, zRef - ti.z * ap + P.getZ(i) * ti.d * ap); } g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.computeVertexNormals();
@@ -4694,6 +4698,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.9.1 (e45d084)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.9.1 (006a407)</div>
 </body>
 </html>
