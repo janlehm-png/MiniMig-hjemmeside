@@ -882,11 +882,17 @@ function setupBrows(body) {
   setupEyeShapes(place, inside); setupMouth(place); setupPynt(place); setupNose(body, P, n, cx, cy, cz, apart);
   // (the eye sits in a hollow, whose shade showed through a shut eye: there the points are lit as if the face went
   // smoothly across - their way out turned towards the average of the ring round the eye, the more the further in)
-  const S = tex.eyeShapes; if (S) { const N = geo.attributes.normal.array, list = [], ring = S.eyes.map(() => [0, 0, 0]);
+  const S = tex.eyeShapes; if (S) { const N = geo.attributes.normal.array, list = [], ring = S.eyes.map(() => []);
     for (let i = 0; i < n; i++) { const X = (P[i * 3] - cx) / apart, Y = (P[i * 3 + 1] - cy) / apart; if (P[i * 3 + 2] < cz - .4 * apart) continue;
       S.eyes.forEach((E, e) => { const rr = Math.hypot((X - E.cx) / E.ew, (Y - E.cy) / E.eh);
-        if (rr < 1.5) list.push(i, e, rr); else if (rr < 1.9) for (let m = 0; m < 3; m++) ring[e][m] += N[i * 3 + m]; }); }
-    S.ring = ring.map(r => new THREE.Vector3(...r).normalize()); S.verts = new Float32Array(list); S.normals = Float32Array.from(list.filter((_, j) => j % 3 === 0).flatMap(i => [N[i * 3], N[i * 3 + 1], N[i * 3 + 2]])); }
+        if (rr < 1.5) list.push(i, e, rr); else if (rr < 1.9) ring[e].push(i); }); }
+     S.verts = new Float32Array(list);
+    // (each point's own way out, from the ring's points, the nearer the more: one way out for the whole hollow leaned far
+    // to the side, which left a brown smudge under the shut eye away from the light)
+    S.flat = new Float32Array(list.length); for (let j = 0; j < list.length; j += 3) { const i = list[j], v = [0, 0, 0];
+      for (const q of ring[list[j + 1]]) { const d2 = (P[q * 3] - P[i * 3]) ** 2 + (P[q * 3 + 1] - P[i * 3 + 1]) ** 2 + (P[q * 3 + 2] - P[i * 3 + 2]) ** 2, wq = 1 / (d2 * d2 + 1e-12); for (let m = 0; m < 3; m++) v[m] += N[q * 3 + m] * wq; }
+      const l = Math.hypot(...v) || 1; S.flat.set(v.map(c => c / l), j); }
+    S.normals = Float32Array.from(list.filter((_, j) => j % 3 === 0).flatMap(i => [N[i * 3], N[i * 3 + 1], N[i * 3 + 2]])); }
   // (the smile is shaped in the face too, a soft crease that showed under a new mouth: lit smooth the same way)
   // (each point's way out the average of all within a fifth of the eyes' distance, the nearer the more - one way out for
   // the whole oval, the ring's, tilted it all down and left it darker than the face round it)
@@ -1065,7 +1071,8 @@ function drawEyes(o) {
       if (sy < E.cy) { const u2 = Math.abs(sx - E.cx) / E.ew, band = Math.max(0, Math.min(1, (.9 - u2) / .2)); if (band > 0) put(i, dark, .9, band * sm(re - .97) * sm(1.05 - re)); }
       continue; }
     if (opts.shut && (!opts.one || E.side > 0)) {
-      const rr = Math.hypot(dx / (E.ew * 1.2), dy / (E.eh * 1.45)); if (rr < 1.25) put(i, skin, k, Math.min(1, (1.25 - rr) / .2));
+      // (the light never under the skin's own - a little darker, it showed under one eye)
+      const rr = Math.hypot(dx / (E.ew * 1.2), dy / (E.eh * 1.45)); if (rr < 1.25) put(i, skin, Math.max(1, k), Math.min(1, (1.25 - rr) / .2));
       const yc = opts.shut === 'up' ? -.3 * E.eh + .75 * E.eh * (1 - u * u) : .1 * E.eh - .55 * E.eh * (1 - u * u);
       put(i, dark, 1, cov(.024 * (1 - .4 * u * u) - Math.hypot(dy - yc, Math.max(0, Math.abs(dx) - E.ew)))); continue; }
     // (proper lashes: twelve along the upper lid's black line - well above the white's top there - fanning out from the
@@ -1079,7 +1086,11 @@ function drawEyes(o) {
         const mx = bx + sg * Math.sin(a1) * len * .55, my = by + Math.cos(a1) * len * .55, tx = mx + sg * Math.sin(a2) * len * .45, ty = my + Math.cos(a2) * len * .45;
         const [d1, t1] = seg(X, Y, bx, by, mx, my), [d2, t2] = seg(X, Y, mx, my, tx, ty);
         put(i, dark, 1, cov(Math.max(.016 * (1 - .4 * t1) - d1, .0096 * (1 - .75 * t2) - d2))); } }
-    if (opts.iris && open) { const ux = (X - E.ix) / E.r, uy = (Y - E.iy) / E.r, rr = Math.hypot(ux, uy); if (rr > 1.3) continue;
+    if (opts.iris) { const ux = (X - E.ix) / E.r, uy = (Y - E.iy) / E.r, rr = Math.hypot(ux, uy), b = Math.min(23, Math.max(0, Math.floor((dx / E.ew + 1) / 2 * 24)));
+      // (the old iris's dark rim, outside the round patch, under the upper lid and inside the opening: it showed as a ring
+      // or a crescent round the star and the heart)
+      if (rr > 1.2 && rr < 2 && E.top[b] > -1 && Y < E.top[b] - .012 && Math.hypot(dx / E.ew, dy / E.eh) < .97) put(i, white, 1, 1);
+      if (!open || rr > 1.3) continue;
       put(i, white, 1, cov((1.25 - rr) * E.r));
       // (how far inside the shape, in iris radii: a five-pointed star, or a heart)
       let sd;
@@ -1342,10 +1353,10 @@ function shapeNose() { const Z = tex && tex.nose; if (!Z) return; const opts = (
     // (its way out turned as the scaling turns it - divided by the scale - so the light still fits the new shape)
     v.set(Z.nrm[j * 3] / (1 + (S[0] - 1) * w), Z.nrm[j * 3 + 1] / (1 + (S[1] - 1) * w), Z.nrm[j * 3 + 2] / (Z.pos[j * 3 + 2] < Z.base ? 1 : 1 + (S[2] - 1) * w)).normalize().toArray(Nm.array, i * 3); }
   A.needsUpdate = true; Nm.needsUpdate = true;
-  // (the clown's ball: made the first time, bound to the head bone alone; smaller - it covered the top of the mouth)
-  if (opts.clown && !Z.ball) { const r = .14 * Z.apart, g = new THREE.SphereGeometry(r, 40, 28);
+  // (the clown's ball: made the first time, bound to the head bone alone; a smaller one was tried, the user liked this better)
+  if (opts.clown && !Z.ball) { const r = .2 * Z.apart, g = new THREE.SphereGeometry(r, 40, 28);
     // (its middle just behind the tip, so it sits close in to the face over the nose)
-    g.translate(Z.tip[0], Z.tip[1] - .005 * Z.apart, Z.tip[2] - .02 * Z.apart);
+    g.translate(Z.tip[0], Z.tip[1] - .02 * Z.apart, Z.tip[2] - .04 * Z.apart);
     Z.ball = noseOnHead(Z, g, new THREE.MeshStandardMaterial({ color: 0xE3212B, roughness: .28, metalness: 0 })); }
   // (Dyrenæse: a real dark nose set on the tip, as the clown's ball - painted, its edge ran out into the skin from the side)
   if (opts.animal && !Z.snout) { Z.snout = noseOnHead(Z, animalNose(Z), new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .34, metalness: 0 })); }
@@ -1376,9 +1387,9 @@ function drawNose(o) { const Z = tex.nose, P = tex.pynt, opts = (NOSES.find(m =>
       const k = 1 - hole * .62, i = T[j] * 4; for (let m = 0; m < 3; m++) o[i + m] *= k; }
     } }
 // (a shut eye's hollow lit smooth - see setupBrows - and an open one as it was)
-function shutNormals(S, opts) { if (!S.verts || !hairBase) return; const N = hairBase.body.geometry.attributes.normal, A = N.array, V = S.verts, v = new THREE.Vector3();
+function shutNormals(S, opts) { if (!S.verts || !hairBase) return; const N = hairBase.body.geometry.attributes.normal, A = N.array, V = S.verts, v = new THREE.Vector3(), s = new THREE.Vector3();
   for (let j = 0, m = 0; j < V.length; j += 3, m += 3) { const i = V[j], E = S.eyes[V[j + 1]], shut = opts.shut && (!opts.one || E.side > 0);
-    v.fromArray(S.normals, m); if (shut) v.lerp(S.ring[V[j + 1]], Math.min(1, (1.5 - V[j + 2]) / .35)).normalize(); v.toArray(A, i * 3); }
+    v.fromArray(S.normals, m); if (shut) v.lerp(s.fromArray(S.flat, m), Math.min(1, (1.5 - V[j + 2]) / .35)).normalize(); v.toArray(A, i * 3); }
   N.needsUpdate = true; }
 // the hair, a part of its own with its own colour picture: all of it gets the hair colour, lit as it was (against the
 // middle brightness of its brown; the hair uses no other part of the picture, and its darkest strands and the edges
@@ -4712,6 +4723,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.9.1 (4df5434)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.9.1 (1b75f01)</div>
 </body>
 </html>
