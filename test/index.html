@@ -3998,7 +3998,16 @@ function skateBuild() { if (sk.rig) return; sk.rig = new THREE.Group();
   for (let i = 0; i < 1400; i++) { c.fillStyle = `rgba(${Math.random() < .6 ? '200,200,205' : '10,10,14'},${(Math.random() * .22).toFixed(3)})`; c.fillRect(Math.random() * 256, Math.random() * 256, 1 + Math.random() * 2, 1 + Math.random() * 2); }
   const rw = SKATE.lane * 3 + .3; c.fillStyle = '#FFFFFF'; for (const s of [-1, 1]) c.fillRect((.5 + s * SKATE.lane / 2 / rw) * 256 - 3, 0, 6, 128); c.fillRect(0, 0, 7, 256); c.fillRect(249, 0, 7, 256);
   const t = sk.roadTex = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(1, 20); t.anisotropy = 4;
-  sk.road = new THREE.Mesh(new THREE.PlaneGeometry(SKATE.lane * 3 + .3, 60), new THREE.MeshStandardMaterial({ map: t, roughness: .95 })); sk.road.rotation.x = -Math.PI / 2; sk.road.position.set(0, .004, -26); sk.road.receiveShadow = true; }
+  sk.road = new THREE.Mesh(new THREE.PlaneGeometry(SKATE.lane * 3 + .3, 60, 1, 120), new THREE.MeshStandardMaterial({ map: t, roughness: .95 })); sk.road.rotation.x = -Math.PI / 2; sk.road.position.set(0, .004, -26); sk.road.receiveShadow = true;
+  sk.roadX = Float32Array.from({ length: sk.road.geometry.attributes.position.count }, (_, i) => sk.road.geometry.attributes.position.getX(i));
+  // (the bits flying: drops from a puddle, sparks from a present)
+  sk.bits = []; sk.bitMats = { vand: skMat('#6FC3FF', .2, '#2B7FD0'), guld: skMat('#FFD23F', .25, '#B07800') }; }
+// (the road bends away out towards the skyline, now one way, now the other, and lies straight again as it comes up
+// to the figure - so it is not just straight, the user said 08-11-2026; u how far down the road)
+const skBend = u => sk.curve * .0055 * Math.max(0, u - 5) ** 2, skSlope = u => sk.curve * .011 * Math.max(0, u - 5);
+function skateBits(kind, x, y, z, n) { for (let k = 0; k < n; k++) { let b = sk.bits.find(b => !b.mesh.visible && b.kind === kind);
+    if (!b) { b = { kind, mesh: new THREE.Mesh(new THREE.SphereGeometry(kind === 'vand' ? .04 : .05, 8, 6), sk.bitMats[kind]), v: new THREE.Vector3() }; scene.add(b.mesh); sk.bits.push(b); }
+    const a = Math.random() * Math.PI * 2, s = 1 + Math.random() * 1.5; b.mesh.position.set(x, y, z); b.v.set(Math.cos(a) * s, 2.5 + Math.random() * 2.5, Math.sin(a) * s); b.life = 1; b.mesh.visible = true; } }
 // (the things on the road, each made once and used again: half - half its width; len - its length along the road)
 function skateThing(kind) { const pool = sk.pools[kind] ??= [], free = pool.find(p => !p.group.visible); if (free) return free;
   const g = new THREE.Group(), add = (geo, m, x, y, z) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.castShadow = true; g.add(o); return o; }; let half = .3, len = .4;
@@ -4008,17 +4017,41 @@ function skateThing(kind) { const pool = sk.pools[kind] ??= [], free = pool.find
   if (kind === 'bom') { for (const x of [-.85, .85]) add(new THREE.BoxGeometry(.08, .55, .08), skMat('#3A2E5C', .5), x, .275, 0); for (let k = 0; k < 8; k++) add(new THREE.BoxGeometry(.22, .14, .1), skMat(k % 2 ? '#FFFFFF' : '#E8384F', .4), -.77 + k * .22, .45, 0); half = .9; len = .3; }
   if (kind === 'stjerne') { const s = new THREE.Shape(); for (let k = 0; k < 10; k++) { const r = k % 2 ? .085 : .2, a = Math.PI / 2 + k * Math.PI / 5; k ? s.lineTo(r * Math.cos(a), r * Math.sin(a)) : s.moveTo(r * Math.cos(a), r * Math.sin(a)); }
     const geo = new THREE.ExtrudeGeometry(s, { depth: .05, bevelEnabled: true, bevelThickness: .03, bevelSize: .025, bevelSegments: 3 }); geo.translate(0, 0, -.025); add(geo, skMat('#FFC233', .25, '#A36A00'), 0, .75, 0); half = .25; len = .4; }
-  const it = { group: g, kind, half, len }; g.visible = false; scene.add(g); pool.push(it); return it; }
+  // (and the fun ones, the user said 08-11-2026 - not just red bars and crates: a puddle to splash through, a ramp to fly
+  // off, a present that pops open, a duck waddling over the road, a beach ball bouncing over it)
+  let lid = null, body = null;
+  if (kind === 'pyt') { const m = new THREE.MeshStandardMaterial({ color: '#4FA8F0', roughness: .08, metalness: .1, transparent: true, opacity: .85 }); const o = add(new THREE.CircleGeometry(.36, 28), m, 0, .012, 0); o.rotation.x = -Math.PI / 2; o.scale.set(1, 1.5, 1); o.castShadow = false; half = .32; len = .9; }
+  if (kind === 'rampe') { const s = new THREE.Shape(); s.moveTo(-.5, 0); s.lineTo(.5, 0); s.lineTo(.5, .32); s.closePath(); const geo = new THREE.ExtrudeGeometry(s, { depth: .58, bevelEnabled: false }); geo.translate(0, 0, -.29); geo.rotateY(Math.PI / 2);
+    add(geo, skMat('#FFB020', .5), 0, 0, 0); for (const z of [-.25, .1]) { const st = add(new THREE.BoxGeometry(.6, .012, .1), skMat('#2B2153', .6), 0, 0, 0); st.position.set(0, .16 - z * .32 + .01, z); st.rotation.x = Math.atan2(.32, 1); } half = .3; len = 1; }
+  if (kind === 'gave') { add(new THREE.BoxGeometry(.44, .4, .44), skMat('#E8384F', .5), 0, .2, 0); for (const r of [0, Math.PI / 2]) { const band = add(new THREE.BoxGeometry(.46, .41, .08), skMat('#FFD23F', .4), 0, .2, 0); band.rotation.y = r; }
+    lid = new THREE.Group(); lid.position.y = .4; g.add(lid); for (const [geo, m, y] of [[new THREE.BoxGeometry(.5, .1, .5), skMat('#E8384F', .5), .05], [new THREE.BoxGeometry(.52, .11, .09), skMat('#FFD23F', .4), .05]]) { const o = new THREE.Mesh(geo, m); o.position.y = y; o.castShadow = true; lid.add(o); }
+    for (const s of [-1, 1]) { const bow = new THREE.Mesh(new THREE.TorusGeometry(.08, .03, 8, 16), skMat('#FFD23F', .4)); bow.position.set(s * .08, .16, 0); bow.rotation.y = Math.PI / 2; bow.castShadow = true; lid.add(bow); } half = .26; len = .44; }
+  if (kind === 'and') { body = new THREE.Group(); g.add(body); const yel = skMat('#FFD23F', .55), add2 = (geo, m, x, y, z) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.castShadow = true; body.add(o); return o; };
+    add2(new THREE.SphereGeometry(.2, 20, 14), yel, 0, .24, 0).scale.set(1.25, .85, 1); add2(new THREE.SphereGeometry(.13, 18, 12), yel, .17, .46, 0); const beak = add2(new THREE.ConeGeometry(.05, .14, 12), skMat('#FF8A1F', .5), .32, .44, 0); beak.rotation.z = -Math.PI / 2;
+    for (const z of [-1, 1]) { add2(new THREE.SphereGeometry(.025, 8, 6), skMat('#1A1A22', .3), .26, .5, z * .065); add2(new THREE.BoxGeometry(.12, .02, .1), skMat('#FF8A1F', .5), 0, .01, z * .08); const w = add2(new THREE.SphereGeometry(.1, 12, 8), yel, -.02, .27, z * .17); w.scale.set(1.2, .6, .4); }
+    const tail = add2(new THREE.ConeGeometry(.06, .14, 10), yel, -.26, .32, 0); tail.rotation.z = Math.PI / 2.6; half = .24; len = .4; }
+  if (kind === 'bold') { const cv = document.createElement('canvas'); cv.width = 128; cv.height = 8; const c = cv.getContext('2d'); ['#FF4F8B', '#FFFFFF', '#FFC233', '#FFFFFF', '#3DA5FF', '#FFFFFF'].forEach((f, k) => { c.fillStyle = f; c.fillRect(k * 128 / 6, 0, 128 / 6 + 1, 8); });
+    const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; body = add(new THREE.SphereGeometry(.26, 28, 18), new THREE.MeshStandardMaterial({ map: t, roughness: .4 }), 0, .26, 0); half = .26; len = .5; }
+  const it = { group: g, kind, half, len, lid, body }; g.visible = false; scene.add(g); pool.push(it); return it; }
+// (the good ones: run into on purpose - a star, a splash, a jump, a present - not bumped into)
+const SK_GOOD = new Set(['stjerne', 'pyt', 'rampe', 'gave']);
 // (a row of things far down the road: one thing - or a bar over two lanes - and, mostly, stars in a free lane; the
 // easiest levels only cones and crates)
 function skateRow(from = SKATE.from) { const easy = ['niveau-meget-let', 'niveau-let'].includes(game.level), r = Math.random(), used = new Set();
-  const put = (it, x, u) => { Object.assign(it, { x, u, hit: false, done: false, mine: false }); it.group.position.set(x, 0, -u); it.group.rotation.set(0, 0, 0); it.group.visible = true; sk.live.push(it); };
-  if (!easy && r < .2) { const left = Math.random() < .5; put(skateThing('bom'), (left ? -.5 : .5) * SKATE.lane, from); used.add(left ? -1 : 1); used.add(0); }
-  else { const lane = Math.floor(Math.random() * 3) - 1, kind = easy ? (Math.random() < .55 ? 'kegle' : 'kasse') : r < .45 ? 'kegle' : r < .72 ? 'kasse' : 'rail'; put(skateThing(kind), lane * SKATE.lane, from); used.add(lane); }
+  const put = (it, x, u) => { Object.assign(it, { x, u, hit: false, done: false, mine: false, dir: 0, vy: 0 }); it.group.position.set(x, 0, -u); it.group.rotation.set(0, 0, 0); it.group.visible = true;
+    if (it.lid) { it.lid.position.set(0, .4, 0); it.lid.rotation.set(0, 0, 0); it.lid.visible = true; } if (it.body) it.body.rotation.set(0, 0, 0); if (it.body) it.body.position.y = it.kind === 'bold' ? .26 : 0; sk.live.push(it); };
+  // (what comes: a pick weighted for the level - the easiest only the soft things and the fun ones)
+  const pick = list => { let s = Math.random() * list.reduce((a, [, w]) => a + w, 0); for (const [k, w] of list) if ((s -= w) < 0) return k; return list[0][0]; };
+  const kind = pick(easy ? [['kegle', 3], ['kasse', 2], ['pyt', 2], ['rampe', 2], ['and', 1.5], ['gave', .8], ['bold', 1]]
+    : [['kegle', 2.5], ['kasse', 2], ['rail', 1.5], ['bom', 2], ['pyt', 1.5], ['rampe', 2], ['and', 1.5], ['gave', .7], ['bold', 1.5]]);
+  if (kind === 'bom') { const left = Math.random() < .5; put(skateThing('bom'), (left ? -.5 : .5) * SKATE.lane, from); used.add(left ? -1 : 1); used.add(0); }
+  // (the duck and the ball cross the road from one side to the other, timed to be in the middle about as they come by)
+  else if (kind === 'and' || kind === 'bold') { const it = skateThing(kind), dir = Math.random() < .5 ? -1 : 1; put(it, -dir * 1.5 * SKATE.lane, from + 2); it.dir = dir; it.cross = 1.5 * SKATE.lane / ((from + 2) / skateLevel().speed) * (kind === 'and' ? .9 : 1.1); used.add(-1).add(0).add(1); }
+  else { const lane = Math.floor(Math.random() * 3) - 1; put(skateThing(kind), lane * SKATE.lane, from); used.add(lane); }
   // (the stars never in the lane the figure rides in now - one has to steer to them, not just stand)
   if (Math.random() < (easy ? .9 : .7)) { const free = [-1, 0, 1].filter(l => !used.has(l) && l !== sk.lane); if (free.length) { const lane = free[Math.floor(Math.random() * free.length)], n = 1 + Math.floor(Math.random() * 3);
     for (let k = 0; k < n; k++) put(skateThing('stjerne'), lane * SKATE.lane, from + (k - (n - 1) / 2) * 1.1); } } }
-function skateStart() { skateBuild(); Object.assign(sk, { lane: 0, x: 0, lean: 0, slow: 0, wobble: 0, next: .3, first: true }); for (const it of sk.live) it.group.visible = false; sk.live = [];
+function skateStart() { skateBuild(); Object.assign(sk, { lane: 0, x: 0, lean: 0, slow: 0, wobble: 0, next: .3, first: true, curve: 0, curveTo: 0, curveT: 3, jy: 0, jv: 0, spin: 0 }); for (const it of sk.live) it.group.visible = false; sk.live = [];
   holder.add(sk.rig); sk.rig.position.set(0, 0, 0); sk.rig.rotation.set(0, 0, 0); sk.rig.add(glb); scene.add(sk.road);
   // (riding: the standing with the page's own pose, arms out - Mixamo's riding stood with a foot each side of our board,
   // the user said, 03-11-2026; it was made for a board pointing the way the figure faces. Its push off, Skateboarding
@@ -4026,7 +4059,7 @@ function skateStart() { skateBuild(); Object.assign(sk, { lane: 0, x: 0, lean: 0
   // and turns across the board when it rides off - at the start, and after hitting a thing)
   sk.push = false; sk.poseW = 1; Promise.all(['staa', SKATE.push].map(loadMove)).then(() => { if (game.on) { runAnim('staa'); startPush(); } }); }
 function startPush() { const a = glbActions[SKATE.push]; if (!a || !game.on || game.mode !== 'skate') return; sk.push = true; sk.needPush = false; runAnim(SKATE.push, true); }
-function skateStop() { if (!sk.rig?.parent) return; holder.add(glb); holder.remove(sk.rig); scene.remove(sk.road); for (const it of sk.live) it.group.visible = false; sk.live = []; }
+function skateStop() { if (!sk.rig?.parent) return; holder.add(glb); holder.remove(sk.rig); scene.remove(sk.road); for (const it of sk.live) it.group.visible = false; sk.live = []; for (const b of sk.bits) b.mesh.visible = false; }
 function steer(dir) { if (!game.on || game.mode !== 'skate') return; const lane = Math.max(-1, Math.min(1, sk.lane + dir)); if (lane === sk.lane) return; sk.lane = lane; game.hint = 0; sfx('swish'); }
 // (the skater's pose, laid over the standing still each frame - turned about the figure's own axes as it stands now:
 // fwd the way its chest faces, right its right, up)
@@ -4057,20 +4090,40 @@ function skateTick(dt) { const L = skateLevel(); sk.slow = Math.max(0, sk.slow -
   // (the lane: glided over, leaning into the turn; a wobble after hitting a thing)
   const dx = sk.lane * SKATE.lane - sk.x; sk.x += dx * Math.min(1, dt * 9); sk.lean += (-dx * .45 - sk.lean) * Math.min(1, dt * 10);
   sk.rig.position.x = sk.x; sk.rig.rotation.z = sk.lean + (sk.wobble > 0 ? Math.sin(sk.wobble * 30) * .14 * sk.wobble : 0);
+  // (off a ramp: up in the air, round once, and down on the board again)
+  if (sk.jy > 0 || sk.jv > 0) { sk.jv -= 12 * dt; sk.jy = Math.max(0, sk.jy + sk.jv * dt); sk.spin = Math.min(Math.PI * 2, sk.spin + dt * Math.PI * 2 / .78); if (!sk.jy) { sk.jv = 0; sk.spin = 0; } }
+  sk.rig.position.y = sk.jy; sk.rig.rotation.y = sk.spin;
+  // (the bend: a new way every few seconds, eased into)
+  if ((sk.curveT -= dt) <= 0) { sk.curveTo = Math.random() < .25 ? 0 : (Math.random() < .5 ? -1 : 1) * (.5 + Math.random() * .5); sk.curveT = 4 + Math.random() * 4; }
+  sk.curve += (sk.curveTo - sk.curve) * Math.min(1, dt * .35);
+  { const P = sk.road.geometry.attributes.position; for (let i = 0; i < P.count; i++) P.setX(i, sk.roadX[i] + skBend(26 + P.getY(i))); P.needsUpdate = true; }
+  for (const b of sk.bits) if (b.mesh.visible) { b.v.y -= 9.8 * dt; b.mesh.position.addScaledVector(b.v, dt); if ((b.life -= dt) <= 0 || b.mesh.position.y < 0) b.mesh.visible = false; }
   sk.roadTex.offset.y = (sk.roadTex.offset.y + v * dt / 3) % 1; skatePose();
   // (the first row near: down the far end of the road it took 7 seconds on the easiest level before anything happened, the
   // user 05-11-2026)
   if ((sk.next -= dt) <= 0) { skateRow(sk.first ? Math.min(SKATE.from, L.speed * 3) : SKATE.from); sk.first = false; sk.next = L.gap * (.85 + Math.random() * .4) - Math.min(.3, game.stars * .008); }
-  for (const it of [...sk.live]) { it.u -= v * dt; const g = it.group, star = it.kind === 'stjerne';
-    if (star) { g.rotation.y += dt * 3; g.position.y = .06 * Math.sin(performance.now() / 300 + it.x * 3); }
-    if (it.hit && !star) { g.rotation.x -= dt * 6; g.position.y = Math.max(0, g.position.y + (it.vy -= 9.8 * dt) * dt); }
-    g.position.z = -it.u;
-    const near = Math.abs(sk.x - it.x) < it.half + .18 && Math.abs(it.u) < it.len / 2 + .22;
+  const now = performance.now() / 1000;
+  for (const it of [...sk.live]) { it.u -= v * dt; const g = it.group, k = it.kind, star = k === 'stjerne', good = SK_GOOD.has(k);
+    if (star) { g.rotation.y += dt * 3; g.position.y = .06 * Math.sin(now * 3.3 + it.x * 3); }
+    // (the duck waddles, the ball bounces - both across the road, and on out of it)
+    if (it.dir && !it.hit) { it.x += it.dir * it.cross * dt; if (k === 'and') { it.body.rotation.z = .12 * Math.sin(now * 14); it.body.position.y = .025 * Math.abs(Math.sin(now * 14)); }
+      else { it.body.position.y = .26 + .45 * Math.abs(Math.sin(now * 4.5 + it.x)); it.body.rotation.z -= it.dir * it.cross / .26 * dt; } }
+    if (it.hit && !good) { if (k === 'and') { g.position.y += 2.2 * dt; it.body.rotation.z = .4 * Math.sin(now * 40); g.rotation.z = 0; } else { g.rotation.x -= dt * 6; g.position.y = Math.max(0, g.position.y + (it.vy -= 9.8 * dt) * dt); } }
+    if (k === 'gave' && it.hit) { it.lid.position.y += (it.vy -= 9.8 * dt) * dt; it.lid.rotation.x += dt * 7; if (it.lid.position.y < -1) it.lid.visible = false; }
+    // (on the bend: across with the road, and turned along it)
+    g.position.x = it.x + skBend(it.u); g.position.z = -it.u; g.rotation.y = star ? now * 3 : -Math.atan(skSlope(it.u)) + (k === 'and' && it.dir < 0 ? Math.PI : 0);
+    const near = Math.abs(sk.x - it.x) < it.half + .18 && Math.abs(it.u) < it.len / 2 + .22, up = sk.jy > .3;
     // (a thing gives a star only when it was coming straight at the figure and it moved out of the way - standing still
     // in one lane while things went by in the others gave stars for nothing, the user said 03-11-2026)
-    if (!star && it.u < 7 && it.u > it.len / 2 && Math.abs(sk.lane * SKATE.lane - it.x) < it.half + .18) it.mine = true;
-    if (!it.done && near) { it.done = true; if (star) { g.visible = false; addStars(1); sfx('ding'); } else { it.hit = true; it.vy = 2.5; sk.slow = 1; sk.wobble = 1; sk.needPush = true; sfx('bonk'); } }
-    if (!it.done && !star && it.u < -(it.len / 2 + .3)) { it.done = true; if (it.mine) addStars(1); }
+    if (!good && !it.dir && it.u < 7 && it.u > it.len / 2 && Math.abs(sk.lane * SKATE.lane - it.x) < it.half + .18) it.mine = true;
+    if (!it.done && near && !(up && k !== 'stjerne')) { it.done = true;
+      if (star) { g.visible = false; addStars(1); sfx('ding'); }
+      else if (k === 'pyt') { skateBits('vand', sk.x, .05, 0, 22); addStars(1); sfx('plask'); }
+      else if (k === 'rampe') { sk.jv = 5; sk.jy = .001; addStars(2); sfx('boing'); }
+      else if (k === 'gave') { it.hit = true; it.vy = 4; it.lid.visible = true; skateBits('guld', g.position.x, .5, g.position.z, 26); addStars(3); for (const t of [0, .12, .24]) sfx('ding', t); }
+      else if (k === 'and') { it.hit = true; sk.wobble = .5; sfx('rap'); sfx('rap', .18); }
+      else { it.hit = true; it.vy = 2.5; sk.slow = 1; sk.wobble = 1; sk.needPush = true; sfx('bonk'); } }
+    if (!it.done && !good && it.u < -(it.len / 2 + .3)) { it.done = true; if (it.mine) addStars(1); }
     // (put away just past the figure - a star left in another lane came on up to the camera, big as the picture)
     if (it.u < -(it.len / 2 + 1) || !g.visible) { g.visible = false; sk.live.splice(sk.live.indexOf(it), 1); } } }
 // (stars to the corner; every fifth the confetti - the skater rides on)
@@ -4779,7 +4832,7 @@ function keys(ctx, t, f, len, vol) { const lp = ctx.createBiquadFilter(), g = ct
 // (the game's sounds: a boing up as it jumps, a wobbly boing down as it stumbles over a ball - always, music or not)
 function sfx(kind, later = 0) { const ctx = game.audio; if (!sound.sfx || !ctx || ctx.state !== 'running') return; const t = ctx.currentTime + later, o = ctx.createOscillator(), g = ctx.createGain(), lfo = ctx.createOscillator(), wob = ctx.createGain();
   // (from, to, how long, wobble speed, wobble size, loudness - a ding for a star caught, a swish for a lane changed)
-  const [from, to, len, wf, wa, vol] = { boing: [180, 620, .28, 22, 25, .28], bonk: [520, 110, .5, 14, 60, .28], ding: [990, 1480, .22, 6, 8, .18], swish: [420, 250, .13, 30, 20, .12] }[kind] || [400, 400, .1, 1, 0, .1];
+  const [from, to, len, wf, wa, vol] = { boing: [180, 620, .28, 22, 25, .28], bonk: [520, 110, .5, 14, 60, .28], ding: [990, 1480, .22, 6, 8, .18], swish: [420, 250, .13, 30, 20, .12], plask: [700, 140, .35, 45, 160, .2], rap: [640, 420, .13, 55, 140, .22] }[kind] || [400, 400, .1, 1, 0, .1];
   o.type = 'sine'; lfo.frequency.value = wf; wob.gain.value = wa; lfo.connect(wob).connect(o.frequency);
   o.frequency.setValueAtTime(from, t); o.frequency.exponentialRampToValueAtTime(to, t + len);
   g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0008, t + len); o.connect(g).connect(ctx.destination); for (const x of [o, lfo]) { x.start(t); x.stop(t + len + .02); } }
@@ -4841,6 +4894,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.9.1 (2578787)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.9.1 (f3ac1e7)</div>
 </body>
 </html>
