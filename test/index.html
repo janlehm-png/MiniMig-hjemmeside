@@ -3316,10 +3316,11 @@ function earPieces(E, geo) { const of = new Map(), tris = [...new Set(Array.from
 function buildEar(s, o) { const { a, mx, ey, ez, inv, M } = earData, E = earData.sides[s], body = hairBase.body, NR = 120, NT = 320, NB = 18, S = (x, p, q) => { const t = Math.min(1, Math.max(0, (x - p) / (q - p))); return t * t * (3 - 2 * t); };
   const headAt = (y, z) => earHead(E, y, z);
   const P = [], C = [], size = o.s || 1, lean = .2, cl = Math.cos(lean), sl = Math.sin(lean), cz = ez - .85 * a, cy = ey - .07 * a, W = .27 * a, H = .335 * a; let lobe = null;
-  const place = (u, v, level, top) => { let pu = u * W * (1 + .17 * v), pv = v * H; const low = v < 0 && size > 1 ? 1 - .35 * (size - 1) / .4 * S(-v, 0, 1) : 1; // (a big ear not drawn as far down: the lobe stuck out as a tip)
+  const place = (u, v, level, top, back = 0) => { let pu = u * W * (1 + .17 * v), pv = v * H; const low = v < 0 && size > 1 ? 1 - .35 * (size - 1) / .4 * S(-v, 0, 1) : 1; // (a big ear not drawn as far down: the lobe stuck out as a tip)
     pu *= size; pv *= size * low; let h = (.92 + .31 * (1 - u) / 2 * (.55 + .45 * S(v, -1, -.2))) * a + (level * a) * (.6 + .4 * size) + Math.max(0, size - 1) * .15 * a; // (a big ear further out: its top went in under the hair)
     if (o.out) h += o.out * .3 * a * (1 - u) / 2 * S(v, -1, -.3);
-    if (o.elf) { const t = S(v, .1, 1); pv += .62 * a * t * t * t; pu -= .1 * a * t * t + u * W * .6 * t * t; h += .3 * a * t * t + .3 * a * t ** 4; } // (and out from the hair, where the point shows - further out, sticking out to the side, higher and sharper: the user 08-11-2026)
+    // (its back down to where an ear sits, not in to the head up by the point: wide from the front - the user 08-11-2026)
+    if (o.elf) { const t = S(v, .1, 1) * (1 - S(back, 0, .8)); pv += .62 * a * t * t * t; pu -= .1 * a * t * t + u * W * .6 * t * t; h += .3 * a * t * t + .3 * a * t ** 4; } // (and out from the hair, where the point shows - further out, sticking out to the side, higher and sharper: the user 08-11-2026)
     const wy = cy + pu * sl + pv * cl, wz = cz + pu * cl - pv * sl, tf = Math.atan2(v, u), opn = (1 - S(tf, -.05, .32)) * S(tf, -1.4, -1.05), fl = S(390 + u * 294 - v * 74, 625 - 95 * opn, 690 - 40 * opn); if (fl) h += (headAt(wy, wz) + (.014 + .01 * opn) * a + level * a - h) * fl; // (down to the cheek over a longer way at the open front: steep, it showed as smears)
     // (and its front never below the head out towards its edge: the head stood through the notches there, jagged)
     if (top) { const rr = Math.hypot(u, v); h = Math.max(h, headAt(wy, wz) + .008 * a - .3 * a * (1 - S(rr, .66, .8))); }
@@ -3327,7 +3328,7 @@ function buildEar(s, o) { const { a, mx, ey, ez, inv, M } = earData, E = earData
   for (let r = 0; r <= NR + NB; r++) for (let q = 0; q < NT; q++) { const th = q / NT * Math.PI * 2, c = Math.cos(th), n = Math.sin(th); let rho, level, dark;
     if (r <= NR) { rho = r / NR; const u = rho * c, v = rho * n, [L, d] = earRelief(u, v), op = (1 - S(th > Math.PI ? th - 2 * Math.PI : th, -.05, .32)) * S(th > Math.PI ? th - 2 * Math.PI : th, -1.4, -1.05), e = S(rho, .86, .98) * (1 - op), x = Math.max(0, (rho - .84) / .16); level = L * (1 - S(rho, .84, 1) * (1 - op)) - .102 * (1 - op) * (1 - Math.sqrt(Math.max(0, 1 - x * x))) - .01 * op * S(rho, .9, 1); dark = d * (1 - e); } // (the rim rolled round, as a tube - but not down the open front, where the ear goes over into the cheek)
     else { const b = (r - NR) / NB, f = S(b, 0, .35); rho = 1 + .03 * Math.sin(Math.PI * b) - .12 * b; level = -.012 * (1 - f) - .03 * f - .09 - .34 * b ** 1.3; dark = .3 * b; }
-    const p = place(rho * c, rho * n, level, r <= NR); P.push(...p); C.push(...earTone(dark));
+    const p = place(rho * c, rho * n, level, r <= NR, Math.max(0, (r - NR) / NB)); P.push(...p); C.push(...earTone(dark));
     if (r === NR && (!lobe || p[1] < lobe[1])) lobe = p; }
   E.lobe = new THREE.Vector3(...lobe);
   const idx = []; for (let r = 0; r < NR + NB; r++) for (let q = 0; q < NT; q++) { const i = r * NT + q, j = r * NT + (q + 1) % NT, k = i + NT, l = j + NT; if (s < 0) idx.push(i, j, k, j, l, k); else idx.push(i, k, j, j, k, l); }
@@ -3362,7 +3363,8 @@ function shapeEars() { if (!hairBase) return; if (!earData) setupEars(); const o
     // there, its big pieces stood up through the hollows, and met its front in a jagged edge)
     for (let k = 0; k < n; k++) { v.set(E.pos[k * 3], E.pos[k * 3 + 1], E.pos[k * 3 + 2]).applyMatrix4(M);
       const o0 = (v.x - mx) * s, hd = earHead(E, v.y, v.z), gz = Math.floor((v.z - z0) / d), gy = Math.floor((v.y - y0) / d), c = gz >= 0 && gy >= 0 && gz < G && gy < G ? T[gz + G * gy] : Infinity;
-      cov[k] = c < Infinity; v.x = mx + s * Math.min(o0 > hd ? hd + .006 * a * (1 - Math.exp(-(o0 - hd) / (.006 * a))) : o0, c - .01 * a); W[k * 3] = v.x; W[k * 3 + 1] = v.y; W[k * 3 + 2] = v.z; }
+      // (covered only where the ear lies near the head: under an elf's point, standing well off it, the head showed a hole)
+      cov[k] = c - hd < .12 * a; v.x = mx + s * Math.min(o0 > hd ? hd + .006 * a * (1 - Math.exp(-(o0 - hd) / (.006 * a))) : o0, c - .01 * a); W[k * 3] = v.x; W[k * 3 + 1] = v.y; W[k * 3 + 2] = v.z; }
     if (!E.kOf) { E.kOf = new Map(); E.idx.forEach((j, k) => E.kOf.set(j, k)); }
     for (const c of E.tris) { const ks = [E.kOf.get(c), E.kOf.get(c + 1), E.kOf.get(c + 2)]; if (ks.every(k => k !== undefined && cov[k])) for (const k of ks.slice(1)) W.copyWithin(k * 3, ks[0] * 3, ks[0] * 3 + 3); }
     for (let k = 0; k < n; k++) { v.fromArray(W, k * 3).applyMatrix4(inv); A.setXYZ(E.idx[k], v.x, v.y, v.z); }
@@ -4839,6 +4841,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.9.1 (6935ac7)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.9.1 (2578787)</div>
 </body>
 </html>
