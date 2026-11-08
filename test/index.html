@@ -2,7 +2,7 @@
 <html lang="da">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>TEST MiniMig</title>
 <meta name="minimig-version" content="0.9.1">
 <!-- (the number of this version, shown under the i - see VERSIONER.md - raised for each package and each fix put out) -->
@@ -4766,9 +4766,13 @@ const infoBtn = document.getElementById('infoBtn'), infoPop = document.getElemen
 { const b = document.getElementById('langBtn'), [ic, nm] = b.children; nm.textContent = T('English', 'Dansk');
   ic.innerHTML = '<svg viewBox="0 0 32 32" width="30" height="30" style="vertical-align:middle"><circle cx="16" cy="16" r="14" fill="#7CC4F5" stroke="#3B82C4" stroke-width="2"/><path d="M16 2c-5 4-7.500 9-7.500 14S11 26 16 30c5-4 7.500-9 7.500-14S21 6 16 2zM2 16h28M4.500 9h23M4.500 23h23" fill="none" stroke="#3B82C4" stroke-width="1.800"/></svg>';
   b.onclick = () => { if (game.on) { toast('Stop spillet først'); return; } try { localStorage.setItem('minimig-test.sprog', T('en', 'da')); } catch (e) {} keepLast(); location.reload(); }; }
-// (two quick taps beside a button zoomed the page on an iPad, whatever the page's style says - the second tap is dropped
-// there, the user 05-11-2026; on buttons nothing is, so quick taps on coins all count)
-{ let last = -1e9; document.addEventListener('touchend', e => { if (e.timeStamp - last < 350 && !e.target.closest?.('button, a, input, select, textarea, label, canvas')) e.preventDefault(); last = e.timeStamp; }, { passive: false }); }
+// (two quick taps zoomed the page on an iPad, whatever the page's style says - the second tap is dropped, the user
+// 05-11-2026; on buttons too, as they still zoomed there (the user 08-11-2026) - but the button is pressed by hand
+// instead, so quick taps on coins all count)
+{ let last = -1e9; document.addEventListener('touchend', e => { const t = e.target.closest ? e.target : e.target.parentElement;
+  if (e.timeStamp - last < 350 && t && !t.closest('input, select, textarea, canvas')) { e.preventDefault(); const b = t.closest('button, a, label'); if (b && !b.disabled) b.click(); }
+  last = e.timeStamp; }, { passive: false });
+  document.addEventListener('dblclick', e => e.preventDefault(), { passive: false }); }
 // (on the test page only: a button with kroner, to try the shop without playing for them - the user, 04-11-2026)
 if (location.pathname.includes('/test/')) { const b = document.createElement('button'); b.textContent = '+100 kr'; b.style.cssText = 'position:fixed;top:28px;left:50%;transform:translateX(-50%);z-index:999;background:#FFC233;color:#5A3A00;border:0;border-radius:10px;padding:5px 12px;font:700 13px system-ui,sans-serif;cursor:pointer'; b.onclick = () => { krOf(score); score.kr += 100; saveScore(); showRecord(); toast(`💰 ${score.kr} kr`); if (!document.getElementById('starSheet').hidden) showStarSheet(); }; document.body.append(b); }
 // (one more line while the child isn't saved with a name yet - the user, 04-11-2026: how to keep one's own player)
@@ -4813,6 +4817,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.9.1 (692d660)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.9.1 (4a2e293)</div>
 </body>
 </html>
