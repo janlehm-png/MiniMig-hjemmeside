@@ -3233,7 +3233,8 @@ function runScene(dt) { const g = bgGeo; if (!game.on || !g || !bgNear.classList
 // (the ears are the body's own: each its points beyond the skull at the side of the head - a third of an eye's distance
 // behind the eyes to a half below them, further out than the skull there - moved about the ear's root, more the further
 // out from the skull, so the skin goes smoothly over into the head; their light turned with them)
-const EARS = [['oerer-naturlig', 'Naturlige'], ['oerer-smaa', 'Små', { s: .84 }], ['oerer-store', 'Store', { s: 1.28 }], ['oerer-udstaaende', 'Udstående', { out: .8 }], ['oerer-alfe', 'Alfeører', { elf: 1 }]];
+// (all a size smaller than at first: too big, the user 08-11-2026)
+const EARS = [['oerer-naturlig', 'Naturlige', { s: .86 }], ['oerer-smaa', 'Små', { s: .74 }], ['oerer-store', 'Store', { s: 1.1 }], ['oerer-udstaaende', 'Udstående', { s: .86, out: .8 }], ['oerer-alfe', 'Alfeører', { s: .86, elf: 1 }]];
 const EARRINGS = [['', 'Ingen'], ['oerering-perler', 'Perler'], ['oerering-ringe', 'Guldringe'], ['oerering-stjerner', 'Stjerner'], ['oerering-hjerter', 'Hjerter']];
 let earsNow = 'oerer-naturlig', earringsNow = '', earData = null; const earrings = {};
 function setEars(name) { earsNow = EARS.some(e => e[0] === name) ? name : 'oerer-naturlig'; shapeEars(); setEarrings(earringsNow); renderStyles(); }
@@ -3243,10 +3244,22 @@ function setupEars() { const hb = hairBase, { pts, inv } = hb.whole, [L, R] = hb
     for (let j = 0; j < pts.length / 6; j++) { const x = (pts[j * 6] - mx) / a * s, y = (pts[j * 6 + 1] - ey) / a, z = (pts[j * 6 + 2] - ez) / a;
       // (the whole ear moved, its bowl too - moving only what stood furthest out, the rim went and the bowl stayed: a ring)
       // (and nearer the head in its front half: the new ear's bowl, open in front, goes deeper there, and they stood up through it)
-      if (y > -.62 && y < .38 && z > -1.45 && z < -.6 && (x > .9 || (x > .7 && z > -.85))) { idx.push(j); w.push(Math.min(1, Math.max(0, (x - .9) / .07)) ** 2 * (3 - 2 * Math.min(1, Math.max(0, (x - .9) / .07)))); } }
-    // (the root: where the ear meets the head - the middle of its points nearest the skull)
-    const near = idx.filter((j, k) => w[k] < .5 && (pts[j * 6] - mx) / a * s > .9), root = new THREE.Vector3(); for (const j of near) root.add(new THREE.Vector3(pts[j * 6], pts[j * 6 + 1], pts[j * 6 + 2])); root.divideScalar(near.length || 1);
-    sides[s] = { idx: Int32Array.from(idx), w: Float32Array.from(w), pos: Float32Array.from(idx.flatMap(j => [A.getX(j), A.getY(j), A.getZ(j)])), nrm: Float32Array.from(idx.flatMap(j => [N.getX(j), N.getY(j), N.getZ(j)])), root }; }
+      // (and all of it round a smaller ear, which left the old one's lobe and back edge standing - the user 08-11-2026; its
+      // light worked out anew but for a narrow edge, where it goes over into the head's own)
+      if (y > -.68 && y < .44 && z > -1.52 && z < -.54 && x > .6) { const e = Math.min(1, Math.max(0, Math.min(y + .68, .44 - y, z + 1.52, -.54 - z) / .06)); idx.push(j); w.push(e * e * (3 - 2 * e)); } }
+    sides[s] = { idx: Int32Array.from(idx), w: Float32Array.from(w), pos: Float32Array.from(idx.flatMap(j => [A.getX(j), A.getY(j), A.getZ(j)])), nrm: Float32Array.from(idx.flatMap(j => [N.getX(j), N.getY(j), N.getZ(j)])) }; }
+  // (the head as if it had no ear: how far out the body's points round the ear stand, and over the ear itself a smooth
+  // skin stretched between them - the old ear laid down on it, and the new one's open front on it, meet without the
+  // jagged line and the bare patches round a smaller ear, the user 08-11-2026)
+  const G = 72, d = .02 * a, z0 = ez - 1.65 * a, y0 = ey - .85 * a;
+  for (const s of [-1, 1]) { const T = new Float32Array(G * G).fill(-1);
+    for (let j = 0; j < pts.length / 6; j++) { const out = (pts[j * 6] - mx) * s, y = (pts[j * 6 + 1] - ey) / a, z = (pts[j * 6 + 2] - ez) / a; if (out < .5 * a || (y > -.68 && y < .44 && z > -1.52 && z < -.54)) continue;
+      const gz = Math.floor((pts[j * 6 + 2] - z0) / d), gy = Math.floor((pts[j * 6 + 1] - y0) / d); if (gz >= 0 && gy >= 0 && gz < G && gy < G && out > T[gz + G * gy]) T[gz + G * gy] = out; }
+    const known = T.map(x => x >= 0 ? 1 : 0);
+    for (let it = 0; it < 900; it++) for (let i = 0; i < G; i++) for (let k = 0; k < G; k++) { const c = i + G * k; if (known[c]) continue; let sum = 0, cnt = 0; for (const [di, dk] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) { const x = i + di < 0 || i + di >= G || k + dk < 0 || k + dk >= G ? -1 : T[c + di + G * dk]; if (x >= 0) { sum += x; cnt++; } } if (cnt) T[c] = sum / cnt; }
+    // (smoothed only where it is stretched over: smoothed where the head itself is, it lay under it, and the cheek stood up through the ear's front)
+    for (let it = 0; it < 3; it++) { const U = T.slice(); for (let i = 1; i < G - 1; i++) for (let k = 1; k < G - 1; k++) { if (known[i + G * k]) continue; let sum = 0; for (let di = -1; di <= 1; di++) for (let dk = -1; dk <= 1; dk++) sum += U[i + di + G * (k + dk)]; T[i + G * k] = sum / 9; } }
+    sides[s].head = { T, G, x0: z0, y0, d }; }
   earData = { sides, a, ey, ez, mx, inv, M: inv.clone().invert() };
   for (const s of [-1, 1]) earPieces(sides[s], geo); }
 // (the inside of a real ear, measured off the user's picture, a 720 x 840 close-up with the face to the right - X, Y are
@@ -3292,6 +3305,8 @@ function earRelief(u, v) { const S = (x, p, q) => { const t = Math.min(1, Math.m
   return [L, c]; }
 // (that depth as a colour laid over the skin: from the skin, over pink and salmon, to a warm dark brown in the folds)
 function earTone(c) { const T = [[0, 1, .99, 1], [.25, .95, .82, .8], [.5, .85, .6, .5], [.7, .72, .45, .33], [.88, .55, .3, .2], [1, .38, .18, .1]]; let k = 0; while (k < T.length - 2 && c > T[k + 1][0]) k++; const q = Math.min(1, Math.max(0, (c - T[k][0]) / (T[k + 1][0] - T[k][0]))); return [1, 2, 3].map(n => T[k][n] + (T[k + 1][n] - T[k][n]) * q); }// (the body's pieces at the ear, with what lies at the same spot: to work out the light on what is left of its old ear)
+// (how far out the head without its ear stands at a spot by the ear)
+function earHead(E, y, z) { const { T, G, x0, y0, d } = E.head, fz = (z - x0) / d - .5, fy = (y - y0) / d - .5, i = Math.max(0, Math.min(G - 2, Math.floor(fz))), k = Math.max(0, Math.min(G - 2, Math.floor(fy))), m = Math.min(1, Math.max(0, fz - i)), n = Math.min(1, Math.max(0, fy - k)); return (T[i + G * k] * (1 - m) + T[i + 1 + G * k] * m) * (1 - n) + (T[i + G * k + G] * (1 - m) + T[i + 1 + G * k + G] * m) * n; }
 function earPieces(E, geo) { const of = new Map(), tris = [...new Set(Array.from(E.idx, j => j - j % 3))], A = geo.attributes.position; E.tris = Int32Array.from(tris); const key = j => `${A.getX(j).toFixed(5)},${A.getY(j).toFixed(5)},${A.getZ(j).toFixed(5)}`;
   E.group = new Map(); for (const c of tris) for (let i = 0; i < 3; i++) { const ky = key(c + i); if (!of.has(ky)) of.set(ky, of.size); E.group.set(c + i, of.get(ky)); } E.groups = of.size; }
 // (a new ear, after the user's picture, as a part of its own: the body's ear - a bowl with a rim, not enough points to
@@ -3299,26 +3314,28 @@ function earPieces(E, geo) { const of = new Map(), tris = [...new Set(Array.from
 // behind it and into the head. Its skin is the body's own picture at one spot of the cheek, so it follows the skin colour;
 // the depths darkened by the point's own colour. o: s size, out turned away from the head, elf drawn up into a point)
 function buildEar(s, o) { const { a, mx, ey, ez, inv, M } = earData, E = earData.sides[s], body = hairBase.body, NR = 120, NT = 320, NB = 18, S = (x, p, q) => { const t = Math.min(1, Math.max(0, (x - p) / (q - p))); return t * t * (3 - 2 * t); };
-  if (!E.head) { const { pts } = hairBase.whole, G = 64, T = new Float32Array(G * G).fill(-1), x0 = ez - 1.3 * a, y0 = ey - .7 * a, d = .02 * a; for (let j = 0; j < pts.length / 6; j++) { const out = (pts[j * 6] - mx) * s; if (out < .55 * a) continue; const gz = Math.floor((pts[j * 6 + 2] - x0) / d), gy = Math.floor((pts[j * 6 + 1] - y0) / d); if (gz < 0 || gy < 0 || gz >= G || gy >= G) continue; if (pts[j * 6 + 2] > ez - .62 * a && !(pts[j * 6 + 2] < ez - .56 * a && out > .9 * a) && out > T[gz + G * gy]) T[gz + G * gy] = out; } // (not the old ear's own front, standing out: it gave bumps on the new ear's open front)
-    for (let it = 0; it < G; it++) for (let i = 1; i < G - 1; i++) for (let k = 1; k < G - 1; k++) if (T[i + G * k] < 0) { const n = [T[i - 1 + G * k], T[i + 1 + G * k], T[i + G * k - G], T[i + G * k + G]].filter(x => x >= 0); if (n.length) T[i + G * k] = Math.min(...n); }
-    // (smoothed: the open front of the ear lies right on it, and its steps showed there as streaks)
-    for (let it = 0; it < 4; it++) { const U = T.slice(); for (let i = 1; i < G - 1; i++) for (let k = 1; k < G - 1; k++) { let sum = 0, cnt = 0; for (let di = -1; di <= 1; di++) for (let dk = -1; dk <= 1; dk++) { const x = U[i + di + G * (k + dk)]; if (x >= 0) { sum += x; cnt++; } } if (cnt && U[i + G * k] >= 0) T[i + G * k] = sum / cnt; } }
-    E.head = { T, G, x0, y0, d }; }
-  const headAt = (y, z) => { const { T, G, x0, y0, d } = E.head, fz = (z - x0) / d - .5, fy = (y - y0) / d - .5, i = Math.max(0, Math.min(G - 2, Math.floor(fz))), k = Math.max(0, Math.min(G - 2, Math.floor(fy))), m = Math.min(1, Math.max(0, fz - i)), n = Math.min(1, Math.max(0, fy - k)); return (T[i + G * k] * (1 - m) + T[i + 1 + G * k] * m) * (1 - n) + (T[i + G * k + G] * (1 - m) + T[i + 1 + G * k + G] * m) * n; };
+  const headAt = (y, z) => earHead(E, y, z);
   const P = [], C = [], size = o.s || 1, lean = .2, cl = Math.cos(lean), sl = Math.sin(lean), cz = ez - .85 * a, cy = ey - .07 * a, W = .27 * a, H = .335 * a; let lobe = null;
-  const place = (u, v, level) => { let pu = u * W * (1 + .17 * v), pv = v * H; const low = v < 0 && size > 1 ? 1 - .35 * (size - 1) / .4 * S(-v, 0, 1) : 1; // (a big ear not drawn as far down: the lobe stuck out as a tip)
-    pu *= size; pv *= size * low; if (size < 1) { pu -= (1 - size) * W * (.5 - 1.5 * S(u, .2, 1)); pv += (1 - size) * H * .5; } /* (but its front still out to the cheek: open there, a bare strip of the old ear showed in front of it) */ /* (a small ear up and back by the hair: the gap, with its ragged edge of hair, came there) */ let h = (.92 + .31 * (1 - u) / 2 * (.55 + .45 * S(v, -1, -.2))) * a + (level * a) * (.6 + .4 * size) + Math.max(0, size - 1) * .15 * a; // (a big ear further out: its top went in under the hair)
+  const place = (u, v, level, top) => { let pu = u * W * (1 + .17 * v), pv = v * H; const low = v < 0 && size > 1 ? 1 - .35 * (size - 1) / .4 * S(-v, 0, 1) : 1; // (a big ear not drawn as far down: the lobe stuck out as a tip)
+    pu *= size; pv *= size * low; let h = (.92 + .31 * (1 - u) / 2 * (.55 + .45 * S(v, -1, -.2))) * a + (level * a) * (.6 + .4 * size) + Math.max(0, size - 1) * .15 * a; // (a big ear further out: its top went in under the hair)
     if (o.out) h += o.out * .3 * a * (1 - u) / 2 * S(v, -1, -.3);
     if (o.elf) { const t = S(v, .1, 1); pv += .36 * a * t * t * t; pu -= .1 * a * t * t + u * W * .4 * t * t; h += .14 * a * t * t; } // (and out from the hair, where the point shows)
-    const wy = cy + pu * sl + pv * cl, wz = cz + pu * cl - pv * sl, tf = Math.atan2(v, u), opn = (1 - S(tf, -.05, .32)) * S(tf, -1.4, -1.05), fl = S(390 + u * 294 - v * 74, 625 - 95 * opn, 690 - 40 * opn); if (fl) h += (headAt(wy, wz) + (.004 + .01 * opn) * a + level * a - h) * fl; // (down to the cheek over a longer way at the open front: steep, it showed as smears)
+    const wy = cy + pu * sl + pv * cl, wz = cz + pu * cl - pv * sl, tf = Math.atan2(v, u), opn = (1 - S(tf, -.05, .32)) * S(tf, -1.4, -1.05), fl = S(390 + u * 294 - v * 74, 625 - 95 * opn, 690 - 40 * opn); if (fl) h += (headAt(wy, wz) + (.014 + .01 * opn) * a + level * a - h) * fl; // (down to the cheek over a longer way at the open front: steep, it showed as smears)
+    // (and its front never below the head out towards its edge: the head stood through the notches there, jagged)
+    if (top) { const rr = Math.hypot(u, v); h = Math.max(h, headAt(wy, wz) + .008 * a - .3 * a * (1 - S(rr, .66, .8))); }
     return [mx + s * h, wy, wz]; };
   for (let r = 0; r <= NR + NB; r++) for (let q = 0; q < NT; q++) { const th = q / NT * Math.PI * 2, c = Math.cos(th), n = Math.sin(th); let rho, level, dark;
-    if (r <= NR) { rho = r / NR; const u = rho * c, v = rho * n, [L, d] = earRelief(u, v), op = (1 - S(th > Math.PI ? th - 2 * Math.PI : th, -.05, .32)) * S(th > Math.PI ? th - 2 * Math.PI : th, -1.4, -1.05), e = S(rho, .86, .98) * (1 - op), x = Math.max(0, (rho - .84) / .16); level = L * (1 - S(rho, .84, 1) * (1 - op)) - .102 * (1 - op) * (1 - Math.sqrt(Math.max(0, 1 - x * x))) - .06 * op * S(rho, .9, 1); dark = d * (1 - e); } // (the rim rolled round, as a tube - but not down the open front, where the ear goes over into the cheek)
+    if (r <= NR) { rho = r / NR; const u = rho * c, v = rho * n, [L, d] = earRelief(u, v), op = (1 - S(th > Math.PI ? th - 2 * Math.PI : th, -.05, .32)) * S(th > Math.PI ? th - 2 * Math.PI : th, -1.4, -1.05), e = S(rho, .86, .98) * (1 - op), x = Math.max(0, (rho - .84) / .16); level = L * (1 - S(rho, .84, 1) * (1 - op)) - .102 * (1 - op) * (1 - Math.sqrt(Math.max(0, 1 - x * x))) - .01 * op * S(rho, .9, 1); dark = d * (1 - e); } // (the rim rolled round, as a tube - but not down the open front, where the ear goes over into the cheek)
     else { const b = (r - NR) / NB, f = S(b, 0, .35); rho = 1 + .03 * Math.sin(Math.PI * b) - .12 * b; level = -.012 * (1 - f) - .03 * f - .09 - .34 * b ** 1.3; dark = .3 * b; }
-    const p = place(rho * c, rho * n, level); P.push(...p); C.push(...earTone(dark));
+    const p = place(rho * c, rho * n, level, r <= NR); P.push(...p); C.push(...earTone(dark));
     if (r === NR && (!lobe || p[1] < lobe[1])) lobe = p; }
   E.lobe = new THREE.Vector3(...lobe);
   const idx = []; for (let r = 0; r < NR + NB; r++) for (let q = 0; q < NT; q++) { const i = r * NT + q, j = r * NT + (q + 1) % NT, k = i + NT, l = j + NT; if (s < 0) idx.push(i, j, k, j, l, k); else idx.push(i, k, j, j, k, l); }
+  // (how far out the ear's front stands at each spot inside its rim: the old ear is laid down under it, and only there)
+  { const G = 240, d = .01 * a, z0 = ez - 1.65 * a, y0 = ey - .85 * a, T = new Float32Array(G * G).fill(Infinity); for (let i = 0; i < NT * (NR + 1); i++) { const gz = Math.floor((P[i * 3 + 2] - z0) / d), gy = Math.floor((P[i * 3 + 1] - y0) / d), out = (P[i * 3] - mx) * s; if (gz >= 0 && gy >= 0 && gz < G && gy < G && out < T[gz + G * gy]) T[gz + G * gy] = out; }
+    // (no spot left out between its points: the old ear stood up through there, crumpled)
+    for (let it = 0; it < 2; it++) { const U = T.slice(); for (let i = 1; i < G - 1; i++) for (let k = 1; k < G - 1; k++) { const c = i + G * k; if (U[c] < Infinity) continue; const n = [U[c - 1], U[c + 1], U[c - G], U[c + G]].filter(x => x < Infinity); if (n.length > 1) T[c] = Math.min(...n); } }
+    E.cover = { T, G, d, z0, y0 }; }
   const g = new THREE.BufferGeometry(), w = new THREE.Vector3(), cnt = P.length / 3;
   for (let i = 0; i < cnt; i++) { w.fromArray(P, i * 3).applyMatrix4(inv); P[i * 3] = w.x; P[i * 3 + 1] = w.y; P[i * 3 + 2] = w.z; }
   g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(C, 3)); g.setIndex(idx); g.computeVertexNormals();
@@ -3338,17 +3355,22 @@ function earLight(E, geo) { const A = geo.attributes.position, N = geo.attribute
   const v = new THREE.Vector3(), o = new THREE.Vector3();
   for (let k = 0; k < E.idx.length; k++) { const j = E.idx[k], g = E.group.get(j) * 3, w = E.w[k]; v.set(sum[g], sum[g + 1], sum[g + 2]).normalize(); o.set(E.nrm[k * 3], E.nrm[k * 3 + 1], E.nrm[k * 3 + 2]); v.lerp(o, 1 - w * w * (3 - 2 * w)).normalize(); N.setXYZ(j, v.x, v.y, v.z); } }
 function shapeEars() { if (!hairBase) return; if (!earData) setupEars(); const o = (EARS.find(e => e[0] === earsNow) || [])[2] || {}, { sides, a, inv, M, mx, ey, ez } = earData;
-  const geo = hairBase.body.geometry, A = geo.attributes.position, N = geo.attributes.normal, v = new THREE.Vector3(), cz = ez - .85 * a, cy = ey - .07 * a;
-  // (a small ear sits up and back and covers less: what is pressed in follows it)
-  const sh = Math.max(0, 1 - (o.s || 1)), sc = Math.min(1, o.s || 1), zc = cz - sh * .135 * a, yc = cy + sh * .1675 * a;
-  for (const s of [-1, 1]) { const E = sides[s];
-    // (the old ear pressed in level with the head, deeper only under the new one's bowl - deeper all over, its edge showed as a band round a small ear)
-    for (let k = 0; k < E.idx.length; k++) { const j = E.idx[k]; v.set(E.pos[k * 3], E.pos[k * 3 + 1], E.pos[k * 3 + 2]).applyMatrix4(M); const q = Math.hypot((v.z - zc) / (.3 * a * sc), (v.y - yc) / (.4 * a * sc)), low = Math.min(1, Math.max(0, (cy - .05 * a - v.y) / (.12 * a))), lim = (.7 + .12 * Math.min(1, Math.max(0, (q - .45) / .3)) + .08 * (1 - low) * Math.min(1, Math.max(0, (q - .55) / .25)) + .12 * Math.min(1, Math.max(0, (q - 1.05) / .4))) * a;
-      // (and deeper still under the front of the new bowl, which is open there: the old ear's front stood up through it)
-      const zn = (v.z - zc) / (.3 * a * sc), yn = Math.abs(v.y - yc) / (.4 * a * sc), fr = Math.min(1, Math.max(0, (zn - .05) / .3)) * (1 - Math.min(1, Math.max(0, (zn - .8) / .15))) * (1 - Math.min(1, Math.max(0, (yn - .75) / .2)));
-      // (in front of and under a small ear its old ear is left bare: in below the cheek, or it stood as a lip)
-      v.x = mx + s * Math.min((v.x - mx) * s, lim - .2 * a * fr, sh && (v.z > cz || v.y < yc - .25 * a) ? .85 * a : Infinity); v.applyMatrix4(inv); A.setXYZ(j, v.x, v.y, v.z); }
-    earLight(E, geo); buildEar(s, o); }
+  const geo = hairBase.body.geometry, A = geo.attributes.position, N = geo.attributes.normal, v = new THREE.Vector3(), S = (x, p, q) => { const t = Math.min(1, Math.max(0, (x - p) / (q - p))); return t * t * (3 - 2 * t); };
+  for (const s of [-1, 1]) { const E = sides[s]; buildEar(s, o); const { T, G, d, z0, y0 } = E.cover, n = E.idx.length, W = new Float32Array(n * 3), cov = new Uint8Array(n);
+    // (the old ear laid down on the head as if it had none - what stands a little over that, the head itself, only
+    // eased down, or it kinked - and at the new one's edge just under it; what lies all under it is gone: pressed down
+    // there, its big pieces stood up through the hollows, and met its front in a jagged edge)
+    for (let k = 0; k < n; k++) { v.set(E.pos[k * 3], E.pos[k * 3 + 1], E.pos[k * 3 + 2]).applyMatrix4(M);
+      const o0 = (v.x - mx) * s, hd = earHead(E, v.y, v.z), gz = Math.floor((v.z - z0) / d), gy = Math.floor((v.y - y0) / d), c = gz >= 0 && gy >= 0 && gz < G && gy < G ? T[gz + G * gy] : Infinity;
+      cov[k] = c < Infinity; v.x = mx + s * Math.min(o0 > hd ? hd + .006 * a * (1 - Math.exp(-(o0 - hd) / (.006 * a))) : o0, c - .01 * a); W[k * 3] = v.x; W[k * 3 + 1] = v.y; W[k * 3 + 2] = v.z; }
+    if (!E.kOf) { E.kOf = new Map(); E.idx.forEach((j, k) => E.kOf.set(j, k)); }
+    for (const c of E.tris) { const ks = [E.kOf.get(c), E.kOf.get(c + 1), E.kOf.get(c + 2)]; if (ks.every(k => k !== undefined && cov[k])) for (const k of ks.slice(1)) W.copyWithin(k * 3, ks[0] * 3, ks[0] * 3 + 3); }
+    for (let k = 0; k < n; k++) { v.fromArray(W, k * 3).applyMatrix4(inv); A.setXYZ(E.idx[k], v.x, v.y, v.z); }
+    earLight(E, geo);
+    // (and painted in the cheek's skin: the old ear's folds in the body's picture showed as blotches round the new one -
+    // only what stood out as the old ear: the head round it keeps its own, the hair's edge painted on it too)
+    if (!E.plain) { const uvA = geo.attributes.uv, ear = new Set(); for (let k = 0; k < E.idx.length; k++) { v.set(E.pos[k * 3], E.pos[k * 3 + 1], E.pos[k * 3 + 2]).applyMatrix4(M); if ((v.x - mx) * s > earHead(E, v.y, v.z) + .015 * a) ear.add(E.idx[k]); }
+      for (const c of E.tris) if (ear.has(c) && ear.has(c + 1) && ear.has(c + 2)) for (let i = 0; i < 3; i++) uvA.setXY(c + i, E.uv[0], E.uv[1]); uvA.needsUpdate = true; E.plain = true; } }
   A.needsUpdate = true; N.needsUpdate = true; }
 // (the earrings: hanging from each lobe - the lowest point of the ear as it is shaped now - bound to the head like the
 // clown's nose)
@@ -4817,6 +4839,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.9.1 (4a2e293)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.9.1 (50390ca)</div>
 </body>
 </html>
