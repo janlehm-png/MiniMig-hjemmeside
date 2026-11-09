@@ -37,4 +37,7 @@ $version = ([BitConverter]::ToString($sha.ComputeHash([Text.Encoding]::UTF8.GetB
 $json = ConvertTo-Json -InputObject $paths -Compress
 [IO.File]::WriteAllText((Join-Path $root 'precache-manifest.js'), "self.MINIMIG_VERSION = '$version';`nself.MINIMIG_FILES = $json;`n", $utf8)
 $mb = ($files | Measure-Object Length -Sum).Sum / 1MB
+# (Safari looks only at service-worker.js itself for a new version, not at what it loads - so the iPads never got a new
+# game: the version goes into its importScripts line, so the file changes with every version. Tried on /test 05-11-2026)
+$sw = Join-Path $root 'service-worker.js'; [IO.File]::WriteAllText($sw, ([IO.File]::ReadAllText($sw) -replace "importScripts\('\./precache-manifest\.js(\?v=[0-9A-F]+)?'\);", "importScripts('./precache-manifest.js?v=$version');"), $utf8)
 Write-Host ("PWA: {0} files ({1:N1} MB), version {2}" -f $paths.Count, $mb, $version)

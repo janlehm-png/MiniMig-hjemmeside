@@ -2,9 +2,9 @@
 <html lang="da">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>MiniMig &ndash; byg og spil</title>
-<meta name="minimig-version" content="0.9.1">
+<meta name="minimig-version" content="0.10.0">
 <!-- (the number of this version, shown under the i - see VERSIONER.md - raised for each package and each fix put out) -->
 <!-- (the same icon as version 1 on a home screen, under the name MiniMig 2 - the icons lie in the website's billeder/;
      the user, 03-11-2026, sharing version 2 with testers) -->
@@ -18,6 +18,8 @@
   :root { --ink: #3A2E5C; --tile: #FFFFFF; --line: #E6DEFF; --accent: #7C5CFF; }
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; background: #FFF8E1; color: var(--ink); font: 15px/1.3 system-ui, sans-serif; overflow: hidden; }
+  /* (two quick taps zoomed the whole page on an iPad, say beside a coin - the user, 05-11-2026; scrolling and pinching still work) */
+  html, body, button, a, input, label, dialog, .main, .main * { touch-action: manipulation; }
   /* the screen split as in the app (version 1): the figure and its scene on the left, the full height; the tabs, choices
      and colours on the right, scrolling on their own. On a phone held upright: the figure on top, the rest under it */
   .main { display: flex; gap: 14px; height: 100dvh; padding: max(10px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); }
@@ -36,6 +38,8 @@
   .panel button { border: 2px solid var(--line); background: var(--tile); color: var(--ink); border-radius: 14px; padding: 8px 12px;
     font: 700 13px/1 system-ui, sans-serif; cursor: pointer; }
   .panel button.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent) inset; }
+  /* (the buttons behind a grown-up's sum a soft lilac, not white: to show a grown-up is wanted there - the user, 09-11-2026) */
+  button.grown, .panel button.grown { background: #ECE6FF; border-color: #CBBEF7; }
   /* the movements: a fourth group of tabs on the right, as the others (the user, 03-11-2026), each with a little picture
      of the figure doing it; a movement chosen stays lit beside the tab chosen in the other groups */
   .tabgroup button[hidden] { display: none; }
@@ -261,6 +265,24 @@
   .lock-badge[hidden] { display: none; }
   /* the grown-ups' sum always on top - it is also asked from inside other sheets (the stars' players button) */
   #gate { z-index: 60; }
+  /* the time limit (the user, 08-11-2026): a button held 3 seconds - a ring fills round it - then the sum; the pause
+     screen over everything but the sum */
+  .hold-btn { position: relative; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; touch-action: manipulation; }
+  .hold-ring { position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: .5;
+    background: conic-gradient(#2FB872 calc(var(--p, 0) * 1turn), transparent 0); }
+  #pauseScreen { position: fixed; inset: 0; z-index: 55; display: grid; place-items: center; text-align: center; color: #fff;
+    background: radial-gradient(circle at 50% 35%, #5B4A9E, #241B47 75%); padding: 24px max(16px, env(safe-area-inset-right, 0px)) 24px max(16px, env(safe-area-inset-left, 0px)); }
+  #pauseScreen[hidden] { display: none; }
+  #timeSheet { z-index: 57; }
+  #pauseScreen .zz { font-size: 5.5rem; line-height: 1; animation: zz 3s ease-in-out infinite; }
+  @keyframes zz { 50% { transform: translateY(-10px) rotate(-4deg); } }
+  #pauseScreen h2 { font-size: 1.9rem; margin: .5em 0 .2em; text-wrap: balance; }
+  #pauseScreen p { font-size: 1.2rem; margin: 0; opacity: .85; }
+  #pauseAdult { position: absolute; right: max(18px, env(safe-area-inset-right, 0px)); bottom: max(18px, env(safe-area-inset-bottom, 0px)); overflow: hidden;
+    border: 2px solid rgba(255, 255, 255, .35); background: rgba(255, 255, 255, .1); color: #fff; border-radius: 14px; padding: 10px 16px; font: inherit; font-size: .95rem; }
+  .time-note { position: fixed; top: max(14px, env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); z-index: 58; max-width: calc(100% - 32px);
+    background: #fff; color: var(--ink); border-radius: 999px; padding: 10px 18px; font-weight: 700; box-shadow: 0 4px 18px rgba(58, 46, 92, .25); text-align: center; }
+  .time-note[hidden] { display: none; }
   .sheet { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; background: rgba(20, 14, 40, .55);
     padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
   .sheet[hidden] { display: none; }
@@ -343,12 +365,13 @@
     <button id="keepBtn"><span class="emo" aria-hidden="true">⭐</span><span>Gem</span></button>
     <button id="figsBtn"><span class="emo" aria-hidden="true">🖼️</span><span>Mine figurer</span></button>
     <button id="newBtn"><span class="emo" aria-hidden="true">✨</span><span>Ny figur</span></button>
-    <button id="saveBtn"><span class="emo" aria-hidden="true">📷</span><span>Send foto</span><span class="lock-badge" id="lockBadge" hidden aria-hidden="true">🔓</span></button>
-    <button id="soundBtn"><span class="emo" aria-hidden="true">🔊</span><span>Lyd</span></button>
+    <button id="saveBtn" class="grown"><span class="emo" aria-hidden="true">📷</span><span>Send foto</span><span class="lock-badge" id="lockBadge" hidden aria-hidden="true">🔓</span></button>
+    <button id="soundBtn" class="grown"><span class="emo" aria-hidden="true">🔊</span><span>Lyd</span></button>
+    <button id="timeBtn" class="hold-btn grown"><span class="emo" aria-hidden="true">⏱️</span><span>Tid</span></button>
     <!-- (the coins are on the button too - the user, 04-11-2026) -->
     <button id="starBtn"><span class="emo emo-coins" aria-hidden="true">🏆<i class="mini-coin">5</i><i class="mini-coin gold">20</i></span><span>Stjerner og mønter</span></button>
     <!-- (the language: a globe and the other language's name - no flag, English being spoken under many - the user, 04-11-2026) -->
-    <button id="langBtn"><span class="emo" aria-hidden="true"></span><span></span></button>
+    <button id="langBtn" class="grown"><span class="emo" aria-hidden="true"></span><span></span></button>
     <!-- (on minimig.dk only: the website's "Til voksne" - home screen, offline, privacy - from its pwa.js) -->
     <!-- (drawn here: an iPad shows the family emoji as a grey outline - the user, 04-11-2026) -->
     <button id="adultBtn" hidden><span class="emo" aria-hidden="true"><svg viewBox="0 0 32 32" width="30" height="30"><circle cx="11.5" cy="8" r="5" fill="#F2C09A"/><path d="M7 7a5 5 0 0 1 9-1.5C13 7 10 7.500 7 7z" fill="#6B4226"/><path d="M4 30V20a7.500 7.500 0 0 1 15 0v10z" fill="#4F7BE8"/><circle cx="23.500" cy="15" r="4" fill="#F7CFAE"/><path d="M19.500 14.500a4 4 0 0 1 8 0c-3-.2-5.500-.8-8 0z" fill="#E0A63A"/><path d="M18 30v-5a5.500 5.500 0 0 1 11 0v5z" fill="#F0628F"/></svg></span><span>Til voksne</span></button>
@@ -486,6 +509,22 @@
     <button class="share-off players-btn" id="addPlayer">➕ Ny spiller</button>
   </div>
 </div>
+<!-- the time, for grown-ups (held 3 seconds, then the sum): how long a day MiniMig may be played - the user, 08-11-2026 -->
+<div class="sheet" id="timeSheet" hidden>
+  <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="timeTitle">
+    <div class="sheet-head"><h2 id="timeTitle">Tid</h2><button class="sheet-x" data-close aria-label="Luk">✕</button></div>
+    <p class="note">For voksne: hvor længe må der spilles om dagen? Når tiden er brugt, holder MiniMig pause til i morgen. Valget huskes på denne enhed.</p>
+    <div class="sound-opts" id="timeOpts"></div>
+    <p class="note" id="timeUsed"></p>
+    <div class="sound-all"><button class="share-off" id="timeMore">➕ 10 minutter mere i dag</button><button class="share-off" id="timeReset">🔄 Start dagen forfra</button></div>
+  </div>
+</div>
+<!-- the pause, when the day's time is used: over everything; only a grown-up gets past it (held 3 seconds, then the sum) -->
+<div id="pauseScreen" hidden>
+  <div><div class="zz" aria-hidden="true">😴🌙</div><h2>Nu skal MiniMig hvile sig</h2><p>Vi ses i morgen!</p></div>
+  <button id="pauseAdult" class="hold-btn">🔒 Voksen</button>
+</div>
+<div class="time-note" id="timeNote" role="status" hidden></div>
 <!-- the sound, for grown-ups (behind the sum): which of MiniMig's sounds may play - the user, 03-11-2026 -->
 <div class="sheet" id="soundSheet" hidden>
   <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="soundTitle">
@@ -529,7 +568,7 @@
          grown-ups' players belonged here with the figures, not under the stars) -->
     <div class="kids" id="figKids"><h3>Børn</h3><div class="who who-small" id="kidList"></div><h3>🖼️ Gemte figurer</h3></div>
     <div class="gallery" id="gallery"></div>
-    <button class="share-off players-btn" id="playersBtn">Børn og spillere – for voksne</button>
+    <button class="share-off players-btn grown" id="playersBtn">Børn og spillere – for voksne</button>
   </div>
 </div>
 <div class="sheet" id="picSheet" hidden>
@@ -600,6 +639,9 @@ const EN = {
   'Spørg en voksen': 'Ask a grown-up', 'Stjernerne fra spillene bliver til kroner på din konto – jo sværere niveau, jo flere. For kronerne køber du ting i butikken.': 'The stars from the games become coins in your account – the harder the level, the more. With the coins you buy things in the shop.', '🏆 = din rekord i det spil på det niveau.': '🏆 = your record in that game at that level.', '🔒 Stjernebutik': '🔒 Star shop', 'Tryk på en ting med 🔒, og betal med mønter. Hvert barn køber for sig selv.': 'Tap a thing with 🔒 and pay with coins. Each child buys for themselves.', '🧾 Det har du købt': '🧾 What you have bought',
   'Køb': 'Buy', '🤝 Hjælp': '🤝 Help', 'Betal ✓': 'Pay ✓', 'Børn og spillere': 'Children and players', 'Hvert barn har sin egen MiniMig og sine egne stjerner. Byg barnets figur, og tryk 📷 – så gemmes figuren på skærmen som barnets MiniMig. Under Mine figurer trykker barnet bare på sit billede. Gemmes kun på denne enhed.': 'Each child has their own MiniMig and their own stars. Build the child’s figure and tap 📷 – the figure on the screen is then saved as the child’s MiniMig. Under My figures the child just taps their picture. Kept on this device only.', '➕ Ny spiller': '➕ New player',
   'For voksne: vælg hvilke lyde MiniMig må lave. Valget huskes på denne enhed.': 'For grown-ups: choose which sounds MiniMig may make. The choice is remembered on this device.', '🎮 Musik i spillene': '🎮 Music in the games', '💃 Musik til dansene': '💃 Music for the dances', '🔔 Lydeffekter – boing, bonk og ta-da': '🔔 Sound effects – boing, bonk and ta-da', '🗣️ Stemmen, der siger navnet': '🗣️ The voice saying the name', 'Slå al lyd fra': 'All sound off', 'Slå al lyd til': 'All sound on',
+  'Tid': 'Time', 'For voksne: hvor længe må der spilles om dagen? Når tiden er brugt, holder MiniMig pause til i morgen. Valget huskes på denne enhed.': 'For grown-ups: how long may MiniMig be played each day? When the time is used up, MiniMig takes a break until tomorrow. The choice is remembered on this device.',
+  '➕ 10 minutter mere i dag': '➕ 10 more minutes today', '🔄 Start dagen forfra': '🔄 Start the day over', 'Nu skal MiniMig hvile sig': 'Time for MiniMig to rest', 'Vi ses i morgen!': 'See you tomorrow!', '🔒 Voksen': '🔒 Grown-up',
+  'Ingen grænse': 'No limit', '⏱️ Hold knappen inde i 3 sekunder': '⏱️ Hold the button down for 3 seconds',
   'Gem i Mine figurer': 'Save in My figures', 'Ny MiniMig': 'New MiniMig', 'Dreng': 'Boy', 'Pige': 'Girl', 'Den figur, du har nu, bliver gemt i Mine figurer 🖼️.': 'The figure you have now is saved in My figures 🖼️.', 'Børn': 'Children', '🖼️ Gemte figurer': '🖼️ Saved figures', 'Børn og spillere – for voksne': 'Children and players – for grown-ups',
   'Dit billede': 'Your picture', 'Tryk og hold på billedet, og vælg': 'Press and hold the picture, and choose', 'Gem i Fotos': 'Save to Photos', 'eller': 'or', 'Del': 'Share', '💾 Gem billedet': '💾 Save the picture', 'Billedet gemmes i mappen Overførsler. Du kan også højreklikke på billedet og vælge': 'The picture is saved in your Downloads folder. You can also right-click the picture and choose', 'Gem billede som': 'Save image as',
   'Sådan gør du': 'How it works', 'Musik til og fra': 'Music on and off', 'Skriv dit navn': 'Write your name', 'Navn på trøjen': 'Name on the top', 'Sig navnet': 'Say the name', 'Slet din egen stemme': 'Delete your own voice', 'Gem dansen': 'Save the dance', 'Start forfra': 'Start again', 'Navn på dansen': 'Name of the dance', 'Luk': 'Close', 'Slet': 'Delete', 'Mønterne på disken': 'The coins on the counter', 'Billedet af figuren': 'The picture of the figure', 'Min MiniMig': 'My MiniMig' };
@@ -882,11 +924,17 @@ function setupBrows(body) {
   setupEyeShapes(place, inside); setupMouth(place); setupPynt(place); setupNose(body, P, n, cx, cy, cz, apart);
   // (the eye sits in a hollow, whose shade showed through a shut eye: there the points are lit as if the face went
   // smoothly across - their way out turned towards the average of the ring round the eye, the more the further in)
-  const S = tex.eyeShapes; if (S) { const N = geo.attributes.normal.array, list = [], ring = S.eyes.map(() => [0, 0, 0]);
+  const S = tex.eyeShapes; if (S) { const N = geo.attributes.normal.array, list = [], ring = S.eyes.map(() => []);
     for (let i = 0; i < n; i++) { const X = (P[i * 3] - cx) / apart, Y = (P[i * 3 + 1] - cy) / apart; if (P[i * 3 + 2] < cz - .4 * apart) continue;
       S.eyes.forEach((E, e) => { const rr = Math.hypot((X - E.cx) / E.ew, (Y - E.cy) / E.eh);
-        if (rr < 1.5) list.push(i, e, rr); else if (rr < 1.9) for (let m = 0; m < 3; m++) ring[e][m] += N[i * 3 + m]; }); }
-    S.ring = ring.map(r => new THREE.Vector3(...r).normalize()); S.verts = new Float32Array(list); S.normals = Float32Array.from(list.filter((_, j) => j % 3 === 0).flatMap(i => [N[i * 3], N[i * 3 + 1], N[i * 3 + 2]])); }
+        if (rr < 1.5) list.push(i, e, rr); else if (rr < 1.9) ring[e].push(i); }); }
+     S.verts = new Float32Array(list);
+    // (each point's own way out, from the ring's points, the nearer the more: one way out for the whole hollow leaned far
+    // to the side, which left a brown smudge under the shut eye away from the light)
+    S.flat = new Float32Array(list.length); for (let j = 0; j < list.length; j += 3) { const i = list[j], v = [0, 0, 0];
+      for (const q of ring[list[j + 1]]) { const d2 = (P[q * 3] - P[i * 3]) ** 2 + (P[q * 3 + 1] - P[i * 3 + 1]) ** 2 + (P[q * 3 + 2] - P[i * 3 + 2]) ** 2, wq = 1 / (d2 * d2 + 1e-12); for (let m = 0; m < 3; m++) v[m] += N[q * 3 + m] * wq; }
+      const l = Math.hypot(...v) || 1; S.flat.set(v.map(c => c / l), j); }
+    S.normals = Float32Array.from(list.filter((_, j) => j % 3 === 0).flatMap(i => [N[i * 3], N[i * 3 + 1], N[i * 3 + 2]])); }
   // (the smile is shaped in the face too, a soft crease that showed under a new mouth: lit smooth the same way)
   // (each point's way out the average of all within a fifth of the eyes' distance, the nearer the more - one way out for
   // the whole oval, the ring's, tilted it all down and left it darker than the face round it)
@@ -903,7 +951,7 @@ function setupBrows(body) {
         for (let m = 0; m < 3; m++) v[m] += N[q * 3 + m] * wq; }
       const l = Math.hypot(...v) || 1; Mo.smooth.set(v.map(c => c / l), j / 2 * 3); }
     Mo.verts = new Float32Array(list); Mo.normals = Float32Array.from(list.filter((_, j) => j % 2 === 0).flatMap(i => [N[i * 3], N[i * 3 + 1], N[i * 3 + 2]]));
-    Mo.pos = Float32Array.from(list.filter((_, j) => j % 2 === 0).flatMap(i => [P[i * 3], P[i * 3 + 1], P[i * 3 + 2]])); Object.assign(Mo, { cx, cy, apart, body }); }
+    Mo.pos = Float32Array.from(list.filter((_, j) => j % 2 === 0).flatMap(i => [P[i * 3], P[i * 3 + 1], P[i * 3 + 2]])); Object.assign(Mo, { cx, cy, apart, body }); body.material.alphaTest = .5; body.frustumCulled = false; }
   // (the old brows: the hair's brown above the eyes - from now on a part of their own - and how they lie, side by side
   // folded together: in 24 strips across, from between the eyes outwards, how high their middle is and how thick)
   const N = 24, top = new Float32Array(N).fill(-9), low = new Float32Array(N).fill(9), zone = new Set();
@@ -1065,7 +1113,8 @@ function drawEyes(o) {
       if (sy < E.cy) { const u2 = Math.abs(sx - E.cx) / E.ew, band = Math.max(0, Math.min(1, (.9 - u2) / .2)); if (band > 0) put(i, dark, .9, band * sm(re - .97) * sm(1.05 - re)); }
       continue; }
     if (opts.shut && (!opts.one || E.side > 0)) {
-      const rr = Math.hypot(dx / (E.ew * 1.2), dy / (E.eh * 1.45)); if (rr < 1.25) put(i, skin, k, Math.min(1, (1.25 - rr) / .2));
+      // (the light never under the skin's own - a little darker, it showed under one eye)
+      const rr = Math.hypot(dx / (E.ew * 1.2), dy / (E.eh * 1.45)); if (rr < 1.25) put(i, skin, Math.max(1, k), Math.min(1, (1.25 - rr) / .2));
       const yc = opts.shut === 'up' ? -.3 * E.eh + .75 * E.eh * (1 - u * u) : .1 * E.eh - .55 * E.eh * (1 - u * u);
       put(i, dark, 1, cov(.024 * (1 - .4 * u * u) - Math.hypot(dy - yc, Math.max(0, Math.abs(dx) - E.ew)))); continue; }
     // (proper lashes: twelve along the upper lid's black line - well above the white's top there - fanning out from the
@@ -1079,7 +1128,11 @@ function drawEyes(o) {
         const mx = bx + sg * Math.sin(a1) * len * .55, my = by + Math.cos(a1) * len * .55, tx = mx + sg * Math.sin(a2) * len * .45, ty = my + Math.cos(a2) * len * .45;
         const [d1, t1] = seg(X, Y, bx, by, mx, my), [d2, t2] = seg(X, Y, mx, my, tx, ty);
         put(i, dark, 1, cov(Math.max(.016 * (1 - .4 * t1) - d1, .0096 * (1 - .75 * t2) - d2))); } }
-    if (opts.iris && open) { const ux = (X - E.ix) / E.r, uy = (Y - E.iy) / E.r, rr = Math.hypot(ux, uy); if (rr > 1.3) continue;
+    if (opts.iris) { const ux = (X - E.ix) / E.r, uy = (Y - E.iy) / E.r, rr = Math.hypot(ux, uy), b = Math.min(23, Math.max(0, Math.floor((dx / E.ew + 1) / 2 * 24)));
+      // (the old iris's dark rim, outside the round patch, under the upper lid and inside the opening: it showed as a ring
+      // or a crescent round the star and the heart)
+      if (rr > 1.2 && rr < 2 && E.top[b] > -1 && Y < E.top[b] - .012 && Math.hypot(dx / E.ew, dy / E.eh) < .97) put(i, white, 1, 1);
+      if (!open || rr > 1.3) continue;
       put(i, white, 1, cov((1.25 - rr) * E.r));
       // (how far inside the shape, in iris radii: a five-pointed star, or a heart)
       let sd;
@@ -1097,12 +1150,16 @@ function drawEyes(o) {
 // thick its upper and lower lips are (lip); Grin and Tunge show upper teeth (teeth) and Grin a tongue lying inside)
 // (round: how bluntly the lips end at the corners - the smaller, the rounder)
 // (Neutral was dropped by the user, 2026-11-02)
-const MOUTHS = [['mund-smil', 'Smil'],
+// (all of real 3D parts since 05-11-2026: closed - no opening, keep - and the figure's painted smile stays under the
+// lips, which lie on its measured curve; dimple, inside, tongueIn, teeth3d and the rest as buildSolid reads them)
+const MOUTHS = [['mund-smil', 'Smil', { mid: [-.036, .0685], hw: .27, open: [0, 0], lip: [.02, .06], closed: true, keep: true, solid: true, lipTint: .2, lip3d: [.026, .07], lipH: [.012, .022] }],
 // (all about as big as each other - the user found Grin much the biggest)
-  ['mund-grin', 'Grin', { mid: [-.02, .09], hw: .32, open: [.025, .19], lip: [.024, .03], teeth: .065, teethW: 1.05, tongue: .055, crease: true, bulge: [.06, .065] }],
-  ['mund-tunge', 'Tunge', { mid: [0, .06], hw: .32, open: [.022, .13], lip: [.026, .032], teeth: .05, out: true, crease: true }],
-  ['mund-o', 'Åh', { o: 1.2 }], ['mund-kys', 'Kys', { kiss: 1.25 }],
-  ['mund-trist', 'Trist', { mid: [.035, -.07], hw: .3, open: [0, 0], lip: [.044, .056], round: .3 }]];
+  ['mund-grin', 'Grin', { mid: [-.02, .09], hw: .32, open: [.025, .19], lip: [.024, .03], solid: true, lipTint: .3, lip3d: [.026, .046], lipH: [.02, .034], dimple: .8, inside: true, teeth3d: { n: 8, h: .078, end: .6, ua: .92 }, tongueIn: { w: .2, h: .05, d: .2, y: .04, z: .2 } }],
+  // (Tunge: a cheeky child's, after the user's two pictures of 06-11-2026 - the mouth closed round the tongue: Smil's own
+  // line and lips, the upper lip pushed out over the tongue (pout), the lower lip pressed flat under it, a broad tongue)
+  ['mund-tunge', 'Tunge', { mid: [-.036, .0685], hw: .27, open: [0, 0], lip: [.02, .06], closed: true, keep: true, solid: true, lipTint: .2, lip3d: [.026, .07], lipH: [.012, .022], pout: { up: .03, arch: .012, w: .4, flat: .6, wide: .05 }, tongue3d: { w: .12, th: .055, down: .088, out: .08 } }],
+  ['mund-o', 'Åh', { o: 1, ow: [.095, .082, .045], solid: true, lipTint: .42, lipH: [.05], inside: true, tongueIn: { w: .08, h: .028, d: .1, y: .022, z: .115 } }], ['mund-kys', 'Kys', { kiss: 1.25, kw: [.14, .105, .125], solid: true, closed: true, lipH: [.042] }],
+  ['mund-trist', 'Trist', { mid: [.05, -.1], hw: .28, open: [0, 0], lip: [.044, .056], round: .3, closed: true, even: true, solid: true, lipTint: .28, lip3d: [.036, .062], lipH: [.022, .036] }]];
 let mouthNow = 'mund-smil';
 function setMouth(name) { mouthNow = name; redrawBody(); renderStyles(); }
 function setupMouth(place) {
@@ -1136,6 +1193,8 @@ function smoothLight(a, stride, at) {
 // (the chosen mouth, drawn into the body's colour picture as it is redrawn: o its pixels)
 function drawMouth(o) {
   const M = tex.mouth, opts = (MOUTHS.find(m => m[0] === mouthNow) || [])[2]; if (!M || !opts) return;
+  // (Smil's own line left as it is; Tunge's drawn crisper along it, thin and dark as in the user's picture)
+  if (opts.keep) { if (opts.pout) for (let j = 0; j < M.texels.length; j += 4) { const i = M.texels[j] * 4, u = M.texels[j + 1] / opts.hw, a = .75 * Math.max(0, Math.min(1, (1 - Math.abs(u)) / .15)) * Math.max(0, Math.min(1, (.0065 - Math.abs(M.texels[j + 2] - (M.my + opts.mid[0] + opts.mid[1] * u * u))) / .004)); if (a > 0) { o[i] = o[i] * (1 - a) + 92 * a; o[i + 1] = o[i + 1] * (1 - a) + 48 * a; o[i + 2] = o[i + 2] * (1 - a) + 38 * a; } } return; }
   const T = M.texels, skin = tex.colours[PARTS.skin] || tex.skin, edge = .007;
   // (the colours: lips a soft pink, a third the skin's own; the mouth's inside a deep red; teeth off-white; the tongue pink)
   const mix = (a, b, t) => ({ r: a.r * (1 - t) + b.r * t, g: a.g * (1 - t) + b.g * t, b: a.b * (1 - t) + b.b * t });
@@ -1175,6 +1234,7 @@ function drawMouth(o) {
       // (the upper lip's outer edge dips a little in the middle - its bow; the lower lip is fuller; both round off at the
       // corners rather than running to a point)
       const rd = opts.round || .45, su = Math.pow(s, rd), up = top + opts.lip[0] * su * (1 - .28 * Math.exp(-((u / .13) ** 2))), lo = bot - opts.lip[1] * Math.pow(s, rd + .05);
+      if (opts.solid) { if (opts.dimple) { const dd = Math.hypot((au - 1) * opts.hw / .035, (Y - c) / .035); if (dd < 1) put(i, skin, k * opts.dimple, (1 - dd) * (1 - dd)); } if (au < 1) { under(i, k, bot - (opts.lip3d[1] * Math.pow(s, rd + .05)) - Y, u); const so = Math.sqrt(Math.max(0, 1 - (u / .93) ** 2)), t2 = c + opts.open[0] * so, b2 = c - opts.open[1] * Math.pow(so, 1.3); if (au < .93) put(i, seamC, opts.closed ? .8 : .5, opts.closed ? .7 * (1 - au) * cl((.005 - Math.abs(Y - c)) / .004) : cl((Math.min(t2 - Y, Y - b2) + .008) / .006)); if (au < .93 && Y < t2 && Y > b2) o[i + 3] = 0; } continue; }
       if (au < 1.05) { under(i, k, lo - Y, u);
         lip(i, k, Y - top, up - Y, (Y - top) / (up - top || 1), false, u);
         lip(i, k, bot - Y, Y - lo, (bot - Y) / (bot - lo || 1), true, u); }
@@ -1201,8 +1261,9 @@ function drawMouth(o) {
         put(i, skin, k * .8, .6 * cl(1 - Math.abs(dc - .045) / .006) * cl((ang + .9) / .3) * cl((.9 - ang) / .3) * cl((Math.abs(X) - cx2 + .02) / .02)); } }
     // (Åh: a round open mouth, its lips all round - fuller below - the inside dark with the tongue's tip at its foot)
     // (Åh and Kys drawn at their size times opts.o / opts.kiss, about their middle)
-    if (opts.o) { const cy = my - .03, sc = opts.o, x = X / sc, y = cy + (Y - cy) / sc, ei = Math.hypot(x / .1, (y - cy) / .09), eo = Math.hypot(x / .148, (y - cy + .008) / (y > cy ? .13 : .145));
+    if (opts.o) { const cy = my - (opts.ow ? opts.ow[2] : .03), sc = opts.o, x = X / sc, y = cy + (Y - cy) / sc, ei = opts.ow ? Math.hypot(X / opts.ow[0], (Y - cy) / opts.ow[1]) : Math.hypot(x / .1, (y - cy) / .09), eo = Math.hypot(x / .148, (y - cy + .008) / (y > cy ? .13 : .145));
       // (how far across the lip: 0 at the opening, 1 at its outer edge - ei / eo is the outer edge's size against the inner's)
+      if (opts.solid) { if (ei < 1.08) o[i + 3] = 0; continue; }
       under(i, k, (eo - 1) * .12 * sc, x / .12);
       lip(i, k, (ei - 1) * .08 * sc, (1 - eo) * .1 * sc, (ei - 1) / ((ei / eo - 1) || 1), cl((cy + .03 - y) / .06), x / .1);
       put(i, insideC, .6 + .45 * cl((cy + .09 - y) / .18), cov((1 - ei) * .08 * sc));
@@ -1211,9 +1272,9 @@ function drawMouth(o) {
     // (Kys: the lips gathered and pushed forward into a round pucker - a dome, its top edge with a little bow, lit from
     // above and in front: lightest where it sticks out most, deep red round its rim; creases run out from a small dark
     // pucker in the middle, and a short seam either side of it)
-    if (opts.kiss) { const sc = opts.kiss, cy = my - .03, rx = .085 * sc, ry = .075 * sc, ux = X / rx;
+    if (opts.kiss) { const sc = opts.kiss, cy = my - .03, rx = opts.kw ? opts.kw[0] : .085 * sc, ry = opts.kw ? opts.kw[2] / 1.08 : .075 * sc, ux = X / rx;
       const top = cy + ry * (1 - .22 * Math.exp(-((ux / .28) ** 2))), uy = Y > cy ? (Y - cy) / (top - cy) : (Y - cy) / (ry * 1.08), r = Math.hypot(ux, uy);
-      if (r < 1.25) { under(i, k, (r - 1) * ry, ux * .8);
+      if (r < 1.25) { if (opts.solid) { if (Y < cy) under(i, k, (r - 1) * ry, ux * .8); continue; } under(i, k, (r - 1) * ry, ux * .8);
         const a = cl((1 - r) * ry / .012 + .5);
         if (a > 0) { const nz = Math.sqrt(Math.max(0, 1 - r * r)), d = cl(.3 + .55 * nz + .25 * uy * (1 - nz) - .06 * ux);
           let c = d < .5 ? mix(kissShade, kissC, d / .5) : mix(kissC, kissLight, (d - .5) / .5 * .75);
@@ -1298,9 +1359,10 @@ function drawPynt(o) { const P = tex.pynt; if (!P || !pyntNow.length) return;
 // scaled across (x), up and down (y) and outwards (z), the more the nearer the middle of the nose, so it melts into the
 // face round it. Dyrenæse: a dark, shiny animal's nose painted on its tip. Klovn: a shiny red ball on its tip, held by
 // the head as the hair is)
-const NOSES = [['naese-naturlig', 'Naturlig'], ['naese-lille', 'Lille', { s: [.8, .85, .5] }], ['naese-bred', 'Bred', { s: [1.55, 1, 1.35] }],
-  // (outwards counted from the bridge, not the cheeks; Spids an ordinary pointed nose, not a Pinocchio's)
-  ['naese-lang', 'Spids', { s: [.88, 1.06, 1.9], down: .01 }], ['naese-dyr', 'Dyrenæse', { animal: true }], ['naese-klovn', 'Klovn', { clown: true }]];
+const NOSES = [['naese-naturlig', 'Naturlig'], ['naese-lille', 'Lille', { s: [.8, .85, .75] }], ['naese-bred', 'Bred', { s: [1.55, 1, 1.1], holes: [.024, .02] }],
+  // (outwards counted from the bridge, not the cheeks; only a hint longer from Naturlig to Bred to Spids, the user
+  // 06-11-2026. holes: the nostrils' size as painted, drawn out by the reshaping)
+  ['naese-lang', 'Spids', { s: [.88, 1.06, 1.22], down: .01, holes: [.03, .02] }], ['naese-dyr', 'Dyrenæse', { animal: true }], ['naese-klovn', 'Klovn', { clown: true }]];
 let noseNow = 'naese-naturlig';
 function setNose(name) { noseNow = name; redrawBody(); renderStyles(); }
 function setupNose(body, P, n, cx, cy, cz, apart) {
@@ -1333,26 +1395,43 @@ function shapeNose() { const Z = tex && tex.nose; if (!Z) return; const opts = (
     // (its way out turned as the scaling turns it - divided by the scale - so the light still fits the new shape)
     v.set(Z.nrm[j * 3] / (1 + (S[0] - 1) * w), Z.nrm[j * 3 + 1] / (1 + (S[1] - 1) * w), Z.nrm[j * 3 + 2] / (Z.pos[j * 3 + 2] < Z.base ? 1 : 1 + (S[2] - 1) * w)).normalize().toArray(Nm.array, i * 3); }
   A.needsUpdate = true; Nm.needsUpdate = true;
-  // (the clown's ball: made the first time, bound to the head bone alone)
-  if (opts.clown && !Z.ball) { const r = .2 * Z.apart, g = new THREE.SphereGeometry(r, 40, 28), cnt = g.attributes.position.count;
+  // (the clown's ball: made the first time, bound to the head bone alone; a smaller one was tried, the user liked this better)
+  if (opts.clown && !Z.ball) { const r = .2 * Z.apart, g = new THREE.SphereGeometry(r, 40, 28);
     // (its middle just behind the tip, so it sits close in to the face over the nose)
     g.translate(Z.tip[0], Z.tip[1] - .02 * Z.apart, Z.tip[2] - .04 * Z.apart);
-    g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(new Uint16Array(cnt * 4).fill(0).map((_, k) => k % 4 ? 0 : hairBase.head), 4));
-    g.setAttribute('skinWeight', new THREE.Float32BufferAttribute(new Float32Array(cnt * 4).map((_, k) => k % 4 ? 0 : 1), 4));
-    Z.ball = new THREE.SkinnedMesh(g, new THREE.MeshStandardMaterial({ color: 0xE3212B, roughness: .28, metalness: 0 })); Z.ball.castShadow = true;
-    Z.body.parent.add(Z.ball); Z.ball.bind(Z.body.skeleton, Z.body.bindMatrix); }
-  if (Z.ball) Z.ball.visible = !!opts.clown; }
-// (Dyrenæse: a dark oval on the nose's tip, lit as a dome - lightest at its top, with a small shine)
-function drawNose(o) { const Z = tex.nose, P = tex.pynt, opts = (NOSES.find(m => m[0] === noseNow) || [])[2]; if (!Z || !P || !opts || !opts.animal) return;
-  const T = P.texels, cy0 = Z.tipY - .015, rx = .165, ry = .092, darkC = { r: .2, g: .11, b: .09 }, lightC = { r: .55, g: .38, b: .34 };
-  for (let j = 0; j < T.length; j += 3) { const X = T[j + 1], Y = T[j + 2], ux = X / rx, uy = (Y - cy0) / ry, r = Math.hypot(ux, uy * (uy < 0 ? 1.15 : 1)); if (r > 1.1) continue;
-    const a = Math.max(0, Math.min(1, (1 - r) * ry / .008 + .5)), nz = Math.sqrt(Math.max(0, 1 - r * r)), d = Math.max(0, Math.min(1, .25 + .35 * nz + .35 * uy));
-    const shine = .7 * Math.exp(-(((ux + .3) / .2) ** 2 + ((uy - .35) / .18) ** 2)), i = T[j] * 4;
-    for (const [m, ch] of [[0, 'r'], [1, 'g'], [2, 'b']]) { const c = darkC[ch] * (1 - d) + lightC[ch] * d; o[i + m] = o[i + m] * (1 - a) + 255 * (c * (1 - shine) + shine) * a; } } }
+    Z.ball = noseOnHead(Z, g, new THREE.MeshStandardMaterial({ color: 0xE3212B, roughness: .28, metalness: 0 })); }
+  // (Dyrenæse: a real dark nose set on the tip, as the clown's ball - painted, its edge ran out into the skin from the side)
+  if (opts.animal && !Z.snout) { Z.snout = noseOnHead(Z, animalNose(Z), new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .34, metalness: 0 })); }
+  if (Z.ball) Z.ball.visible = !!opts.clown; if (Z.snout) Z.snout.visible = !!opts.animal; }
+function noseOnHead(Z, g, mat) { const cnt = g.attributes.position.count;
+  g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(new Uint16Array(cnt * 4).fill(0).map((_, k) => k % 4 ? 0 : hairBase.head), 4));
+  g.setAttribute('skinWeight', new THREE.Float32BufferAttribute(new Float32Array(cnt * 4).map((_, k) => k % 4 ? 0 : 1), 4));
+  // (never culled, as the body: measured in one pose, the clown's ball could vanish in another)
+  const m = new THREE.SkinnedMesh(g, mat); m.castShadow = true; m.frustumCulled = false; Z.body.parent.add(m); m.bind(Z.body.skeleton, Z.body.bindMatrix); return m; }
+// (a flattened ball, broader at the top, with two dark dents for nostrils low on its front; the seam turned in behind it,
+// and the light evened out over points that lie on top of each other, so no line shows in the shine)
+function animalNose(Z) { const g = new THREE.SphereGeometry(1, 56, 40).rotateY(-Math.PI / 2), P = g.attributes.position, a = Z.apart, rx = .165, ry = .1, rz = .085, col = [];
+  for (let i = 0; i < P.count; i++) { const x = P.getX(i), y = P.getY(i), z = P.getZ(i), d = Math.exp(-(((Math.abs(x) - .42) / .2) ** 2 + ((y + .3) / .17) ** 2)) * (z > 0 ? 1 : 0), k = 1 - .86 * Math.min(1, d * 1.5);
+    col.push(.05 * k, .024 * k, .02 * k);
+    P.setXYZ(i, Z.tip[0] + x * rx * (1 + .14 * y) * a, Z.tip[1] + (y * ry - .02) * a, Z.tip[2] + (z * (1 - .07 * d) * rz - .04) * a); }
+  g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.computeVertexNormals();
+  const N = g.attributes.normal, same = {};
+  for (let i = 0; i < P.count; i++) (same[[P.getX(i), P.getY(i), P.getZ(i)].map(v => v.toFixed(5))] ||= []).push(i);
+  for (const L of Object.values(same)) { if (L.length < 2) continue; const v = new THREE.Vector3(); for (const i of L) v.add(new THREE.Vector3().fromBufferAttribute(N, i)); v.normalize(); for (const i of L) N.setXYZ(i, v.x, v.y, v.z); }
+  return g; }
+function drawNose(o) { const Z = tex.nose, P = tex.pynt, opts = (NOSES.find(m => m[0] === noseNow) || [])[2]; if (!Z || !P) return;
+  // (Naturlig: two nostrils, a darker shade of the skin itself, whatever its colour - the nose hardly showed on the face,
+  // the user 05-11-2026. Lille, Bred and Spids the same: painted on the skin, they follow the nose as it is reshaped;
+  // without them these looked like blurry mounds. The soft line round each wing taken away, the user 06-11-2026)
+  if (noseNow === 'naese-naturlig' || opts && opts.s) { const T = P.texels, y0 = Z.tipY - .062, H = opts && opts.holes || [.032, .018];
+    for (let j = 0; j < T.length; j += 3) { const X = Math.abs(T[j + 1]), Y = T[j + 2] - y0; if (X > .2 || Math.abs(Y) > .14) continue;
+      const hole = Math.max(0, Math.min(1, (1 - Math.hypot((X - .08) / H[0], Y / H[1])) / .35));
+      const k = 1 - hole * .62, i = T[j] * 4; for (let m = 0; m < 3; m++) o[i + m] *= k; }
+    } }
 // (a shut eye's hollow lit smooth - see setupBrows - and an open one as it was)
-function shutNormals(S, opts) { if (!S.verts || !hairBase) return; const N = hairBase.body.geometry.attributes.normal, A = N.array, V = S.verts, v = new THREE.Vector3();
+function shutNormals(S, opts) { if (!S.verts || !hairBase) return; const N = hairBase.body.geometry.attributes.normal, A = N.array, V = S.verts, v = new THREE.Vector3(), s = new THREE.Vector3();
   for (let j = 0, m = 0; j < V.length; j += 3, m += 3) { const i = V[j], E = S.eyes[V[j + 1]], shut = opts.shut && (!opts.one || E.side > 0);
-    v.fromArray(S.normals, m); if (shut) v.lerp(S.ring[V[j + 1]], Math.min(1, (1.5 - V[j + 2]) / .35)).normalize(); v.toArray(A, i * 3); }
+    v.fromArray(S.normals, m); if (shut) v.lerp(s.fromArray(S.flat, m), Math.min(1, (1.5 - V[j + 2]) / .35)).normalize(); v.toArray(A, i * 3); }
   N.needsUpdate = true; }
 // the hair, a part of its own with its own colour picture: all of it gets the hair colour, lit as it was (against the
 // middle brightness of its brown; the hair uses no other part of the picture, and its darkest strands and the edges
@@ -1403,6 +1482,112 @@ function recolour(part, hexColour) {
 // (under a dress the vest and shorts are painted in the skin's colour: they would show at the neckline, under the arms
 // and through a tight skirt - and under trousers the shorts, under a top the vest: they came out at the waistband and the
 // hems. tex.covered: which of them are covered now)
+// ---- A mouth of real 3D parts (opts.solid; Tunge and Smil so far - the painted ones looked flat close up, the user 05-11-2026):
+// a hole in the skin's picture where it opens, a dark hollow behind, lips, teeth and tongue - all held by the head bone,
+// and the face's own shape left alone (moving its points looked awful from the side) ----
+function solidMouth() { const M = tex && tex.mouth; if (!M || !M.pos || !hairBase) return; const opts = (MOUTHS.find(m => m[0] === mouthNow) || [])[2] || {};
+  if (M.solid) for (const m of M.solid) m.visible = false;
+  if (!opts.solid) return;
+  // (each mouth's parts kept once built: changing back and forth shows only that mouth's)
+  M.solidBy = M.solidBy || {}; if (!M.solidBy[mouthNow]) { const from = M.solid ? M.solid.length : 0; buildSolid(M, opts); M.solidBy[mouthNow] = { parts: M.solid.slice(from), lipT: M.lipT }; }
+  const S = M.solidBy[mouthNow]; M.lipT = S.lipT; colourLips(M, opts); for (const m of S.parts) m.visible = true; }
+function faceHeight(M) { if (M.fz) return M.fz; const P = M.body.geometry.attributes.position.array, ap = M.apart, tris = [];
+  for (let k = 0; k < P.length; k += 9) { const q = [0, 3, 6].map(o => [(P[k + o] - M.cx) / ap, (P[k + o + 1] - M.cy) / ap, (P[k + o + 2])]);
+    if (Math.max(...q.map(v => Math.abs(v[0]))) > .8 || Math.min(...q.map(v => v[1])) > M.my + .6 || Math.max(...q.map(v => v[1])) < M.my - .6) continue;
+    if ((q[0][2] + q[1][2] + q[2][2]) / 3 < M.pos.reduce((a, v, j) => j % 3 === 2 ? Math.max(a, v) : a, -Infinity) - .8 * ap) continue;
+    tris.push(q); }
+  return M.fz = (X, Y) => { let best = -Infinity;
+    for (const [a, b, c] of tris) { const d = (b[1] - c[1]) * (a[0] - c[0]) + (c[0] - b[0]) * (a[1] - c[1]); if (!d) continue;
+      const l0 = ((b[1] - c[1]) * (X - c[0]) + (c[0] - b[0]) * (Y - c[1])) / d, l1 = ((c[1] - a[1]) * (X - c[0]) + (a[0] - c[0]) * (Y - c[1])) / d, l2 = 1 - l0 - l1;
+      if (l0 < -.001 || l1 < -.001 || l2 < -.001) continue; best = Math.max(best, l0 * a[2] + l1 * b[2] + l2 * c[2]); }
+    return best; }; }
+function holdByHead(M, g, mat) { const cnt = g.attributes.position.count;
+  g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(new Uint16Array(cnt * 4).map((_, k) => k % 4 ? 0 : hairBase.head), 4));
+  g.setAttribute('skinWeight', new THREE.Float32BufferAttribute(new Float32Array(cnt * 4).map((_, k) => k % 4 ? 0 : 1), 4));
+  const m = new THREE.SkinnedMesh(g, mat); m.frustumCulled = false; M.body.parent.add(m); m.bind(M.body.skeleton, M.body.bindMatrix); M.solid.push(m); return m; }
+// (a grid of rows x cols points as one piece, at(a, b) its [x, y, z] in the body's units, a and b 0..1; wrap: its two ends lit as one, closed round)
+function gridGeo(rows, cols, at, colour, wrap) { const pos = [], col = [], idx = [];
+  for (let i = 0; i <= rows; i++) for (let j = 0; j <= cols; j++) { const p = at(i / rows, j / cols); pos.push(p[0], p[1], p[2]); if (colour) { const c = colour(i / rows, j / cols); col.push(c.r, c.g, c.b); } }
+  for (let i = 0; i < rows; i++) for (let j = 0; j < cols; j++) { const a = i * (cols + 1) + j, b = a + 1, c = a + cols + 1, d = c + 1; idx.push(a, c, b, b, c, d); }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); if (colour) g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.setIndex(idx); g.computeVertexNormals();
+  if (wrap) { const N = g.attributes.normal; for (let i = 0; i <= rows; i++) { const a = i * (cols + 1), b = a + cols, x = N.getX(a) + N.getX(b), y = N.getY(a) + N.getY(b), z = N.getZ(a) + N.getZ(b), l = Math.hypot(x, y, z) || 1; N.setXYZ(a, x / l, y / l, z / l); N.setXYZ(b, x / l, y / l, z / l); } }
+  return g; }
+const linear = (r, g, b) => new THREE.Color().setRGB(r, g, b, THREE.SRGBColorSpace);
+function buildSolid(M, o) { M.solid = M.solid || []; const fz = faceHeight(M), ap = M.apart, my = M.my, hw = o.hw, B = (x, y, z) => [M.cx + x * ap, M.cy + y * ap, z];
+
+  const edge = u => { const s = Math.sqrt(Math.max(0, 1 - u * u)), c = my + o.mid[0] + o.mid[1] * u * u; const so = Math.sqrt(Math.max(0, 1 - (u / .93) ** 2)); return { s, c, top: c + o.open[0] * so, bot: c - o.open[1] * Math.pow(so, 1.3) }; };
+  // (the lips: from just inside the opening - curling back behind the skin's edge - over a round roll, out to where they sink into the skin)
+  // (the figure's own face has the old smile's crease in its shape: parts laid across it - Åh's sides, all of Trist, even -
+  // lie on the face evened out up and down, as even gives it; followed point by point they bulged there, the user 05-11-2026)
+  const even = (X, Y) => { let s = 0, n = 0; for (let d = -3; d <= 3; d++) { const v = fz(X, Y + d * .027); if (isFinite(v)) { s += v; n++; } } return s / n; }, evened = {};
+  const faceAt = (lower, b, X, inner, wide, t) => { if (!o.even) return fz(X, t >= 0 ? inner + wide * t : inner); const k = (lower ? 1000 : 0) + Math.round(b * 64), v = evened[k] || (evened[k] = [even(X, inner), even(X, inner + wide)]); return t >= 0 ? v[0] + (v[1] - v[0]) * t : v[0]; };
+  const L = o.lip3d, H = o.lipH; M.lipT = [];
+  const lipAt = lower => (a, b) => { const u = (b * 2 - 1) * .995, e = edge(u), rd = o.round || .45, su = Math.pow(e.s, rd), tMin = .3, t = a * (1 + tMin) - tMin;
+    const pw = o.pout ? Math.exp(-((u / o.pout.w) ** 2)) : 0, inner = lower ? e.bot : e.top + (o.pout ? o.pout.arch * pw : 0), wide = (lower ? -L[1] * Math.pow(e.s, rd + .05) : L[0] * su * (1 - .28 * Math.exp(-((u / .13) ** 2))) + (o.pout ? o.pout.wide * pw : 0)), h = (lower ? H[1] * (1 - (o.pout ? o.pout.flat * Math.exp(-((u / o.pout.flat) ** 4)) : 0)) : H[0] + (o.pout ? o.pout.up * pw : 0)) * ap * Math.pow(e.s, .8), X = u * hw;
+    let Y, z;
+    if (t >= 0) { const p = t < .35 ? .6 + .4 * Math.sin(Math.PI / 2 * t / .35) : Math.pow(Math.cos(Math.PI / 2 * (t - .35) / .65), 2.4); Y = inner + wide * t; z = faceAt(lower, b, X, inner, wide, t) + h * p - .004 * ap * t * t; }
+    else { const v = -t / tMin; Y = inner - wide * .3 * Math.sin(v * Math.PI / 2); z = faceAt(lower, b, X, inner, wide, t) + h * .6 * Math.cos(v * Math.PI / 2) - .1 * ap * v * v; }
+    return B(X, Y, z); };
+  // (the opening's inside: a rim round the opening, under the skin and following it, from there back into a dark hollow)
+  const cyR = my - (o.ow ? o.ow[2] : .03), rO = o.o || o.kiss || 1, mid = o.hw ? edge(0) : o.ow ? { top: cyR + o.ow[1], bot: cyR - o.ow[1] } : { top: cyR + .09 * rO, bot: cyR - .09 * rO }, cyy = (mid.top + mid.bot) / 2, ry = (mid.top - mid.bot) / 2 + .07 + (o.mid ? o.mid[1] * 1.1 : 0), rx = o.hw ? hw * 1.12 : .15 * rO, zRef = fz(0, cyy), deep = .42 * ap;
+  if (!o.closed) {
+  const cav = gridGeo(12, 48, (a, b) => { const an = b * Math.PI * 2, k = Math.sqrt(Math.max(0, 1 - a * a)), rimX = Math.cos(an) * rx, rimY = cyy + Math.sin(an) * ry, rimZ = fz(rimX, rimY);
+      const zr = isFinite(rimZ) ? rimZ - .02 * ap : zRef - .2 * ap; return B(rimX * k, cyy + Math.sin(an) * ry * k, zr + (zRef - .3 * ap - deep - zr) * a * a * (3 - 2 * a) ); },
+    a => { const d = 1 - a; return o.o ? linear(.13, .03, .035) : o.inside ? linear(.3 + .25 * d, .05 + .05 * d, .06 + .05 * d) : linear(.08 + .2 * d, .015 + .05 * d, .02 + .05 * d); }, true);
+  holdByHead(M, cav, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: o.o ? 1 : .75, side: THREE.DoubleSide }));
+  // (the upper teeth: small rounded blocks along the curve of the jaw, behind the upper lip)
+  // (the upper teeth: one band along the curve of the jaw, behind the upper lip, its lower edge gliding - after the user's
+  // picture of 06-11-2026 - with n broad teeth told apart only by a faint groove and the slightest dip between them)
+  if (o.teeth3d) { const T = o.teeth3d, pos = [], col = [], idx = [], NU = T.n * 12, NV = 16, ua = T.ua, th0 = T.h, zm = fz(0, edge(0).top), zs = (fz(hw * .72, edge(.72).top) + fz(-hw * .72, edge(.72).top)) / 2, white = linear(1, .99, .96);
+  for (let i = 0; i <= NU; i++) { const u = (i / NU * 2 - 1) * ua, e = edge(u), su = Math.abs(u / ua), p = (u / ua + 1) * T.n / 2, dn = Math.abs(p - Math.round(p)), line = Math.exp(-((dn / .06) ** 2)), dip = Math.exp(-((dn / .16) ** 2));
+    const top = e.top + .002 + .016 * (u / .84) ** 2, th = th0 * (1 - (1 - T.end) * su * su) * (1 - .04 * dip), z0 = zm + (zs - zm) * (u / .72) ** 2 - (.085 + .035 * (u / .84) ** 2) * ap - su * .012 * ap, thick = .026 * ap * Math.pow(Math.max(0, 1 - su ** 8), .5);
+    for (let j = 0; j <= NV; j++) { const t = j / NV, front = t <= .75, v = front ? t / .75 : 1 - (t - .75) / .25, side = Math.pow(Math.max(0, 1 - v ** 4), .5) * (front ? 1 : -1), shade = (.84 + .16 * Math.min(1, v / .35)) * (1 - .1 * line * (.4 + .6 * v));
+      pos.push(M.cx + u * hw * ap, M.cy + (top - th * v) * ap, z0 + thick * side - .004 * ap * line * v * (front ? 1 : 0));
+      col.push(white.r * shade, white.g * shade, white.b * shade); } }
+  for (let i = 0; i < NU; i++) for (let j = 0; j < NV; j++) { const a = i * (NV + 1) + j, b = a + NV + 1; idx.push(a, a + 1, b, b, a + 1, b + 1); }
+  const tg = new THREE.BufferGeometry(); tg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); tg.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); tg.setIndex(idx); tg.computeVertexNormals();
+  holdByHead(M, tg, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .3, side: THREE.DoubleSide })); }
+  }
+  // (a tongue lying inside the mouth)
+  if (o.tongueIn) { const ti = o.tongueIn, g = new THREE.SphereGeometry(1, 24, 14), P = g.attributes.position, col = [], fr = linear(.85, .38, .4), bk = linear(.45, .15, .17); for (let i = 0; i < P.count; i++) { fr.clone().lerp(bk, Math.max(0, Math.min(1, .7 - P.getZ(i)))).toArray(col, i * 3); P.setXYZ(i, M.cx + P.getX(i) * ti.w * ap, M.cy + (mid.bot + ti.y + P.getY(i) * ti.h) * ap, zRef - ti.z * ap + P.getZ(i) * ti.d * ap); } g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.computeVertexNormals();
+    holdByHead(M, g, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .55 })); }
+  if (o.tongue3d) {
+  // (the tongue: from under the skin, out between the lips, down to a round tip - a groove down its middle)
+  const chin = o.tongue3d.down, far = o.tongue3d.out, lipZ = fz(0, mid.bot);
+  const spine = new THREE.CatmullRomCurve3([[mid.top + .004, lipZ - .12 * ap], [mid.top - .002, lipZ], [mid.bot - chin * .35, lipZ + far * .55 * ap], [mid.bot - chin * .72, lipZ + far * .85 * ap], [mid.bot - chin, lipZ + far * 1.05 * ap]].map(([y, z]) => new THREE.Vector3(0, M.cy + y * ap, z)));
+  const W = o.tongue3d.w, TH = o.tongue3d.th, tc = linear(.9, .5, .52), back = linear(.4, .14, .16), deep = linear(.1, .03, .035), n = new THREE.Vector3(), tan = new THREE.Vector3(), pt = new THREE.Vector3();
+  const tongue = gridGeo(40, 32, (a, b) => { spine.getPoint(a, pt); spine.getTangent(a, tan); n.set(0, -tan.z, tan.y).normalize(); if (n.z < 0) n.negate();
+      const r = a > .25 ? (1 - .64 * (a - .25) / .75) * Math.sqrt(Math.max(0, 1 - ((a - .25) / .75) ** 5)) : 1, an = b * Math.PI * 2, x = Math.cos(an) * W * r, ss = Math.sin(an), groove = ss > 0 ? .005 * Math.exp(-((x / W / .2) ** 2)) * Math.min(1, a * 3) * Math.max(0, Math.min(1, (.72 - a) / .3)) : 0, nn = ss * TH * Math.pow(r, .8) - groove;
+      return [M.cx + x * ap, pt.y + n.y * nn * ap, pt.z + n.z * nn * ap]; },
+    (a, b) => { const an = b * Math.PI * 2, line = Math.sin(an) > 0 ? Math.exp(-((Math.cos(an) / .05) ** 2)) * Math.min(1, a * 2.5) * Math.max(0, Math.min(1, (.72 - a) / .25)) : 0; return tc.clone().lerp(back, .75 * Math.max(0, 1 - (a - .25) / .45)).lerp(back, .35 * line).lerp(deep, Math.max(0, 1 - a / .2)); }, true);
+  { const N = tongue.attributes.normal, v = 20 * 33 + 8; if (N.getZ(v) < 0) { const ix = tongue.index.array; for (let k = 0; k < ix.length; k += 3) { const t = ix[k + 1]; ix[k + 1] = ix[k + 2]; ix[k + 2] = t; } tongue.computeVertexNormals(); M.flipped = true; } }
+  holdByHead(M, tongue, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .55 }));
+  }
+  // (the lips last, their colours in colourLips)
+  if (o.hw) for (const lower of [false, true]) { const g = gridGeo(22, 64, lipAt(lower), () => ({ r: 1, g: 1, b: 1 })); M.lipT.push(g);
+    // (the lips fade out at their outer edge and corners, so what is painted under them shows through and no edge shows)
+    g.setAttribute('color', new THREE.Float32BufferAttribute(new Float32Array(23 * 65 * 4).fill(1), 4));
+    // (the winding depends on the lip's direction: the upper lip's faces turned out)
+    if (!lower) { const ix = g.index.array; for (let k = 0; k < ix.length; k += 3) { const t = ix[k + 1]; ix[k + 1] = ix[k + 2]; ix[k + 2] = t; } g.computeVertexNormals(); }
+    const m = holdByHead(M, g, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .62, side: THREE.DoubleSide, transparent: true })); m.castShadow = false; }
+  // (Åh, after the user's picture of 05-11-2026: an oval, ow its half width, half height and how far below the mouth's
+  // middle - one ring of lip, thin above with a little bow, full below. Kys: two lips pushed forward, a groove between)
+  else { const wAt = sn => [.016, .066 - .034 * sn], base = o.o ? Array.from({ length: 65 }, (_, j) => { const an = j / 32 * Math.PI, c = Math.cos(an), sn = Math.sin(an), [wx, wy] = wAt(sn); return [even(c * o.ow[0], cyR + sn * o.ow[1]), even(c * (o.ow[0] + wx), cyR + sn * (o.ow[1] + wy))]; }) : null;
+    const ringAt = (a, b) => { const an = b * Math.PI * 2, c = Math.cos(an), sn = Math.sin(an), t = a * 1.3 - .3, f = (.68 - .32 * sn) * (.18 + .82 * sn * sn), [wx, wy] = wAt(sn), rx0 = o.ow[0], ry0 = o.ow[1], [zIn, zOut] = base[Math.round(b * 64)], lift = .015 * ap * (1 - sn * sn);
+      if (t >= 0) { const p = t < .35 ? .6 + .4 * Math.sin(Math.PI / 2 * t / .35) : Math.pow(Math.cos(Math.PI / 2 * (t - .35) / .65), 2.4), X = c * (rx0 + wx * t), Y = cyR + sn * (ry0 + wy * t) - .008 * t * Math.max(0, sn) * Math.exp(-((c / .22) ** 2)); return B(X, Y, zIn + (zOut - zIn) * t + lift * (1 - t) + H[0] * ap * f * p - .004 * ap * t * t); }
+      const v = -t / .3, X = c * (rx0 - wx * .3 * Math.sin(v * Math.PI / 2)), Y = cyR + sn * (ry0 - wy * .3 * Math.sin(v * Math.PI / 2)); return B(X, Y, zIn + lift + H[0] * ap * f * .6 * Math.cos(v * Math.PI / 2) - .1 * ap * v * v); };
+    // (kw: half width, height of the upper lip and of the lower, after the user's picture of 05-11-2026 - the upper lip's top with a deep bow, two peaks either side of it; pointed corners; two lips, each its own roll, the lower the fuller)
+    const domeAt = (a, b) => { const an = b * Math.PI * 2, ux = a * Math.cos(an), uy = a * Math.sin(an), [kx, ku, kl] = o.kw, corner = Math.pow(Math.max(0, 1 - ux * ux), .28), X = ux * kx, Y = cyR - .012 * Math.exp(-((ux / .2) ** 2)) * (1 - Math.abs(uy)) + (uy > 0 ? uy * ku * corner * (1 - .36 * Math.exp(-Math.abs(ux) / .1)) : uy * kl * corner), roll = Math.pow(Math.cos(a * Math.PI / 2), .55) * (uy > 0 ? .55 : 1);
+      return B(X, Y, fz(X, Y) + H[0] * ap * roll - .02 * ap * Math.exp(-((uy / .1) ** 2)) * Math.max(0, 1 - Math.abs(ux) / .95) - .004 * ap); };
+    const g = gridGeo(22, 64, o.o ? ringAt : domeAt, () => ({ r: 1, g: 1, b: 1 }), true); M.lipT.push(g); g.setAttribute('color', new THREE.Float32BufferAttribute(new Float32Array(23 * 65 * 4).fill(1), 4));
+    holdByHead(M, g, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: o.o ? .9 : .5, side: THREE.DoubleSide, transparent: true })).castShadow = false; } }
+// (the lips' colour from the skin's: the skin's own at the outer edge, so they melt into the face; deeper, warmer in the middle)
+function colourLips(M, o) { const skin = tex.colours[PARTS.skin] || tex.skin, T = M.texels; let k = 0, c = 0; for (let j = 0; j < T.length; j += 4) if (Math.hypot(T[j + 1], (T[j + 2] - M.my) / .8) < .45) { k += T[j + 3]; c++; } k = c ? k / c : 1;
+  const mix = (a, b, t) => ({ r: a.r * (1 - t) + b.r * t, g: a.g * (1 - t) + b.g * t, b: a.b * (1 - t) + b.b * t }), lip = mix(skin, { r: .78, g: .32, b: .36 }, o.lipTint || .36), S = linear(Math.min(1, skin.r * k), Math.min(1, skin.g * k), Math.min(1, skin.b * k)), Lp = linear(lip.r, lip.g, lip.b), rim = o.pout ? linear(lip.r * .32, lip.g * .2, lip.b * .2) : o.closed ? linear(lip.r * .55, lip.g * .4, lip.b * .4) : linear(lip.r * .3, lip.g * .17, lip.b * .17), kl = mix(skin, { r: .72, g: .34, b: .4 }, .5), kd = mix(kl, { r: .4, g: .12, b: .14 }, .62), KL = linear(kl.r, kl.g, kl.b), KD = linear(kd.r, kd.g, kd.b), KH = linear(1, .88, .88);
+  for (const g of M.lipT) { const C = g.attributes.color; for (let i = 0; i <= 22; i++) { const a = i / 22, t = a * 1.3 - .3, col = t < .2 ? rim.clone().lerp(Lp, Math.max(0, (t + .3) / .5)) : Lp.clone().lerp(S, Math.min(1, Math.max(0, (t - .55) / .45)) ** 1.3); for (let j = 0; j <= 64; j++) { const sm = v => { v = Math.min(1, Math.max(0, v)); return v * v * (3 - 2 * v); }, au = Math.abs(j / 32 - 1), at = (i * 65 + j) * 4;
+        if (o.kiss) { const an = j / 32 * Math.PI, sx = a * Math.cos(an), sy = a * Math.sin(an), seam = sm((.05 - Math.abs(sy)) / .045) * sm((.97 - Math.abs(sx)) / .2), shine = Math.exp(-(((sy + .5) / .22) ** 2 + (sx / .45) ** 2)); KL.clone().lerp(KH, .38 * shine).lerp(KD, Math.max(.8 * seam, .3 * sm((a - .72) / .28))).toArray(C.array, at); C.array[at + 3] = 1 - sm((a - .86) / .14); continue; }
+        col.toArray(C.array, at); const pu = o.pout ? Math.exp(-(((j / 32 - 1) * .995 / o.pout.w) ** 2)) : 0; if (pu) { col.clone().lerp(S, pu * sm((t - .02) / .3)).toArray(C.array, at); } C.array[at + 3] = (1 - (o.o ? sm((t - .62) / .38) : sm((t - .4) / .55) * (1 - pu) + sm((t - .78) / .22) * pu)) * (o.hw ? 1 - (o.closed ? sm((au - .5) / .42) : sm((au - .93) / .065)) : 1); } } C.needsUpdate = true; } }
+
 function redrawBody() {
   if (!tex) return; const out = tex.ctx.createImageData(tex.w, tex.h), o = out.data, s = tex.src;
   if (!tex.skin) { let r = 0, g = 0, b = 0, m = 0; for (let p = 0, i = 0; p < tex.w * tex.h; p++, i += 4) if (tex.label[p] === PARTS.skin) { r += s[i]; g += s[i + 1]; b += s[i + 2]; m++; }
@@ -1415,12 +1600,14 @@ function redrawBody() {
     if (!c) { o[i] = s[i]; o[i + 1] = s[i + 1]; o[i + 2] = s[i + 2]; o[i + 3] = 255; continue; }
     const k = (.3 * s[i] + .59 * s[i + 1] + .11 * s[i + 2]) / tex.mid[tex.label[p]];
     o[i] = Math.min(255, c.r * 255 * k); o[i + 1] = Math.min(255, c.g * 255 * k); o[i + 2] = Math.min(255, c.b * 255 * k); o[i + 3] = 255; }
-  matchThighs(o); drawEyes(o); drawMouth(o); drawPynt(o); drawNose(o); drawBrows(o); tex.ctx.putImageData(out, 0, 0); tex.texture.needsUpdate = true; smoothUnder(); thighLight(); shapeNose(); mouthNormals(); bulgeLips(); }
+  matchThighs(o); drawEyes(o); drawMouth(o); drawPynt(o); drawNose(o); drawBrows(o); tex.ctx.putImageData(out, 0, 0); tex.texture.needsUpdate = true; smoothUnder(); thighLight(); shapeNose(); mouthNormals(); bulgeLips(); solidMouth(); }
 // (the smile's crease lit smooth under a new mouth, as it was under the smile - after shapeNose, whose area reaches
 // down over the upper lip and put the crease's light back there)
 function mouthNormals() { const M = tex && tex.mouth, opts = (MOUTHS.find(m => m[0] === mouthNow) || [])[2]; if (!M || !M.verts || !hairBase) return;
-  const A = hairBase.body.geometry.attributes.normal, V = M.verts, v = new THREE.Vector3(), s = new THREE.Vector3();
-  for (let j = 0, m = 0; j < V.length; j += 2, m += 3) { v.fromArray(M.normals, m); if (opts) v.lerp(s.fromArray(M.smooth, m), Math.min(1, (1 - V[j + 1]) / .15)).normalize(); v.toArray(A.array, V[j] * 3); }
+  const A = hairBase.body.geometry.attributes.normal, V = M.verts, v = new THREE.Vector3(), s = new THREE.Vector3(), y0 = tex.nose ? tex.nose.tipY - .09 : Infinity;
+  // (fading out upwards, from just under the nose: right up to the oval's edge it evened out the nose's own shape, so
+  // the nose went flat over Grin, Åh, Kys and Trist, with a dark edge across the cheeks, the user 06-11-2026)
+  for (let j = 0, m = 0; j < V.length; j += 2, m += 3) { v.fromArray(M.normals, m); if (opts && !opts.keep) v.lerp(s.fromArray(M.smooth, m), Math.min(1, (1 - V[j + 1]) / .15) * Math.max(0, Math.min(1, (y0 - (M.pos[m + 1] - M.cy) / M.apart) / .12))).normalize(); v.toArray(A.array, V[j] * 3); }
   A.needsUpdate = true; }
 // (the lips standing out a little in the face, for the mouths that ask for it (bulge: how far the upper and the lower
 // lip come out, in eyes' distances) - only the lips: each point moved straight out by a soft hump over the lip's
@@ -1507,7 +1694,8 @@ function showMyDance() { const list = mdList(), row = document.getElementById('m
 async function mdAdd(id) { const list = mdList(); if (list.length >= MD_MAX) { toast('Der er plads til 5 – tryk ✕ for at tage en ud'); return; }
   list.push(id); savePlayers(); showMyDance(); const a = await loadMove(id); if (a && !md.on && !game.on && partNow === 'move-mindans') runAnim(id); }
 async function mdStart() { const list = mdList(); if (!list.length) return; stopGame(); if (musicOn) soundOut()?.resume(); md.on = true; md.k = -1; showMyDance();
-  await Promise.all(list.map(loadMove)); if (md.on) mdNext(); }
+  // (none of them to be had, no internet: the button goes back to Dans! - it showed Stop with the figure standing still)
+  const got = await Promise.all(list.map(loadMove)); if (!md.on) return; if (!got.some(Boolean)) { mdStop(true); return; } mdNext(); }
 function mdStop(stand) { md.on = false; md.cur = null; if (stand) runAnim('staa'); showMyDance(); }
 async function mdNext() { const list = mdList(); if (!md.on || !list.length) return mdStop(true); md.left = Infinity; md.k = (md.k + 1) % list.length; const id = list[md.k], a = await loadMove(id); if (!md.on) return; if (!a) return mdNext();
   // (a short one - a wave, a hop - done over again until it has had 2.4 seconds, too quick to see otherwise)
@@ -1551,7 +1739,7 @@ const exists = async u => { try { return (await fetch(u, { method: 'HEAD' })).ok
 // (Bob taken out 01-11-2026 - the user chose to go on without it; haar-bob.json/.jpg are kept, put back
 // ['haar-bob', 'Bob'] after Kort to have it again; Skaldet - no hair - taken out the same day, put back ['', 'Skaldet']
 // first to have it again)
-const HAIRS = [['haar-kort', 'Kort', { snug: .55, ears: true }], ['haar-kroeller', 'Krøller'], ['haar-strit', 'Strit'], ['haar-fletninger', 'Fletninger', { braids: true }], ['haar-fletning', 'Fletning']];
+const HAIRS = [['haar-kort', 'Kort', { snug: .55, ears: true }], ['haar-kroeller', 'Krøller'], ['haar-strit', 'Strit', { ears: true }], ['haar-fletninger', 'Fletninger', { braids: true, ears: true }], ['haar-fletning', 'Fletning', { ears: true }]];
 let hairNow = 'haar-kort', hairBase = null; const hairMeshes = {};
 // the figure's eye whites and head bone, measured once as it stands when loaded (in its T-pose, before it moves)
 function measureHead(fbx) {
@@ -1781,7 +1969,7 @@ function scalpCap(hair, g, W, outlines, a, eyeY) { if (!outlines.length) return;
   const D6 = 6;
   const corner = (js, q) => { const p = [0, 0, 0]; js.forEach((j, n) => { for (let c = 0; c < 3; c++) p[c] += pts[j * 6 + c] * q[n]; }); return p; };
   for (const e of outlines) for (let c = 0; c < pts.length / 6; c += 3) { const js = [c, c + 1, c + 2];
-    if (!js.every(j => { const x = pts[j * 6], y = pts[j * 6 + 1], z = pts[j * 6 + 2]; return (x - e.mx) * e.s > .62 * a && y > e.cy - .25 * e.Rm && y < eyeY + 1.25 * a && z > e.back - .3 * a && z < e.front + (y > e.cy + .8 * e.Rm ? .15 : .06) * a; })) continue;
+    if (!js.every(j => { const x = pts[j * 6], y = pts[j * 6 + 1], z = pts[j * 6 + 2]; return (x - e.mx) * e.s > .62 * a && y > e.cy - .25 * e.Rm && y < eyeY + 1.25 * a && z > e.back - .3 * a && z < e.front + (y > e.cy + .8 * e.Rm ? .15 : -.02) * a; })) continue;
     // (the small pieces: corners at sixths along the big one, two triangles to each little square, one in the last row)
     const near = q => js[q.indexOf(Math.max(...q))];
     for (let u = 0; u < D6; u++) for (let w = 0; u + w < D6; w++) for (const tri of [[[u, w], [u + 1, w], [u, w + 1]], ...(u + w < D6 - 1 ? [[[u + 1, w], [u + 1, w + 1], [u, w + 1]]] : [])]) {
@@ -2845,13 +3033,15 @@ let sayTimer = 0, sayOpen = false, playing = null;
 const VOICE_KEY = 'minimig3d.stemmer', voices = (() => { try { return JSON.parse(localStorage.getItem(VOICE_KEY)) || {}; } catch (e) { return {}; } })();
 const voiceFor = n => voices[n.trim().toLowerCase()];
 function sayName() { const n = nameInput.value.trim(); if (!n || !sound.voice) return; const own = voiceFor(n);
-  if (own) { playOwn(own); return; }
+  // (on the test page: what spoke, to find why the English sounded Danish on the user's iPad, 05-11-2026)
+  const testSay = s => { if (location.pathname.includes('/test/')) toast(s); };
+  if (own) { testSay('Stemme: egen optagelse af ' + n); playOwn(own); return; }
   if (!window.speechSynthesis) return; speechSynthesis.cancel();
   // (English as near a child's as a device can: none has a child's voice, so an American woman's voice - the lightest there
   // are - raised far up, the user 04-11-2026)
   const light = /samantha|zira|jenny|aria|ava|allison|susan|nicky|shelley|flo|sandy|google us english/i, all = speechSynthesis.getVoices(), da = all.filter(v => (LANG === 'en' ? /^en/i : /^da/i).test(v.lang)), us = da.filter(v => /^en[-_]US/i.test(v.lang));
   const v = LANG === 'en' ? us.find(v => light.test(v.name)) || da.find(v => light.test(v.name)) || us[0] || da[0] : da.find(v => /premium|enhanced|forbedret|neural|natural/i.test(v.name)) || da.find(v => !v.localService) || da[0];
-  const u = new SpeechSynthesisUtterance(T(`Hej! Jeg hedder ${n}.`, `Hi! My name is ${n}.`)); u.lang = T('da-DK', 'en-US'); if (v) u.voice = v; u.rate = T(.92, 1); u.pitch = T(1.4, 1.8); speechSynthesis.speak(u); }
+  const u = new SpeechSynthesisUtterance(T(`Hej! Jeg hedder ${n}.`, `Hi! My name is ${n}.`)); u.lang = T('da-DK', 'en-US'); if (v) u.voice = v; u.rate = T(.92, 1); u.pitch = T(1.4, 1.8); testSay(`Stemme: ${v ? `${v.name} (${v.lang})` : 'ingen fundet'}, ${all.length} i alt`); speechSynthesis.speak(u); }
 // (recording one's own voice: a tap on the microphone, up to four seconds, a tap again stops it; kept in this browser
 // only, for the name written)
 const recBtn = document.getElementById('recBtn'), recDel = document.getElementById('recDel'), recNote = document.getElementById('recNote'); let recorder = null;
@@ -3085,7 +3275,8 @@ function runScene(dt) { const g = bgGeo; if (!game.on || !g || !bgNear.classList
 // (the ears are the body's own: each its points beyond the skull at the side of the head - a third of an eye's distance
 // behind the eyes to a half below them, further out than the skull there - moved about the ear's root, more the further
 // out from the skull, so the skin goes smoothly over into the head; their light turned with them)
-const EARS = [['oerer-naturlig', 'Naturlige'], ['oerer-smaa', 'Små', { s: .72 }], ['oerer-store', 'Store', { s: 1.4 }], ['oerer-udstaaende', 'Udstående', { out: .8 }], ['oerer-alfe', 'Alfeører', { elf: 1 }]];
+// (all a size smaller than at first: too big, the user 08-11-2026)
+const EARS = [['oerer-naturlig', 'Naturlige', { s: .8 }], ['oerer-smaa', 'Små', { s: .74 }], ['oerer-store', 'Store', { s: 1.1 }], ['oerer-udstaaende', 'Udstående', { s: .86, out: .8 }], ['oerer-alfe', 'Alfeører', { s: .86, elf: 1 }]];
 const EARRINGS = [['', 'Ingen'], ['oerering-perler', 'Perler'], ['oerering-ringe', 'Guldringe'], ['oerering-stjerner', 'Stjerner'], ['oerering-hjerter', 'Hjerter']];
 let earsNow = 'oerer-naturlig', earringsNow = '', earData = null; const earrings = {};
 function setEars(name) { earsNow = EARS.some(e => e[0] === name) ? name : 'oerer-naturlig'; shapeEars(); setEarrings(earringsNow); renderStyles(); }
@@ -3094,30 +3285,162 @@ function setupEars() { const hb = hairBase, { pts, inv } = hb.whole, [L, R] = hb
   for (const s of [-1, 1]) { const idx = [], w = [];
     for (let j = 0; j < pts.length / 6; j++) { const x = (pts[j * 6] - mx) / a * s, y = (pts[j * 6 + 1] - ey) / a, z = (pts[j * 6 + 2] - ez) / a;
       // (the whole ear moved, its bowl too - moving only what stood furthest out, the rim went and the bowl stayed: a ring)
-      if (y > -.62 && y < .38 && z > -1.45 && z < -.6 && x > .9) { idx.push(j); w.push(Math.min(1, Math.max(0, (x - .9) / .07)) ** 2 * (3 - 2 * Math.min(1, Math.max(0, (x - .9) / .07)))); } }
-    // (the root: where the ear meets the head - the middle of its points nearest the skull)
-    const near = idx.filter((j, k) => w[k] < .5), root = new THREE.Vector3(); for (const j of near) root.add(new THREE.Vector3(pts[j * 6], pts[j * 6 + 1], pts[j * 6 + 2])); root.divideScalar(near.length || 1);
-    sides[s] = { idx: Int32Array.from(idx), w: Float32Array.from(w), pos: Float32Array.from(idx.flatMap(j => [A.getX(j), A.getY(j), A.getZ(j)])), nrm: Float32Array.from(idx.flatMap(j => [N.getX(j), N.getY(j), N.getZ(j)])), root }; }
-  earData = { sides, a, ey, ez, mx, inv, M: inv.clone().invert() }; }
-function shapeEars() { if (!hairBase) return; if (!earData) setupEars(); const o = (EARS.find(e => e[0] === earsNow) || [])[2] || {}, { sides, a, inv, M } = earData;
-  const geo = hairBase.body.geometry, A = geo.attributes.position, N = geo.attributes.normal, v = new THREE.Vector3(), n = new THREE.Vector3(), q = new THREE.Quaternion();
-  for (const s of [-1, 1]) { const E = sides[s];
-    for (let k = 0; k < E.idx.length; k++) { const j = E.idx[k], w = E.w[k]; v.set(E.pos[k * 3], E.pos[k * 3 + 1], E.pos[k * 3 + 2]).applyMatrix4(M); n.set(E.nrm[k * 3], E.nrm[k * 3 + 1], E.nrm[k * 3 + 2]).transformDirection(M);
-      if (o.s) v.sub(E.root).multiplyScalar(1 + (o.s - 1) * w).add(E.root);
-      // (sticking out: the ear turned about an upright line through its root, its back swung away from the head)
-      if (o.out) { q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), -s * o.out * w); v.sub(E.root).applyQuaternion(q).add(E.root); n.applyQuaternion(q); }
-      // (elf ears: the upper part drawn up and back into a point - more the higher up the ear, a little narrower)
-      if (o.elf) { const t = Math.min(1, Math.max(0, (v.y - E.root.y + .05 * a) / (.36 * a))) * w; v.y += .8 * a * t * t * t; v.z -= .25 * a * t * t; v.x += s * .22 * a * t * t; } // (out from the hair, where the point shows)
-      v.applyMatrix4(inv); A.setXYZ(j, v.x, v.y, v.z); n.transformDirection(inv); N.setXYZ(j, n.x, n.y, n.z); } }
+      // (and nearer the head in its front half: the new ear's bowl, open in front, goes deeper there, and they stood up through it)
+      // (and all of it round a smaller ear, which left the old one's lobe and back edge standing - the user 08-11-2026; its
+      // light worked out anew but for a narrow edge, where it goes over into the head's own)
+      if (y > -.68 && y < .44 && z > -1.52 && z < -.54 && x > .6) { const e = Math.min(1, Math.max(0, Math.min(y + .68, .44 - y, z + 1.52, -.54 - z) / .06)); idx.push(j); w.push(e * e * (3 - 2 * e)); } }
+    sides[s] = { idx: Int32Array.from(idx), w: Float32Array.from(w), pos: Float32Array.from(idx.flatMap(j => [A.getX(j), A.getY(j), A.getZ(j)])), nrm: Float32Array.from(idx.flatMap(j => [N.getX(j), N.getY(j), N.getZ(j)])) }; }
+  // (the head as if it had no ear: how far out the body's points round the ear stand, and over the ear itself a smooth
+  // skin stretched between them - the old ear laid down on it, and the new one's open front on it, meet without the
+  // jagged line and the bare patches round a smaller ear, the user 08-11-2026)
+  const G = 72, d = .02 * a, z0 = ez - 1.65 * a, y0 = ey - .85 * a;
+  for (const s of [-1, 1]) { const T = new Float32Array(G * G).fill(-1);
+    for (let j = 0; j < pts.length / 6; j++) { const out = (pts[j * 6] - mx) * s, y = (pts[j * 6 + 1] - ey) / a, z = (pts[j * 6 + 2] - ez) / a; if (out < .5 * a || (y > -.68 && y < .44 && z > -1.52 && z < -.54)) continue;
+      const gz = Math.floor((pts[j * 6 + 2] - z0) / d), gy = Math.floor((pts[j * 6 + 1] - y0) / d); if (gz >= 0 && gy >= 0 && gz < G && gy < G && out > T[gz + G * gy]) T[gz + G * gy] = out; }
+    const known = T.map(x => x >= 0 ? 1 : 0);
+    for (let it = 0; it < 900; it++) for (let i = 0; i < G; i++) for (let k = 0; k < G; k++) { const c = i + G * k; if (known[c]) continue; let sum = 0, cnt = 0; for (const [di, dk] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) { const x = i + di < 0 || i + di >= G || k + dk < 0 || k + dk >= G ? -1 : T[c + di + G * dk]; if (x >= 0) { sum += x; cnt++; } } if (cnt) T[c] = sum / cnt; }
+    // (smoothed only where it is stretched over: smoothed where the head itself is, it lay under it, and the cheek stood up through the ear's front)
+    for (let it = 0; it < 3; it++) { const U = T.slice(); for (let i = 1; i < G - 1; i++) for (let k = 1; k < G - 1; k++) { if (known[i + G * k]) continue; let sum = 0; for (let di = -1; di <= 1; di++) for (let dk = -1; dk <= 1; dk++) sum += U[i + di + G * (k + dk)]; T[i + G * k] = sum / 9; } }
+    sides[s].head = { T, G, x0: z0, y0, d }; }
+  earData = { sides, a, ey, ez, mx, inv, M: inv.clone().invert() };
+  for (const s of [-1, 1]) earPieces(sides[s], geo); }
+// (the inside of a real ear, measured off the user's picture, a 720 x 840 close-up with the face to the right - X, Y are
+// spots in it. u from the back of the ear (-1) to its front (1), v from the lobe (-1) to the top (1). Gives how high the
+// front face stands, in eye distances below the rim, and how deep its colour is, 0 the skin itself, 1 the darkest fold:
+// the rolled rim, steep on its inside; the groove inside it; the ridge round the bowl that forks at the top, one arm up into
+// the rim, one fine arm forward over the bowl; the hollow between the arms; the deep bowl, darkest under the fine arm, in
+// the notch and down by the opening; the lump in front, the small bump under the bowl, the soft lobe)
+// (a line through points, each with its width and height, drawn through in small steps so it has no corners; closed: round)
+function earCurve(R, closed) { const out = [], n = R.length, at = k => closed ? R[(k + n) % n] : R[Math.max(0, Math.min(n - 1, k))];
+  for (let k = 0; k < (closed ? n : n - 1); k++) { const p0 = at(k - 1), p1 = at(k), p2 = at(k + 1), p3 = at(k + 2);
+    for (let i = 0; i < 10; i++) { const t = i / 10, t2 = t * t, t3 = t2 * t; out.push([...p1.map((_, m) => .5 * (2 * p1[m] + (p2[m] - p0[m]) * t + (2 * p0[m] - 5 * p1[m] + 4 * p2[m] - p3[m]) * t2 + (3 * p1[m] - p0[m] - 3 * p2[m] + p3[m]) * t3)), (k + t) / (n - 1)]); } }
+  out.push([...(closed ? R[0] : R[n - 1]), 1]); return out; }
+// (the nearest spot on such a line: how far off, and its width, height and how far along it lies)
+function earNear(C, X, Y) { let m = Infinity, w = 1, l = 0, f = 0; for (let k = 0; k + 1 < C.length; k++) { const a = C[k], b = C[k + 1], dx = b[0] - a[0], dy = b[1] - a[1], t = Math.min(1, Math.max(0, ((X - a[0]) * dx + (Y - a[1]) * dy) / (dx * dx + dy * dy))), d = Math.hypot(X - a[0] - t * dx, Y - a[1] - t * dy);
+  if (d < m) { m = d; w = a[2] + (b[2] - a[2]) * t; l = a[3] + (b[3] - a[3]) * t; f = a[a.length - 1] + (b[b.length - 1] - a[a.length - 1]) * t; } } return [m, w, l, f]; }
+// (the ridge round the bowl: up round its back and forward over it, narrowing - each point x, y, width, height)
+const EAR_RIDGE = earCurve([[470, 692, 40, -.02], [380, 656, 44, -.008], [326, 588, 46, -.004], [302, 500, 46, -.004], [306, 428, 42, -.006], [326, 382, 36, -.008], [360, 350, 30, -.01], [420, 330, 27, -.012], [490, 316, 24, -.016], [555, 304, 20, -.022]]);
+// (the rim's own end: down the front of the ear and in over the bowl, sinking as it goes, to die out in its middle)
+const EAR_CRUS = earCurve([[624, 280, 34, 0], [608, 320, 36, -.008], [592, 352, 38, -.02], [566, 386, 40, -.045], [526, 414, 40, -.08], [484, 432, 36, -.12], [448, 442, 30, -.17]]);
+// (the bowl's edge, round: the top, under the fine ridge, runs on forward in under the rim; then back and down inside the
+// ridge, along the bottom, into the notch under the lump in front, up the steep crease behind the lump to the deep notch
+// over it, and up under the rim's end. Each point with how wide the slope down is - soft at the back, sharp in front)
+const EAR_BOWL = earCurve([[548, 333, 24, 0], [500, 342, 26, 0], [450, 356, 30, 0], [400, 381, 40, 0], [362, 418, 45, 0], [338, 470, 50, 0], [330, 530, 50, 0], [345, 592, 45, 0], [380, 640, 40, 0], [432, 668, 30, 0], [492, 676, 22, 0], [550, 670, 16, 0], [598, 660, 14, 0], [594, 620, 16, 0], [574, 566, 16, 0], [558, 522, 16, 0], [560, 484, 14, 0], [570, 452, 14, 0], [578, 410, 18, 0], [572, 366, 22, 0]], true);
+function earRelief(u, v) { const S = (x, p, q) => { const t = Math.min(1, Math.max(0, (x - p) / (q - p))); return t * t * (3 - 2 * t); }, E = (x, c, w) => Math.exp(-(((x - c) / w) ** 2)), rho = Math.hypot(u, v);
+  const X = 390 + u * 300 * .98 - v * 370 * .2, Y = 440 - u * 300 * .2 - v * 370 * .98;
+  const line = (pts, w) => { let m = Infinity; for (let k = 0; k + 1 < pts.length; k++) { const [ax, ay] = pts[k], [bx, by] = pts[k + 1], dx = bx - ax, dy = by - ay, q = Math.min(1, Math.max(0, ((X - ax) * dx + (Y - ay) * dy) / (dx * dx + dy * dy))); m = Math.min(m, Math.hypot(X - ax - q * dx, Y - ay - q * dy)); } return Math.exp(-((m / w) ** 2)); };
+  // (open: the front below the rim's end, where there is no rim - only the lump, the notches and the cheek)
+  const ft = E(Math.atan2(v, u), .6, .5), r0 = .69 - .2 * ft, th = Math.atan2(v, u), open = (1 - S(th, -.05, .32)) * S(th, -1.4, -1.05) * S(rho, .35, .6), tube = Math.sqrt(S(rho, r0, r0 + .15)) * (1 - open), front = S(X, 610, 670), lobe = S(Y, 705, 785), top = S(v, .2, .8);
+  const [rm, rw, rl] = earNear(EAR_RIDGE, X, Y), [hm, hw, hl, hf] = earNear(EAR_CRUS, X, Y), [bm, bw] = earNear(EAR_BOWL, X, Y);
+  let inside = false; for (let k = 0, j = EAR_BOWL.length - 1; k < EAR_BOWL.length; j = k++) { const [ax, ay] = EAR_BOWL[k], [bx, by] = EAR_BOWL[j]; if ((ay > Y) !== (by > Y) && X < (bx - ax) * (Y - ay) / (by - ay) + ax) inside = !inside; }
+  const sd = inside ? bm : -bm, conc = S(sd, -.2 * bw, bw), deep = S(sd, 15, 90), crease = E(sd, 8, 18) * (1 - S(bw, 17, 24)),
+    ridge = Math.exp(-((rm / rw) ** 2)) * (1 - S(X, 545, 605)), stem = ridge * S(Y, 330, 400), crus = ridge * (1 - S(Y, 330, 400)), arm = line([[322, 390], [288, 280], [262, 190]], 56),
+    helix = Math.exp(-((hm / hw) ** 2)) * (1 - S(hf, .45, 1)), fossa = E(X, 385, 100) * E(Y, 245, 60), cymba = E(X, 495, 70) * E(Y, 360, 20),
+    canal = E(X, 530, 45) * E(Y, 545, 55), notch = E(X, 568, 18) * E(Y, 462, 26), lump = E(X, 612, 36) * E(Y, 514, 52), dip = E(X, 598, 20) * E(Y, 646, 20), anti = E(X, 480, 60) * E(Y, 688, 22);
+  let L = -.065 + .075 * tube; L = Math.max(L, -.065 + .022 * arm) - .022 * fossa * (1 - arm); L += (-.06 * (1 - front) - L) * open;
+  L += (-.17 + .07 * E(X, 585, 30) * E(Y, 615, 45) - .025 * deep - .025 * canal - .04 * notch - .03 * cymba - .035 * dip - L) * conc; L = Math.max(L, L + (rl - L) * ridge); L = Math.max(L, L + (hl - L) * helix);
+  L = L * (1 - front) + .13 * lump - .03 * notch * (1 - conc) + .03 * anti; L = L * (1 - lobe) - .025 * lobe;
+  let c = .4 + (.14 - .4) * tube; c = Math.max(c, (.6 + .4 * top) * E(rho, r0 + .015, .035) * (1 - front) * (1 - lobe) * (1 - open));
+  c *= 1 - open; c += (.12 - c) * Math.max(stem, arm) * (1 - conc); c += (.24 + .12 * E(X, 300, 50) * E(Y, 285, 30) - c) * fossa * (1 - arm);
+  c += (Math.min(1, .58 + .08 * deep + .25 * canal + .45 * cymba + .55 * notch + .2 * crease + .45 * dip - .15 * E(Y, 600, 45) * E(X, 445, 70)) - c) * conc; c += (.08 - c) * crus;
+  c += (.12 + .38 * hf - c) * helix; c = Math.max(c * (1 - front), .75 * notch, .7 * dip) * (1 - .97 * lump); c += (.3 - c) * anti; c += (.22 - c) * lobe;
+  return [L, c]; }
+// (the inside made soft: the relief laid on a grid and blurred, so its folds go over into each other gently - too coarse,
+// the user said 09-11-2026, with a photo marking the inner ear in red. Only the rolled rim keeps its own shape)
+let earSoftGrid = null;
+function earSoft(u, v) { const N = 161, A = 1.05, h = 2 * A / (N - 1), S = (x, p, q) => { const t = Math.min(1, Math.max(0, (x - p) / (q - p))); return t * t * (3 - 2 * t); };
+  if (!earSoftGrid) { const L = new Float32Array(N * N), C = new Float32Array(N * N); for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) { const [l, c] = earRelief(-A + i * h, -A + j * h); L[i + N * j] = l; C[i + N * j] = c; }
+    const blur = (F, sg) => { const R = Math.ceil(sg * 3), K = []; for (let k = -R; k <= R; k++) K.push(Math.exp(-k * k / (2 * sg * sg))); const ks = K.reduce((a, x) => a + x, 0), T = new Float32Array(N * N);
+      for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) { let a = 0; for (let k = -R; k <= R; k++) a += K[k + R] * F[Math.min(N - 1, Math.max(0, i + k)) + N * j]; T[i + N * j] = a / ks; }
+      for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) { let a = 0; for (let k = -R; k <= R; k++) a += K[k + R] * T[i + N * Math.min(N - 1, Math.max(0, j + k))]; F[i + N * j] = a / ks; } };
+    blur(L, 4.5); blur(C, 5.5); earSoftGrid = { L, C }; }
+  const fx = (u + A) / h, fy = (v + A) / h, i = Math.max(0, Math.min(N - 2, Math.floor(fx))), j = Math.max(0, Math.min(N - 2, Math.floor(fy))), m = Math.min(1, fx - i), n = Math.min(1, fy - j);
+  const at = F => (F[i + N * j] * (1 - m) + F[i + 1 + N * j] * m) * (1 - n) + (F[i + N * j + N] * (1 - m) + F[i + 1 + N * j + N] * m) * n;
+  const [L, c] = earRelief(u, v), w = S(Math.hypot(u, v), .7, .82);
+  return [at(earSoftGrid.L) * (1 - w) + L * w, at(earSoftGrid.C) * (1 - w) + c * w]; }
+// (that depth as a colour laid over the skin: from the skin, over pink and salmon, to a warm dark brown in the folds)
+function earTone(c) { const T = [[0, 1, .99, 1], [.25, .95, .82, .8], [.5, .85, .6, .5], [.7, .72, .45, .33], [.88, .55, .3, .2], [1, .38, .18, .1]]; let k = 0; while (k < T.length - 2 && c > T[k + 1][0]) k++; const q = Math.min(1, Math.max(0, (c - T[k][0]) / (T[k + 1][0] - T[k][0]))); return [1, 2, 3].map(n => T[k][n] + (T[k + 1][n] - T[k][n]) * q); }// (the body's pieces at the ear, with what lies at the same spot: to work out the light on what is left of its old ear)
+// (how far out the head without its ear stands at a spot by the ear)
+function earHead(E, y, z) { const { T, G, x0, y0, d } = E.head, fz = (z - x0) / d - .5, fy = (y - y0) / d - .5, i = Math.max(0, Math.min(G - 2, Math.floor(fz))), k = Math.max(0, Math.min(G - 2, Math.floor(fy))), m = Math.min(1, Math.max(0, fz - i)), n = Math.min(1, Math.max(0, fy - k)); return (T[i + G * k] * (1 - m) + T[i + 1 + G * k] * m) * (1 - n) + (T[i + G * k + G] * (1 - m) + T[i + 1 + G * k + G] * m) * n; }
+function earPieces(E, geo) { const of = new Map(), tris = [...new Set(Array.from(E.idx, j => j - j % 3))], A = geo.attributes.position; E.tris = Int32Array.from(tris); const key = j => `${A.getX(j).toFixed(5)},${A.getY(j).toFixed(5)},${A.getZ(j).toFixed(5)}`;
+  E.group = new Map(); for (const c of tris) for (let i = 0; i < 3; i++) { const ky = key(c + i); if (!of.has(ky)) of.set(ky, of.size); E.group.set(c + i, of.get(ky)); } E.groups = of.size; }
+// (a new ear, after the user's picture, as a part of its own: the body's ear - a bowl with a rim, not enough points to
+// shape well - pressed in against the head and this set on it. Rings from the bowl's middle out to the rim, then round
+// behind it and into the head. Its skin is the body's own picture at one spot of the cheek, so it follows the skin colour;
+// the depths darkened by the point's own colour. o: s size, out turned away from the head, elf drawn up into a point)
+function buildEar(s, o) { const { a, mx, ey, ez, inv, M } = earData, E = earData.sides[s], body = hairBase.body, NR = 120, NT = 320, NB = 18, S = (x, p, q) => { const t = Math.min(1, Math.max(0, (x - p) / (q - p))); return t * t * (3 - 2 * t); };
+  const headAt = (y, z) => earHead(E, y, z);
+  const P = [], C = [], size = o.s || 1, lean = .2, cl = Math.cos(lean), sl = Math.sin(lean), cz = ez - .85 * a, cy = ey - .07 * a, W = .27 * a, H = .335 * a; let lobe = null;
+  const place = (u, v, level, top, back = 0) => { let pu = u * W * (1 + .17 * v), pv = v * H; const low = v < 0 && size > 1 ? 1 - .35 * (size - 1) / .4 * S(-v, 0, 1) : 1; // (a big ear not drawn as far down: the lobe stuck out as a tip)
+    pu *= size; pv *= size * low; let h = (.92 + .31 * (1 - u) / 2 * (.55 + .45 * S(v, -1, -.2))) * a + (level * a) * (.6 + .4 * size) + Math.max(0, size - 1) * .15 * a; // (a big ear further out: its top went in under the hair)
+    if (o.out) h += o.out * .3 * a * (1 - u) / 2 * S(v, -1, -.3);
+    // (its back down to where an ear sits, not in to the head up by the point: wide from the front - the user 08-11-2026)
+    if (o.elf) { const t = S(v, .1, 1) * (1 - S(back, 0, .8)); pv += .62 * a * t * t * t; pu -= .1 * a * t * t + u * W * .6 * t * t; h += .3 * a * t * t + .3 * a * t ** 4; } // (and out from the hair, where the point shows - further out, sticking out to the side, higher and sharper: the user 08-11-2026)
+    const wy = cy + pu * sl + pv * cl, wz = cz + pu * cl - pv * sl, tf = Math.atan2(v, u), opn = (1 - S(tf, -.05, .32)) * S(tf, -1.4, -1.05), fl = S(390 + u * 294 - v * 74, 625 - 95 * opn, 690 - 40 * opn); if (fl) h += (headAt(wy, wz) + (.014 + .01 * opn) * a + level * a - h) * fl; // (down to the cheek over a longer way at the open front: steep, it showed as smears)
+    // (and its front never below the head out towards its edge: the head stood through the notches there, jagged)
+    if (top) { const rr = Math.hypot(u, v); h = Math.max(h, headAt(wy, wz) + .008 * a - .3 * a * (1 - S(rr, .66, .8))); }
+    return [mx + s * h, wy, wz]; };
+  for (let r = 0; r <= NR + NB; r++) for (let q = 0; q < NT; q++) { const th = q / NT * Math.PI * 2, c = Math.cos(th), n = Math.sin(th); let rho, level, dark;
+    if (r <= NR) { rho = r / NR; const u = rho * c, v = rho * n, [L, d] = earSoft(u, v), op = (1 - S(th > Math.PI ? th - 2 * Math.PI : th, -.05, .32)) * S(th > Math.PI ? th - 2 * Math.PI : th, -1.4, -1.05), e = S(rho, .86, .98) * (1 - op), x = Math.max(0, (rho - .84) / .16); level = L * (1 - S(rho, .84, 1) * (1 - op)) - .102 * (1 - op) * (1 - Math.sqrt(Math.max(0, 1 - x * x))) - .01 * op * S(rho, .9, 1); dark = d * (1 - e); } // (the rim rolled round, as a tube - but not down the open front, where the ear goes over into the cheek)
+    else { const b = (r - NR) / NB, f = S(b, 0, .35); rho = 1 + .03 * Math.sin(Math.PI * b) - .12 * b; level = -.012 * (1 - f) - .03 * f - .09 - .34 * b ** 1.3; dark = .3 * b; }
+    const p = place(rho * c, rho * n, level, r <= NR, Math.max(0, (r - NR) / NB)); P.push(...p); C.push(...earTone(dark));
+    if (r === NR && (!lobe || p[1] < lobe[1])) lobe = p; }
+  E.lobe = new THREE.Vector3(...lobe);
+  // (the front, where the ear goes over into the cheek, smoothed out: it lay crumpled after the head's own uneven skin
+  // there - the user 09-11-2026, wanting the inner ear soft as in a photo; then kept off the head again)
+  { const m = new Float32Array((NR + 1) * NT); for (let r = 1; r < NR; r++) for (let q = 0; q < NT; q++) { const th = q / NT * Math.PI * 2, u = r / NR * Math.cos(th), v = r / NR * Math.sin(th); m[r * NT + q] = S(390 + u * 294 - v * 74, 500, 590); }
+    for (let it = 0; it < 90; it++) { const X = P.slice(0, (NR + 1) * NT * 3); for (let r = 1; r < NR; r++) for (let q = 0; q < NT; q++) { const k = r * NT + q, w = m[k]; if (!w) continue;
+      const av = (X[((r - 1) * NT + q) * 3] + X[((r + 1) * NT + q) * 3] + X[(r * NT + (q + 1) % NT) * 3] + X[(r * NT + (q + NT - 1) % NT) * 3]) / 4; P[k * 3] += (av - X[k * 3]) * .6 * w; } }
+    for (let k = 0; k < (NR + 1) * NT; k++) if (m[k]) P[k * 3] = mx + s * Math.max((P[k * 3] - mx) * s, headAt(P[k * 3 + 1], P[k * 3 + 2]) + .008 * a - .3 * a * (1 - S(Math.floor(k / NT) / NR, .66, .8))); }
+  const idx = []; for (let r = 0; r < NR + NB; r++) for (let q = 0; q < NT; q++) { const i = r * NT + q, j = r * NT + (q + 1) % NT, k = i + NT, l = j + NT; if (s < 0) idx.push(i, j, k, j, l, k); else idx.push(i, k, j, j, k, l); }
+  // (how far out the ear's front stands at each spot inside its rim: the old ear is laid down under it, and only there)
+  { const G = 240, d = .01 * a, z0 = ez - 1.65 * a, y0 = ey - .85 * a, T = new Float32Array(G * G).fill(Infinity); for (let i = 0; i < NT * (NR + 1); i++) { const gz = Math.floor((P[i * 3 + 2] - z0) / d), gy = Math.floor((P[i * 3 + 1] - y0) / d), out = (P[i * 3] - mx) * s; if (gz >= 0 && gy >= 0 && gz < G && gy < G && out < T[gz + G * gy]) T[gz + G * gy] = out; }
+    // (no spot left out between its points: the old ear stood up through there, crumpled)
+    for (let it = 0; it < 2; it++) { const U = T.slice(); for (let i = 1; i < G - 1; i++) for (let k = 1; k < G - 1; k++) { const c = i + G * k; if (U[c] < Infinity) continue; const n = [U[c - 1], U[c + 1], U[c - G], U[c + G]].filter(x => x < Infinity); if (n.length > 1) T[c] = Math.min(...n); } }
+    E.cover = { T, G, d, z0, y0 }; }
+  const g = new THREE.BufferGeometry(), w = new THREE.Vector3(), cnt = P.length / 3;
+  for (let i = 0; i < cnt; i++) { w.fromArray(P, i * 3).applyMatrix4(inv); P[i * 3] = w.x; P[i * 3 + 1] = w.y; P[i * 3 + 2] = w.z; }
+  g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(C, 3)); g.setIndex(idx); g.computeVertexNormals();
+  // (the skin's spot and the bones: those of the body's point nearest the ear's middle and of a spot on the cheek)
+  const bg = body.geometry, bsi = bg.attributes.skinIndex, bsw = bg.attributes.skinWeight; if (E.uv === undefined) { const { pts } = hairBase.whole, uvA = bg.attributes.uv; let best = Infinity, bone = 0, bb = Infinity, sp = 0;
+    for (let j = 0; j < pts.length / 6; j++) { const dx = pts[j * 6] - (mx + s * .84 * a), dy = pts[j * 6 + 1] - (ey - .4 * a), dz = pts[j * 6 + 2] - (ez - .5 * a), d = dx * dx + dy * dy + dz * dz; if (d < best) { best = d; sp = j; }
+      const ex = pts[j * 6] - (mx + s * .95 * a), ey2 = pts[j * 6 + 1] - cy, ez2 = pts[j * 6 + 2] - cz, e = ex * ex + ey2 * ey2 + ez2 * ez2; if (e < bb) { bb = e; bone = j; } }
+    E.uv = [uvA.getX(sp), uvA.getY(sp)]; E.bone = bone; }
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(Array.from({ length: cnt }, () => E.uv).flat(), 2));
+  const si = [], sw = []; for (let i = 0; i < cnt; i++) for (let k = 0; k < 4; k++) { si.push(bsi.getComponent(E.bone, k)); sw.push(bsw.getComponent(E.bone, k)); }
+  g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(si, 4)); g.setAttribute('skinWeight', new THREE.Float32BufferAttribute(sw, 4));
+  if (E.part) { E.part.geometry.dispose(); E.part.geometry = g; return; }
+  const m = body.material.clone(); m.vertexColors = true;
+  const sm = new THREE.SkinnedMesh(g, m); sm.castShadow = true; sm.frustumCulled = false; sm.position.copy(body.position); sm.quaternion.copy(body.quaternion); sm.scale.copy(body.scale); body.parent.add(sm); sm.bind(body.skeleton, body.bindMatrix); E.part = sm; }
+function earLight(E, geo) { const A = geo.attributes.position, N = geo.attributes.normal, sum = new Float32Array(E.groups * 3), p = [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()], e = new THREE.Vector3(), f = new THREE.Vector3();
+  for (const c of E.tris) { for (let i = 0; i < 3; i++) p[i].fromBufferAttribute(A, c + i); e.subVectors(p[1], p[0]); f.subVectors(p[2], p[0]); e.cross(f); for (let i = 0; i < 3; i++) { const g = E.group.get(c + i) * 3; sum[g] += e.x; sum[g + 1] += e.y; sum[g + 2] += e.z; } }
+  const v = new THREE.Vector3(), o = new THREE.Vector3();
+  for (let k = 0; k < E.idx.length; k++) { const j = E.idx[k], g = E.group.get(j) * 3, w = E.w[k]; v.set(sum[g], sum[g + 1], sum[g + 2]).normalize(); o.set(E.nrm[k * 3], E.nrm[k * 3 + 1], E.nrm[k * 3 + 2]); v.lerp(o, 1 - w * w * (3 - 2 * w)).normalize(); N.setXYZ(j, v.x, v.y, v.z); } }
+function shapeEars() { if (!hairBase) return; if (!earData) setupEars(); const o = (EARS.find(e => e[0] === earsNow) || [])[2] || {}, { sides, a, inv, M, mx, ey, ez } = earData;
+  const geo = hairBase.body.geometry, A = geo.attributes.position, N = geo.attributes.normal, v = new THREE.Vector3(), S = (x, p, q) => { const t = Math.min(1, Math.max(0, (x - p) / (q - p))); return t * t * (3 - 2 * t); };
+  for (const s of [-1, 1]) { const E = sides[s]; buildEar(s, o); const { T, G, d, z0, y0 } = E.cover, n = E.idx.length, W = new Float32Array(n * 3), cov = new Uint8Array(n);
+    // (the old ear laid down on the head as if it had none - what stands a little over that, the head itself, only
+    // eased down, or it kinked - and at the new one's edge just under it; what lies all under it is gone: pressed down
+    // there, its big pieces stood up through the hollows, and met its front in a jagged edge)
+    for (let k = 0; k < n; k++) { v.set(E.pos[k * 3], E.pos[k * 3 + 1], E.pos[k * 3 + 2]).applyMatrix4(M);
+      const o0 = (v.x - mx) * s, hd = earHead(E, v.y, v.z), gz = Math.floor((v.z - z0) / d), gy = Math.floor((v.y - y0) / d), c = gz >= 0 && gy >= 0 && gz < G && gy < G ? T[gz + G * gy] : Infinity;
+      // (covered only where the ear lies near the head: under an elf's point, standing well off it, the head showed a hole)
+      cov[k] = c - hd < .12 * a; v.x = mx + s * Math.min(o0 > hd ? hd + .006 * a * (1 - Math.exp(-(o0 - hd) / (.006 * a))) : o0, c - .01 * a); W[k * 3] = v.x; W[k * 3 + 1] = v.y; W[k * 3 + 2] = v.z; }
+    if (!E.kOf) { E.kOf = new Map(); E.idx.forEach((j, k) => E.kOf.set(j, k)); }
+    for (const c of E.tris) { const ks = [E.kOf.get(c), E.kOf.get(c + 1), E.kOf.get(c + 2)]; if (ks.every(k => k !== undefined && cov[k])) for (const k of ks.slice(1)) W.copyWithin(k * 3, ks[0] * 3, ks[0] * 3 + 3); }
+    for (let k = 0; k < n; k++) { v.fromArray(W, k * 3).applyMatrix4(inv); A.setXYZ(E.idx[k], v.x, v.y, v.z); }
+    earLight(E, geo);
+    // (and painted in the cheek's skin: the old ear's folds in the body's picture showed as blotches round the new one -
+    // only what stood out as the old ear: the head round it keeps its own, the hair's edge painted on it too)
+    if (!E.plain) { const uvA = geo.attributes.uv, ear = new Set(); for (let k = 0; k < E.idx.length; k++) { v.set(E.pos[k * 3], E.pos[k * 3 + 1], E.pos[k * 3 + 2]).applyMatrix4(M); if ((v.x - mx) * s > earHead(E, v.y, v.z) + .015 * a) ear.add(E.idx[k]); }
+      for (const c of E.tris) if (ear.has(c) && ear.has(c + 1) && ear.has(c + 2)) for (let i = 0; i < 3; i++) uvA.setXY(c + i, E.uv[0], E.uv[1]); uvA.needsUpdate = true; E.plain = true; } }
   A.needsUpdate = true; N.needsUpdate = true; }
 // (the earrings: hanging from each lobe - the lowest point of the ear as it is shaped now - bound to the head like the
 // clown's nose)
 function setEarrings(name) { earringsNow = EARRINGS.some(e => e[0] === name) ? name : '';
   for (const m of earrings.list || []) { m.parent?.remove(m); m.geometry.dispose(); } earrings.list = [];
   if (earringsNow && hairBase) { if (!earData) setupEars(); const kind = earringsNow.slice(9), { sides, a, inv } = earData, A = hairBase.body.geometry.attributes.position, M = earData.M, parts = [];
-    for (const s of [-1, 1]) { const E = sides[s]; let lo = null; const v = new THREE.Vector3();
-      for (let k = 0; k < E.idx.length; k++) { if (E.w[k] < .5) continue; v.fromBufferAttribute(A, E.idx[k]).applyMatrix4(M); if (!lo || v.y < lo.y) lo = v.clone(); }
-      if (!lo) continue; lo.x -= s * .02 * a; // (a little in from the lobe's edge)
+    for (const s of [-1, 1]) { const E = sides[s]; const lo = E.lobe.clone(); lo.x -= s * .02 * a; lo.y += .06 * a; // (a little in from the lobe's edge)
       const r = .1 * a, gs = kind === 'perler' ? [new THREE.SphereGeometry(r * .75, 20, 14).translate(0, -r * .8, 0)]
         : kind === 'ringe' ? [new THREE.TorusGeometry(r * 1.1, r * .2, 10, 32).rotateY(Math.PI / 2).translate(0, -r * 1.2, 0)]
         : kind === 'stjerner' ? [(() => { const sh = new THREE.Shape(); for (let i = 0; i < 10; i++) { const rr = i % 2 ? r * .45 : r * 1.15, an = Math.PI / 2 + i * Math.PI / 5; i ? sh.lineTo(rr * Math.cos(an), rr * Math.sin(an)) : sh.moveTo(rr * Math.cos(an), rr * Math.sin(an)); }
@@ -3462,7 +3785,8 @@ const onTheSpot = clip => { const t = clip.tracks.find(tr => tr.name === 'mixamo
   for (let i = 0; i < t.values.length; i += 3) { t.values[i] = t.values[0]; t.values[i + 2] = t.values[2]; } return clip; };
 const moveLoads = {};
 function loadMove(id) { return moveLoads[id] ??= (async () => {
-  if (!glbActions[id]) try { glbActions[id] = mixer.clipAction(onTheSpot(THREE.AnimationClip.parse(await (await fetch(`figur-${id}.json${FIGUR_V}`)).json()))); } catch (e) { delete moveLoads[id]; return null; }
+  // (not fetched - no internet yet - it said nothing and the figure just stood, the user 05-11-2026: now it says so)
+  if (!glbActions[id]) try { glbActions[id] = mixer.clipAction(onTheSpot(THREE.AnimationClip.parse(await (await fetch(`figur-${id}.json${FIGUR_V}`)).json()))); } catch (e) { delete moveLoads[id]; toast(NO_NET); return null; }
   if (kick.ready) keepPlaying(() => { if (MOVES.spark.some(m => m[0] === id)) kickSetup(id); lifts[id] = liftCurve(id); });
   return glbActions[id]; })(); }
 // (measuring stops every movement - a movement fetched for the first time while a game ran, as after each new version,
@@ -3735,7 +4059,16 @@ function skateBuild() { if (sk.rig) return; sk.rig = new THREE.Group();
   for (let i = 0; i < 1400; i++) { c.fillStyle = `rgba(${Math.random() < .6 ? '200,200,205' : '10,10,14'},${(Math.random() * .22).toFixed(3)})`; c.fillRect(Math.random() * 256, Math.random() * 256, 1 + Math.random() * 2, 1 + Math.random() * 2); }
   const rw = SKATE.lane * 3 + .3; c.fillStyle = '#FFFFFF'; for (const s of [-1, 1]) c.fillRect((.5 + s * SKATE.lane / 2 / rw) * 256 - 3, 0, 6, 128); c.fillRect(0, 0, 7, 256); c.fillRect(249, 0, 7, 256);
   const t = sk.roadTex = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(1, 20); t.anisotropy = 4;
-  sk.road = new THREE.Mesh(new THREE.PlaneGeometry(SKATE.lane * 3 + .3, 60), new THREE.MeshStandardMaterial({ map: t, roughness: .95 })); sk.road.rotation.x = -Math.PI / 2; sk.road.position.set(0, .004, -26); sk.road.receiveShadow = true; }
+  sk.road = new THREE.Mesh(new THREE.PlaneGeometry(SKATE.lane * 3 + .3, 60, 1, 120), new THREE.MeshStandardMaterial({ map: t, roughness: .95 })); sk.road.rotation.x = -Math.PI / 2; sk.road.position.set(0, .004, -26); sk.road.receiveShadow = true;
+  sk.roadX = Float32Array.from({ length: sk.road.geometry.attributes.position.count }, (_, i) => sk.road.geometry.attributes.position.getX(i));
+  // (the bits flying: drops from a puddle, sparks from a present)
+  sk.bits = []; sk.bitMats = { vand: skMat('#6FC3FF', .2, '#2B7FD0'), guld: skMat('#FFD23F', .25, '#B07800') }; }
+// (the road bends away out towards the skyline, now one way, now the other, and lies straight again as it comes up
+// to the figure - so it is not just straight, the user said 08-11-2026; u how far down the road)
+const skBend = u => sk.curve * .0055 * Math.max(0, u - 5) ** 2, skSlope = u => sk.curve * .011 * Math.max(0, u - 5);
+function skateBits(kind, x, y, z, n) { for (let k = 0; k < n; k++) { let b = sk.bits.find(b => !b.mesh.visible && b.kind === kind);
+    if (!b) { b = { kind, mesh: new THREE.Mesh(new THREE.SphereGeometry(kind === 'vand' ? .04 : .05, 8, 6), sk.bitMats[kind]), v: new THREE.Vector3() }; scene.add(b.mesh); sk.bits.push(b); }
+    const a = Math.random() * Math.PI * 2, s = 1 + Math.random() * 1.5; b.mesh.position.set(x, y, z); b.v.set(Math.cos(a) * s, 2.5 + Math.random() * 2.5, Math.sin(a) * s); b.life = 1; b.mesh.visible = true; } }
 // (the things on the road, each made once and used again: half - half its width; len - its length along the road)
 function skateThing(kind) { const pool = sk.pools[kind] ??= [], free = pool.find(p => !p.group.visible); if (free) return free;
   const g = new THREE.Group(), add = (geo, m, x, y, z) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.castShadow = true; g.add(o); return o; }; let half = .3, len = .4;
@@ -3745,17 +4078,44 @@ function skateThing(kind) { const pool = sk.pools[kind] ??= [], free = pool.find
   if (kind === 'bom') { for (const x of [-.85, .85]) add(new THREE.BoxGeometry(.08, .55, .08), skMat('#3A2E5C', .5), x, .275, 0); for (let k = 0; k < 8; k++) add(new THREE.BoxGeometry(.22, .14, .1), skMat(k % 2 ? '#FFFFFF' : '#E8384F', .4), -.77 + k * .22, .45, 0); half = .9; len = .3; }
   if (kind === 'stjerne') { const s = new THREE.Shape(); for (let k = 0; k < 10; k++) { const r = k % 2 ? .085 : .2, a = Math.PI / 2 + k * Math.PI / 5; k ? s.lineTo(r * Math.cos(a), r * Math.sin(a)) : s.moveTo(r * Math.cos(a), r * Math.sin(a)); }
     const geo = new THREE.ExtrudeGeometry(s, { depth: .05, bevelEnabled: true, bevelThickness: .03, bevelSize: .025, bevelSegments: 3 }); geo.translate(0, 0, -.025); add(geo, skMat('#FFC233', .25, '#A36A00'), 0, .75, 0); half = .25; len = .4; }
-  const it = { group: g, kind, half, len }; g.visible = false; scene.add(g); pool.push(it); return it; }
+  // (and the fun ones, the user said 08-11-2026 - not just red bars and crates: a puddle to splash through, a ramp to fly
+  // off, a present that pops open, a duck waddling over the road, a beach ball bouncing over it)
+  let lid = null, body = null;
+  if (kind === 'pyt') { const m = new THREE.MeshStandardMaterial({ color: '#4FA8F0', roughness: .08, metalness: .1, transparent: true, opacity: .85 }); const o = add(new THREE.CircleGeometry(.36, 28), m, 0, .012, 0); o.rotation.x = -Math.PI / 2; o.scale.set(1, 1.5, 1); o.castShadow = false; half = .32; len = .9; }
+  if (kind === 'rampe') { const s = new THREE.Shape(); s.moveTo(-.5, 0); s.lineTo(.5, 0); s.lineTo(.5, .32); s.closePath(); const geo = new THREE.ExtrudeGeometry(s, { depth: .58, bevelEnabled: false }); geo.translate(0, 0, -.29); geo.rotateY(Math.PI / 2);
+    add(geo, skMat('#FFB020', .5), 0, 0, 0); for (const z of [-.25, .1]) { const st = add(new THREE.BoxGeometry(.6, .012, .1), skMat('#2B2153', .6), 0, 0, 0); st.position.set(0, .16 - z * .32 + .01, z); st.rotation.x = Math.atan2(.32, 1); } half = .3; len = 1; }
+  if (kind === 'gave') { add(new THREE.BoxGeometry(.44, .4, .44), skMat('#E8384F', .5), 0, .2, 0); for (const r of [0, Math.PI / 2]) { const band = add(new THREE.BoxGeometry(.46, .41, .08), skMat('#FFD23F', .4), 0, .2, 0); band.rotation.y = r; }
+    lid = new THREE.Group(); lid.position.y = .4; g.add(lid); for (const [geo, m, y] of [[new THREE.BoxGeometry(.5, .1, .5), skMat('#E8384F', .5), .05], [new THREE.BoxGeometry(.52, .11, .09), skMat('#FFD23F', .4), .05]]) { const o = new THREE.Mesh(geo, m); o.position.y = y; o.castShadow = true; lid.add(o); }
+    for (const s of [-1, 1]) { const bow = new THREE.Mesh(new THREE.TorusGeometry(.08, .03, 8, 16), skMat('#FFD23F', .4)); bow.position.set(s * .08, .16, 0); bow.rotation.y = Math.PI / 2; bow.castShadow = true; lid.add(bow); } half = .26; len = .44; }
+  if (kind === 'and') { body = new THREE.Group(); g.add(body); const yel = skMat('#FFD23F', .55), add2 = (geo, m, x, y, z) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.castShadow = true; body.add(o); return o; };
+    add2(new THREE.SphereGeometry(.2, 20, 14), yel, 0, .24, 0).scale.set(1.25, .85, 1); add2(new THREE.SphereGeometry(.13, 18, 12), yel, .17, .46, 0); const beak = add2(new THREE.ConeGeometry(.05, .14, 12), skMat('#FF8A1F', .5), .32, .44, 0); beak.rotation.z = -Math.PI / 2;
+    for (const z of [-1, 1]) { add2(new THREE.SphereGeometry(.025, 8, 6), skMat('#1A1A22', .3), .26, .5, z * .065); add2(new THREE.BoxGeometry(.12, .02, .1), skMat('#FF8A1F', .5), 0, .01, z * .08); const w = add2(new THREE.SphereGeometry(.1, 12, 8), yel, -.02, .27, z * .17); w.scale.set(1.2, .6, .4); }
+    const tail = add2(new THREE.ConeGeometry(.06, .14, 10), yel, -.26, .32, 0); tail.rotation.z = Math.PI / 2.6; half = .24; len = .4; }
+  if (kind === 'bold') { const cv = document.createElement('canvas'); cv.width = 128; cv.height = 8; const c = cv.getContext('2d'); ['#FF4F8B', '#FFFFFF', '#FFC233', '#FFFFFF', '#3DA5FF', '#FFFFFF'].forEach((f, k) => { c.fillStyle = f; c.fillRect(k * 128 / 6, 0, 128 / 6 + 1, 8); });
+    const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; body = add(new THREE.SphereGeometry(.26, 28, 18), new THREE.MeshStandardMaterial({ map: t, roughness: .4 }), 0, .26, 0); half = .26; len = .5; }
+  const it = { group: g, kind, half, len, lid, body }; g.visible = false; scene.add(g); pool.push(it); return it; }
+// (the good ones: run into on purpose - a star, a splash, a jump, a present - not bumped into)
+const SK_GOOD = new Set(['stjerne', 'pyt', 'rampe', 'gave']);
 // (a row of things far down the road: one thing - or a bar over two lanes - and, mostly, stars in a free lane; the
 // easiest levels only cones and crates)
-function skateRow() { const easy = ['niveau-meget-let', 'niveau-let'].includes(game.level), r = Math.random(), used = new Set();
-  const put = (it, x, u) => { Object.assign(it, { x, u, hit: false, done: false, mine: false }); it.group.position.set(x, 0, -u); it.group.rotation.set(0, 0, 0); it.group.visible = true; sk.live.push(it); };
-  if (!easy && r < .2) { const left = Math.random() < .5; put(skateThing('bom'), (left ? -.5 : .5) * SKATE.lane, SKATE.from); used.add(left ? -1 : 1); used.add(0); }
-  else { const lane = Math.floor(Math.random() * 3) - 1, kind = easy ? (Math.random() < .55 ? 'kegle' : 'kasse') : r < .45 ? 'kegle' : r < .72 ? 'kasse' : 'rail'; put(skateThing(kind), lane * SKATE.lane, SKATE.from); used.add(lane); }
+function skateRow(from = SKATE.from) { const easy = ['niveau-meget-let', 'niveau-let'].includes(game.level), r = Math.random(), used = new Set();
+  const put = (it, x, u) => { Object.assign(it, { x, u, hit: false, done: false, mine: false, dir: 0, vy: 0, pair: null, over: false }); it.group.position.set(x, 0, -u); it.group.rotation.set(0, 0, 0); it.group.visible = true;
+    if (it.lid) { it.lid.position.set(0, .4, 0); it.lid.rotation.set(0, 0, 0); it.lid.visible = true; } if (it.body) it.body.rotation.set(0, 0, 0); if (it.body) it.body.position.y = it.kind === 'bold' ? .26 : 0; sk.live.push(it); };
+  // (what comes: a pick weighted for the level - the easiest only the soft things and the fun ones)
+  const pick = list => { let s = Math.random() * list.reduce((a, [, w]) => a + w, 0); for (const [k, w] of list) if ((s -= w) < 0) return k; return list[0][0]; };
+  const kind = pick(easy ? [['kegle', 3], ['kasse', 2], ['pyt', 2], ['rampe', 2], ['and', 1.5], ['gave', .8], ['bold', 1]]
+    : [['kegle', 2.5], ['kasse', 2], ['rail', 1.5], ['bom', 2], ['pyt', 1.5], ['rampe', 2], ['and', 1.5], ['gave', .7], ['bold', 1.5]]);
+  if (kind === 'bom') { const left = Math.random() < .5; put(skateThing('bom'), (left ? -.5 : .5) * SKATE.lane, from); used.add(left ? -1 : 1); used.add(0); }
+  // (the duck and the ball cross the road from one side to the other, timed to be in the middle about as they come by)
+  else if (kind === 'and' || kind === 'bold') { const it = skateThing(kind), dir = Math.random() < .5 ? -1 : 1; put(it, -dir * 1.5 * SKATE.lane, from + 2); it.dir = dir; it.cross = 1.5 * SKATE.lane / ((from + 2) / skateLevel().speed) * (kind === 'and' ? .9 : 1.1); used.add(-1).add(0).add(1); }
+  else { const lane = Math.floor(Math.random() * 3) - 1, it = skateThing(kind); put(it, lane * SKATE.lane, from); used.add(lane);
+    // (mostly a crate or a cone just past a ramp, in its lane: up the ramp, and over it - the user said 08-11-2026; as
+    // far past it as the jump goes at this level's speed, so the figure is in the air as it goes under)
+    if (kind === 'rampe' && Math.random() < .75) { const ob = skateThing(Math.random() < .55 ? 'kasse' : 'kegle'); put(ob, lane * SKATE.lane, from + Math.max(.95, .45 * skateLevel().speed - .4)); it.pair = ob; } }
   // (the stars never in the lane the figure rides in now - one has to steer to them, not just stand)
   if (Math.random() < (easy ? .9 : .7)) { const free = [-1, 0, 1].filter(l => !used.has(l) && l !== sk.lane); if (free.length) { const lane = free[Math.floor(Math.random() * free.length)], n = 1 + Math.floor(Math.random() * 3);
-    for (let k = 0; k < n; k++) put(skateThing('stjerne'), lane * SKATE.lane, SKATE.from + (k - (n - 1) / 2) * 1.1); } } }
-function skateStart() { skateBuild(); Object.assign(sk, { lane: 0, x: 0, lean: 0, slow: 0, wobble: 0, next: 1.2 }); for (const it of sk.live) it.group.visible = false; sk.live = [];
+    for (let k = 0; k < n; k++) put(skateThing('stjerne'), lane * SKATE.lane, from + (k - (n - 1) / 2) * 1.1); } } }
+function skateStart() { skateBuild(); Object.assign(sk, { lane: 0, x: 0, lean: 0, slow: 0, wobble: 0, next: .3, first: true, curve: 0, curveTo: 0, curveT: 3, jy: 0, jv: 0, spin: 0 }); for (const it of sk.live) it.group.visible = false; sk.live = [];
   holder.add(sk.rig); sk.rig.position.set(0, 0, 0); sk.rig.rotation.set(0, 0, 0); sk.rig.add(glb); scene.add(sk.road);
   // (riding: the standing with the page's own pose, arms out - Mixamo's riding stood with a foot each side of our board,
   // the user said, 03-11-2026; it was made for a board pointing the way the figure faces. Its push off, Skateboarding
@@ -3763,7 +4123,7 @@ function skateStart() { skateBuild(); Object.assign(sk, { lane: 0, x: 0, lean: 0
   // and turns across the board when it rides off - at the start, and after hitting a thing)
   sk.push = false; sk.poseW = 1; Promise.all(['staa', SKATE.push].map(loadMove)).then(() => { if (game.on) { runAnim('staa'); startPush(); } }); }
 function startPush() { const a = glbActions[SKATE.push]; if (!a || !game.on || game.mode !== 'skate') return; sk.push = true; sk.needPush = false; runAnim(SKATE.push, true); }
-function skateStop() { if (!sk.rig?.parent) return; holder.add(glb); holder.remove(sk.rig); scene.remove(sk.road); for (const it of sk.live) it.group.visible = false; sk.live = []; }
+function skateStop() { if (!sk.rig?.parent) return; holder.add(glb); holder.remove(sk.rig); scene.remove(sk.road); for (const it of sk.live) it.group.visible = false; sk.live = []; for (const b of sk.bits) b.mesh.visible = false; }
 function steer(dir) { if (!game.on || game.mode !== 'skate') return; const lane = Math.max(-1, Math.min(1, sk.lane + dir)); if (lane === sk.lane) return; sk.lane = lane; game.hint = 0; sfx('swish'); }
 // (the skater's pose, laid over the standing still each frame - turned about the figure's own axes as it stands now:
 // fwd the way its chest faces, right its right, up)
@@ -3794,18 +4154,47 @@ function skateTick(dt) { const L = skateLevel(); sk.slow = Math.max(0, sk.slow -
   // (the lane: glided over, leaning into the turn; a wobble after hitting a thing)
   const dx = sk.lane * SKATE.lane - sk.x; sk.x += dx * Math.min(1, dt * 9); sk.lean += (-dx * .45 - sk.lean) * Math.min(1, dt * 10);
   sk.rig.position.x = sk.x; sk.rig.rotation.z = sk.lean + (sk.wobble > 0 ? Math.sin(sk.wobble * 30) * .14 * sk.wobble : 0);
+  // (off a ramp: up in the air, round once, and down on the board again)
+  if (sk.jy > 0 || sk.jv > 0) { sk.jv -= sk.jg * dt; sk.jy = Math.max(0, sk.jy + sk.jv * dt); sk.spin = Math.min(Math.PI * 2, sk.spin + dt * Math.PI * 2 / sk.jt); if (!sk.jy) { sk.jv = 0; sk.spin = 0; } }
+  sk.rig.position.y = sk.jy; sk.rig.rotation.y = sk.spin;
+  // (the bend: a new way every few seconds, eased into)
+  if ((sk.curveT -= dt) <= 0) { sk.curveTo = Math.random() < .25 ? 0 : (Math.random() < .5 ? -1 : 1) * (.5 + Math.random() * .5); sk.curveT = 4 + Math.random() * 4; }
+  sk.curve += (sk.curveTo - sk.curve) * Math.min(1, dt * .35);
+  { const P = sk.road.geometry.attributes.position; for (let i = 0; i < P.count; i++) P.setX(i, sk.roadX[i] + skBend(26 + P.getY(i))); P.needsUpdate = true; }
+  for (const b of sk.bits) if (b.mesh.visible) { b.v.y -= 9.8 * dt; b.mesh.position.addScaledVector(b.v, dt); if ((b.life -= dt) <= 0 || b.mesh.position.y < 0) b.mesh.visible = false; }
   sk.roadTex.offset.y = (sk.roadTex.offset.y + v * dt / 3) % 1; skatePose();
-  if ((sk.next -= dt) <= 0) { skateRow(); sk.next = L.gap * (.85 + Math.random() * .4) - Math.min(.3, game.stars * .008); }
-  for (const it of [...sk.live]) { it.u -= v * dt; const g = it.group, star = it.kind === 'stjerne';
-    if (star) { g.rotation.y += dt * 3; g.position.y = .06 * Math.sin(performance.now() / 300 + it.x * 3); }
-    if (it.hit && !star) { g.rotation.x -= dt * 6; g.position.y = Math.max(0, g.position.y + (it.vy -= 9.8 * dt) * dt); }
-    g.position.z = -it.u;
-    const near = Math.abs(sk.x - it.x) < it.half + .18 && Math.abs(it.u) < it.len / 2 + .22;
+  // (the first row near: down the far end of the road it took 7 seconds on the easiest level before anything happened, the
+  // user 05-11-2026)
+  if ((sk.next -= dt) <= 0) { skateRow(sk.first ? Math.min(SKATE.from, L.speed * 3) : SKATE.from); sk.first = false; sk.next = L.gap * (.85 + Math.random() * .4) - Math.min(.3, game.stars * .008); }
+  const now = performance.now() / 1000;
+  for (const it of [...sk.live]) { it.u -= v * dt; const g = it.group, k = it.kind, star = k === 'stjerne', good = SK_GOOD.has(k);
+    if (star) { g.rotation.y += dt * 3; g.position.y = .06 * Math.sin(now * 3.3 + it.x * 3); }
+    // (the duck waddles, the ball bounces - both across the road, and on out of it)
+    if (it.dir && !it.hit) { it.x += it.dir * it.cross * dt; if (k === 'and') { it.body.rotation.z = .12 * Math.sin(now * 14); it.body.position.y = .025 * Math.abs(Math.sin(now * 14)); }
+      else { it.body.position.y = .26 + .45 * Math.abs(Math.sin(now * 4.5 + it.x)); it.body.rotation.z -= it.dir * it.cross / .26 * dt; } }
+    if (it.hit && !good) { if (k === 'and') { g.position.y += 2.2 * dt; it.body.rotation.z = .4 * Math.sin(now * 40); g.rotation.z = 0; } else { g.rotation.x -= dt * 6; g.position.y = Math.max(0, g.position.y + (it.vy -= 9.8 * dt) * dt); } }
+    if (k === 'gave' && it.hit) { it.lid.position.y += (it.vy -= 9.8 * dt) * dt; it.lid.rotation.x += dt * 7; if (it.lid.position.y < -1) it.lid.visible = false; }
+    // (on the bend: across with the road, and turned along it)
+    g.position.x = it.x + skBend(it.u); g.position.z = -it.u; g.rotation.y = star ? now * 3 : -Math.atan(skSlope(it.u)) + (k === 'and' && it.dir < 0 ? Math.PI : 0);
+    const near = Math.abs(sk.x - it.x) < it.half + .18 && Math.abs(it.u) < it.len / 2 + .22, up = sk.jy > 0;
     // (a thing gives a star only when it was coming straight at the figure and it moved out of the way - standing still
     // in one lane while things went by in the others gave stars for nothing, the user said 03-11-2026)
-    if (!star && it.u < 7 && it.u > it.len / 2 && Math.abs(sk.lane * SKATE.lane - it.x) < it.half + .18) it.mine = true;
-    if (!it.done && near) { it.done = true; if (star) { g.visible = false; addStars(1); sfx('ding'); } else { it.hit = true; it.vy = 2.5; sk.slow = 1; sk.wobble = 1; sk.needPush = true; sfx('bonk'); } }
-    if (!it.done && !star && it.u < -(it.len / 2 + .3)) { it.done = true; if (it.mine) addStars(1); }
+    if (!good && !it.dir && it.u < 7 && it.u > it.len / 2 && Math.abs(sk.lane * SKATE.lane - it.x) < it.half + .18) it.mine = true;
+    if (!it.done && near && !(up && k !== 'stjerne') && !it.over) { it.done = true;
+      if (star) { g.visible = false; addStars(1); sfx('ding'); }
+      else if (k === 'pyt') { skateBits('vand', sk.x, .05, 0, 22); addStars(1); sfx('plask'); }
+      // (the thing past it jumped over - never bumped, even if the figure was slow off the ramp)
+      // (a metre up, and long enough to come down well past everything in its lane near the landing - a fence a bit
+      // further on was jumped into, the user said 09-11-2026: the jump was timed only to the thing put past the ramp)
+      else if (k === 'rampe') { const vv = Math.max(v, .5); let land = it.pair ? 2 * it.pair.u : .84 * vv;
+        for (let more = true; more;) { more = false; for (const o of sk.live) if (!SK_GOOD.has(o.kind) && !o.dir && !o.over && !o.hit && o.u > 0 && Math.abs(sk.lane * SKATE.lane - o.x) < o.half + .18 && o.u - o.len / 2 < land + Math.max(2, 1.5 * vv)) { const far = o.u + o.len / 2; o.over = true; land = Math.max(land, far / .7, far + .9); more = true; } }
+        // (each thing under the high middle of the jump - its far end by 70 % of it, where the board is still well over a
+        // crate; and anything within one and a half seconds' ride past the landing jumped too: too near to steer from after coming down)
+        const T = Math.min(1.6, Math.max(.3, land / 2 / vv)); sk.jv = 2.1 / T; sk.jg = 2.1 / (T * T); sk.jt = 2 * T; sk.jy = .001; addStars(2); sfx('boing'); }
+      else if (k === 'gave') { it.hit = true; it.vy = 4; it.lid.visible = true; skateBits('guld', g.position.x, .5, g.position.z, 26); addStars(3); for (const t of [0, .12, .24]) sfx('ding', t); }
+      else if (k === 'and') { it.hit = true; sk.wobble = .5; sfx('rap'); sfx('rap', .18); }
+      else { it.hit = true; it.vy = 2.5; sk.slow = 1; sk.wobble = 1; sk.needPush = true; sfx('bonk'); } }
+    if (!it.done && !good && it.u < -(it.len / 2 + .3)) { it.done = true; if (it.mine) addStars(1); }
     // (put away just past the figure - a star left in another lane came on up to the camera, big as the picture)
     if (it.u < -(it.len / 2 + 1) || !g.visible) { g.visible = false; sk.live.splice(sk.live.indexOf(it), 1); } } }
 // (stars to the corner; every fifth the confetti - the skater rides on)
@@ -4472,6 +4861,41 @@ function setSound(k, on) { if (k) sound[k] = on; else for (const x of Object.key
 document.getElementById('soundBtn').onclick = () => askGrownUp(() => { showSound(); document.getElementById('soundSheet').hidden = false; });
 for (const b of document.querySelectorAll('[data-sound]')) b.onclick = () => setSound(b.dataset.sound, !sound[b.dataset.sound]);
 for (const b of document.querySelectorAll('[data-sound-all]')) b.onclick = () => setSound(null, b.dataset.soundAll === '1');
+// ---- the time limit (the user, 08-11-2026): a grown-up sets how long a day MiniMig may be played - ⏱️ Tid, held down 3
+// seconds and then the sum, both so a small child does not get in by chance. The time counts while the page is on the
+// screen; two minutes before the end a note says so, and at the end the pause screen comes over everything (a game
+// stopped, the sounds quiet) until the next day - or till a grown-up, past the same hold and sum, gives more time.
+// Kept on this device in minimig3d.tid: { limit (minutes, 0 none), day, used (seconds), extra (minutes) }
+const TIME_KEY = 'minimig3d.tid', TIME_CHOICES = [0, 15, 30, 45, 60], dayNow = () => new Date().toLocaleDateString('sv');
+const tl = Object.assign({ limit: 0, day: '', used: 0, extra: 0 }, (() => { try { return JSON.parse(localStorage.getItem(TIME_KEY)) || {}; } catch (e) { return {}; } })());
+const pauseScreen = document.getElementById('pauseScreen'), timeNote = document.getElementById('timeNote');
+function tlSave() { try { localStorage.setItem(TIME_KEY, JSON.stringify(tl)); } catch (e) {} }
+function tlDay() { if (tl.day !== dayNow()) { tl.day = dayNow(); tl.used = 0; tl.extra = 0; tlSave(); } }
+const tlLeft = () => tl.limit ? (tl.limit + tl.extra) * 60 - tl.used : Infinity;
+function tlNote(text, ms = 5000) { timeNote.textContent = text; timeNote.hidden = false; clearTimeout(tlNote.t); tlNote.t = setTimeout(() => { timeNote.hidden = true; }, ms); }
+function tlCheck() { tlDay(); const over = tlLeft() <= 0; pauseScreen.hidden = !over;
+  if (over) { if (game.on) stopGame(); try { game.audio?.suspend(); speechSynthesis.cancel(); } catch (e) {} } }
+function showTime() { tlDay(); const box = document.getElementById('timeOpts'); box.innerHTML = '';
+  for (const m of TIME_CHOICES) { const b = document.createElement('button'); b.className = 'sound-opt'; b.setAttribute('aria-pressed', String(tl.limit === m));
+    b.innerHTML = `<span>${m ? T(`⏱️ ${m} minutter om dagen`, `⏱️ ${m} minutes a day`) : '♾️ ' + tr('Ingen grænse')}</span><b></b>`; b.onclick = () => { tl.limit = m; tlSave(); showTime(); tlCheck(); }; box.append(b); }
+  const used = Math.floor(tl.used / 60), left = tlLeft();
+  document.getElementById('timeUsed').textContent = T(`Brugt i dag: ${used} min.`, `Used today: ${used} min.`) + (left < Infinity ? T(` Tilbage: ${Math.max(0, Math.ceil(left / 60))} min.`, ` Left: ${Math.max(0, Math.ceil(left / 60))} min.`) : '');
+  document.getElementById('timeMore').hidden = document.getElementById('timeReset').hidden = !tl.limit; }
+document.getElementById('timeMore').onclick = () => { tl.extra += 10; tlSave(); showTime(); tlCheck(); };
+document.getElementById('timeReset').onclick = () => { tl.used = 0; tl.extra = 0; tlSave(); showTime(); tlCheck(); };
+// (held down: a ring fills round the button in 3 seconds; let go before, and a note says to hold it)
+function holdToOpen(btn, then, ms = 3000) { let t0 = 0, raf = 0, ring = null;
+  const end = () => { clearInterval(raf); ring?.remove(); ring = null; if (t0 && performance.now() - t0 < ms) tlNote(tr('⏱️ Hold knappen inde i 3 sekunder'), 3000); t0 = 0; };
+  const step = () => { const p = (performance.now() - t0) / ms; ring?.style.setProperty('--p', Math.min(1, p).toFixed(3)); if (p >= 1) { clearInterval(raf); t0 = 0; ring?.remove(); ring = null; then(); } };
+  btn.addEventListener('pointerdown', e => { e.preventDefault(); if (t0) return; t0 = performance.now(); ring = document.createElement('span'); ring.className = 'hold-ring'; btn.append(ring); raf = setInterval(step, 30); });
+  for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) btn.addEventListener(ev, end);
+  btn.addEventListener('contextmenu', e => e.preventDefault()); btn.addEventListener('click', e => e.preventDefault()); }
+holdToOpen(document.getElementById('timeBtn'), () => askGrownUp(() => { showTime(); document.getElementById('timeSheet').hidden = false; }));
+holdToOpen(document.getElementById('pauseAdult'), () => askGrownUp(() => { showTime(); document.getElementById('timeSheet').hidden = false; }));
+setInterval(() => { tlDay(); if (!pauseScreen.hidden) { tlCheck(); return; } if (!tl.limit || document.visibilityState !== 'visible') return;
+  tl.used++; if (tl.used % 5 === 0) tlSave(); const left = tlLeft();
+  if (left === 120) tlNote(T('⏱️ 2 minutter tilbage', '⏱️ 2 minutes left')); if (left <= 0) { tlSave(); tlCheck(); } }, 1000);
+addEventListener('pagehide', tlSave); tlCheck();
 // (no sound from a page one cannot see - another tab or the app in the background)
 document.addEventListener('visibilitychange', () => { try { if (document.hidden) game.audio?.suspend(); else if (musicPlaying()) game.audio?.resume(); } catch (e) {} });
 function musicPlaying() { return musicOn && ((isDance(anim) && sound.dance) || (game.on && sound.game) || (md.on && sound.dance)); }
@@ -4514,7 +4938,7 @@ function keys(ctx, t, f, len, vol) { const lp = ctx.createBiquadFilter(), g = ct
 // (the game's sounds: a boing up as it jumps, a wobbly boing down as it stumbles over a ball - always, music or not)
 function sfx(kind, later = 0) { const ctx = game.audio; if (!sound.sfx || !ctx || ctx.state !== 'running') return; const t = ctx.currentTime + later, o = ctx.createOscillator(), g = ctx.createGain(), lfo = ctx.createOscillator(), wob = ctx.createGain();
   // (from, to, how long, wobble speed, wobble size, loudness - a ding for a star caught, a swish for a lane changed)
-  const [from, to, len, wf, wa, vol] = { boing: [180, 620, .28, 22, 25, .28], bonk: [520, 110, .5, 14, 60, .28], ding: [990, 1480, .22, 6, 8, .18], swish: [420, 250, .13, 30, 20, .12] }[kind] || [400, 400, .1, 1, 0, .1];
+  const [from, to, len, wf, wa, vol] = { boing: [180, 620, .28, 22, 25, .28], bonk: [520, 110, .5, 14, 60, .28], ding: [990, 1480, .22, 6, 8, .18], swish: [420, 250, .13, 30, 20, .12], plask: [700, 140, .35, 45, 160, .2], rap: [640, 420, .13, 55, 140, .22] }[kind] || [400, 400, .1, 1, 0, .1];
   o.type = 'sine'; lfo.frequency.value = wf; wob.gain.value = wa; lfo.connect(wob).connect(o.frequency);
   o.frequency.setValueAtTime(from, t); o.frequency.exponentialRampToValueAtTime(to, t + len);
   g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0008, t + len); o.connect(g).connect(ctx.destination); for (const x of [o, lfo]) { x.start(t); x.stop(t + len + .02); } }
@@ -4522,9 +4946,17 @@ musicBtn.onclick = () => { musicOn = !musicOn; try { localStorage.setItem('minim
 // (once the figure is in, the hint goes into the i in the corner - on a touch screen and on a computer alike)
 const infoBtn = document.getElementById('infoBtn'), infoPop = document.getElementById('infoPop'); let infoTimer = 0;
 // (the globe: the page loaded anew in the other language, with the figure on the screen - not in a game)
-{ const b = document.getElementById('langBtn'), [ic, nm] = b.children; nm.textContent = T('English', 'Dansk');
+{ const b = document.getElementById('langBtn'), [ic, nm] = b.children; nm.textContent = T('Skift sprog', 'Language'); // (not the other language's name: more may come - the user 09-11-2026)
   ic.innerHTML = '<svg viewBox="0 0 32 32" width="30" height="30" style="vertical-align:middle"><circle cx="16" cy="16" r="14" fill="#7CC4F5" stroke="#3B82C4" stroke-width="2"/><path d="M16 2c-5 4-7.500 9-7.500 14S11 26 16 30c5-4 7.500-9 7.500-14S21 6 16 2zM2 16h28M4.500 9h23M4.500 23h23" fill="none" stroke="#3B82C4" stroke-width="1.800"/></svg>';
-  b.onclick = () => { if (game.on) { toast('Stop spillet først'); return; } try { localStorage.setItem('minimig3d.sprog', T('en', 'da')); } catch (e) {} keepLast(); location.reload(); }; }
+  // (behind the grown-up's sum, as the other lilac buttons - the language is for grown-ups, the user 09-11-2026)
+  b.onclick = () => { if (game.on) { toast('Stop spillet først'); return; } askGrownUp(() => { try { localStorage.setItem('minimig3d.sprog', T('en', 'da')); } catch (e) {} keepLast(); location.reload(); }); }; }
+// (two quick taps zoomed the page on an iPad, whatever the page's style says - the second tap is dropped, the user
+// 05-11-2026; on buttons too, as they still zoomed there (the user 08-11-2026) - but the button is pressed by hand
+// instead, so quick taps on coins all count)
+{ let last = -1e9; document.addEventListener('touchend', e => { const t = e.target.closest ? e.target : e.target.parentElement;
+  if (e.timeStamp - last < 350 && t && !t.closest('input, select, textarea, canvas')) { e.preventDefault(); const b = t.closest('button, a, label'); if (b && !b.disabled) b.click(); }
+  last = e.timeStamp; }, { passive: false });
+  document.addEventListener('dblclick', e => e.preventDefault(), { passive: false }); }
 // (on the test page only: a button with kroner, to try the shop without playing for them - the user, 04-11-2026)
 if (location.pathname.includes('/test/')) { const b = document.createElement('button'); b.textContent = '+100 kr'; b.style.cssText = 'position:fixed;top:28px;left:50%;transform:translateX(-50%);z-index:999;background:#FFC233;color:#5A3A00;border:0;border-radius:10px;padding:5px 12px;font:700 13px system-ui,sans-serif;cursor:pointer'; b.onclick = () => { krOf(score); score.kr += 100; saveScore(); showRecord(); toast(`💰 ${score.kr} kr`); if (!document.getElementById('starSheet').hidden) showStarSheet(); }; document.body.append(b); }
 // (one more line while the child isn't saved with a name yet - the user, 04-11-2026: how to keep one's own player)
