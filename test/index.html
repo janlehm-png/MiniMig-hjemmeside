@@ -263,6 +263,24 @@
   .lock-badge[hidden] { display: none; }
   /* the grown-ups' sum always on top - it is also asked from inside other sheets (the stars' players button) */
   #gate { z-index: 60; }
+  /* the time limit (the user, 08-11-2026): a button held 3 seconds - a ring fills round it - then the sum; the pause
+     screen over everything but the sum */
+  .hold-btn { position: relative; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; touch-action: manipulation; }
+  .hold-ring { position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: .5;
+    background: conic-gradient(#2FB872 calc(var(--p, 0) * 1turn), transparent 0); }
+  #pauseScreen { position: fixed; inset: 0; z-index: 55; display: grid; place-items: center; text-align: center; color: #fff;
+    background: radial-gradient(circle at 50% 35%, #5B4A9E, #241B47 75%); padding: 24px max(16px, env(safe-area-inset-right, 0px)) 24px max(16px, env(safe-area-inset-left, 0px)); }
+  #pauseScreen[hidden] { display: none; }
+  #timeSheet { z-index: 57; }
+  #pauseScreen .zz { font-size: 5.5rem; line-height: 1; animation: zz 3s ease-in-out infinite; }
+  @keyframes zz { 50% { transform: translateY(-10px) rotate(-4deg); } }
+  #pauseScreen h2 { font-size: 1.9rem; margin: .5em 0 .2em; text-wrap: balance; }
+  #pauseScreen p { font-size: 1.2rem; margin: 0; opacity: .85; }
+  #pauseAdult { position: absolute; right: max(18px, env(safe-area-inset-right, 0px)); bottom: max(18px, env(safe-area-inset-bottom, 0px)); overflow: hidden;
+    border: 2px solid rgba(255, 255, 255, .35); background: rgba(255, 255, 255, .1); color: #fff; border-radius: 14px; padding: 10px 16px; font: inherit; font-size: .95rem; }
+  .time-note { position: fixed; top: max(14px, env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); z-index: 58; max-width: calc(100% - 32px);
+    background: #fff; color: var(--ink); border-radius: 999px; padding: 10px 18px; font-weight: 700; box-shadow: 0 4px 18px rgba(58, 46, 92, .25); text-align: center; }
+  .time-note[hidden] { display: none; }
   .sheet { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; background: rgba(20, 14, 40, .55);
     padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
   .sheet[hidden] { display: none; }
@@ -345,6 +363,7 @@
     <button id="newBtn"><span class="emo" aria-hidden="true">✨</span><span>Ny figur</span></button>
     <button id="saveBtn"><span class="emo" aria-hidden="true">📷</span><span>Send foto</span><span class="lock-badge" id="lockBadge" hidden aria-hidden="true">🔓</span></button>
     <button id="soundBtn"><span class="emo" aria-hidden="true">🔊</span><span>Lyd</span></button>
+    <button id="timeBtn" class="hold-btn"><span class="emo" aria-hidden="true">⏱️</span><span>Tid</span></button>
     <!-- (the coins are on the button too - the user, 04-11-2026) -->
     <button id="starBtn"><span class="emo emo-coins" aria-hidden="true">🏆<i class="mini-coin">5</i><i class="mini-coin gold">20</i></span><span>Stjerner og mønter</span></button>
     <!-- (the language: a globe and the other language's name - no flag, English being spoken under many - the user, 04-11-2026) -->
@@ -486,6 +505,22 @@
     <button class="share-off players-btn" id="addPlayer">➕ Ny spiller</button>
   </div>
 </div>
+<!-- the time, for grown-ups (held 3 seconds, then the sum): how long a day MiniMig may be played - the user, 08-11-2026 -->
+<div class="sheet" id="timeSheet" hidden>
+  <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="timeTitle">
+    <div class="sheet-head"><h2 id="timeTitle">Tid</h2><button class="sheet-x" data-close aria-label="Luk">✕</button></div>
+    <p class="note">For voksne: hvor længe må der spilles om dagen? Når tiden er brugt, holder MiniMig pause til i morgen. Valget huskes på denne enhed.</p>
+    <div class="sound-opts" id="timeOpts"></div>
+    <p class="note" id="timeUsed"></p>
+    <div class="sound-all"><button class="share-off" id="timeMore">➕ 10 minutter mere i dag</button><button class="share-off" id="timeReset">🔄 Start dagen forfra</button></div>
+  </div>
+</div>
+<!-- the pause, when the day's time is used: over everything; only a grown-up gets past it (held 3 seconds, then the sum) -->
+<div id="pauseScreen" hidden>
+  <div><div class="zz" aria-hidden="true">😴🌙</div><h2>Nu skal MiniMig hvile sig</h2><p>Vi ses i morgen!</p></div>
+  <button id="pauseAdult" class="hold-btn">🔒 Voksen</button>
+</div>
+<div class="time-note" id="timeNote" role="status" hidden></div>
 <!-- the sound, for grown-ups (behind the sum): which of MiniMig's sounds may play - the user, 03-11-2026 -->
 <div class="sheet" id="soundSheet" hidden>
   <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="soundTitle">
@@ -600,6 +635,9 @@ const EN = {
   'Spørg en voksen': 'Ask a grown-up', 'Stjernerne fra spillene bliver til kroner på din konto – jo sværere niveau, jo flere. For kronerne køber du ting i butikken.': 'The stars from the games become coins in your account – the harder the level, the more. With the coins you buy things in the shop.', '🏆 = din rekord i det spil på det niveau.': '🏆 = your record in that game at that level.', '🔒 Stjernebutik': '🔒 Star shop', 'Tryk på en ting med 🔒, og betal med mønter. Hvert barn køber for sig selv.': 'Tap a thing with 🔒 and pay with coins. Each child buys for themselves.', '🧾 Det har du købt': '🧾 What you have bought',
   'Køb': 'Buy', '🤝 Hjælp': '🤝 Help', 'Betal ✓': 'Pay ✓', 'Børn og spillere': 'Children and players', 'Hvert barn har sin egen MiniMig og sine egne stjerner. Byg barnets figur, og tryk 📷 – så gemmes figuren på skærmen som barnets MiniMig. Under Mine figurer trykker barnet bare på sit billede. Gemmes kun på denne enhed.': 'Each child has their own MiniMig and their own stars. Build the child’s figure and tap 📷 – the figure on the screen is then saved as the child’s MiniMig. Under My figures the child just taps their picture. Kept on this device only.', '➕ Ny spiller': '➕ New player',
   'For voksne: vælg hvilke lyde MiniMig må lave. Valget huskes på denne enhed.': 'For grown-ups: choose which sounds MiniMig may make. The choice is remembered on this device.', '🎮 Musik i spillene': '🎮 Music in the games', '💃 Musik til dansene': '💃 Music for the dances', '🔔 Lydeffekter – boing, bonk og ta-da': '🔔 Sound effects – boing, bonk and ta-da', '🗣️ Stemmen, der siger navnet': '🗣️ The voice saying the name', 'Slå al lyd fra': 'All sound off', 'Slå al lyd til': 'All sound on',
+  'Tid': 'Time', 'For voksne: hvor længe må der spilles om dagen? Når tiden er brugt, holder MiniMig pause til i morgen. Valget huskes på denne enhed.': 'For grown-ups: how long may MiniMig be played each day? When the time is used up, MiniMig takes a break until tomorrow. The choice is remembered on this device.',
+  '➕ 10 minutter mere i dag': '➕ 10 more minutes today', '🔄 Start dagen forfra': '🔄 Start the day over', 'Nu skal MiniMig hvile sig': 'Time for MiniMig to rest', 'Vi ses i morgen!': 'See you tomorrow!', '🔒 Voksen': '🔒 Grown-up',
+  'Ingen grænse': 'No limit', '⏱️ Hold knappen inde i 3 sekunder': '⏱️ Hold the button down for 3 seconds',
   'Gem i Mine figurer': 'Save in My figures', 'Ny MiniMig': 'New MiniMig', 'Dreng': 'Boy', 'Pige': 'Girl', 'Den figur, du har nu, bliver gemt i Mine figurer 🖼️.': 'The figure you have now is saved in My figures 🖼️.', 'Børn': 'Children', '🖼️ Gemte figurer': '🖼️ Saved figures', 'Børn og spillere – for voksne': 'Children and players – for grown-ups',
   'Dit billede': 'Your picture', 'Tryk og hold på billedet, og vælg': 'Press and hold the picture, and choose', 'Gem i Fotos': 'Save to Photos', 'eller': 'or', 'Del': 'Share', '💾 Gem billedet': '💾 Save the picture', 'Billedet gemmes i mappen Overførsler. Du kan også højreklikke på billedet og vælge': 'The picture is saved in your Downloads folder. You can also right-click the picture and choose', 'Gem billede som': 'Save image as',
   'Sådan gør du': 'How it works', 'Musik til og fra': 'Music on and off', 'Skriv dit navn': 'Write your name', 'Navn på trøjen': 'Name on the top', 'Sig navnet': 'Say the name', 'Slet din egen stemme': 'Delete your own voice', 'Gem dansen': 'Save the dance', 'Start forfra': 'Start again', 'Navn på dansen': 'Name of the dance', 'Luk': 'Close', 'Slet': 'Delete', 'Mønterne på disken': 'The coins on the counter', 'Billedet af figuren': 'The picture of the figure', 'Min MiniMig': 'My MiniMig' };
@@ -4038,7 +4076,7 @@ const SK_GOOD = new Set(['stjerne', 'pyt', 'rampe', 'gave']);
 // (a row of things far down the road: one thing - or a bar over two lanes - and, mostly, stars in a free lane; the
 // easiest levels only cones and crates)
 function skateRow(from = SKATE.from) { const easy = ['niveau-meget-let', 'niveau-let'].includes(game.level), r = Math.random(), used = new Set();
-  const put = (it, x, u) => { Object.assign(it, { x, u, hit: false, done: false, mine: false, dir: 0, vy: 0 }); it.group.position.set(x, 0, -u); it.group.rotation.set(0, 0, 0); it.group.visible = true;
+  const put = (it, x, u) => { Object.assign(it, { x, u, hit: false, done: false, mine: false, dir: 0, vy: 0, pair: null, over: false }); it.group.position.set(x, 0, -u); it.group.rotation.set(0, 0, 0); it.group.visible = true;
     if (it.lid) { it.lid.position.set(0, .4, 0); it.lid.rotation.set(0, 0, 0); it.lid.visible = true; } if (it.body) it.body.rotation.set(0, 0, 0); if (it.body) it.body.position.y = it.kind === 'bold' ? .26 : 0; sk.live.push(it); };
   // (what comes: a pick weighted for the level - the easiest only the soft things and the fun ones)
   const pick = list => { let s = Math.random() * list.reduce((a, [, w]) => a + w, 0); for (const [k, w] of list) if ((s -= w) < 0) return k; return list[0][0]; };
@@ -4047,7 +4085,10 @@ function skateRow(from = SKATE.from) { const easy = ['niveau-meget-let', 'niveau
   if (kind === 'bom') { const left = Math.random() < .5; put(skateThing('bom'), (left ? -.5 : .5) * SKATE.lane, from); used.add(left ? -1 : 1); used.add(0); }
   // (the duck and the ball cross the road from one side to the other, timed to be in the middle about as they come by)
   else if (kind === 'and' || kind === 'bold') { const it = skateThing(kind), dir = Math.random() < .5 ? -1 : 1; put(it, -dir * 1.5 * SKATE.lane, from + 2); it.dir = dir; it.cross = 1.5 * SKATE.lane / ((from + 2) / skateLevel().speed) * (kind === 'and' ? .9 : 1.1); used.add(-1).add(0).add(1); }
-  else { const lane = Math.floor(Math.random() * 3) - 1; put(skateThing(kind), lane * SKATE.lane, from); used.add(lane); }
+  else { const lane = Math.floor(Math.random() * 3) - 1, it = skateThing(kind); put(it, lane * SKATE.lane, from); used.add(lane);
+    // (mostly a crate or a cone just past a ramp, in its lane: up the ramp, and over it - the user said 08-11-2026; as
+    // far past it as the jump goes at this level's speed, so the figure is in the air as it goes under)
+    if (kind === 'rampe' && Math.random() < .75) { const ob = skateThing(Math.random() < .55 ? 'kasse' : 'kegle'); put(ob, lane * SKATE.lane, from + Math.max(.95, .45 * skateLevel().speed - .4)); it.pair = ob; } }
   // (the stars never in the lane the figure rides in now - one has to steer to them, not just stand)
   if (Math.random() < (easy ? .9 : .7)) { const free = [-1, 0, 1].filter(l => !used.has(l) && l !== sk.lane); if (free.length) { const lane = free[Math.floor(Math.random() * free.length)], n = 1 + Math.floor(Math.random() * 3);
     for (let k = 0; k < n; k++) put(skateThing('stjerne'), lane * SKATE.lane, from + (k - (n - 1) / 2) * 1.1); } } }
@@ -4091,7 +4132,7 @@ function skateTick(dt) { const L = skateLevel(); sk.slow = Math.max(0, sk.slow -
   const dx = sk.lane * SKATE.lane - sk.x; sk.x += dx * Math.min(1, dt * 9); sk.lean += (-dx * .45 - sk.lean) * Math.min(1, dt * 10);
   sk.rig.position.x = sk.x; sk.rig.rotation.z = sk.lean + (sk.wobble > 0 ? Math.sin(sk.wobble * 30) * .14 * sk.wobble : 0);
   // (off a ramp: up in the air, round once, and down on the board again)
-  if (sk.jy > 0 || sk.jv > 0) { sk.jv -= 12 * dt; sk.jy = Math.max(0, sk.jy + sk.jv * dt); sk.spin = Math.min(Math.PI * 2, sk.spin + dt * Math.PI * 2 / .78); if (!sk.jy) { sk.jv = 0; sk.spin = 0; } }
+  if (sk.jy > 0 || sk.jv > 0) { sk.jv -= sk.jg * dt; sk.jy = Math.max(0, sk.jy + sk.jv * dt); sk.spin = Math.min(Math.PI * 2, sk.spin + dt * Math.PI * 2 / sk.jt); if (!sk.jy) { sk.jv = 0; sk.spin = 0; } }
   sk.rig.position.y = sk.jy; sk.rig.rotation.y = sk.spin;
   // (the bend: a new way every few seconds, eased into)
   if ((sk.curveT -= dt) <= 0) { sk.curveTo = Math.random() < .25 ? 0 : (Math.random() < .5 ? -1 : 1) * (.5 + Math.random() * .5); sk.curveT = 4 + Math.random() * 4; }
@@ -4116,10 +4157,12 @@ function skateTick(dt) { const L = skateLevel(); sk.slow = Math.max(0, sk.slow -
     // (a thing gives a star only when it was coming straight at the figure and it moved out of the way - standing still
     // in one lane while things went by in the others gave stars for nothing, the user said 03-11-2026)
     if (!good && !it.dir && it.u < 7 && it.u > it.len / 2 && Math.abs(sk.lane * SKATE.lane - it.x) < it.half + .18) it.mine = true;
-    if (!it.done && near && !(up && k !== 'stjerne')) { it.done = true;
+    if (!it.done && near && !(up && k !== 'stjerne') && !it.over) { it.done = true;
       if (star) { g.visible = false; addStars(1); sfx('ding'); }
       else if (k === 'pyt') { skateBits('vand', sk.x, .05, 0, 22); addStars(1); sfx('plask'); }
-      else if (k === 'rampe') { sk.jv = 5; sk.jy = .001; addStars(2); sfx('boing'); }
+      // (the thing past it jumped over - never bumped, even if the figure was slow off the ramp)
+      // (the jump's top over that thing, whatever the speed: a metre up, the time to the top from how far off it is)
+      else if (k === 'rampe') { const T = it.pair ? Math.min(.75, Math.max(.3, it.pair.u / Math.max(v, .5))) : .42; sk.jv = 2.1 / T; sk.jg = 2.1 / (T * T); sk.jt = 2 * T; sk.jy = .001; addStars(2); sfx('boing'); if (it.pair) it.pair.over = true; }
       else if (k === 'gave') { it.hit = true; it.vy = 4; it.lid.visible = true; skateBits('guld', g.position.x, .5, g.position.z, 26); addStars(3); for (const t of [0, .12, .24]) sfx('ding', t); }
       else if (k === 'and') { it.hit = true; sk.wobble = .5; sfx('rap'); sfx('rap', .18); }
       else { it.hit = true; it.vy = 2.5; sk.slow = 1; sk.wobble = 1; sk.needPush = true; sfx('bonk'); } }
@@ -4790,6 +4833,41 @@ function setSound(k, on) { if (k) sound[k] = on; else for (const x of Object.key
 document.getElementById('soundBtn').onclick = () => askGrownUp(() => { showSound(); document.getElementById('soundSheet').hidden = false; });
 for (const b of document.querySelectorAll('[data-sound]')) b.onclick = () => setSound(b.dataset.sound, !sound[b.dataset.sound]);
 for (const b of document.querySelectorAll('[data-sound-all]')) b.onclick = () => setSound(null, b.dataset.soundAll === '1');
+// ---- the time limit (the user, 08-11-2026): a grown-up sets how long a day MiniMig may be played - ⏱️ Tid, held down 3
+// seconds and then the sum, both so a small child does not get in by chance. The time counts while the page is on the
+// screen; two minutes before the end a note says so, and at the end the pause screen comes over everything (a game
+// stopped, the sounds quiet) until the next day - or till a grown-up, past the same hold and sum, gives more time.
+// Kept on this device in minimig-test.tid: { limit (minutes, 0 none), day, used (seconds), extra (minutes) }
+const TIME_KEY = 'minimig-test.tid', TIME_CHOICES = [0, 15, 30, 45, 60], dayNow = () => new Date().toLocaleDateString('sv');
+const tl = Object.assign({ limit: 0, day: '', used: 0, extra: 0 }, (() => { try { return JSON.parse(localStorage.getItem(TIME_KEY)) || {}; } catch (e) { return {}; } })());
+const pauseScreen = document.getElementById('pauseScreen'), timeNote = document.getElementById('timeNote');
+function tlSave() { try { localStorage.setItem(TIME_KEY, JSON.stringify(tl)); } catch (e) {} }
+function tlDay() { if (tl.day !== dayNow()) { tl.day = dayNow(); tl.used = 0; tl.extra = 0; tlSave(); } }
+const tlLeft = () => tl.limit ? (tl.limit + tl.extra) * 60 - tl.used : Infinity;
+function tlNote(text, ms = 5000) { timeNote.textContent = text; timeNote.hidden = false; clearTimeout(tlNote.t); tlNote.t = setTimeout(() => { timeNote.hidden = true; }, ms); }
+function tlCheck() { tlDay(); const over = tlLeft() <= 0; pauseScreen.hidden = !over;
+  if (over) { if (game.on) stopGame(); try { game.audio?.suspend(); speechSynthesis.cancel(); } catch (e) {} } }
+function showTime() { tlDay(); const box = document.getElementById('timeOpts'); box.innerHTML = '';
+  for (const m of TIME_CHOICES) { const b = document.createElement('button'); b.className = 'sound-opt'; b.setAttribute('aria-pressed', String(tl.limit === m));
+    b.innerHTML = `<span>${m ? T(`⏱️ ${m} minutter om dagen`, `⏱️ ${m} minutes a day`) : '♾️ ' + tr('Ingen grænse')}</span><b></b>`; b.onclick = () => { tl.limit = m; tlSave(); showTime(); tlCheck(); }; box.append(b); }
+  const used = Math.floor(tl.used / 60), left = tlLeft();
+  document.getElementById('timeUsed').textContent = T(`Brugt i dag: ${used} min.`, `Used today: ${used} min.`) + (left < Infinity ? T(` Tilbage: ${Math.max(0, Math.ceil(left / 60))} min.`, ` Left: ${Math.max(0, Math.ceil(left / 60))} min.`) : '');
+  document.getElementById('timeMore').hidden = document.getElementById('timeReset').hidden = !tl.limit; }
+document.getElementById('timeMore').onclick = () => { tl.extra += 10; tlSave(); showTime(); tlCheck(); };
+document.getElementById('timeReset').onclick = () => { tl.used = 0; tl.extra = 0; tlSave(); showTime(); tlCheck(); };
+// (held down: a ring fills round the button in 3 seconds; let go before, and a note says to hold it)
+function holdToOpen(btn, then, ms = 3000) { let t0 = 0, raf = 0, ring = null;
+  const end = () => { clearInterval(raf); ring?.remove(); ring = null; if (t0 && performance.now() - t0 < ms) tlNote(tr('⏱️ Hold knappen inde i 3 sekunder'), 3000); t0 = 0; };
+  const step = () => { const p = (performance.now() - t0) / ms; ring?.style.setProperty('--p', Math.min(1, p).toFixed(3)); if (p >= 1) { clearInterval(raf); t0 = 0; ring?.remove(); ring = null; then(); } };
+  btn.addEventListener('pointerdown', e => { e.preventDefault(); if (t0) return; t0 = performance.now(); ring = document.createElement('span'); ring.className = 'hold-ring'; btn.append(ring); raf = setInterval(step, 30); });
+  for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) btn.addEventListener(ev, end);
+  btn.addEventListener('contextmenu', e => e.preventDefault()); btn.addEventListener('click', e => e.preventDefault()); }
+holdToOpen(document.getElementById('timeBtn'), () => askGrownUp(() => { showTime(); document.getElementById('timeSheet').hidden = false; }));
+holdToOpen(document.getElementById('pauseAdult'), () => askGrownUp(() => { showTime(); document.getElementById('timeSheet').hidden = false; }));
+setInterval(() => { tlDay(); if (!pauseScreen.hidden) { tlCheck(); return; } if (!tl.limit || document.visibilityState !== 'visible') return;
+  tl.used++; if (tl.used % 5 === 0) tlSave(); const left = tlLeft();
+  if (left === 120) tlNote(T('⏱️ 2 minutter tilbage', '⏱️ 2 minutes left')); if (left <= 0) { tlSave(); tlCheck(); } }, 1000);
+addEventListener('pagehide', tlSave); tlCheck();
 // (no sound from a page one cannot see - another tab or the app in the background)
 document.addEventListener('visibilitychange', () => { try { if (document.hidden) game.audio?.suspend(); else if (musicPlaying()) game.audio?.resume(); } catch (e) {} });
 function musicPlaying() { return musicOn && ((isDance(anim) && sound.dance) || (game.on && sound.game) || (md.on && sound.dance)); }
@@ -4894,6 +4972,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.9.1 (f3ac1e7)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.9.1 (ba5323b)</div>
 </body>
 </html>
