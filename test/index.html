@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>TEST MiniMig</title>
-<meta name="minimig-version" content="0.9.1">
+<meta name="minimig-version" content="0.10.0">
 <!-- (the number of this version, shown under the i - see VERSIONER.md - raised for each package and each fix put out) -->
 <!-- (the same icon as version 1 on a home screen, under the name MiniMig 2 - the icons lie in the website's billeder/;
      the user, 03-11-2026, sharing version 2 with testers) -->
@@ -4145,7 +4145,7 @@ function skateOwnPose(fwd, right, up, w = 1) {
 function skateTick(dt) { const L = skateLevel(); sk.slow = Math.max(0, sk.slow - dt); sk.wobble = Math.max(0, sk.wobble - dt);
   // (the push: through - then riding off, the pose growing in as it turns; after a hit, a push again once the wobble is over)
   const pa = glbActions[SKATE.push]; if (sk.push && (!pa?.isRunning() || pa.time >= pa.getClip().duration - .06)) { sk.push = false; runAnim('staa'); }
-  if (sk.needPush && sk.wobble <= 0 && !sk.push) startPush();
+  if (sk.needPush && sk.wobble <= 0 && !sk.push && !sk.jy) startPush(); // (never up in the air: only once back on the road)
   sk.poseW += ((sk.push ? 0 : 1) - sk.poseW) * Math.min(1, dt * (sk.push ? 12 : 4));
   // (slower while pushing off, faster with each push)
   const v = L.speed * (sk.slow > 0 ? .45 : 1) * (sk.push && pa ? .45 + .55 * pa.time / pa.getClip().duration : 1);
@@ -4184,7 +4184,10 @@ function skateTick(dt) { const L = skateLevel(); sk.slow = Math.max(0, sk.slow -
       // (the thing past it jumped over - never bumped, even if the figure was slow off the ramp)
       // (a metre up, and long enough to come down well past everything in its lane near the landing - a fence a bit
       // further on was jumped into, the user said 09-11-2026: the jump was timed only to the thing put past the ramp)
-      else if (k === 'rampe') { const vv = Math.max(v, .5); let land = it.pair ? 2 * it.pair.u : .84 * vv;
+      // (a push going on stops at the ramp and comes after the landing - the user, 09-11-2026: hitting a thing just before a
+      // ramp, it pushed with its foot up in the air; timed to the speed it rides at without the push)
+      else if (k === 'rampe') { if (sk.push) { sk.push = false; sk.needPush = true; runAnim('staa'); }
+        const vv = Math.max(v, L.speed * (sk.slow > 0 ? .45 : 1), .5); let land = it.pair ? 2 * it.pair.u : .84 * vv;
         for (let more = true; more;) { more = false; for (const o of sk.live) if (!SK_GOOD.has(o.kind) && !o.dir && !o.over && !o.hit && o.u > 0 && Math.abs(sk.lane * SKATE.lane - o.x) < o.half + .18 && o.u - o.len / 2 < land + Math.max(2, 1.5 * vv)) { const far = o.u + o.len / 2; o.over = true; land = Math.max(land, far / .7, far + .9); more = true; } }
         // (each thing under the high middle of the jump - its far end by 70 % of it, where the board is still well over a
         // crate; and anything within one and a half seconds' ride past the landing jumped too: too near to steer from after coming down)
@@ -4999,6 +5002,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.9.1 (64ea72c)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.10.0 (d283d43)</div>
 </body>
 </html>
