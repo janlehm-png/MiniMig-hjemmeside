@@ -38,6 +38,8 @@
   .panel button { border: 2px solid var(--line); background: var(--tile); color: var(--ink); border-radius: 14px; padding: 8px 12px;
     font: 700 13px/1 system-ui, sans-serif; cursor: pointer; }
   .panel button.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent) inset; }
+  /* (the buttons behind a grown-up's sum a soft lilac, not white: to show a grown-up is wanted there - the user, 09-11-2026) */
+  button.grown, .panel button.grown { background: #ECE6FF; border-color: #CBBEF7; }
   /* the movements: a fourth group of tabs on the right, as the others (the user, 03-11-2026), each with a little picture
      of the figure doing it; a movement chosen stays lit beside the tab chosen in the other groups */
   .tabgroup button[hidden] { display: none; }
@@ -361,13 +363,13 @@
     <button id="keepBtn"><span class="emo" aria-hidden="true">⭐</span><span>Gem</span></button>
     <button id="figsBtn"><span class="emo" aria-hidden="true">🖼️</span><span>Mine figurer</span></button>
     <button id="newBtn"><span class="emo" aria-hidden="true">✨</span><span>Ny figur</span></button>
-    <button id="saveBtn"><span class="emo" aria-hidden="true">📷</span><span>Send foto</span><span class="lock-badge" id="lockBadge" hidden aria-hidden="true">🔓</span></button>
-    <button id="soundBtn"><span class="emo" aria-hidden="true">🔊</span><span>Lyd</span></button>
-    <button id="timeBtn" class="hold-btn"><span class="emo" aria-hidden="true">⏱️</span><span>Tid</span></button>
+    <button id="saveBtn" class="grown"><span class="emo" aria-hidden="true">📷</span><span>Send foto</span><span class="lock-badge" id="lockBadge" hidden aria-hidden="true">🔓</span></button>
+    <button id="soundBtn" class="grown"><span class="emo" aria-hidden="true">🔊</span><span>Lyd</span></button>
+    <button id="timeBtn" class="hold-btn grown"><span class="emo" aria-hidden="true">⏱️</span><span>Tid</span></button>
     <!-- (the coins are on the button too - the user, 04-11-2026) -->
     <button id="starBtn"><span class="emo emo-coins" aria-hidden="true">🏆<i class="mini-coin">5</i><i class="mini-coin gold">20</i></span><span>Stjerner og mønter</span></button>
     <!-- (the language: a globe and the other language's name - no flag, English being spoken under many - the user, 04-11-2026) -->
-    <button id="langBtn"><span class="emo" aria-hidden="true"></span><span></span></button>
+    <button id="langBtn" class="grown"><span class="emo" aria-hidden="true"></span><span></span></button>
     <!-- (on minimig.dk only: the website's "Til voksne" - home screen, offline, privacy - from its pwa.js) -->
     <!-- (drawn here: an iPad shows the family emoji as a grey outline - the user, 04-11-2026) -->
     <button id="adultBtn" hidden><span class="emo" aria-hidden="true"><svg viewBox="0 0 32 32" width="30" height="30"><circle cx="11.5" cy="8" r="5" fill="#F2C09A"/><path d="M7 7a5 5 0 0 1 9-1.5C13 7 10 7.500 7 7z" fill="#6B4226"/><path d="M4 30V20a7.500 7.500 0 0 1 15 0v10z" fill="#4F7BE8"/><circle cx="23.500" cy="15" r="4" fill="#F7CFAE"/><path d="M19.500 14.500a4 4 0 0 1 8 0c-3-.2-5.500-.8-8 0z" fill="#E0A63A"/><path d="M18 30v-5a5.500 5.500 0 0 1 11 0v5z" fill="#F0628F"/></svg></span><span>Til voksne</span></button>
@@ -564,7 +566,7 @@
          grown-ups' players belonged here with the figures, not under the stars) -->
     <div class="kids" id="figKids"><h3>Børn</h3><div class="who who-small" id="kidList"></div><h3>🖼️ Gemte figurer</h3></div>
     <div class="gallery" id="gallery"></div>
-    <button class="share-off players-btn" id="playersBtn">Børn og spillere – for voksne</button>
+    <button class="share-off players-btn grown" id="playersBtn">Børn og spillere – for voksne</button>
   </div>
 </div>
 <div class="sheet" id="picSheet" hidden>
@@ -4942,9 +4944,10 @@ musicBtn.onclick = () => { musicOn = !musicOn; try { localStorage.setItem('minim
 // (once the figure is in, the hint goes into the i in the corner - on a touch screen and on a computer alike)
 const infoBtn = document.getElementById('infoBtn'), infoPop = document.getElementById('infoPop'); let infoTimer = 0;
 // (the globe: the page loaded anew in the other language, with the figure on the screen - not in a game)
-{ const b = document.getElementById('langBtn'), [ic, nm] = b.children; nm.textContent = T('English', 'Dansk');
+{ const b = document.getElementById('langBtn'), [ic, nm] = b.children; nm.textContent = T('Skift sprog', 'Language'); // (not the other language's name: more may come - the user 09-11-2026)
   ic.innerHTML = '<svg viewBox="0 0 32 32" width="30" height="30" style="vertical-align:middle"><circle cx="16" cy="16" r="14" fill="#7CC4F5" stroke="#3B82C4" stroke-width="2"/><path d="M16 2c-5 4-7.500 9-7.500 14S11 26 16 30c5-4 7.500-9 7.500-14S21 6 16 2zM2 16h28M4.500 9h23M4.500 23h23" fill="none" stroke="#3B82C4" stroke-width="1.800"/></svg>';
-  b.onclick = () => { if (game.on) { toast('Stop spillet først'); return; } try { localStorage.setItem('minimig-test.sprog', T('en', 'da')); } catch (e) {} keepLast(); location.reload(); }; }
+  // (behind the grown-up's sum, as the other lilac buttons - the language is for grown-ups, the user 09-11-2026)
+  b.onclick = () => { if (game.on) { toast('Stop spillet først'); return; } askGrownUp(() => { try { localStorage.setItem('minimig-test.sprog', T('en', 'da')); } catch (e) {} keepLast(); location.reload(); }); }; }
 // (two quick taps zoomed the page on an iPad, whatever the page's style says - the second tap is dropped, the user
 // 05-11-2026; on buttons too, as they still zoomed there (the user 08-11-2026) - but the button is pressed by hand
 // instead, so quick taps on coins all count)
@@ -4996,6 +4999,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.9.1 (1c52db1)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.9.1 (64ea72c)</div>
 </body>
 </html>
