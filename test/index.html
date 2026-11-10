@@ -2206,7 +2206,7 @@ const GARMENTS = {
   // (tops and trousers made from the figure's own body - makeCloth; the Meshy ones were fitted on, with holes and edges
   // that stood out)
   shirt: { items: [['', 'Undertrøje'], ['toej-tshirt', 'T-shirt', { made: true, sleeve: .3, length: .01 }],
-    ['toej-haette', 'Hættetrøje', { made: true, sleeve: 1.06, length: .04, hood: true, pocket: true, cloth: 'smooth' }],
+    ['toej-haette', 'Hættetrøje', { made: true, sleeve: 1, length: .04, hood: true, wrist: true, pocket: true, cloth: 'smooth' }],
     ['toej-fodbold', 'Fodboldtrøje', { made: true, sleeve: .32, length: .01, tuck: true, trim: true, cloth: 'smooth' }]], texs: clothTexs },
   // (the folds lower than at first - the user - and the long trousers turned up a little too)
   pants: { items: [['', 'Undershorts'], ['bukser-trusser', 'Trusser', { made: true, hem: .41, brief: .07, under: .012, rise: .012, noBand: true, white: true }], ['bukser-lange', 'Lange bukser', { made: true, hem: .06, loose: .004, cuff: .014 }], ['bukser-shorts', 'Shorts', { made: true, hem: .3, cuff: .018 }],
@@ -2426,7 +2426,8 @@ function makeCloth(name, part, opts) {
     // height; cut by height alone it was wide and square, ragged on the shoulders)
     // (a hoodie's hood goes up over the back of the neck)
     const front = p => clamp((p[2] - K.nz) / (.05 * H)), back = p => clamp((K.nz - p[2]) / (.04 * H));
-    const low = p => K.neckY + .015 * H - .035 * H * front(p) + (opts.hood ? .05 * H * back(p) : 0);
+    // (not any more - the user, 10-11-2026: seen from the front the hood stood up behind the neck; only clean shoulders)
+    const low = p => K.neckY + .015 * H - .035 * H * front(p);
     // (and nothing of the head, wider than the neck: over the middle nothing above the neck's bottom)
     // (the V cut out below it at the front: above its point and inside its two sides - the chest there is far from the
     // neck, so the round cut alone left it)
@@ -2440,6 +2441,8 @@ function makeCloth(name, part, opts) {
     // the T-shirt's bottom was lumpy; tucked in, the other way: inside the trousers)
     const ease = v => { v = clamp(v); return v * v * (3 - 2 * v); };
     out = p => { let o = .009 + .006 * clamp((side(p) - K.shoulderX) / (sleeveX - K.shoulderX));
+      // (wrist: the sleeve's end drawn in close round the wrist, a ribbed cuff - the hoodie's stood wide open, the user said 10-11-2026)
+      if (opts.wrist) o -= (o - .006) * ease((side(p) - sleeveX + .07 * H) / (.035 * H));
       // (by .004 the T-shirt and hoodie stood out too wide at the bottom)
       if (!opts.tuck) o += .0015 * ease((top + .03 * H - p[1]) / (.06 * H));
       if (opts.hood) o += .05 * Math.sqrt(hood(p));
@@ -2452,8 +2455,9 @@ function makeCloth(name, part, opts) {
     // (the hood lying down on the back: a rounded pouch below the neck, behind the back only - spread round the neck it
     // made lumps on the shoulders, seen from the front - with its rim darker, so it reads as a hood from behind)
     // (shaped like a hood laid flat: widest just under the neck, coming to a point down the back)
-    var hood = p => { const t = clamp((p[1] - K.neckY + .14 * H) / (.1 * H)), hw = .095 * H * t ** .7;
-      return hw ? clamp(1 - Math.abs(p[0] - K.mid) / hw - ((p[1] - K.neckY + .03 * H) / (.11 * H)) ** 2) * clamp((K.cz - .02 * H - p[2]) / (.03 * H)) : 0; }; }
+    // (lower down the back, so nothing of it shows over the shoulders from the front - the user, 10-11-2026)
+    var hood = p => { const y = p[1] + .045 * H, t = clamp((y - K.neckY + .14 * H) / (.1 * H)), hw = .095 * H * t ** .7;
+      return hw ? clamp(1 - Math.abs(p[0] - K.mid) / hw - ((y - K.neckY + .03 * H) / (.11 * H)) ** 2) * clamp((K.cz - .02 * H - p[2]) / (.03 * H)) : 0; }; }
   // (the body's triangles at least partly inside - and each spot's way out the average of the corners there, so the
   // garment does not come apart where the body's colour picture has a seam)
   const ways = new Map(), spot = j => `${pts[j * 6]},${pts[j * 6 + 1]},${pts[j * 6 + 2]}`, tris = [], P3 = j => [pts[j * 6], pts[j * 6 + 1], pts[j * 6 + 2]];
@@ -4101,19 +4105,25 @@ function skateRow(from = SKATE.from) { const easy = ['niveau-meget-let', 'niveau
     if (it.lid) { it.lid.position.set(0, .4, 0); it.lid.rotation.set(0, 0, 0); it.lid.visible = true; } if (it.body) it.body.rotation.set(0, 0, 0); if (it.body) it.body.position.y = it.kind === 'bold' ? .26 : 0; sk.live.push(it); };
   // (what comes: a pick weighted for the level - the easiest only the soft things and the fun ones)
   const pick = list => { let s = Math.random() * list.reduce((a, [, w]) => a + w, 0); for (const [k, w] of list) if ((s -= w) < 0) return k; return list[0][0]; };
-  const kind = pick(easy ? [['kegle', 3], ['kasse', 2], ['pyt', 2], ['rampe', 2], ['and', 1.5], ['gave', .8], ['bold', 1]]
-    : [['kegle', 2.5], ['kasse', 2], ['rail', 1.5], ['bom', 2], ['pyt', 1.5], ['rampe', 2], ['and', 1.5], ['gave', .7], ['bold', 1.5]]);
+  // (no ramp within five seconds' ride of the last one, in any lane - the user, 10-11-2026: ramps came one after the other,
+  // passing under the figure while it was up in the air from the first, and it can't steer there)
+  // (counted in time since the last one was put out: on the faster levels the last ramp was already behind the figure
+  // and gone from the road five seconds' ride later)
+  const rampNear = sk.rampWait > 0;
+  const kind = pick((easy ? [['kegle', 3], ['kasse', 2], ['pyt', 2], ['rampe', 2], ['and', 1.5], ['gave', .8], ['bold', 1]]
+    : [['kegle', 2.5], ['kasse', 2], ['rail', 1.5], ['bom', 2], ['pyt', 1.5], ['rampe', 2], ['and', 1.5], ['gave', .7], ['bold', 1.5]]).filter(([k]) => k !== 'rampe' || !rampNear));
   if (kind === 'bom') { const left = Math.random() < .5; put(skateThing('bom'), (left ? -.5 : .5) * SKATE.lane, from); used.add(left ? -1 : 1); used.add(0); }
   // (the duck and the ball cross the road from one side to the other, timed to be in the middle about as they come by)
   else if (kind === 'and' || kind === 'bold') { const it = skateThing(kind), dir = Math.random() < .5 ? -1 : 1; put(it, -dir * 1.5 * SKATE.lane, from + 2); it.dir = dir; it.cross = 1.5 * SKATE.lane / ((from + 2) / skateLevel().speed) * (kind === 'and' ? .9 : 1.1); used.add(-1).add(0).add(1); }
   else { const lane = Math.floor(Math.random() * 3) - 1, it = skateThing(kind); put(it, lane * SKATE.lane, from); used.add(lane);
     // (mostly a crate or a cone just past a ramp, in its lane: up the ramp, and over it - the user said 08-11-2026; as
     // far past it as the jump goes at this level's speed, so the figure is in the air as it goes under)
+    if (kind === 'rampe') sk.rampWait = 5;
     if (kind === 'rampe' && Math.random() < .75) { const ob = skateThing(Math.random() < .55 ? 'kasse' : 'kegle'); put(ob, lane * SKATE.lane, from + Math.max(.95, .45 * skateLevel().speed - .4)); it.pair = ob; } }
   // (the stars never in the lane the figure rides in now - one has to steer to them, not just stand)
   if (Math.random() < (easy ? .9 : .7)) { const free = [-1, 0, 1].filter(l => !used.has(l) && l !== sk.lane); if (free.length) { const lane = free[Math.floor(Math.random() * free.length)], n = 1 + Math.floor(Math.random() * 3);
     for (let k = 0; k < n; k++) put(skateThing('stjerne'), lane * SKATE.lane, from + (k - (n - 1) / 2) * 1.1); } } }
-function skateStart() { skateBuild(); Object.assign(sk, { lane: 0, x: 0, lean: 0, slow: 0, wobble: 0, next: .3, first: true, curve: 0, curveTo: 0, curveT: 3, jy: 0, jv: 0, spin: 0 }); for (const it of sk.live) it.group.visible = false; sk.live = [];
+function skateStart() { skateBuild(); Object.assign(sk, { lane: 0, x: 0, lean: 0, slow: 0, wobble: 0, next: .3, first: true, curve: 0, curveTo: 0, curveT: 3, jy: 0, jv: 0, spin: 0, rampWait: 0 }); for (const it of sk.live) it.group.visible = false; sk.live = [];
   holder.add(sk.rig); sk.rig.position.set(0, 0, 0); sk.rig.rotation.set(0, 0, 0); sk.rig.add(glb); scene.add(sk.road);
   // (riding: the standing with the page's own pose, arms out - Mixamo's riding stood with a foot each side of our board,
   // the user said, 03-11-2026; it was made for a board pointing the way the figure faces. Its push off, Skateboarding
@@ -4122,7 +4132,8 @@ function skateStart() { skateBuild(); Object.assign(sk, { lane: 0, x: 0, lean: 0
   sk.push = false; sk.poseW = 1; Promise.all(['staa', SKATE.push].map(loadMove)).then(() => { if (game.on) { runAnim('staa'); startPush(); } }); }
 function startPush() { const a = glbActions[SKATE.push]; if (!a || !game.on || game.mode !== 'skate') return; sk.push = true; sk.needPush = false; runAnim(SKATE.push, true); }
 function skateStop() { if (!sk.rig?.parent) return; holder.add(glb); holder.remove(sk.rig); scene.remove(sk.road); for (const it of sk.live) it.group.visible = false; sk.live = []; for (const b of sk.bits) b.mesh.visible = false; }
-function steer(dir) { if (!game.on || game.mode !== 'skate') return; const lane = Math.max(-1, Math.min(1, sk.lane + dir)); if (lane === sk.lane) return; sk.lane = lane; game.hint = 0; sfx('swish'); }
+// (not up in the air off a ramp - only once landed again, the user said 10-11-2026)
+function steer(dir) { if (!game.on || game.mode !== 'skate' || sk.jy > 0) return; const lane = Math.max(-1, Math.min(1, sk.lane + dir)); if (lane === sk.lane) return; sk.lane = lane; game.hint = 0; sfx('swish'); }
 // (the skater's pose, laid over the standing still each frame - turned about the figure's own axes as it stands now:
 // fwd the way its chest faces, right its right, up)
 const skAxes = { fwd: new THREE.Vector3(), right: new THREE.Vector3(), up: new THREE.Vector3(), q: new THREE.Quaternion() }, skQ = new THREE.Quaternion(), skP = new THREE.Quaternion();
@@ -4142,7 +4153,7 @@ function skateOwnPose(fwd, right, up, w = 1) {
   glb.updateMatrixWorld(true); for (const n of ['LeftLeg', 'RightLeg']) turnBone(n, right, -.85 * w); glb.updateMatrixWorld(true); for (const n of ['LeftFoot', 'RightFoot']) turnBone(n, right, .38 * w);
   for (const [n, s] of [['LeftArm', 1], ['RightArm', -1]]) turnBone(n, fwd, s * 1.05 * w); glb.updateMatrixWorld(true); for (const [n, s] of [['LeftForeArm', 1], ['RightForeArm', -1]]) turnBone(n, fwd, s * .25 * w);
   turnBone('Spine', right, -.12 * w); turnBone('Spine2', up, .35 * w); glb.updateMatrixWorld(true); turnBone('Neck', up, .4 * w); glb.updateMatrixWorld(true); turnBone('Head', up, .45 * w); glb.updateMatrixWorld(true); }
-function skateTick(dt) { const L = skateLevel(); sk.slow = Math.max(0, sk.slow - dt); sk.wobble = Math.max(0, sk.wobble - dt);
+function skateTick(dt) { const L = skateLevel(); sk.slow = Math.max(0, sk.slow - dt); sk.wobble = Math.max(0, sk.wobble - dt); sk.rampWait = Math.max(0, (sk.rampWait || 0) - dt);
   // (the push: through - then riding off, the pose growing in as it turns; after a hit, a push again once the wobble is over)
   const pa = glbActions[SKATE.push]; if (sk.push && (!pa?.isRunning() || pa.time >= pa.getClip().duration - .06)) { sk.push = false; runAnim('staa'); }
   if (sk.needPush && sk.wobble <= 0 && !sk.push && !sk.jy) startPush(); // (never up in the air: only once back on the road)
@@ -5002,6 +5013,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.10.0 (d283d43)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.10.0 (0cbced2)</div>
 </body>
 </html>
