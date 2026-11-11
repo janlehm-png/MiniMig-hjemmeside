@@ -2206,7 +2206,7 @@ const GARMENTS = {
   // (tops and trousers made from the figure's own body - makeCloth; the Meshy ones were fitted on, with holes and edges
   // that stood out)
   shirt: { items: [['', 'Undertrøje'], ['toej-tshirt', 'T-shirt', { made: true, sleeve: .3, length: .01, relief: 'tshirt' }],
-    ['toej-haette', 'Hættetrøje', { made: true, sleeve: 1.035, length: .04, hood: true, wrist: true, pocket: true, relief: true, cloth: 'smooth' }],
+    ['toej-haette', 'Hættetrøje', { made: true, sleeve: 1.035, length: .01, hood: true, wrist: true, pocket: true, relief: true, cloth: 'smooth' }],
     ['toej-fodbold', 'Fodboldtrøje', { made: true, sleeve: .32, length: .01, tuck: true, trim: true, relief: 'fodbold', cloth: 'smooth' }]], texs: clothTexs },
   // (the folds lower than at first - the user - and the long trousers turned up a little too)
   pants: { items: [['', 'Undershorts'], ['bukser-trusser', 'Trusser', { made: true, hem: .41, brief: .07, under: .012, rise: .012, noBand: true, white: true }], ['bukser-lange', 'Lange bukser', { made: true, hem: .06, loose: .004, cuff: .014 }], ['bukser-shorts', 'Shorts', { made: true, hem: .3, cuff: .018 }],
@@ -5175,6 +5175,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.10.0 (3d64243)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.10.0 (e37af22)</div>
 </body>
 </html>
