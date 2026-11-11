@@ -4447,6 +4447,23 @@ const SK_SIDE = { geo: null,
   baenk: () => { const G = SK_SIDE.geo; return skPiece([[G.box, '#A9713F', 0, .34, 0, .38, .05, 1.2], [G.box, '#A9713F', .2, .58, 0, .05, .3, 1.2], [G.box, '#5A5F6A', 0, .16, .5, .32, .32, .05], [G.box, '#5A5F6A', 0, .16, -.5, .32, .32, .05]]); },
   blomster: () => { const G = SK_SIDE.geo, parts = []; for (let k = 0; k < 7; k++) { const x = (Math.random() - .5) * .9, z = (Math.random() - .5) * 1.6, h = .16 + Math.random() * .14, c = ['#FF6FA8', '#FFD23F', '#FFFFFF', '#FF8A3D', '#B58CFF'][Math.floor(Math.random() * 5)];
       parts.push([G.cyl, '#3F9A45', x, h / 2, z, .012, h, .012], [G.ball, c, x, h + .03, z, .07, .05, .07], [G.ball, '#FFE27A', x, h + .06, z, .03]); } return skPiece(parts); } };
+// (the house, the leafy tree and the lamp post made at Meshy - the user, 11-11-2026: the things round the road made
+// there, three to begin with. Each a small GLB file with one mesh and its colour picture inside; read here, set on the
+// ground and made as tall as asked. Until they are in - or if they cannot be fetched - the simple ones above stand in)
+async function readProp(url) { const buf = await (await fetch(url)).arrayBuffer(), jl = new DataView(buf).getUint32(12, true), j = JSON.parse(new TextDecoder().decode(new Uint8Array(buf, 20, jl))), binAt = 20 + jl + 8;
+  const SIZE = { SCALAR: 1, VEC2: 2, VEC3: 3 }, TYPE = { 5121: Uint8Array, 5123: Uint16Array, 5125: Uint32Array, 5126: Float32Array };
+  const attr = i => { const a = j.accessors[i], v = j.bufferViews[a.bufferView], C = TYPE[a.componentType], n = SIZE[a.type], at = binAt + (v.byteOffset || 0) + (a.byteOffset || 0); return new THREE.BufferAttribute(new C(buf.slice(at, at + a.count * n * C.BYTES_PER_ELEMENT)), n); };
+  const pr = j.meshes[0].primitives[0], geo = new THREE.BufferGeometry(); geo.setAttribute('position', attr(pr.attributes.POSITION)); geo.setAttribute('normal', attr(pr.attributes.NORMAL)); geo.setAttribute('uv', attr(pr.attributes.TEXCOORD_0)); geo.setIndex(attr(pr.indices));
+  const iv = j.bufferViews[j.images[0].bufferView], img = new Image(), src = URL.createObjectURL(new Blob([new Uint8Array(buf, binAt + (iv.byteOffset || 0), iv.byteLength)], { type: j.images[0].mimeType || 'image/jpeg' }));
+  await new Promise((ok, bad) => { img.onload = ok; img.onerror = bad; img.src = src; }); const map = new THREE.Texture(img); map.flipY = false; map.colorSpace = THREE.SRGBColorSpace; map.needsUpdate = true;
+  return { geo, map }; }
+// (height: how tall, in metres; turn: turned so its front - the house's door, the lamp's arm - is where the simple one's was)
+const SK_PROPS = { hus: ['skate-hus.glb', 2.9, 0], trae: ['skate-trae.glb', 2.5, 0], lygte: ['skate-lygte.glb', 2.7, Math.PI] };
+function skPropsLoad() { sk.propsLoad ??= Promise.all(Object.entries(SK_PROPS).map(async ([kind, [url, height, turn]]) => { try { const { geo, map } = await readProp(url);
+    geo.computeBoundingBox(); const b = geo.boundingBox, k = height / (b.max.y - b.min.y); geo.translate(-(b.min.x + b.max.x) / 2, -b.min.y, -(b.min.z + b.max.z) / 2); geo.scale(k, k, k); if (turn) geo.rotateY(turn);
+    const mat = new THREE.MeshStandardMaterial({ map, roughness: .8, metalness: 0 }); SK_SIDE[kind] = () => new THREE.Mesh(geo, mat);
+    // (those standing by the road now changed for the new ones)
+    const old = sk.sidePools[kind] || []; sk.sidePools[kind] = []; for (const it of sk.side) if (it.kind === kind) { const g = SK_SIDE[kind](); g.scale.copy(it.g.scale); sk.sidePools[kind].push(g); sk.world.add(g); it.g = g; } for (const g of old) { g.visible = false; sk.world.remove(g); } } catch (e) { /* (the simple one stays) */ } })); }
 function skWorldBuild() { if (sk.world) return; const w = sk.world = new THREE.Group();
   SK_SIDE.geo = { cyl: new THREE.CylinderGeometry(1, 1, 1, 10), ball: new THREE.SphereGeometry(1, 12, 9), cone: new THREE.ConeGeometry(1, 1, 10), box: new THREE.BoxGeometry(1, 1, 1), roof: new THREE.ConeGeometry(1, 1, 4) };
   sk.sideMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .85 });
@@ -4465,19 +4482,19 @@ function skWorldBuild() { if (sk.world) return; const w = sk.world = new THREE.G
 // (a row of things, one or two each side of the road, u down it: lamp posts and fences close by, flowers and benches at
 // the verge, bushes and trees further out, houses behind them, and now and then a tree far out in the meadow)
 function skSidePut(kind, u, x, rot = 0, size = 1) { const pool = sk.sidePools[kind] ??= []; let g = pool.find(p => !p.visible); if (!g) { g = SK_SIDE[kind](); pool.push(g); sk.world.add(g); }
-  g.visible = true; g.scale.setScalar(size); sk.side.push({ g, u, x, rot }); }
+  g.visible = true; g.scale.setScalar(size); sk.side.push({ g, u, x, rot, kind }); }
 function skSideRow(u) { sk.rowN = (sk.rowN || 0) + 1;
   for (const s of [-1, 1]) { const E = SKW.edge, r = Math.random(), turn = s > 0 ? -Math.PI / 2 : Math.PI / 2;
     if (sk.rowN % 5 === (s > 0 ? 0 : 2)) skSidePut('lygte', u, s * (E + .45), s > 0 ? 0 : Math.PI);
     if (sk.sideSkip[s] > 0) { sk.sideSkip[s]--; continue; }
     if (r < .13) { skSidePut('hus', u, s * (E + 4.2 + Math.random() * 1.5), turn); sk.sideSkip[s] = 1; if (Math.random() < .7) skSidePut('hegn', u, s * (E + 1.5)); }
-    else if (r < .4) skSidePut('trae', u, s * (E + 1.7 + Math.random() * 3.2), Math.random() * 6.28, .9 + Math.random() * .5);
+    else if (r < .4) skSidePut('trae', u, s * (E + 2 + Math.random() * 3.2), Math.random() * 6.28, .85 + Math.random() * .4);
     else if (r < .55) skSidePut('gran', u, s * (E + 2.2 + Math.random() * 3.5), 0, .9 + Math.random() * .6);
     else if (r < .73) skSidePut('busk', u, s * (E + .9 + Math.random() * 2), Math.random() * 6.28, .8 + Math.random() * .6);
     else if (r < .83) skSidePut('blomster', u, s * (E + .7 + Math.random() * .8));
     else if (r < .88) skSidePut('baenk', u, s * (E + 1.05), s > 0 ? 0 : Math.PI);
-    if (Math.random() < .45) skSidePut(Math.random() < .5 ? 'trae' : 'gran', u + Math.random() * 2, s * (E + 7.5 + Math.random() * 9), 0, 1.1 + Math.random() * .7); } }
-function skWorldStart() { skWorldBuild(); scene.add(sk.world); for (const it of sk.side) it.g.visible = false; sk.side = []; sk.sideGo = 0; sk.sideSkip = { '-1': 0, 1: 0 };
+    if (Math.random() < .45) skSidePut(Math.random() < .5 ? 'trae' : 'gran', u + Math.random() * 2, s * (E + 7.5 + Math.random() * 9), Math.random() * 6.28, 1 + Math.random() * .5); } }
+function skWorldStart() { skWorldBuild(); skPropsLoad(); scene.add(sk.world); for (const it of sk.side) it.g.visible = false; sk.side = []; sk.sideGo = 0; sk.sideSkip = { '-1': 0, 1: 0 };
   for (let u = 3; u < SKW.far; u += SKW.step) skSideRow(u);
   scene.fog = new THREE.Fog(0xCDEBFF, 36, 88); floor.visible = false; disc.visible = false; for (const el of [bgNear, bgFar, bgNear2]) el.hidden = true; stage.classList.add('street'); }
 function skWorldStop() { if (!sk.world?.parent) return; scene.remove(sk.world); scene.fog = null; stage.classList.remove('street'); floor.visible = true; setBg(bgNow); }
@@ -5441,6 +5458,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.11.0 (fbeb0cf)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.11.0 (76c22f5)</div>
 </body>
 </html>
