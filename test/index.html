@@ -125,6 +125,14 @@
   .stage.playing { position: fixed; inset: 0; z-index: 40; width: 100%; height: 100%; max-width: none; aspect-ratio: auto; border-radius: 0; }
   .stage.playing .hud { top: max(12px, env(safe-area-inset-top)); left: max(12px, env(safe-area-inset-left)); right: max(12px, env(safe-area-inset-right)); }
   .stage.playing .game-x { width: 54px; height: 54px; font-size: 24px; }
+  .hud-right { display: flex; align-items: center; gap: 8px; }
+  .game-lvl { padding: 0; display: grid; place-items: center; } .game-lvl img { width: 40px; height: 40px; object-fit: contain; pointer-events: none; }
+  .lvl-pop { position: absolute; z-index: 4; top: calc(max(12px, env(safe-area-inset-top)) + 64px); right: max(12px, env(safe-area-inset-right)); display: flex; flex-direction: column; gap: 6px; padding: 8px; border-radius: 20px; background: var(--tile); box-shadow: 0 6px 22px rgba(58, 46, 92, .28); }
+  .lvl-pop[hidden] { display: none; }
+  .lvl-pop div { display: flex; gap: 6px; justify-content: flex-end; }
+  .lvl-pop button { width: 56px; height: 56px; padding: 2px; border-radius: 16px; border: 3px solid transparent; background: #F4F0FF; cursor: pointer; }
+  .lvl-pop button.on { border-color: var(--accent); background: #fff; }
+  .lvl-pop img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
   .stage.playing .tap-hint { bottom: max(18px, env(safe-area-inset-bottom)); }
   .hud-left { display: flex; align-items: center; gap: 6px; }
   .record { background: var(--tile); border-radius: 999px; padding: 4px 11px; font: 700 15px/1.2 system-ui, sans-serif; box-shadow: 0 2px 10px rgba(58, 46, 92, .15); }
@@ -349,7 +357,9 @@
 <button class="info-btn" id="infoBtn" aria-label="Sådan gør du" aria-expanded="false" hidden>i</button>
 <div class="info-pop" id="infoPop" hidden>👆 Træk for at dreje figuren<br>🤏 Knib for at zoome<br>👕 Tryk på navnet på trøjen, så siger figuren det – med din egen indtalte stemme, hvis du har indtalt en</div>
 <!-- Hop over bolden: the stars won, and the cross that ends the game; a hint at the start -->
-<div class="hud" id="hud" hidden><span class="hud-left"><span class="hud-face" id="hudFace" hidden></span><span class="stars" id="stars">⭐ 0</span><span class="record" id="record" title="Din rekord">🏆 0</span><span class="record" id="hudKr" title="Din konto">💰 0</span></span><button class="game-x" id="gameExit" aria-label="Stop spillet">✕</button></div>
+<div class="hud" id="hud" hidden><span class="hud-left"><span class="hud-face" id="hudFace" hidden></span><span class="stars" id="stars">⭐ 0</span><span class="record" id="record" title="Din rekord">🏆 0</span><span class="record" id="hudKr" title="Din konto">💰 0</span></span><span class="hud-right"><button class="game-x game-lvl" id="gameLvl" aria-label="Sværhedsgrad" aria-expanded="false"><img alt=""></button><button class="game-x" id="gameExit" aria-label="Stop spillet">✕</button></span></div>
+<!-- (the levels - and in Hop over bolden the three ways to play - chosen without leaving the game: the user, 11-11-2026) -->
+<div class="lvl-pop" id="lvlPop" hidden></div>
 <div class="tap-hint" id="tapHint" hidden>👆 Tryk for at hoppe</div>
 <!-- (who is playing, always in sight: the child's picture and name - tapped: Mine figurer, where the children are) -->
 <button class="who-badge" id="whoBadge" aria-label="Hvem spiller? Tryk for at skifte"></button>
@@ -628,7 +638,7 @@ const EN = {
   'Klap': 'Clap', 'Dyk og rul': 'Dive and roll', 'Snuble': 'Stumble', 'Falder på numsen': 'Fall on your bottom', 'Venstre fod': 'Left foot', 'Højre fod': 'Right foot',
   'Meget let': 'Very easy', 'Let': 'Easy', 'Mellem': 'Medium', 'Svær': 'Hard', 'Meget svær': 'Very hard', 'Fra siden': 'From the side', 'Bagfra': 'From behind', 'Forfra': 'From the front',
   '👈 Tryk i siden for at svinge 👉': '👈 Tap the side to turn 👉', '👆 Tryk hvor du vil gå hen': '👆 Tap where you want to go', '👆 Tryk eller træk – så svømmer du derhen': '👆 Tap or drag to swim there', '🔍 Hvor er jeg? Tryk på busken': '🔍 Where am I? Tap the bush', '👆 Tryk i målet, hvor bolden skal hen': '👆 Tap the goal where the ball should go', '👆 Tryk for at hoppe': '👆 Tap to jump',
-  '🏆 Ny rekord!': '🏆 New record!', 'Din rekord': 'Your record', 'Stop spillet': 'Stop the game', 'Stop spillet først': 'Stop the game first',
+  '🏆 Ny rekord!': '🏆 New record!', 'Din rekord': 'Your record', 'Stop spillet': 'Stop the game', 'Sværhedsgrad': 'Level', 'Stop spillet først': 'Stop the game first',
   // (messages)
   'Henter figuren …': 'Loading the figure …', 'Figuren kunne ikke hentes': 'The figure could not be loaded', 'Det kan ikke hentes lige nu 📶': 'That can’t be loaded right now 📶',
   '⭐ Gemt!': '⭐ Saved!', 'Kunne ikke gemme': 'Could not save', '✨ Ny MiniMig!': '✨ New MiniMig!', '👋 Hej!': '👋 Hello!', '📷 Gemt som barnets MiniMig': '📷 Saved as the child’s MiniMig', 'Hvem køber?': 'Who is buying?', 'Hvem spiller?': 'Who is playing?', 'Hvem spiller? Tryk for at skifte': 'Who is playing? Tap to change', 'Slet?': 'Delete?',
@@ -4300,7 +4310,7 @@ const hud = document.getElementById('hud'), starsEl = document.getElementById('s
 function startGame(mode = game.mode) { if (game.on || !glb) return; game.mode = mode; const M = MODES[mode]; game.on = true; Object.assign(game, { stars: 0, jumpT: -1, busy: 0, cheer: 0, cheerWait: false, rotY: M.face, next: 1.5, hint: 4, record: false, counted: false });
   // (on a computer the browser's own bars go too, where it lets them - not on an iPad, where that is not to be relied on:
   // there the game is opened from its icon on the home screen)
-  if (matchMedia('(hover: hover) and (pointer: fine)').matches) try { document.documentElement.requestFullscreen?.()?.catch?.(() => {}); } catch (e) {}
+  if (matchMedia('(hover: hover) and (pointer: fine)').matches && !navigator.maxTouchPoints) try { document.documentElement.requestFullscreen?.()?.catch?.(() => {}); } catch (e) {}
   if (!game.again) game.wore = wearSnap(); dressFor(MODES[mode].from ? 'hop' : mode);
   if (!game.again) game.saved = { cam: camera.position.clone(), target: controls.target.clone(), anim, bg: bgNow, spin }; game.again = false; spin = false; document.getElementById('spin').classList.remove('on');
   goal = null; closeUp = false; controls.enabled = false; controls.maxDistance = 14; holder.position.x = M.x;
@@ -4313,7 +4323,7 @@ function startGame(mode = game.mode) { if (game.on || !glb) return; game.mode = 
     game.bigPool ??= [goldBall(), goldBall()]; Object.assign(game, { dive: false, sinceBig: 0 });
     const run = levelNow().run; Promise.all([run, GAME.jump, GAME.trip, GAME.cheer, GAME.dive].map(loadMove)).then(() => { if (game.on) runAnim(run); }); }
   hintEl.textContent = tr(mode === 'skate' ? '👈 Tryk i siden for at svinge 👉' : mode === 'island' ? '👆 Tryk hvor du vil gå hen' : mode === 'sea' ? '👆 Tryk eller træk – så svømmer du derhen' : mode === 'hide' ? '🔍 Hvor er jeg? Tryk på busken' : mode === 'pk' ? '👆 Tryk i målet, hvor bolden skal hen' : '👆 Tryk for at hoppe');
-  hud.hidden = false; hintEl.hidden = false; document.querySelector('.top').hidden = true; document.getElementById('stage').classList.add('playing'); showStars(); showRecord();
+  hud.hidden = false; hintEl.hidden = false; try { showLvl(); } catch (e) {} document.querySelector('.top').hidden = true; document.getElementById('stage').classList.add('playing'); showStars(); showRecord();
   if (MODES[mode].from) game.hopWay = mode; // (the way last chosen in Hop over bolden)
   document.querySelectorAll('[data-game]').forEach(b => b.classList.toggle('on', b.dataset.game === mode || b.dataset.game === 'hop' && !!MODES[mode].from)); prepScene(); }
 // (again: only stopped to start once more - at another level or in another way - the figure's own setting not put back)
@@ -4321,7 +4331,7 @@ function stopGame(again) { if (!game.on) return; game.on = false; for (const b o
   // (the sound shut down when nothing plays: on an iPad an open sound channel could go on sounding after the game)
   if (!again) { try { game.audio?.suspend(); } catch (e) {} setItem(itemNow); }
   if (again) { game.again = true; return; } holder.position.x = 0; wearBack(game.wore); try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) {}
-  hud.hidden = true; hintEl.hidden = true; document.querySelector('.top').hidden = false; document.getElementById('stage').classList.remove('playing'); document.querySelectorAll('[data-game]').forEach(b => b.classList.remove('on'));
+  hud.hidden = true; hintEl.hidden = true; document.getElementById('lvlPop').hidden = true; document.querySelector('.top').hidden = false; document.getElementById('stage').classList.remove('playing'); document.querySelectorAll('[data-game]').forEach(b => b.classList.remove('on'));
   if (game.saved.bg !== bgNow) setBg(game.saved.bg); camera.position.copy(game.saved.cam); controls.target.copy(game.saved.target); controls.enabled = true; controls.maxDistance = 10;
   // (back to standing - not to the dance from before the game: its music came straight back, as if the game's sound
   // never stopped, the user found on a computer)
@@ -5235,6 +5245,14 @@ addEventListener('keydown', e => { if (!game.on || /INPUT/.test(e.target.tagName
   if (game.mode === 'skate' && (e.code === 'ArrowLeft' || e.code === 'ArrowRight')) { e.preventDefault(); steer(e.code === 'ArrowLeft' ? -1 : 1); }
   else if (MODES[game.mode].from && e.code === 'Space') { e.preventDefault(); jump(); } });
 document.getElementById('gameExit').onclick = () => stopGame();
+// (the level button in the game: the level played now on it; tapped, the five levels under it - and the three ways of Hop
+// over bolden - each a picture, the one on now framed. One tapped: the game starts again at once at that level)
+const lvlBtn = document.getElementById('gameLvl'), lvlPop = document.getElementById('lvlPop');
+function showLvl(open = false) { lvlBtn.firstElementChild.src = `ikoner/valg-${game.level}.png`; lvlPop.hidden = !open; lvlBtn.setAttribute('aria-expanded', String(open)); if (!open) return; lvlPop.innerHTML = '';
+  const row = (items, now, set) => { const d = document.createElement('div'); for (const [id, label] of items) { const b = document.createElement('button'), i = new Image(); i.src = `ikoner/valg-${id}.png`; i.alt = ''; b.append(i); b.setAttribute('aria-label', tr(label)); b.classList.toggle('on', id === now);
+      b.onclick = () => { lvlPop.hidden = true; if (id !== now) set(id); showLvl(); }; d.append(b); } lvlPop.append(d); };
+  row(LEVELS, game.level, setLevel); if (MODES[game.mode]?.from) row(HOP_WAYS, game.mode, setHopWay); }
+lvlBtn.onclick = () => showLvl(lvlPop.hidden);
 // (no menu from a long press anywhere but in the name box)
 document.querySelector('.main').addEventListener('contextmenu', e => { if (e.target.tagName !== 'INPUT') e.preventDefault(); });
 // (the game's tab starts it and shows its levels in the box, as a movement's tab shows its kinds)
@@ -5423,6 +5441,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.11.0 (b0fa58f)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.11.0 (fbeb0cf)</div>
 </body>
 </html>
