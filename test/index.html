@@ -610,7 +610,7 @@ const EN = {
   'Små': 'Small', 'Store': 'Big', 'Udstående': 'Sticking out', 'Alfeører': 'Elf ears', 'Perler': 'Pearls', 'Guldringe': 'Gold rings',
   // (clothes)
   'Undertrøje': 'Tank top', 'T-shirt': 'T-shirt', 'Hættetrøje': 'Hoodie', 'Fodboldtrøje': 'Soccer jersey', 'Undershorts': 'Underwear', 'Trusser': 'Briefs', 'Lange bukser': 'Long pants', 'Shorts': 'Shorts', 'Cowboyshorts': 'Denim shorts', 'Fodboldbukser': 'Soccer shorts',
-  'Ingen kjole': 'No dress', 'Sommerkjole': 'Summer dress', 'Prinsessekjole': 'Princess dress', 'Havfruekjole': 'Mermaid dress', 'Ingen strømper': 'No socks', 'Ankelstrømper': 'Ankle socks', 'Fodboldstrømper': 'Soccer socks', 'Knæstrømper': 'Knee socks',
+  'Ingen kjole': 'No dress', 'Sommerkjole': 'Summer dress', 'Prinsessekjole': 'Princess dress', 'Havfruekjole': 'Mermaid dress', 'Ingen strømper': 'No socks', 'Ankelstrømper': 'Ankle socks', 'Almindelige strømper': 'Regular socks', 'Fodboldstrømper': 'Soccer socks', 'Knæstrømper': 'Knee socks',
   'Bare fødder': 'Bare feet', 'Sneakers': 'Sneakers', 'Fodboldstøvler': 'Soccer cleats', 'Gummistøvler': 'Rain boots', 'Balletsko': 'Ballet shoes', 'Højhælede': 'High heels',
   'Ingen hat': 'No hat', 'Kasket': 'Cap', 'Krone': 'Crown', 'Kaninører': 'Bunny ears', 'Sløjfe': 'Bow', 'Ingen briller': 'No glasses', 'Runde': 'Round', 'Solbriller': 'Sunglasses', 'Hjerte': 'Heart',
   // (things, pets, backgrounds)
@@ -2214,6 +2214,8 @@ const GARMENTS = {
   dress: { items: [['', 'Ingen kjole'], ['kjole-sommer', 'Sommerkjole'], ['kjole-prinsesse', 'Prinsessekjole', { hang: .5, armsOut: 12 }], ['kjole-havfrue', 'Havfruekjole', { skirt: false, margin: .012, reach: 8, tail: true, snug: .2, waist: .15 }]], texs: [], skirt: true, noArms: true },
   // (socks made from the body too: low ones for sneakers, football socks with a stripe at the top, and knee socks)
   socks: { items: [['', 'Ingen strømper'], ['stroemper-ankel', 'Ankelstrømper', { made: true, top: .045, cloth: 'knit' }],
+    // (ordinary socks, halfway between the ankle socks and the football socks - the user, 11-11-2026)
+    ['stroemper-almindelige', 'Almindelige strømper', { made: true, top: .13, cloth: 'knit' }],
     ['stroemper-fodbold', 'Fodboldstrømper', { made: true, top: .2, stripe: [.012, .026], cloth: 'knit' }], ['stroemper-hoeje', 'Knæstrømper', { made: true, top: .24, cloth: 'knit' }]], texs: [] },
   shoe: { items: [['', 'Bare fødder'], ['sko-sneakers', 'Sneakers', { sole: .02 }], ['sko-fodbold', 'Fodboldstøvler', { file: 'sko-sneakers', sole: .02, studs: true }], ['sko-gummi', 'Gummistøvler', { pale: .9, paleTop: .015 }], ['sko-ballet', 'Balletsko', { paleFrom: .06, flat: .35, solid: .03 }],
     // (high heels, for the dresses - the user, 03-11-2026: made from the feet as the socks are, a shiny shell, the heels
@@ -5175,6 +5177,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.10.0 (e37af22)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.10.0 (67d56cb)</div>
 </body>
 </html>
