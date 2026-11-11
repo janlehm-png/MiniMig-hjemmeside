@@ -120,6 +120,12 @@
   /* Hop over bolden: the stars top left, the cross top right, a hint at the foot of the picture at the start */
   .hud { position: absolute; top: 10px; left: 10px; right: 10px; display: flex; justify-content: space-between; align-items: center; pointer-events: none; z-index: 2; }
   .hud[hidden], .tap-hint[hidden] { display: none; }
+  /* (game mode - the user, 11-11-2026: while a game runs its picture fills the whole window, the tabs and buttons under
+     it - only the stars and the cross that stops the game left; kept clear of an iPad's rounded corners and bars) */
+  .stage.playing { position: fixed; inset: 0; z-index: 40; width: 100%; height: 100%; max-width: none; aspect-ratio: auto; border-radius: 0; }
+  .stage.playing .hud { top: max(12px, env(safe-area-inset-top)); left: max(12px, env(safe-area-inset-left)); right: max(12px, env(safe-area-inset-right)); }
+  .stage.playing .game-x { width: 54px; height: 54px; font-size: 24px; }
+  .stage.playing .tap-hint { bottom: max(18px, env(safe-area-inset-bottom)); }
   .hud-left { display: flex; align-items: center; gap: 6px; }
   .record { background: var(--tile); border-radius: 999px; padding: 4px 11px; font: 700 15px/1.2 system-ui, sans-serif; box-shadow: 0 2px 10px rgba(58, 46, 92, .15); }
   .record.beaten { background: #FFC233; }
@@ -4238,6 +4244,9 @@ const LEVELS = [['niveau-meget-let', 'Meget let', { run: 'loeb', speed: .9, top:
 // Each ball goes along its own line to the figure: u is how far it has left (below 0: past it). x: where the figure
 // stands; face: which way it looks; cam(wide): from where it is seen; from: how far off a ball starts; k: how much
 // quicker the balls go than the level says (the far ground is far); gone: where a ball past it is put away
+// (the nearer camera is for a low, squat picture - a phone held upright; in game mode on an iPad or a computer the
+// picture is much wider than high, and the camera made for the tall picture shows the whole game, with more at its sides)
+const wideCam = () => camera.aspect > .85 && camera.aspect < 1.25;
 const MODES = {
   side: { x: -.25, face: Math.PI / 2, cheer: .3, cam: w => [.55, 1.6, w ? 7.5 : 10, .55, 1.55, 0], from: (halfW, camX) => camX + halfW + .4 + .25, k: 1, gone: -2.6,
     put: (p, u) => p.set(-.25 + u, p.y, 0), roll: (g, d) => { g.rotation.z += d; } },
@@ -4284,6 +4293,9 @@ function startDive() { const a = glbActions[GAME.dive]; if (!a) return false; ga
 function setLevel(id) { game.level = id; renderStyles(); stopGame(true); startGame(game.mode); }
 const hud = document.getElementById('hud'), starsEl = document.getElementById('stars'), hintEl = document.getElementById('tapHint');
 function startGame(mode = game.mode) { if (game.on || !glb) return; game.mode = mode; const M = MODES[mode]; game.on = true; Object.assign(game, { stars: 0, jumpT: -1, busy: 0, cheer: 0, cheerWait: false, rotY: M.face, next: 1.5, hint: 4, record: false, counted: false });
+  // (on a computer the browser's own bars go too, where it lets them - not on an iPad, where that is not to be relied on:
+  // there the game is opened from its icon on the home screen)
+  if (matchMedia('(hover: hover) and (pointer: fine)').matches) try { document.documentElement.requestFullscreen?.()?.catch?.(() => {}); } catch (e) {}
   if (!game.again) game.wore = wearSnap(); dressFor(MODES[mode].from ? 'hop' : mode);
   if (!game.again) game.saved = { cam: camera.position.clone(), target: controls.target.clone(), anim, bg: bgNow, spin }; game.again = false; spin = false; document.getElementById('spin').classList.remove('on');
   goal = null; closeUp = false; controls.enabled = false; controls.maxDistance = 14; holder.position.x = M.x;
@@ -4303,7 +4315,7 @@ function startGame(mode = game.mode) { if (game.on || !glb) return; game.mode = 
 function stopGame(again) { if (!game.on) return; game.on = false; for (const b of [...gamePool(), ...(game.bigPool || [])]) b.group.visible = false; game.dive = false; game.balls = []; confetti.length = 0; unprepScene(); skateStop(); hideStop(); islandStop(); seaStop(); pkStop();
   // (the sound shut down when nothing plays: on an iPad an open sound channel could go on sounding after the game)
   if (!again) { try { game.audio?.suspend(); } catch (e) {} setItem(itemNow); }
-  if (again) { game.again = true; return; } holder.position.x = 0; wearBack(game.wore);
+  if (again) { game.again = true; return; } holder.position.x = 0; wearBack(game.wore); try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) {}
   hud.hidden = true; hintEl.hidden = true; document.querySelector('.top').hidden = false; document.getElementById('stage').classList.remove('playing'); document.querySelectorAll('[data-game]').forEach(b => b.classList.remove('on'));
   if (game.saved.bg !== bgNow) setBg(game.saved.bg); camera.position.copy(game.saved.cam); controls.target.copy(game.saved.target); controls.enabled = true; controls.maxDistance = 10;
   // (back to standing - not to the dance from before the game: its music came straight back, as if the game's sound
@@ -4328,7 +4340,7 @@ function gameTick(dt) { confettiTick(dt); if (!game.on || !glb) return; const r 
   const faceNow = OWN_WORLD.includes(game.mode) ? game.rotY ?? 0 : game.mode === 'skate' && sk.push ? Math.PI : game.cheer ? M.cheer : M.face;
   game.rotY ??= M.face; game.rotY += (faceNow - game.rotY) * Math.min(1, dt * 8); glb.rotation.y = game.rotY;
   // (a wide picture - a phone held upright gives one - from nearer: the figure was small in it)
-  const [cx, cy, cz, tx, ty, tz] = M.cam(camera.aspect > .85), halfW = Math.tan(camera.fov * Math.PI / 360) * Math.hypot(cx - tx, cz - tz) * camera.aspect;
+  const [cx, cy, cz, tx, ty, tz] = M.cam(wideCam()), halfW = Math.tan(camera.fov * Math.PI / 360) * Math.hypot(cx - tx, cz - tz) * camera.aspect;
   camera.position.set(cx, cy, cz); controls.target.set(tx, ty, tz); camera.lookAt(controls.target);
   if (game.hint > 0 && (game.hint -= dt) <= 0) hintEl.hidden = true; else if (game.hint <= 0) hintEl.hidden = true;
   if (game.mode === 'skate') { skateTick(dt); return; }
@@ -4693,7 +4705,7 @@ function islandTick(dt) { const t = performance.now() / 1000, p = il.rig.positio
       for (const [ox, oz, rr] of il.blocks) { const ex = p.x - ox, ez = p.z - oz, e = Math.hypot(ex, ez); if (e < rr) { p.x = ox + ex / e * rr; p.z = oz + ez / e * rr; } } } }
   let dy = il.face - (game.rotY ?? 0); dy = Math.atan2(Math.sin(dy), Math.cos(dy)); game.rotY = (game.rotY ?? 0) + dy * Math.min(1, dt * 10); glb.rotation.y = game.rotY;
   // (the camera behind and above, following smoothly)
-  const wide = camera.aspect > .85; il.cam.set(p.x, wide ? 5.5 : 7.5, p.z + (wide ? 7.5 : 9.5)); il.look.set(p.x, .3, p.z - 1.2);
+  const wide = wideCam(); il.cam.set(p.x, wide ? 5.5 : 7.5, p.z + (wide ? 7.5 : 9.5)); il.look.set(p.x, .3, p.z - 1.2);
   if (il.snap) { il.snap = false; il.camNow.copy(il.cam); il.lookNow.copy(il.look); } else { il.camNow.lerp(il.cam, Math.min(1, dt * 3)); il.lookNow.lerp(il.look, Math.min(1, dt * 3)); }
   camera.position.copy(il.camNow); controls.target.copy(il.lookNow); camera.lookAt(controls.target);
   // (the sun's shadows made round the figure wherever it walks - they were cut off away from the middle, the user said)
@@ -4804,7 +4816,7 @@ function seaFish(k) { const g = new THREE.Group(), c = FISH_COLS[k % FISH_COLS.l
   for (const s of [-1, 1]) ilMesh(new THREE.SphereGeometry(.022, 8, 6), ilM('#1C1A22', .3), .09, .03, s * .055, g, false);
   g.userData.at = new THREE.Vector3(); sea.world.add(g); return g; }
 // (where the figure may swim: inside the picture as the camera sees it, over the sand - worked out as it starts)
-function seaBox() { const [cx, cy, cz] = MODES.sea.cam(camera.aspect > .85), halfH = Math.tan(camera.fov * Math.PI / 360) * cz, halfW = halfH * camera.aspect, b = sea.box;
+function seaBox() { const [cx, cy, cz] = MODES.sea.cam(wideCam()), halfH = Math.tan(camera.fov * Math.PI / 360) * cz, halfW = halfH * camera.aspect, b = sea.box;
   // (the hips kept a body's length from the sides: lying in the water the head reaches far ahead of them)
   b.sand = cy - halfH * .92; b.l = -halfW + 1.05; b.r = halfW - 1.05; b.b = b.sand - .2; b.t = cy + halfH - 1.65; b.edge = halfW + .6; b.cy = cy; b.halfH = halfH;
   sea.sand.position.y = b.sand; sea.ground.position.y = b.sand; }
@@ -5045,7 +5057,7 @@ function pkTick(dt) { const t = performance.now() / 1000, L = pkLevel(), kp = pk
   if (pk.phase === 'aim' || pk.phase === 'return') pk.rig.position.lerp(pkStand(pkWant), Math.min(1, dt * 5));
   // (the camera far enough back that the whole goal is in the picture, however narrow it is)
   // (never nearer than 13 m from the goal: on a wide picture it came so close the figure hid the goal again)
-  const tanH = Math.tan(camera.fov * Math.PI / 360), D = Math.max(13, (PK.halfW + 1) / (tanH * camera.aspect));
+  const tanH = Math.tan(camera.fov * Math.PI / 360), D = Math.max(camera.aspect > 1.25 ? 16.5 : 13, (PK.halfW + 1) / (tanH * camera.aspect)); // (in game mode on a wide screen as far back as on the tall picture: nearer, the figure's legs and the ball were cut off below)
   // (from above and a little to the side, the goal seen over the figure's head)
   camera.position.set(.9, 3.2, D + PK.goalZ); controls.target.set(0, .7, PK.goalZ + 1.8); camera.lookAt(controls.target);
   // (facing the goal - turned round to the one playing while it cheers a goal)
@@ -5345,6 +5357,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.11.0 (bd74812)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.11.0 (a52d8a6)</div>
 </body>
 </html>
