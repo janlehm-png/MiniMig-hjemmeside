@@ -2206,7 +2206,7 @@ const GARMENTS = {
   // (tops and trousers made from the figure's own body - makeCloth; the Meshy ones were fitted on, with holes and edges
   // that stood out)
   shirt: { items: [['', 'Undertrøje'], ['toej-tshirt', 'T-shirt', { made: true, sleeve: .3, length: .01 }],
-    ['toej-haette', 'Hættetrøje', { made: true, sleeve: 1, length: .04, hood: true, wrist: true, pocket: true, relief: true, cloth: 'smooth' }],
+    ['toej-haette', 'Hættetrøje', { made: true, sleeve: 1.035, length: .04, hood: true, wrist: true, pocket: true, relief: true, cloth: 'smooth' }],
     ['toej-fodbold', 'Fodboldtrøje', { made: true, sleeve: .32, length: .01, tuck: true, trim: true, cloth: 'smooth' }]], texs: clothTexs },
   // (the folds lower than at first - the user - and the long trousers turned up a little too)
   pants: { items: [['', 'Undershorts'], ['bukser-trusser', 'Trusser', { made: true, hem: .41, brief: .07, under: .012, rise: .012, noBand: true, white: true }], ['bukser-lange', 'Lange bukser', { made: true, hem: .06, loose: .004, cuff: .014 }], ['bukser-shorts', 'Shorts', { made: true, hem: .3, cuff: .018 }],
@@ -2442,7 +2442,8 @@ function makeCloth(name, part, opts) {
     const ease = v => { v = clamp(v); return v * v * (3 - 2 * v); };
     out = p => { let o = .009 + .006 * clamp((side(p) - K.shoulderX) / (sleeveX - K.shoulderX));
       // (wrist: the sleeve's end drawn in close round the wrist, a ribbed cuff - the hoodie's stood wide open, the user said 10-11-2026)
-      if (opts.wrist) o -= (o - .006) * ease((side(p) - sleeveX + .07 * H) / (.035 * H));
+      // (the forearm a little closer than the upper arm, going over to it softly; the cuff half as long - the user, 11-11-2026)
+      if (opts.wrist) { o -= .0035 * ease((side(p) - K.elbowX + .01 * H) / (.05 * H)); o -= (o - .006) * ease((side(p) - sleeveX + .045 * H) / (.015 * H)); }
       // (by .004 the T-shirt and hoodie stood out too wide at the bottom)
       if (!opts.tuck) o += .0015 * ease((top + .03 * H - p[1]) / (.06 * H));
       // (the hood a real shape: a step up all round its edge, where the cloth lies double, then a low dome - before, one
@@ -2546,7 +2547,7 @@ function makeCloth(name, part, opts) {
       wp[i * 3] += (x / q - wp[i * 3]) * k[i] * .6; wp[i * 3 + 1] += (y / q - wp[i * 3 + 1]) * k[i] * .6; wp[i * 3 + 2] += (z / q - wp[i * 3 + 2]) * k[i] * .6; } } }
   list.forEach((c, i) => { n.fromArray(dir, i * 3); w.fromArray(wp, i * 3); U.set([(w.x + w.z) * 3, w.y * 3], i * 2);
     // (shades: a pocket, and the trimmed edges)
-    const rim = hood && opts.hood ? hood(c.p) : 0, shade = (pocket && opts.pocket && !opts.relief && pocket(c.p) ? .8 : 1) * (rim > 0 && rim < .1 ? .92 : 1) * (opts.hood && -edges[1].f(c.p) < .032 * H && Math.abs(c.p[0] - K.mid) < .066 * H && Math.cos(Math.atan2(c.p[0] - K.mid, c.p[2] - K.nz)) < -.55 ? .5 : 1) *(edges.some(e => e.trim && -e.f(c.p) < .018 * H) ? .55 : 1) * (c.fold !== undefined ? 1.45 : 1); C.set([shade, shade, shade], i * 3); // (the fold a lighter shade of the cloth)
+    const rim = hood && opts.hood ? hood(c.p) : 0, shade = (pocket && opts.pocket && !opts.relief && pocket(c.p) ? .8 : 1) * (rim > 0 && rim < .1 ? .92 : 1) * (opts.hood && -edges[1].f(c.p) < .032 * H && Math.abs(c.p[0] - K.mid) < .066 * H && Math.cos(Math.atan2(c.p[0] - K.mid, c.p[2] - K.nz)) < -.66 ? .68 : 1) /* (the hood's inside: inside the rim only, ending where it ends - out past it, over the shoulders, it was too dark; the user, 11-11-2026) */ *(edges.some(e => e.trim && -e.f(c.p) < .018 * H) ? .55 : 1) * (c.fold !== undefined ? 1.45 : 1); C.set([shade, shade, shade], i * 3); // (the fold a lighter shade of the cloth)
     // (socks: their picture once from the floor (0) to their top (1), so the stripe lies level round the leg)
     if (socks) U[i * 2 + 1] = c.p[1] / (opts.top * H);
     w.applyMatrix4(inv); P.set([w.x, w.y, w.z], i * 3); n.transformDirection(inv); N.set([n.x, n.y, n.z], i * 3);
@@ -2619,7 +2620,7 @@ function clothRelief(list, tri, K, H, hem, sleeveX, hood, pocket) {
       // (folds above it, soft and a little wavy, more out at the sides)
       if (!arm) for (const [k, f] of [[0, .065], [1, .095], [2, .125]].entries()) { const yc = hem + f[1] * H + .006 * H * Math.sin(x / (.045 * H) + k * 2.1 + s); v -= (.3 + .2 * ease(ax / (.09 * H))) * groove(y - yc, (.007 + .002 * k) * H) * (1 - .5 * ease(1 - ax / (.12 * H))); }
       // (the cuffs: a seam round the arm where they begin, ribs along them)
-      if (arm && ax > sleeveX - .065 * H) { const cf = ax > sleeveX - .06 * H; v -= .25 * groove(ax - (sleeveX - .06 * H), .0018 * H); if (cf) v += .1 * Math.cos(2 * Math.PI * y / (.006 * H)); }
+      if (arm && ax > sleeveX - .035 * H) { const cf = ax > sleeveX - .03 * H; v -= .25 * groove(ax - (sleeveX - .03 * H), .0018 * H); if (cf) v += .1 * Math.cos(2 * Math.PI * y / (.006 * H)); }
       // (creases round the inside of the elbows)
       if (arm) for (const o of [-.012, .004, .02]) v -= .2 * groove(ax - (K.elbowX + o * H + .004 * H * Math.sin(y / (.012 * H) + o * 300)), .0035 * H);
       // (the sleeves' seams, from the neck down to under the arms, front and back)
@@ -5134,6 +5135,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.10.0 (e294090)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.10.0 (3fa9dd3)</div>
 </body>
 </html>
