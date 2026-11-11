@@ -2547,7 +2547,7 @@ function makeCloth(name, part, opts) {
       wp[i * 3] += (x / q - wp[i * 3]) * k[i] * .6; wp[i * 3 + 1] += (y / q - wp[i * 3 + 1]) * k[i] * .6; wp[i * 3 + 2] += (z / q - wp[i * 3 + 2]) * k[i] * .6; } } }
   list.forEach((c, i) => { n.fromArray(dir, i * 3); w.fromArray(wp, i * 3); U.set([(w.x + w.z) * 3, w.y * 3], i * 2);
     // (shades: a pocket, and the trimmed edges)
-    const rim = hood && opts.hood ? hood(c.p) : 0, shade = (pocket && opts.pocket && !opts.relief && pocket(c.p) ? .8 : 1) * (rim > 0 && rim < .1 ? .92 : 1) * (opts.hood && -edges[1].f(c.p) < .032 * H && Math.abs(c.p[0] - K.mid) < .066 * H && Math.cos(Math.atan2(c.p[0] - K.mid, c.p[2] - K.nz)) < -.66 ? .68 : 1) /* (the hood's inside: inside the rim only, ending where it ends - out past it, over the shoulders, it was too dark; the user, 11-11-2026) */ *(edges.some(e => e.trim && -e.f(c.p) < .018 * H) ? .55 : 1) * (c.fold !== undefined ? 1.45 : 1); C.set([shade, shade, shade], i * 3); // (the fold a lighter shade of the cloth)
+    const rim = hood && opts.hood ? hood(c.p) : 0, shade = (pocket && opts.pocket && !opts.relief && pocket(c.p) ? .8 : 1) * (rim > 0 && rim < .1 ? .92 : 1) * (opts.hood && (b => b > HOOD_A0 && -edges[1].f(c.p) < hoodGap(b, H) - .002 * H)(Math.abs(Math.atan2(c.p[0] - K.mid, c.p[2] - K.nz))) ? .68 : 1) /* (the hood's inside: inside the rim only, ending where it ends - out past it, over the shoulders, it was too dark; the user, 11-11-2026) */ *(edges.some(e => e.trim && -e.f(c.p) < .018 * H) ? .55 : 1) * (c.fold !== undefined ? 1.45 : 1); C.set([shade, shade, shade], i * 3); // (the fold a lighter shade of the cloth)
     // (socks: their picture once from the floor (0) to their top (1), so the stripe lies level round the leg)
     if (socks) U[i * 2 + 1] = c.p[1] / (opts.top * H);
     w.applyMatrix4(inv); P.set([w.x, w.y, w.z], i * 3); n.transformDirection(inv); N.set([n.x, n.y, n.z], i * 3);
@@ -2642,6 +2642,9 @@ function clothRelief(list, tri, K, H, hem, sleeveX, hood, pocket) {
     D[o] = (-gx / l * .5 + .5) * 255; D[o + 1] = (-gy / l * .5 + .5) * 255; D[o + 2] = (1 / l * .5 + .5) * 255; D[o + 3] = 255; }
   cx.putImageData(im, 0, 0); const map = new THREE.CanvasTexture(cv); map.channel = 1; map.anisotropy = 4;
   return { from: Int32Array.from(from), idx, uv1, map }; }
+// (how far out from the neck's edge the hood's rim lies, at an angle round the neck from the front (0) to the back (pi):
+// at the back the hood's inside shows between, and towards the sides it comes in to the collar. The dark inside the same)
+const HOOD_A0 = 1.75, hoodGap = (b, H) => { const t = Math.min(1, Math.max(0, (b - HOOD_A0) / .45)); return H * (.004 + .03 * t * t * (3 - 2 * t)); };
 // (the hood's opening: a thick rolled edge round the back of the neck and forward over the shoulders, a little way out
 // from the neck - between it and the neck the hood's inside shows, darker. The collar round the neck stays as it was.
 // The user's pictures, 11-11-2026. A tube of the same cloth, following the bones of the cloth under it)
@@ -2649,20 +2652,21 @@ function hoodRim(cloth, list, wp, dir, neck, K, H, inv) {
   // (behind the shoulders only: further forward it stood up over them, seen from the front)
   // (gap: how far from the neck - wider, so more of the hood's inside shows, the user said 11-11-2026)
   // (A0: where it ends, round from the front - as far out as the hood is wide up there, narrowed 11-11-2026)
-  const A0 = 2.25, NB = 18, gap = .034 * H, bins = Array.from({ length: NB }, () => ({ p: [0, 0, 0], n: [0, 0, 0], w: {}, c: 0 }));
-  list.forEach((c, i) => { const d = -neck(c.p); if (Math.abs(d - gap) > .007 * H || Math.hypot(c.p[0] - K.mid, c.p[2] - K.nz) > K.nr + .09 * H) return;
-    // (and no wider than the hood up there: out over the shoulders the neck's edge lies far from the neck)
-    let a = Math.atan2(c.p[0] - K.mid, c.p[2] - K.nz); if (a < 0) a += 2 * Math.PI; if (a < A0 || a > 2 * Math.PI - A0 || Math.abs(c.p[0] - K.mid) > .068 * H) return;
+  // (and at its two ends turning in over the shoulders to the neck, round the dark inside, so it goes all the way from
+  // one side of the neck to the other - the user, 11-11-2026. hoodGap: how far out from the neck, round from the front)
+  const A0 = HOOD_A0, NB = 26, bins = Array.from({ length: NB }, () => ({ p: [0, 0, 0], n: [0, 0, 0], w: {}, c: 0 }));
+  list.forEach((c, i) => { let a = Math.atan2(c.p[0] - K.mid, c.p[2] - K.nz); if (a < 0) a += 2 * Math.PI; if (a < A0 || a > 2 * Math.PI - A0) return;
+    const d = -neck(c.p), gap = hoodGap(Math.min(a, 2 * Math.PI - a), H); if (Math.abs(d - gap) > Math.min(.007 * H, gap * .6) || Math.hypot(c.p[0] - K.mid, c.p[2] - K.nz) > K.nr + .09 * H) return;
     const B = bins[Math.min(NB - 1, Math.floor((a - A0) / (2 * Math.PI - 2 * A0) * NB))];
     for (let e = 0; e < 3; e++) { B.p[e] += wp[i * 3 + e]; B.n[e] += dir[i * 3 + e]; } for (const [k, v] of Object.entries(c.w)) B.w[k] = (B.w[k] || 0) + v; B.c++; });
   const pts = bins.filter(B => B.c).map(B => ({ p: B.p.map(x => x / B.c), n: B.n, w: B.w, c: B.c })); if (pts.length < 6) return;
   // (evened out with its neighbours - straight from the cloth's corners it went in waves)
   for (let it = 0; it < 3; it++) { const was = pts.map(B => B.p.slice()); for (let k = 1; k + 1 < pts.length; k++) for (let e = 0; e < 3; e++) pts[k].p[e] = (was[k - 1][e] + 2 * was[k][e] + was[k + 1][e]) / 4; }
   const ease = v => { v = Math.min(1, Math.max(0, v)); return v * v * (3 - 2 * v); }, R = .0085 * H;
-  const r = u => R * (.2 + .8 * ease(Math.min(u, 1 - u) / .25));
+  const r = u => R * (.45 + .55 * ease(Math.min(u, 1 - u) / .12));
   const curve = new THREE.CatmullRomCurve3(pts.map((B, k) => { const u = k / (pts.length - 1), n = new THREE.Vector3(...B.n).normalize();
-    // (its ends sunk into the cloth - out on it they stood off in a thin point, seen at a slant)
-    return new THREE.Vector3(...B.p).addScaledVector(n, r(u) * .75 - R * (1 - ease(Math.min(u, 1 - u) / .15))); }));
+    // (its ends, at the collar, sunk a little into the cloth - out on it they stood off in a point)
+    return new THREE.Vector3(...B.p).addScaledVector(n, r(u) * .75 - .5 * R * (1 - ease(Math.min(u, 1 - u) / .08))); }));
   const TS = 120, RS = 12, g = new THREE.TubeGeometry(curve, TS, 1, RS, false), P = g.attributes.position, c0 = new THREE.Vector3(), v = new THREE.Vector3();
   const m = P.count, si = new Uint16Array(m * 4), sw = new Float32Array(m * 4), C = new Float32Array(m * 3).fill(1), U = g.attributes.uv;
   for (let i = 0; i <= TS; i++) { const u = i / TS; curve.getPointAt(u, c0);
@@ -5135,6 +5139,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.10.0 (3fa9dd3)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.10.0 (8a2bd73)</div>
 </body>
 </html>
