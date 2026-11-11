@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>TEST MiniMig</title>
-<meta name="minimig-version" content="0.10.0">
+<meta name="minimig-version" content="0.11.0">
 <!-- (the number of this version, shown under the i - see VERSIONER.md - raised for each package and each fix put out) -->
 <!-- (the same icon as version 1 on a home screen, under the name MiniMig 2 - the icons lie in the website's billeder/;
      the user, 03-11-2026, sharing version 2 with testers) -->
@@ -597,7 +597,7 @@ const LANG = (() => { let l = new URLSearchParams(location.search).get('lang'); 
 const T = (da, en) => LANG === 'en' ? en : da, krTxt = n => T(`${n} kr`, n == 1 ? '1 coin' : `${n} coins`);
 const EN = {
   // (the tabs)
-  'Hud': 'Skin', 'Hår': 'Hair', 'Øjne': 'Eyes', 'Bryn': 'Brows', 'Næse': 'Nose', 'Mund': 'Mouth', 'Ører': 'Ears', 'Pynt': 'Face art', 'Trøje': 'Top', 'Bukser': 'Pants', 'Kjole': 'Dress', 'Strømper': 'Socks', 'Sko': 'Shoes', 'Hat': 'Hat', 'Briller': 'Glasses', 'Ting': 'Things', 'Navn': 'Name', 'Baggrund': 'Back­ground',
+  'Hud': 'Skin', 'Hår': 'Hair', 'Øjne': 'Eyes', 'Bryn': 'Brows', 'Næse': 'Nose', 'Mund': 'Mouth', 'Ører': 'Ears', 'Pynt': 'Face art', 'Trøje': 'Top', 'Bukser': 'Pants', 'Kjole': 'Dress', 'Udstyr': 'Gear', 'Strømper': 'Socks', 'Sko': 'Shoes', 'Hat': 'Hat', 'Briller': 'Glasses', 'Ting': 'Things', 'Navn': 'Name', 'Baggrund': 'Back­ground',
   'Gem': 'Save', 'Mine figurer': 'My figures', 'Ny figur': 'New figure', 'Send foto': 'Send photo', 'Lyd': 'Sound', 'Stjerner og mønter': 'Stars and coins', 'Til voksne': 'For grown-ups',
   'Stå': 'Stand', 'Vink': 'Wave', 'Hop': 'Jump', 'Dans': 'Dance', 'Løb': 'Run', 'Jubel': 'Cheer', 'Kolbøtte': 'Roll', 'Spark': 'Kick', 'Drej rundt': 'Spin', 'Min dans': 'My dance',
   'Hop over bolden': 'Jump the ball', 'Skateboard': 'Skate­board', 'Skattejagt': 'Treasure hunt', 'Svømmeverden': 'Swim world', 'Gemmeleg': 'Hide and seek', 'Straffespark': 'Penalty kick',
@@ -610,9 +610,9 @@ const EN = {
   'Små': 'Small', 'Store': 'Big', 'Udstående': 'Sticking out', 'Alfeører': 'Elf ears', 'Perler': 'Pearls', 'Guldringe': 'Gold rings',
   // (clothes)
   'Undertrøje': 'Tank top', 'T-shirt': 'T-shirt', 'Hættetrøje': 'Hoodie', 'Fodboldtrøje': 'Soccer jersey', 'Undershorts': 'Underwear', 'Trusser': 'Briefs', 'Lange bukser': 'Long pants', 'Shorts': 'Shorts', 'Cowboyshorts': 'Denim shorts', 'Fodboldbukser': 'Soccer shorts',
-  'Ingen kjole': 'No dress', 'Sommerkjole': 'Summer dress', 'Prinsessekjole': 'Princess dress', 'Havfruekjole': 'Mermaid dress', 'Ingen strømper': 'No socks', 'Ankelstrømper': 'Ankle socks', 'Almindelige strømper': 'Regular socks', 'Fodboldstrømper': 'Soccer socks', 'Knæstrømper': 'Knee socks',
+  'Ingen kjole': 'No dress', 'Ingen dragt': 'No suit', 'Badedragt': 'Swimsuit', 'Badebukser': 'Swim trunks', 'Sommerkjole': 'Summer dress', 'Prinsessekjole': 'Princess dress', 'Havfruekjole': 'Mermaid dress', 'Ingen strømper': 'No socks', 'Ankelstrømper': 'Ankle socks', 'Almindelige strømper': 'Regular socks', 'Fodboldstrømper': 'Soccer socks', 'Knæstrømper': 'Knee socks',
   'Bare fødder': 'Bare feet', 'Sneakers': 'Sneakers', 'Fodboldstøvler': 'Soccer cleats', 'Gummistøvler': 'Rain boots', 'Balletsko': 'Ballet shoes', 'Højhælede': 'High heels',
-  'Ingen hat': 'No hat', 'Kasket': 'Cap', 'Krone': 'Crown', 'Kaninører': 'Bunny ears', 'Sløjfe': 'Bow', 'Ingen briller': 'No glasses', 'Runde': 'Round', 'Solbriller': 'Sunglasses', 'Hjerte': 'Heart',
+  'Ingen hat': 'No hat', 'Kasket': 'Cap', 'Krone': 'Crown', 'Kaninører': 'Bunny ears', 'Sløjfe': 'Bow', 'Ingen briller': 'No glasses', 'Svømmebriller': 'Swim goggles', 'Snorkel': 'Snorkel', 'Ingen svømmebriller': 'No goggles', 'Runde': 'Round', 'Solbriller': 'Sunglasses', 'Hjerte': 'Heart',
   // (things, pets, backgrounds)
   'Ballon': 'Balloon', 'Bamse': 'Teddy bear', 'Tryllestav': 'Magic wand', 'Is': 'Ice cream', 'Blomst': 'Flower', 'Bold': 'Ball', 'Fodbold': 'Soccer ball', 'Hulahopring': 'Hula hoop',
   'Intet dyr': 'No pet', 'Kat': 'Cat', 'Hund': 'Dog', 'Kanin': 'Rabbit', 'Halsbånd': 'Collar', 'Madskål': 'Food bowl', 'Legebold': 'Play ball',
@@ -677,9 +677,9 @@ disc.rotation.x = -Math.PI / 2; disc.position.y = .001; scene.add(disc);
 
 // ---- colours: the figure's painted texture, recoloured (below) ----
 // (the parts, each with the app's icon for its tab, in ikoner/; the fixed colours are gone - the sliders alone)
-const CHOICES = [['skin', 'Hud', 'hud'], ['hair', 'Hår', 'haar'], ['eyes', 'Øjne', 'oejne'], ['brows', 'Bryn', 'bryn'], ['nose', 'Næse', 'naese'], ['mouth', 'Mund', 'mund'], ['ears', 'Ører', 'oerer'], ['pynt', 'Pynt', 'kinder'], ['shirt', 'Trøje', 'troeje'], ['pants', 'Bukser', 'bukser'], ['dress', 'Kjole', 'kjoler'],
+const CHOICES = [['skin', 'Hud', 'hud'], ['hair', 'Hår', 'haar'], ['eyes', 'Øjne', 'oejne'], ['brows', 'Bryn', 'bryn'], ['nose', 'Næse', 'naese'], ['mouth', 'Mund', 'mund'], ['ears', 'Ører', 'oerer'], ['pynt', 'Pynt', 'kinder'], ['shirt', 'Trøje', 'troeje'], ['pants', 'Bukser', 'bukser'], ['dress', 'Kjole', 'kjoler'], ['suit', 'Udstyr', 'dragter'],
   ['socks', 'Strømper', 'stroemper'], ['shoe', 'Sko', 'sko'], ['hat', 'Hat', 'hat'], ['glasses', 'Briller', 'briller'], ['item', 'Ting', 'ting'], ['name', 'Navn', 'navn'], ['bg', 'Baggrund', 'baggrund']];
-const picked = {}, START = { skin: '#EDB98A', hair: '#4A2C1D', eyes: '#7A4220', brows: '#4A2C1D', mouth: '#C0505A', pynt: '#FF5A6E', nose: '#EDB98A', shirt: '#FF7A2F', pants: '#2C3E8C', dress: '#3D8BFF', socks: '#3D8BFF', item: '#E8384F', shoe: '#3D8BFF', hat: '#3D8BFF', glasses: '#3D8BFF' }; let partNow = 'shirt';
+const picked = {}, START = { skin: '#EDB98A', hair: '#4A2C1D', eyes: '#7A4220', brows: '#4A2C1D', mouth: '#C0505A', pynt: '#FF5A6E', nose: '#EDB98A', shirt: '#FF7A2F', pants: '#2C3E8C', dress: '#3D8BFF', suit: '#3D8BFF', socks: '#3D8BFF', item: '#E8384F', shoe: '#3D8BFF', hat: '#3D8BFF', glasses: '#3D8BFF' }; let partNow = 'shirt';
 const apply = (part, c) => { picked[part] = c; recolour(part, c); if (part === 'shirt' || part === 'dress') chestName(); };
 const iconButton = (src, label) => { const b = document.createElement('button'), i = new Image(); i.src = src; i.alt = ''; i.onerror = () => i.remove();
   const s = document.createElement('span'); s.textContent = tr(label); b.append(i, s); return b; };
@@ -770,7 +770,7 @@ for (const el of Object.values(S)) el.addEventListener('input', () => { paintTra
 // (the tabs in the app's three groups: the body and face, the clothes, the rest)
 const groups = [0, 1, 2].map(() => document.getElementById('parts').appendChild(Object.assign(document.createElement('div'), { className: 'tabgroup' })));
 for (const [part, name, icon] of CHOICES) { const b = iconButton(`ikoner/${icon}.png`, name); b.dataset.part = part; b.onclick = () => tapTab(part, () => lookFor(part));
-  groups[['shirt', 'pants', 'dress', 'socks', 'shoe', 'hat', 'glasses'].includes(part) ? 1 : ['item', 'name', 'bg'].includes(part) ? 2 : 0].append(b); }
+  groups[['shirt', 'pants', 'dress', 'suit', 'socks', 'shoe', 'hat', 'glasses'].includes(part) ? 1 : ['item', 'name', 'bg'].includes(part) ? 2 : 0].append(b); }
 document.getElementById('parts').append(document.getElementById('moves'), document.getElementById('games')); document.getElementById('parts').prepend(document.getElementById('saving'));
 showSwatches();
 
@@ -1159,6 +1159,9 @@ const MOUTHS = [['mund-smil', 'Smil', { mid: [-.036, .0685], hw: .27, open: [0, 
   ['mund-o', 'Åh', { o: 1, ow: [.095, .082, .045], solid: true, lipTint: .42, lipH: [.05], inside: true, tongueIn: { w: .08, h: .028, d: .1, y: .022, z: .115 } }], ['mund-kys', 'Kys', { kiss: 1.25, kw: [.14, .105, .125], solid: true, closed: true, lipH: [.042] }],
   ['mund-trist', 'Trist', { mid: [.05, -.1], hw: .28, open: [0, 0], lip: [.044, .056], round: .3, closed: true, even: true, solid: true, lipTint: .28, lip3d: [.036, .062], lipH: [.022, .036] }]];
 let mouthNow = 'mund-smil';
+// (with the snorkel on, the mouth is shown round and open about its mouthpiece, whichever mouth is chosen - the user,
+// 11-11-2026; the choice itself is kept, and comes back when the snorkel is taken off)
+let snorkelOn = false; const mouthLook = () => snorkelOn ? 'mund-o' : mouthNow;
 function setMouth(name) { mouthNow = name; redrawBody(); renderStyles(); }
 function setupMouth(place) {
   const s = tex.src, w = tex.w, h = tex.h, ys = []; let mw = 0;
@@ -1190,7 +1193,7 @@ function smoothLight(a, stride, at) {
   return out; }
 // (the chosen mouth, drawn into the body's colour picture as it is redrawn: o its pixels)
 function drawMouth(o) {
-  const M = tex.mouth, opts = (MOUTHS.find(m => m[0] === mouthNow) || [])[2]; if (!M || !opts) return;
+  const M = tex.mouth, opts = (MOUTHS.find(m => m[0] === mouthLook()) || [])[2]; if (!M || !opts) return;
   // (Smil's own line left as it is; Tunge's drawn crisper along it, thin and dark as in the user's picture)
   if (opts.keep) { if (opts.pout) for (let j = 0; j < M.texels.length; j += 4) { const i = M.texels[j] * 4, u = M.texels[j + 1] / opts.hw, a = .75 * Math.max(0, Math.min(1, (1 - Math.abs(u)) / .15)) * Math.max(0, Math.min(1, (.0065 - Math.abs(M.texels[j + 2] - (M.my + opts.mid[0] + opts.mid[1] * u * u))) / .004)); if (a > 0) { o[i] = o[i] * (1 - a) + 92 * a; o[i + 1] = o[i + 1] * (1 - a) + 48 * a; o[i + 2] = o[i + 2] * (1 - a) + 38 * a; } } return; }
   const T = M.texels, skin = tex.colours[PARTS.skin] || tex.skin, edge = .007;
@@ -1471,7 +1474,7 @@ function recolour(part, hexColour) {
   if (part === 'socks') return paintSocks(); if (part === 'item') return paintItem();
   // (all the shoes, the ones not on too: back in the high heels after the sneakers had a new colour, they had the old one)
   if (part === 'shoe' && typeof GARMENTS !== 'undefined') { paintSocks(); paintHeels(); recolourHair(hexColour, GARMENTS.shoe.texs); return; }
-  if (part === 'hair') recolourHair(hexColour); if (typeof GARMENTS !== 'undefined' && GARMENTS[part]) recolourHair(hexColour, GARMENTS[part].texs);
+  if (part === 'hair') recolourHair(hexColour); if (typeof GARMENTS !== 'undefined' && GARMENTS[part]) recolourHair(hexColour, GARMENTS[part].texs); if (part === 'suit' && gearTexs) recolourHair(hexColour, gearTexs); // (the goggles and snorkel in the suit's colour: one tab, one colour)
   // (the picked colour read straight from its #rrggbb code: a THREE.Color would hold it in linear light, too dark here)
   if (!tex) return; const n = parseInt(hexColour.slice(1), 16); tex.colours[PARTS[part]] = { r: (n >> 16 & 255) / 255, g: (n >> 8 & 255) / 255, b: (n & 255) / 255 };
   // (the brows follow the hair's colour until they are given their own)
@@ -1483,12 +1486,12 @@ function recolour(part, hexColour) {
 // ---- A mouth of real 3D parts (opts.solid; Tunge and Smil so far - the painted ones looked flat close up, the user 05-11-2026):
 // a hole in the skin's picture where it opens, a dark hollow behind, lips, teeth and tongue - all held by the head bone,
 // and the face's own shape left alone (moving its points looked awful from the side) ----
-function solidMouth() { const M = tex && tex.mouth; if (!M || !M.pos || !hairBase) return; const opts = (MOUTHS.find(m => m[0] === mouthNow) || [])[2] || {};
+function solidMouth() { const M = tex && tex.mouth; if (!M || !M.pos || !hairBase) return; const opts = (MOUTHS.find(m => m[0] === mouthLook()) || [])[2] || {};
   if (M.solid) for (const m of M.solid) m.visible = false;
   if (!opts.solid) return;
   // (each mouth's parts kept once built: changing back and forth shows only that mouth's)
-  M.solidBy = M.solidBy || {}; if (!M.solidBy[mouthNow]) { const from = M.solid ? M.solid.length : 0; buildSolid(M, opts); M.solidBy[mouthNow] = { parts: M.solid.slice(from), lipT: M.lipT }; }
-  const S = M.solidBy[mouthNow]; M.lipT = S.lipT; colourLips(M, opts); for (const m of S.parts) m.visible = true; }
+  M.solidBy = M.solidBy || {}; if (!M.solidBy[mouthLook()]) { const from = M.solid ? M.solid.length : 0; buildSolid(M, opts); M.solidBy[mouthLook()] = { parts: M.solid.slice(from), lipT: M.lipT }; }
+  const S = M.solidBy[mouthLook()]; M.lipT = S.lipT; colourLips(M, opts); for (const m of S.parts) m.visible = true; }
 function faceHeight(M) { if (M.fz) return M.fz; const P = M.body.geometry.attributes.position.array, ap = M.apart, tris = [];
   for (let k = 0; k < P.length; k += 9) { const q = [0, 3, 6].map(o => [(P[k + o] - M.cx) / ap, (P[k + o + 1] - M.cy) / ap, (P[k + o + 2])]);
     if (Math.max(...q.map(v => Math.abs(v[0]))) > .8 || Math.min(...q.map(v => v[1])) > M.my + .6 || Math.max(...q.map(v => v[1])) < M.my - .6) continue;
@@ -1601,7 +1604,7 @@ function redrawBody() {
   matchThighs(o); drawEyes(o); drawMouth(o); drawPynt(o); drawNose(o); drawBrows(o); tex.ctx.putImageData(out, 0, 0); tex.texture.needsUpdate = true; smoothUnder(); thighLight(); shapeNose(); mouthNormals(); bulgeLips(); solidMouth(); }
 // (the smile's crease lit smooth under a new mouth, as it was under the smile - after shapeNose, whose area reaches
 // down over the upper lip and put the crease's light back there)
-function mouthNormals() { const M = tex && tex.mouth, opts = (MOUTHS.find(m => m[0] === mouthNow) || [])[2]; if (!M || !M.verts || !hairBase) return;
+function mouthNormals() { const M = tex && tex.mouth, opts = (MOUTHS.find(m => m[0] === mouthLook()) || [])[2]; if (!M || !M.verts || !hairBase) return;
   const A = hairBase.body.geometry.attributes.normal, V = M.verts, v = new THREE.Vector3(), s = new THREE.Vector3(), y0 = tex.nose ? tex.nose.tipY - .09 : Infinity;
   // (fading out upwards, from just under the nose: right up to the oval's edge it evened out the nose's own shape, so
   // the nose went flat over Grin, Åh, Kys and Trist, with a dark edge across the cheeks, the user 06-11-2026)
@@ -1611,7 +1614,7 @@ function mouthNormals() { const M = tex && tex.mouth, opts = (MOUTHS.find(m => m
 // lip come out, in eyes' distances) - only the lips: each point moved straight out by a soft hump over the lip's
 // middle line that fades smoothly into the skin round it, so no edge shows from the side. Nothing else of the face is
 // moved, and the nose's points are left alone. Painted flat, the mouth showed no lips seen from the side)
-function bulgeLips() { const M = tex && tex.mouth; if (!M || !M.pos) return; const opts = (MOUTHS.find(m => m[0] === mouthNow) || [])[2] || {};
+function bulgeLips() { const M = tex && tex.mouth; if (!M || !M.pos) return; const opts = (MOUTHS.find(m => m[0] === mouthLook()) || [])[2] || {};
   if (!M.inNose) M.inNose = new Set(tex.nose ? tex.nose.idx : []);
   const A = M.body.geometry.attributes.position, V = M.verts, ap = M.apart, b = opts.bulge;
   for (let j = 0, m = 0; j < V.length; j += 2, m += 3) { const i = V[j]; if (M.inNose.has(i)) continue; let dz = 0;
@@ -2051,6 +2054,11 @@ async function loadHair(name, list = hairTexs, colourPart = 'hair', extra = {}) 
   body.parent.add(hair); hair.bind(body.skeleton, body.bindMatrix); scalpCap(hair, g, W, earLines, apart, eyeY); if (picked[colourPart]) recolourHair(picked[colourPart], list); return hair; }
 var styleLists = () => ({ hair: [HAIRS, hairNow, setHair], eyes: [EYES, eyesNow, setEyes], brows: [BROWS, browsNow, setBrows], mouth: [MOUTHS, mouthNow, setMouth], pynt: [PYNT, pyntNow.map(k => 'pynt-' + k), setPynt], nose: [NOSES, noseNow, setNose], item: [ITEMS, itemNow, n => { petPick = false; setItem(n); showSwatches(); }, [PETS, petNow, n => { petPick = true; setPet(n); showSwatches(); }, 'dyr', petNow ? PET_TOYS_LIST() : null]], bg: [BGS, bgNow, setBg], ears: [EARS, earsNow, setEars, [EARRINGS, earringsNow, setEarrings, 'oerering']],
   ...Object.fromEntries(Object.entries(GARMENTS).map(([part, G]) => [part, [G.items, G.now, n => setGarment(part, n)]])),
+  // (Udstyr - the user, 11-11-2026: suits and gear in one tab. The suits above, the goggles and snorkel in a row under
+  // them - taken out of Briller; what is chosen here is what the figure puts on by itself for the game, see dressFor)
+  glasses: [GARMENTS.glasses.items.filter(i => !i[2]?.goggles), GARMENTS.glasses.now, n => setGarment('glasses', n)],
+  suit: [GARMENTS.suit.items, GARMENTS.suit.now, n => { gearPick('suit', n); setGarment('suit', n); },
+    [[['', 'Ingen svømmebriller'], ...GARMENTS.glasses.items.filter(i => i[2]?.goggles)], isGear(GARMENTS.glasses.now) ? GARMENTS.glasses.now : '', n => { gearPick('glasses', n); if (n || isGear(GARMENTS.glasses.now)) setGarment('glasses', n); }, 'udstyr']],
   ...Object.fromEntries(Object.entries(MOVES).map(([g, list]) => ['move-' + g, [list, moveNow[g], playMove]])), 'game-hop': gameList() });
 // (a style being fetched is fetched once: two taps on it made two heads of hair, and the first stayed on for good. One
 // that cannot come - no internet the first time - is tried again the next time it is chosen)
@@ -2058,7 +2066,7 @@ const hairLoads = {};
 async function setHair(name) {
   hairNow = name; renderStyles();
   if (name && !hairMeshes[name]) { hairMeshes[name] = await (hairLoads[name] ??= loadHair(name).catch(() => null)); if (!hairMeshes[name]) { delete hairLoads[name]; toast(NO_NET); } }
-  for (const [n, m] of Object.entries(hairMeshes)) if (m) m.visible = n === hairNow; hatHair(); }
+  for (const [n, m] of Object.entries(hairMeshes)) if (m) m.visible = n === hairNow; hatHair(); regoggle(); }
 // (a crown set on what is under it - the hair, or the bald head - its lowest ring sunk into it by sink eyes' distances:
 // one height for all, it hung in the air over the bald head and the braids and sank into the bob)
 function restHat(hat, hair, sink) {
@@ -2212,6 +2220,10 @@ const GARMENTS = {
   pants: { items: [['', 'Undershorts'], ['bukser-trusser', 'Trusser', { made: true, hem: .41, brief: .07, under: .012, rise: .012, noBand: true, white: true }], ['bukser-lange', 'Lange bukser', { made: true, hem: .06, loose: .004, cuff: .014 }], ['bukser-shorts', 'Shorts', { made: true, hem: .3, cuff: .018 }],
     ['bukser-cowboy', 'Cowboyshorts', { made: true, hem: .24, cuff: .02, cloth: 'denim' }], ['bukser-fodbold', 'Fodboldbukser', { made: true, hem: .295, loose: .004, loops: false, cloth: 'smooth' }]], texs: [], waist: true },
   dress: { items: [['', 'Ingen kjole'], ['kjole-sommer', 'Sommerkjole'], ['kjole-prinsesse', 'Prinsessekjole', { hang: .5, armsOut: 12 }], ['kjole-havfrue', 'Havfruekjole', { skirt: false, margin: .012, reach: 8, tail: true, snug: .2, waist: .15 }]], texs: [], skirt: true, noArms: true },
+  // (suits, worn instead of a top and trousers - or a dress - as a dress is: the swimsuit and swim trunks for the swim
+  // world first; ski, space and motocross suits to come. The user, 11-11-2026. Made from the body, as the tops are)
+  suit: { items: [['', 'Ingen dragt'], ['dragt-bade', 'Badedragt', { made: true, swim: true, brief: .065, relief: 'bade', cloth: 'smooth', game: 'sea' }],
+    ['dragt-badebukser', 'Badebukser', { made: true, trunks: true, hem: .33, loose: .003, loops: false, cloth: 'smooth', game: 'sea' }]], texs: [] },
   // (socks made from the body too: low ones for sneakers, football socks with a stripe at the top, and knee socks)
   socks: { items: [['', 'Ingen strømper'], ['stroemper-ankel', 'Ankelstrømper', { made: true, top: .045, cloth: 'knit' }],
     // (ordinary socks, halfway between the ankle socks and the football socks - the user, 11-11-2026)
@@ -2225,37 +2237,158 @@ const GARMENTS = {
   hat: { items: [['', 'Ingen hat'], ['hat-kasket', 'Kasket', { grow: 1.12, lift: .1, cap: true }], ['hat-krone', 'Krone', { grow: 1.05, rest: .12 }], ['hat-kanin', 'Kaninører', { grow: 1.12, lift: .3, wrap: .03, ears: .45, thin: .35, scalp: true, flat: .3 }],
     ['hat-sloejfe', 'Sløjfe', { grow: 1.05, lift: .35, move: .02, size: .75 }]], texs: [], head: true },
   glasses: { items: [['', 'Ingen briller'], ['briller-runde', 'Runde', { fwd: .12 }], ['briller-sol', 'Solbriller', { pale: .7, lens: .1, dark: true, cap: 1.15 }],
-    ['briller-hjerte', 'Hjerte', { lens: .1, fwd: .1, cap: 1.15 }], ['briller-stjerne', 'Stjerne', { lens: .1, cap: 1.15 }]], texs: [], head: true } };
+    ['briller-hjerte', 'Hjerte', { lens: .1, fwd: .1, cap: 1.15 }], ['briller-stjerne', 'Stjerne', { lens: .1, cap: 1.15 }],
+    // (for the swim world: swim goggles, and the same with a snorkel - made here, see makeGoggles. The user, 11-11-2026)
+    ['briller-svoemme', 'Svømmebriller', { goggles: true, game: 'sea' }], ['briller-snorkel', 'Snorkel', { goggles: true, snorkel: true, game: 'sea' }]], texs: [], head: true } };
 // (now: what is chosen, shown: what the figure has on - the same once all of it is loaded)
 for (const G of Object.values(GARMENTS)) { G.now = G.shown = ''; G.meshes = {}; G.loading = {}; }
+// (the figure dresses for a game by itself when it starts - the user, 11-11-2026: the gear made for that game, the one
+// chosen under Udstyr or else a first choice, put on in place of what it wore; gear made for another game taken off. When
+// the game stops it is dressed again as it was before. game: the game a suit or a piece of gear is for)
+const isGear = n => !!GARMENTS.glasses.items.find(i => i[0] === n)?.[2]?.goggles;
+const gearOf = () => { try { return playerNow().gear ??= {}; } catch (e) { return {}; } }, gearPick = (k, n) => { try { gearOf()[k] = n; savePlayers(); } catch (e) {} };
+const wearSnap = () => ({ now: Object.fromEntries(Object.entries(GARMENTS).map(([p, g]) => [p, g.now])), sb: GARMENTS.suit.before, db: GARMENTS.dress.before });
+function wearBack(w) { if (!w || Object.entries(w.now).every(([p, n]) => GARMENTS[p].now === n)) return; for (const [p, n] of Object.entries(w.now)) GARMENTS[p].now = n; GARMENTS.suit.before = w.sb; GARMENTS.dress.before = w.db; setGarment('socks', GARMENTS.socks.now); }
+function dressFor(mode) { const pick = gearOf();
+  for (const [part, first] of [['suit', () => GARMENTS.dress.now || /flet/.test(hairNow) ? 'dragt-bade' : 'dragt-badebukser'], ['glasses', () => 'briller-svoemme']]) { const G = GARMENTS[part], mine = G.items.filter(i => i[2]?.game === mode && owns(i[0])), on = G.items.find(i => i[0] === G.now)?.[2]?.game;
+    if (mine.length) { if (on !== mode) setGarment(part, mine.find(i => i[0] === pick[part])?.[0] || mine.find(i => i[0] === first())?.[0] || mine[0][0]); } else if (on) setGarment(part, ''); } }
 let dressing = 0; const NO_NET = 'Det kan ikke hentes lige nu 📶';
 async function setGarment(part, name) { const G = GARMENTS[part], ask = ++dressing;
   // (a dress is worn instead of a top and trousers, and the other way round; taking the dress off puts back the top and
   // trousers worn before it - the white vest came back instead)
-  if (name && part === 'dress') { if (!G.now) G.before = { shirt: GARMENTS.shirt.now, pants: GARMENTS.pants.now }; GARMENTS.shirt.now = GARMENTS.pants.now = ''; }
+  // (a suit the same way, instead of the top and trousers or the dress)
+  const S = GARMENTS.suit;
+  if (name && part === 'suit') { if (!G.now) G.before = GARMENTS.dress.now ? { dress: GARMENTS.dress.now } : { shirt: GARMENTS.shirt.now, pants: GARMENTS.pants.now }; GARMENTS.shirt.now = GARMENTS.pants.now = GARMENTS.dress.now = ''; }
+  if (!name && part === 'suit' && G.now && G.before) { for (const [p, n] of Object.entries(G.before)) GARMENTS[p].now = n; }
+  if (name && part === 'dress') { if (!G.now) G.before = S.now && S.before ? { shirt: S.before.shirt || '', pants: S.before.pants || '' } : { shirt: GARMENTS.shirt.now, pants: GARMENTS.pants.now }; GARMENTS.shirt.now = GARMENTS.pants.now = ''; }
   if (!name && part === 'dress' && G.now && G.before) { GARMENTS.shirt.now = G.before.shirt; GARMENTS.pants.now = G.before.pants; }
   if (name && (part === 'shirt' || part === 'pants')) GARMENTS.dress.now = '';
+  if (name && part !== 'suit' && ['shirt', 'pants', 'dress'].includes(part)) { S.now = ''; S.before = null; }
   G.now = name; briefsOn = GARMENTS.pants.now === 'bukser-trusser'; if (part === 'pants') showSwatches(); else renderStyles();
   // (everything changed at once, when all of it is loaded - the underwear went skin coloured and the last dress stayed on
   // while a new one loaded; a choice made meanwhile wins)
   for (const [p, g] of Object.entries(GARMENTS)) if (g.now && !g.meshes[g.now]) { const n = g.now;
-    g.loading[n] ??= g.head ? loadHair(n, g.texs, p, g.items.find(i => i[0] === n)?.[2] || {})
+    g.loading[n] ??= g.items.find(i => i[0] === n)?.[2]?.goggles ? Promise.resolve(makeGoggles(n, p, g.items.find(i => i[0] === n)[2])) : g.head ? loadHair(n, g.texs, p, g.items.find(i => i[0] === n)?.[2] || {})
       : g.items.find(i => i[0] === n)?.[2]?.made ? Promise.resolve(makeCloth(n, p, g.items.find(i => i[0] === n)[2])) : loadCloth(n, p);
     // (one that cannot come - no internet the first time - holds nothing else up, and is tried again the next time)
     g.meshes[n] = await g.loading[n].catch(() => null); if (!g.meshes[n]) { delete g.loading[n]; if (p === part && ask === dressing) toast(NO_NET); } }
   if (ask !== dressing) return;
   for (const g of Object.values(GARMENTS)) g.shown = g.now;
-  const shirt = !!(GARMENTS.dress.now || GARMENTS.shirt.now), pants = !!(GARMENTS.dress.now || GARMENTS.pants.now);
+  { const sn = !!GARMENTS.glasses.items.find(i => i[0] === GARMENTS.glasses.shown)?.[2]?.snorkel; if (sn !== snorkelOn) { snorkelOn = sn; redrawBody(); } }
+  const shirt = !!(GARMENTS.dress.now || GARMENTS.shirt.now || GARMENTS.suit.now), pants = !!(GARMENTS.dress.now || GARMENTS.pants.now || GARMENTS.suit.now);
   if (tex && (!!tex.covered[PARTS.shirt] !== shirt || !!tex.covered[PARTS.pants] !== pants)) { tex.covered = { [PARTS.shirt]: shirt, [PARTS.pants]: pants }; redrawBody(); }
   for (const g of Object.values(GARMENTS)) for (const [n, m] of Object.entries(g.meshes)) if (m) m.visible = n === g.shown;
   wearUnder(); hideBody(); layer(); hatHair(); chestName(); }
+// (swim goggles after the user's picture, 11-11-2026: two rounded glasses, each a thin sharp-edged frame in front and a
+// soft clear rim behind it down on to the face, lying on its curves, a short bridge between them, and small clips at
+// their outer ends holding the strap - a thin flat band going up over the ears and round the back of the head, outside
+// the hair. The snorkel a tube from a clear mouthpiece in the mouth - shown open round it, see mouthLook - out to the
+// left, up the cheek outside the goggles, clipped on to the strap, and up well past the head, bending back at its top.
+// All of it on the head, as hair is, in the glasses' colour. Made anew when the hair changes - see regoggle)
+var gearTexs = [];
+function makeGoggles(name, part, opts) { if (!hairBase?.whole) return null;
+  const G = GARMENTS[part], [L, R] = hairBase.eyes, a = L.distanceTo(R), eyeY = (L.y + R.y) / 2, pts = hairBase.whole.pts, mid = (L.x + R.x) / 2, V = (x, y, z) => new THREE.Vector3(x, y, z);
+  // (the face near the eyes and mouth in little squares: how far forward it comes in each)
+  const cell = .04 * a, front = new Map(), head = [];
+  for (let j = 0; j < pts.length; j += 6) { const x = pts[j], y = pts[j + 1]; if (y > eyeY - .3 * a && Math.abs(x - mid) < 2.5 * a) head.push(x, y, pts[j + 2]);
+    if (Math.abs(y - eyeY + .3 * a) > 1.1 * a || Math.abs(x - mid) > 1.6 * a) continue; const k = `${Math.floor(x / cell)},${Math.floor(y / cell)}`; if (!(front.get(k) >= pts[j + 2])) front.set(k, pts[j + 2]); }
+  const faceZ = (x, y) => { let z = -Infinity; for (let r = 1; r < 6 && z === -Infinity; r++) for (let dx = -r; dx <= r; dx++) for (let dy = -r; dy <= r; dy++) { const v = front.get(`${Math.floor(x / cell) + dx},${Math.floor(y / cell) + dy}`); if (v > z) z = v; } return z; };
+  let cz = 0, cn = 0; for (let j = 0; j < head.length; j += 3) if (Math.abs(head[j + 1] - eyeY) < .1 * a) { cz += head[j + 2]; cn++; } cz /= cn;
+  // (the hair on now, as it lies on the figure: the strap goes outside it)
+  const hair = hairNow && hairMeshes[hairNow], hpts = []; if (hair) { const M = hairBase.whole.inv.clone().invert(), Q = hair.geometry.attributes.position, v = new THREE.Vector3(); for (let i = 0; i < Q.count; i++) { v.fromBufferAttribute(Q, i).applyMatrix4(M); if (v.y > eyeY - .3 * a) hpts.push(v.x, v.y, v.z); } }
+  // (how far out the head - and most of the hair - comes, seen from its middle, in a direction round it and at a height)
+  const far = (ang, y) => { let r = 0; const rs = [];
+    for (const [list, own] of [[head, true], [hpts, false]]) for (let j = 0; j < list.length; j += 3) { if (Math.abs(list[j + 1] - y) > .07 * a) continue; const dx = list[j] - mid, dz = list[j + 2] - cz; let d = Math.atan2(dx, dz) - ang; d -= Math.round(d / (2 * Math.PI)) * 2 * Math.PI; if (Math.abs(d) > .09) continue;
+      const q = Math.hypot(dx, dz); if (own) r = Math.max(r, q); else rs.push(q); }
+    if (rs.length) { rs.sort((p, q) => p - q); r = Math.max(r, rs[Math.floor(rs.length * .7)]); } return r; };
+  const frames = [], clear = [], glass = [], put = (list, geo) => list.push(geo.index ? geo.toNonIndexed() : geo);
+  // (a band between two rings of points; its corners not shared, so each of its faces is lit flat and its edges stand sharp)
+  const band = (A, B, shut = true, smooth = false) => { if (smooth) { const n = A.length, g = new THREE.BufferGeometry(), ix = []; g.setAttribute('position', new THREE.Float32BufferAttribute([...A, ...B].flatMap(q => q.toArray()), 3));
+      for (let k = 0; k < n; k++) { const k2 = (k + 1) % n; ix.push(k, n + k, n + k2, k, n + k2, k2); } g.setIndex(ix); g.computeVertexNormals(); return g.toNonIndexed(); }
+    const n = A.length, P = []; for (let k = 0; k < (shut ? n : n - 1); k++) { const k2 = (k + 1) % n; P.push(...A[k].toArray(), ...B[k].toArray(), ...B[k2].toArray(), ...A[k].toArray(), ...B[k2].toArray(), ...A[k2].toArray()); }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.computeVertexNormals(); return g; };
+  // (the size of the first ones made - the user: the wide ones were too big)
+  // (FL: the clear rim that much wider down at the face than at the frame, a soft bell - the user's pictures)
+  const rx = .35 * a, ry = .3 * a, depth = .15 * a, FL = 1.16, NS = 72, sq = (c, p) => Math.sign(c) * Math.abs(c) ** p, cups = [];
+  for (const e of [L, R]) { const s = Math.sign(e.x - mid), c = V(e.x + s * .01 * a, e.y + .01 * a, 0);
+    // (the outline: nearly round, a little wider than high; each point's place on the face, evened out round it)
+    const back = [], fwd = [];
+    for (let k = 0; k < NS; k++) { const t = k / NS * 2 * Math.PI, x = c.x + FL * rx * sq(Math.cos(t), .88), y = c.y + FL * ry * sq(Math.sin(t), .88); back.push(V(x, y, faceZ(x, y) - .01 * a)); }
+    for (let it = 0; it < 4; it++) { const z = back.map(p => p.z); back.forEach((p, k) => { p.z = (z[(k + NS - 1) % NS] + 2 * z[k] + z[(k + 1) % NS]) / 4; }); }
+    // (the frame's front: as far out as the face comes inside it, plus the rim's depth, tilted back a little at the outer end)
+    let zf = -Infinity; for (let i = -4; i <= 4; i++) for (let j = -3; j <= 3; j++) zf = Math.max(zf, faceZ(c.x + i * rx / 4.5, c.y + j * ry / 3.5));
+    for (const p of back) { const u = (p.x - c.x) / rx * s; fwd.push(V(c.x + (p.x - c.x) * .97 / FL, c.y + (p.y - c.y) * .97 / FL, Math.max(p.z + .05 * a, zf + depth * .5 - .1 * a * Math.max(0, u)))); }
+    // (the clear rim smooth all round, so the light glints on it, and a thin bead along its edge on the face, so it
+    // stands clear of the skin - the user, 11-11-2026: the clear parts crisper)
+    put(clear, band(back, fwd, true, true)); put(clear, new THREE.TubeGeometry(new THREE.CatmullRomCurve3(back.map(q => q.clone().add(V(0, 0, .012 * a))), true), NS * 2, .013 * a, 6, true));
+    // (the frame: thin, its sides square to its front - a flat front, an outer and an inner wall - so its edges are crisp;
+    // the user: much thinner than the thick round one, and sharper)
+    const sc = (p, k, dz) => V(c.x + (p.x - c.x) * k, c.y + (p.y - c.y) * k, p.z + dz), th = .045 * a;
+    const oB = fwd.map(p => sc(p, 1.015, 0)), oF = fwd.map(p => sc(p, 1.015, th)), iF = fwd.map(p => sc(p, .9, th)), iB = fwd.map(p => sc(p, .9, 0));
+    put(frames, band(oB, oF)); put(frames, band(oF, iF)); put(frames, band(iF, iB));
+    // (the glass, gently domed, set a little into the frame)
+    const rimG = fwd.map(p => sc(p, .9, th * .5)), ctr = rimG.reduce((m, p) => m.add(p), V(0, 0, 0)).divideScalar(NS).add(V(0, 0, .03 * a)), GP = [];
+    for (let k = 0; k < NS; k++) GP.push(...ctr.toArray(), ...rimG[k].toArray(), ...rimG[(k + 1) % NS].toArray());
+    const gg = new THREE.BufferGeometry(); gg.setAttribute('position', new THREE.Float32BufferAttribute(GP, 3)); gg.computeVertexNormals(); put(glass, gg);
+    cups.push({ s, c, inEnd: sc(fwd[NS / 2 * (s > 0 ? 1 : 0)], 1, th * .5), outEnd: sc(fwd[NS / 2 * (s > 0 ? 0 : 1)], 1, th * .5) }); }
+  cups.sort((p, q) => p.s - q.s); const [A, B] = cups;
+  // (the bridge: short, low over the nose)
+  put(frames, new THREE.TubeGeometry(new THREE.CatmullRomCurve3([A.inEnd, V(mid, A.c.y - .02 * a, Math.max(A.inEnd.z, B.inEnd.z) + .01 * a), B.inEnd]), 12, .035 * a, 8, false));
+  // (small clips at the outer ends)
+  const clipAt = cp => cp.outEnd.clone().add(V(cp.s * .06 * a, 0, -.04 * a));
+  for (const cp of [A, B]) { const g = new THREE.BoxGeometry(.09 * a, .15 * a, .08 * a), p = clipAt(cp); g.translate(p.x, p.y, p.z); put(frames, g); }
+  // (the strap: a thin flat band from each clip back and up over the ear, then level round the back of the head, lying
+  // on the hair - the user: not across the ears, and thin as a band, not a thick round sausage)
+  const up = (opts.strapUp ?? .5) * a, sw = .07 * a, angOf = p => Math.atan2(p.x - mid, p.z - cz), ease = v => { v = Math.min(1, Math.max(0, v)); return v * v * (3 - 2 * v); };
+  const pB = clipAt(B), pA = clipAt(A), a0 = angOf(pB), a1 = angOf(pA) + 2 * Math.PI, N = 44, line = [pB];
+  for (let k = 1; k < N; k++) { const ang = a0 + (a1 - a0) * k / N, y = eyeY + up * ease(Math.min(ang - a0, a1 - ang) / .75), r = far(ang, y) + .025 * a; line.push(V(mid + Math.sin(ang) * r, y, cz + Math.cos(ang) * r)); }
+  line.push(pA);
+  for (let it = 0; it < 2; it++) { const was = line.map(p => p.clone()); for (let k = 2; k < line.length - 2; k++) line[k].copy(was[k - 1]).add(was[k + 1]).addScaledVector(was[k], 2).multiplyScalar(.25); }
+  { const curve = new THREE.CatmullRomCurve3(line), SN = 160, lo = [], hi = [], lo2 = [], hi2 = [], t = new THREE.Vector3();
+    for (let k = 0; k <= SN; k++) { const p = curve.getPointAt(k / SN); curve.getTangentAt(k / SN, t); const out = V(p.x - mid, 0, p.z - cz).normalize(), w = new THREE.Vector3().crossVectors(t, out).normalize().multiplyScalar(sw / 2);
+      lo.push(p.clone().sub(w)); hi.push(p.clone().add(w)); lo2.push(p.clone().sub(w).addScaledVector(out, .012 * a)); hi2.push(p.clone().add(w).addScaledVector(out, .012 * a)); }
+    put(frames, band(lo2, hi2, false)); put(frames, band(lo, lo2, false)); put(frames, band(hi2, hi, false)); }
+  if (opts.snorkel) { // (the mouth: where it is on the figure as made, from the mouth's own measures)
+    const M = typeof tex !== 'undefined' && tex?.mouth; let mouth = V(mid, eyeY - .6 * a, faceZ(mid, eyeY - .6 * a));
+    if (M?.pos) { mouth = V(M.cx, M.cy + M.my * M.apart, M.pos.reduce((m, v, j) => j % 3 === 2 ? Math.max(m, v) : m, -Infinity)).applyMatrix4(hairBase.headBack.clone().invert()); }
+    const mouthY = mouth.y + (opts.mouthUp ?? 0) * a, fz = mouth.z, mx = mouth.x, t = 1.15, sy = eyeY + up * ease((t - a0) / .75), tr = far(t, sy) + .14 * a, tx = Math.max(mid + Math.sin(t) * tr, B.outEnd.x + .2 * a), tz = cz + Math.cos(t) * tr;
+    // (a clear mouthpiece from inside the mouth straight out, bending to the side, where the blue tube takes over)
+    const m1 = V(mx + .34 * a, mouthY, fz + .1 * a);
+    put(clear, new THREE.TubeGeometry(new THREE.CatmullRomCurve3([V(mx, mouthY, fz - .12 * a), V(mx, mouthY, fz + .05 * a), V(mx + .12 * a, mouthY, fz + .12 * a), m1]), 24, (opts.bite ?? .07) * a, 14, false));
+    // (longer than at first - the user)
+    const path = [m1, V(mx + .7 * a, mouthY + .03 * a, fz + .02 * a), V(tx - .05 * a, mouthY + .3 * a, tz + .2 * a), V(tx, eyeY, tz + .05 * a), V(tx, eyeY + .9 * a, tz - .04 * a), V(tx - .03 * a, eyeY + 1.7 * a, tz - .12 * a), V(tx - .08 * a, eyeY + 2.2 * a, tz - .3 * a), V(tx - .12 * a, eyeY + 2.45 * a, tz - .55 * a)];
+    put(frames, new THREE.TubeGeometry(new THREE.CatmullRomCurve3(path), 140, .1 * a, 14, false));
+    // (its clip on the strap)
+    const cl = new THREE.BoxGeometry(.26 * a, .13 * a, .26 * a); cl.translate(tx, sy, tz + .02 * a); put(frames, cl); }
+  // (all of it one piece on the head bone, in the figure as it was made)
+  const mesh = (list, mat) => { let n = 0; for (const g of list) n += g.attributes.position.count; const P = new Float32Array(n * 3), Nn = new Float32Array(n * 3), U = new Float32Array(n * 2); let o = 0;
+    for (const g of list) { P.set(g.attributes.position.array, o * 3); Nn.set(g.attributes.normal.array, o * 3); if (g.attributes.uv) U.set(g.attributes.uv.array, o * 2); o += g.attributes.position.count; }
+    const g = new THREE.BufferGeometry(), pos = new THREE.BufferAttribute(P, 3), nr = new THREE.BufferAttribute(Nn, 3), v = new THREE.Vector3(), turn = new THREE.Matrix3().getNormalMatrix(hairBase.headBack);
+    for (let i = 0; i < n; i++) { v.fromBufferAttribute(pos, i).applyMatrix4(hairBase.headBack); pos.setXYZ(i, v.x, v.y, v.z); v.fromBufferAttribute(nr, i).applyMatrix3(turn).normalize(); nr.setXYZ(i, v.x, v.y, v.z); }
+    g.setAttribute('position', pos); g.setAttribute('normal', nr); g.setAttribute('uv', new THREE.BufferAttribute(U, 2));
+    const si = new Uint16Array(n * 4), sw = new Float32Array(n * 4); for (let i = 0; i < n; i++) { si[i * 4] = hairBase.head; sw[i * 4] = 1; }
+    g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(si, 4)); g.setAttribute('skinWeight', new THREE.Float32BufferAttribute(sw, 4));
+    const m = new THREE.SkinnedMesh(g, mat); m.castShadow = true; m.frustumCulled = false; return m; };
+  // (the colour picture: shiny plastic in the clothes' blue, coloured as they are)
+  const cv = document.createElement('canvas'); cv.width = cv.height = 64; const cx = cv.getContext('2d'); cx.fillStyle = '#2C48AA'; cx.fillRect(0, 0, 64, 64);
+  const body = hairBase.body, frame = mesh(frames, new THREE.MeshStandardMaterial({ map: setupHairTexture(cv, gearTexs), roughness: .22, metalness: 0, side: THREE.DoubleSide }));
+  frame.name = name; frame.position.copy(body.position); frame.quaternion.copy(body.quaternion); frame.scale.copy(body.scale); body.parent.add(frame); frame.bind(body.skeleton, body.bindMatrix);
+  // (the soft rims and mouthpiece clear with a faint tint, the glass clearer still - both drawn after the face)
+  const soft = mesh(clear, new THREE.MeshStandardMaterial({ color: 0xEAF3FF, transparent: true, opacity: .62, roughness: .06, metalness: 0, side: THREE.DoubleSide, depthWrite: false }));
+  const lens = mesh(glass, new THREE.MeshStandardMaterial({ color: 0xEAF6FF, transparent: true, opacity: .18, roughness: .05, metalness: 0, side: THREE.DoubleSide, depthWrite: false }));
+  for (const x of [soft, lens]) { frame.add(x); x.bind(body.skeleton, body.bindMatrix); }
+  if (picked.suit) recolourHair(picked.suit, gearTexs); return frame; }
+// (the goggles made anew for the hair now on: their strap lies on it)
+function regoggle() { const G = GARMENTS.glasses; let had = false;
+  for (const [n, , o] of G.items) if (o?.goggles && (G.meshes[n] || G.loading[n])) { const m = G.meshes[n]; if (m) { const i = gearTexs.findIndex(t => t.texture === m.material.map); if (i >= 0) gearTexs.splice(i, 1); m.parent?.remove(m); m.traverse(x => x.geometry?.dispose()); had = true; } delete G.meshes[n]; delete G.loading[n]; }
+  if (had && G.items.find(i => i[0] === G.now)?.[2]?.goggles) setGarment('glasses', G.now); }
 // (white briefs under a wide skirt, on their own - the user, 04-11-2026: in a roll or a breakdance one could see up the
 // dress, and there nothing was on: the underwear there is painted over in skin under a dress, the body close under it hidden)
 let underBriefs = null;
 function wearUnder() { const D = GARMENTS.dress, wide = !!D.shown && (D.items.find(i => i[0] === D.shown)?.[2]?.skirt ?? D.skirt);
   if (wide && !underBriefs) { const o = GARMENTS.pants.items.find(i => i[0] === 'bukser-trusser')[2]; underBriefs = makeCloth('bukser-trusser', 'pants', o);
     if (underBriefs) { underBriefs.material = new THREE.MeshStandardMaterial({ color: 0xF4F1EA, roughness: .85, side: THREE.DoubleSide }); underBriefs.name = 'under-dress'; } }
-  if (underBriefs) underBriefs.visible = wide; setSlim(wide || GARMENTS.pants.shown === 'bukser-trusser'); }
+  if (underBriefs) underBriefs.visible = wide; setSlim(wide || GARMENTS.pants.shown === 'bukser-trusser' || GARMENTS.suit.shown === 'dragt-bade'); }
 // (the thighs in their own shape: the figure was made wearing its shorts, so down to their hem the thighs are that much
 // thicker, with a step at the hem - it shows only where nothing covers them: with the briefs, or looking up a wide skirt.
 // Then each thigh is drawn in to a smooth line from the top of the thigh to the leg as it is just under the hem - the
@@ -2402,7 +2535,7 @@ function makeCloth(name, part, opts) {
   // after those had been on, the shorts had a hole there and only their hem and waistband showed)
   const G = GARMENTS[part], body = hairBase.body, geo = body.geometry, { pts, inv, H } = hairBase.whole, K = clothMarks();
   const bsi = geo.attributes.skinIndex, bsw = geo.attributes.skinWeight, bones = body.skeleton.bones, corners = geo.attributes.position.count;
-  const pants = part === 'pants', socks = part === 'socks' || (part === 'shoe' && opts.made), hipY = hairBase.hipY, top = hipY + (opts.rise ?? .06) * H, crotch = hipY - .06 * H, side = p => Math.abs(p[0] - K.mid), clamp = v => Math.min(1, Math.max(0, v));
+  const pants = part === 'pants' || !!opts.trunks, socks = part === 'socks' || (part === 'shoe' && opts.made), hipY = hairBase.hipY, top = hipY + (opts.rise ?? .06) * H, crotch = hipY - .06 * H, side = p => Math.abs(p[0] - K.mid), clamp = v => Math.min(1, Math.max(0, v));
   const arms = new Set(bones.flatMap((b, j) => /Arm|Hand/.test(b.name) ? [j] : [])), armPt = new Uint8Array(pts.length / 6);
   for (let j = 0; j < armPt.length; j++) { let a = 0; for (let c = 0; c < 4; c++) if (arms.has(bsi.getComponent(j, c))) a += bsw.getComponent(j, c); armPt[j] = a > .5; }
   // (its edges: f is under 0 inside; fold: the cloth turned up there, how far; bare: how far in from it the body stays -
@@ -2410,7 +2543,7 @@ function makeCloth(name, part, opts) {
   // so it cannot come through it anyway)
   // (and how far out from the body it lies at each point)
   // (level: below it the garment is put out sideways only, so its bottom edge stays straight)
-  let edges, out, level = Infinity, tuckIn = null;
+  let edges, out, level = Infinity, tuckIn = null, swimArm = Infinity;
   // (socks: the feet and legs up to their top - opts.top, in fractions of the height - close on the skin; stripe: a band
   // in the contrast colour that far below the top, [from, to])
   if (socks) { const top = opts.top * H; edges = [{ f: p => p[1] - top, bare: .008 * H }]; out = () => (opts.out || .0035) * H; }
@@ -2421,6 +2554,21 @@ function makeCloth(name, part, opts) {
     edges = [{ f: p => hemAt(p) - p[1], fold: (opts.cuff || 0) * H, bare: .012 * H }, { f: p => p[1] - top, bare: .003 * H }];
     // (loose: the legs that much further out all the way down, from just under the crotch - long trousers sat like tights)
     out = p => { const s = clamp((crotch - p[1]) / (crotch - hem)); return (.006 + (opts.flare || 0) * s * s + (opts.loose || 0) * clamp((crotch - p[1]) / (.06 * H))) * H; }; }
+  // (a swimsuit: close on the body from the leg openings, cut high over the hips, up to a scooped neck - lower at the
+  // front - and two straps over the shoulders, the arms bare. Edges softened where they meet, so its corners are round.
+  // The user, 11-11-2026)
+  // (front or back by the chest's middle, nearly at once: the relief knows only which side it is on)
+  else if (opts.swim) { const smin = (a, b, k) => (a + b - Math.hypot(a - b, k)) / 2, front = p => clamp((p[2] - K.cz) / (.02 * H) + .5);
+    const legCut = p => crotch - .004 * H + clamp(side(p) / (.1 * H)) * opts.brief * H - .012 * H * clamp(1 - side(p) / (.05 * H)) - p[1];
+    // (the neck a round U from strap to strap, deeper at the front)
+    const sc = K.nr + (opts.strapAt ?? .016) * H, sw = (opts.strap ?? .01) * H, armLo = K.neckY - (opts.arm ?? .1) * H; swimArm = armLo;
+    const neckLo = p => { const u = clamp(side(p) / (sc - sw)); return K.neckY - .01 * H - (.035 + .035 * front(p)) * H * (1 - u * u); };
+    // (the arms left out by their bones, as the trousers leave the hands: they hang down by the body, and cut off by how
+    // far out they are, the body's sides went too)
+    edges = [{ f: legCut, bare: .008 * H }, { f: p => smin(p[1] - neckLo(p), sc - sw - side(p), .02 * H), bare: .01 * H }, { f: p => smin(p[1] - armLo, side(p) - sc - sw, .025 * H), bare: .01 * H },
+      // (and nothing above the shoulders: the straps went on up the sides of the head, round the ears)
+      { f: p => p[1] - K.neckY - .02 * H, bare: .005 * H }];
+    level = -Infinity; out = () => (opts.out ?? .0035) * H; }
   // (tucked: a top's bottom inside the trousers - as long as a T-shirt, so with underpants only no tummy shows)
   else { const hem = hipY - (opts.length || 0) * H, sleeveX = K.shoulderX + opts.sleeve * (K.wristX - K.shoulderX); level = hem + .03 * H;
     // (the neck: round it, a little out from it, and below the bottom of it - lower at the front, with a V there for the
@@ -2477,7 +2625,7 @@ function makeCloth(name, part, opts) {
   // garment does not come apart where the body's colour picture has a seam)
   const ways = new Map(), spot = j => `${pts[j * 6]},${pts[j * 6 + 1]},${pts[j * 6 + 2]}`, tris = [], P3 = j => [pts[j * 6], pts[j * 6 + 1], pts[j * 6 + 2]];
   for (let c = 0; c < corners; c += 3) { const v = [c, c + 1, c + 2];
-    if (edges.some(e => v.every(j => e.f(P3(j)) > 0)) || (pants || socks) && v.some(j => armPt[j])) continue; tris.push(v);
+    if (edges.some(e => v.every(j => e.f(P3(j)) > 0)) || (pants || socks) && v.some(j => armPt[j]) || v.some(j => armPt[j] && pts[j * 6 + 1] < swimArm)) continue; tris.push(v);
     for (const j of v) { const k = spot(j), n = ways.get(k) || [0, 0, 0]; for (let e = 0; e < 3; e++) n[e] += pts[j * 6 + 3 + e]; ways.set(k, n); } }
   // (a corner: where it is, its way out, and the bones it follows; one of the body's, or one between two on a triangle's
   // side where an edge cuts it - the triangles cut there, so the edges are straight)
@@ -2547,6 +2695,12 @@ function makeCloth(name, part, opts) {
   if (opts.hood) { const k = Float32Array.from(list, c => Math.min(1, hood(c.p) * 3)), t2 = new Float32Array(m * 3);
     for (let it = 0; it < 8; it++) { t2.set(wp); for (let i = 0; i < m; i++) { if (!k[i] || nbs[i].length < 3) continue; let x = 0, y = 0, z = 0; for (const j of nbs[i]) { x += t2[j * 3]; y += t2[j * 3 + 1]; z += t2[j * 3 + 2]; } const q = nbs[i].length;
       wp[i * 3] += (x / q - wp[i * 3]) * k[i] * .6; wp[i * 3 + 1] += (y / q - wp[i * 3 + 1]) * k[i] * .6; wp[i * 3 + 2] += (z / q - wp[i * 3 + 2]) * k[i] * .6; } } }
+  // (a swimsuit evened out from the hips down, away from its edges, and only ever outwards: the shorts the figure was
+  // modelled in left a step at their top, a line round the hips and the bottom darker - the user, 11-11-2026)
+  if (opts.swim) { const k = Float32Array.from(list, c => (c.p[1] < hipY + .1 * H && edges.every(e => -e.f(c.p) > .012 * H)) ? 1 : 0), orig = wp.slice(), t2 = new Float32Array(m * 3);
+    for (let it = 0; it < 24; it++) { t2.set(wp); for (let i = 0; i < m; i++) { if (!k[i] || nbs[i].length < 3) continue; let x = 0, y = 0, z = 0; for (const j of nbs[i]) { x += t2[j * 3]; y += t2[j * 3 + 1]; z += t2[j * 3 + 2]; } const q = nbs[i].length;
+      for (const [e, v] of [x, y, z].entries()) wp[i * 3 + e] += (v / q - wp[i * 3 + e]) * .5;
+      const d = (wp[i * 3] - orig[i * 3]) * dir[i * 3] + (wp[i * 3 + 1] - orig[i * 3 + 1]) * dir[i * 3 + 1] + (wp[i * 3 + 2] - orig[i * 3 + 2]) * dir[i * 3 + 2]; if (d < 0) for (let e = 0; e < 3; e++) wp[i * 3 + e] -= d * dir[i * 3 + e]; } } }
   list.forEach((c, i) => { n.fromArray(dir, i * 3); w.fromArray(wp, i * 3); U.set([(w.x + w.z) * 3, w.y * 3], i * 2);
     // (shades: a pocket, and the trimmed edges)
     const rim = hood && opts.hood ? hood(c.p) : 0, shade = (pocket && opts.pocket && !opts.relief && pocket(c.p) ? .8 : 1) * (rim > 0 && rim < .1 ? .92 : 1) * (opts.hood && (b => b > HOOD_A0 && -edges[1].f(c.p) < hoodGap(b, H) - .002 * H)(Math.abs(Math.atan2(c.p[0] - K.mid, c.p[2] - K.nz))) ? .68 : 1) /* (the hood's inside: inside the rim only, ending where it ends - out past it, over the shoulders, it was too dark; the user, 11-11-2026) */ *(edges.some(e => e.trim && -e.f(c.p) < .018 * H) ? .55 : 1) * (c.fold !== undefined ? 1.45 : 1); C.set([shade, shade, shade], i * 3); // (the fold a lighter shade of the cloth)
@@ -2560,9 +2714,19 @@ function makeCloth(name, part, opts) {
     let mk = Float32Array.from(list, c => hood(c.p) > 0 ? 1 : 0); for (let it = 0; it < 3; it++) { const was = mk.slice(); for (let i = 0; i < m; i++) for (const j of nbs[i]) mk[i] = Math.max(mk[i], was[j] * .6); }
     for (let i = 0; i < m; i++) { const k = mk[i]; if (!k) continue; let x = GN[i * 3], y = GN[i * 3 + 1], z = GN[i * 3 + 2]; if (x * N[i * 3] + y * N[i * 3 + 1] + z * N[i * 3 + 2] < 0) { x = -x; y = -y; z = -z; }
       x = N[i * 3] + (x - N[i * 3]) * k; y = N[i * 3 + 1] + (y - N[i * 3 + 1]) * k; z = N[i * 3 + 2] + (z - N[i * 3 + 2]) * k; const l = Math.hypot(x, y, z) || 1; N.set([x / l, y / l, z / l], i * 3); } }
+  // (a swimsuit lit by its own shape all over, its slant evened out over its neighbours a few times: lit as the body under
+  // it, the shorts the figure was modelled in, its lower half came out darker than the top - the user, 11-11-2026)
+  if (opts.swim) { const g2 = new THREE.BufferGeometry(); g2.setAttribute('position', new THREE.BufferAttribute(P, 3)); g2.setIndex(tri); g2.computeVertexNormals(); let GN = g2.attributes.normal.array.slice();
+    for (let i = 0; i < m; i++) if (GN[i * 3] * N[i * 3] + GN[i * 3 + 1] * N[i * 3 + 1] + GN[i * 3 + 2] * N[i * 3 + 2] < 0) for (let e = 0; e < 3; e++) GN[i * 3 + e] *= -1;
+    for (let it = 0; it < 4; it++) { const was = GN.slice(); for (let i = 0; i < m; i++) { let x = was[i * 3] * 2, y = was[i * 3 + 1] * 2, z = was[i * 3 + 2] * 2; for (const j of nbs[i]) { x += was[j * 3]; y += was[j * 3 + 1]; z += was[j * 3 + 2]; } const l = Math.hypot(x, y, z) || 1; GN[i * 3] = x / l; GN[i * 3 + 1] = y / l; GN[i * 3 + 2] = z / l; } }
+    // (and from the tummy down lit as trousers are, facing straight out sideways: there the body curves in under, and the
+    // cloth faced down into the shade)
+    const back = inv.clone().invert(), q = new THREE.Vector3();
+    for (let i = 0; i < m; i++) { const f = clamp((hipY + .1 * H - list[i].p[1]) / (.08 * H)); if (!f) continue; q.fromArray(GN, i * 3).transformDirection(back); q.y *= 1 - .8 * f; q.normalize().transformDirection(inv); GN.set([q.x, q.y, q.z], i * 3); }
+    N.set(GN); }
   // (relief: seams, ribbing and folds - see clothRelief; the corners where its front and back meet, at the sides, taken
   // twice, so each triangle has its place all on the one or the other)
-  let rel = null; if (opts.relief) { rel = clothRelief(list, tri, K, H, level - .03 * H, K.shoulderX + opts.sleeve * (K.wristX - K.shoulderX), opts.hood ? hood : null, opts.pocket ? pocket : null, opts.relief === true ? 'haette' : opts.relief, edges[1].f, !!opts.tuck);
+  let rel = null; if (opts.relief) { rel = clothRelief(list, tri, K, H, level - .03 * H, K.shoulderX + (opts.sleeve || 0) * (K.wristX - K.shoulderX), opts.hood ? hood : null, opts.pocket ? pocket : null, opts.relief === true ? 'haette' : opts.relief, opts.swim ? p => Math.max(...edges.map(e => e.f(p))) : edges[1].f, !!opts.tuck);
     const ex = (A, k) => { if (!A) return A; const B = new A.constructor(rel.from.length * k); rel.from.forEach((o, i) => { for (let e = 0; e < k; e++) B[i * k + e] = A[o * k + e]; }); return B; };
     P = ex(P, 3); N = ex(N, 3); U = ex(U, 2); C = ex(C, 3); si = ex(si, 4); sw = ex(sw, 4); T = ex(T, 3); }
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(P, 3)); g.setAttribute('normal', new THREE.BufferAttribute(N, 3));
@@ -2588,9 +2752,9 @@ function makeCloth(name, part, opts) {
   body.parent.add(cloth); cloth.bind(body.skeleton, body.bindMatrix); if (picked[part]) recolourHair(picked[part], G.texs);
   if (socks) { cloth.userData.sock = opts; paintSocks(cloth); if (opts.heel) { cloth.material.roughness = .28; cloth.material.metalness = .05; } }
   if (opts.hood) hoodRim(cloth, list, wp, dir, edges[1].f, K, H, inv);
-  if (opts.relief && !opts.hood) neckBand(cloth, list, wp, dir, edges[1].f, K, H, inv, opts.trim ? .55 : 1);
+  if (opts.relief && !opts.hood && !opts.swim) neckBand(cloth, list, wp, dir, edges[1].f, K, H, inv, opts.trim ? .55 : 1);
   // (the body under it hidden, all but near its edges)
-  const covered = new Uint8Array(pts.length / 6); for (let j = 0; j < covered.length; j++) covered[j] = !((pants || socks) && armPt[j]) && edges.every(e => e.f(P3(j)) < -e.bare) ? 1 : 0;
+  const covered = new Uint8Array(pts.length / 6); for (let j = 0; j < covered.length; j++) covered[j] = !((pants || socks || pts[j * 6 + 1] < swimArm) && armPt[j]) && edges.every(e => e.f(P3(j)) < -e.bare) ? 1 : 0;
   // (white: always white, like the vest and the undershorts - the briefs)
   if (opts.white) cloth.material = new THREE.MeshStandardMaterial({ color: 0xF2EFE8, roughness: .85, metalness: 0, side: THREE.DoubleSide });
   cloth.userData.covered = covered; cloth.userData.made = true; cloth.userData.tucked = T; return cloth; }
@@ -2621,6 +2785,9 @@ function clothRelief(list, tri, K, H, hem, sleeveX, hood, pocket, kind = 'haette
   const segD = (x, y, [ax, ay, bx, by]) => { const dx = bx - ax, dy = by - ay, t = Math.min(1, Math.max(0, ((x - ax) * dx + (y - ay) * dy) / (dx * dx + dy * dy))); return [Math.hypot(x - ax - dx * t, y - ay - dy * t), t]; };
   for (let r = 0; r < R; r++) { const y = y0 + (1 - (r + .5) / R) * (y1 - y0);
     for (let c = 0; c < W; c++) { const s = c >= W / 2 ? 1 : 0, x = K.mid - X + ((c % (W / 2)) + .5) * sx, ax = Math.abs(x - K.mid), arm = ax > K.shoulderX; let v = 0;
+      // (a swimsuit: every edge finished with an elastic band, stitched twice a little in from it; nothing else - it
+      // lies close. neck is then all its edges as one, measured on the front or back)
+      if (kind === 'bade') { const d = -neck([x, y, s ? K.cz - .1 * H : K.cz + .1 * H]); v -= .22 * (groove(d - .007 * H, .001 * H) + groove(d - .0105 * H, .001 * H)) - .06 * ease((.011 * H - d) / (.003 * H)); h[r * W + c] = v * u; continue; }
       // (ribbed hem: fine ribs up and down, a seam along its top)
       // (as high as the cloth goes straight down - its kink there then reads as the band's seam)
       const hood1 = kind === 'haette', short = sleeveX < K.elbowX;
@@ -3257,7 +3424,7 @@ const figureNow = () => ({ picked: { ...picked }, hair: hairNow, eyes: eyesNow, 
   wear: Object.fromEntries(Object.entries(GARMENTS).map(([p, G]) => [p, G.now])), name: nameNow, badge: badgeNow, item: itemNow, pet: petNow, petToys: [...petToys], ears: earsNow, earrings: earringsNow, bg: bgNow });
 // (a part's own colour back: the figure's painted one, the hair's and the garments' as made)
 const unpaint = list => { for (const t of list) { const im = t.ctx.createImageData(t.w, t.h); im.data.set(t.src); t.ctx.putImageData(im, 0, 0); t.texture.needsUpdate = true; } };
-function unpick(part) { delete picked[part]; if (part === 'socks' || part === 'shoe') { paintSocks(); paintHeels(); } if (part === 'item') paintItem(); if (part === 'hair') unpaint(hairTexs); if (GARMENTS[part]) unpaint(GARMENTS[part].texs);
+function unpick(part) { delete picked[part]; if (part === 'socks' || part === 'shoe') { paintSocks(); paintHeels(); } if (part === 'item') paintItem(); if (part === 'hair') unpaint(hairTexs); if (GARMENTS[part]) unpaint(GARMENTS[part].texs); if (part === 'suit') unpaint(gearTexs);
   if (tex && PARTS[part]) { delete tex.colours[PARTS[part]]; if (part === 'hair' && !picked.brows) delete tex.colours[PARTS.brows]; if (part === 'brows' && picked.hair) tex.colours[PARTS.brows] = tex.colours[PARTS.hair]; } }
 let dressingUp = 0;
 async function wearFigure(f) { const ask = ++dressingUp;
@@ -3269,8 +3436,8 @@ async function wearFigure(f) { const ask = ++dressingUp;
   if (f.hair !== hairNow) await setHair(f.hair); if (ask !== dressingUp) return;
   // (a dress last: it takes off the top and trousers. No dress: taken off at once - a new MiniMig in just its underwear
   // kept the dress on before, as only a top or trousers put on took it off; the user, 03-11-2026)
-  if (!f.wear.dress) { GARMENTS.dress.now = ''; GARMENTS.dress.before = null; }
-  for (const p of ['shirt', 'pants', 'socks', 'shoe', 'hat', 'glasses', 'dress']) { if (p === 'dress' && !f.wear.dress) continue; await setGarment(p, f.wear[p] || ''); if (ask !== dressingUp) return; }
+  if (!f.wear.dress) { GARMENTS.dress.now = ''; GARMENTS.dress.before = null; } if (!f.wear.suit) { GARMENTS.suit.now = ''; GARMENTS.suit.before = null; }
+  for (const p of ['shirt', 'pants', 'socks', 'shoe', 'hat', 'glasses', 'dress', 'suit']) { if (p === 'dress' && !f.wear.dress || p === 'suit' && !f.wear.suit) continue; await setGarment(p, f.wear[p] || ''); if (ask !== dressingUp) return; }
   chestName(); renderStyles(); }
 // (a picture of the figure as it stands now: the whole of it on the app's sun, or a profile picture - the head and
 // shoulders, square. Made with a camera of its own in front of it, so wherever it has been turned it is seen from the front)
@@ -4117,6 +4284,7 @@ function startDive() { const a = glbActions[GAME.dive]; if (!a) return false; ga
 function setLevel(id) { game.level = id; renderStyles(); stopGame(true); startGame(game.mode); }
 const hud = document.getElementById('hud'), starsEl = document.getElementById('stars'), hintEl = document.getElementById('tapHint');
 function startGame(mode = game.mode) { if (game.on || !glb) return; game.mode = mode; const M = MODES[mode]; game.on = true; Object.assign(game, { stars: 0, jumpT: -1, busy: 0, cheer: 0, cheerWait: false, rotY: M.face, next: 1.5, hint: 4, record: false, counted: false });
+  if (!game.again) game.wore = wearSnap(); dressFor(MODES[mode].from ? 'hop' : mode);
   if (!game.again) game.saved = { cam: camera.position.clone(), target: controls.target.clone(), anim, bg: bgNow, spin }; game.again = false; spin = false; document.getElementById('spin').classList.remove('on');
   goal = null; closeUp = false; controls.enabled = false; controls.maxDistance = 14; holder.position.x = M.x;
   // (the plain sun has no ground to run on: the football field then, until the game stops)
@@ -4135,7 +4303,7 @@ function startGame(mode = game.mode) { if (game.on || !glb) return; game.mode = 
 function stopGame(again) { if (!game.on) return; game.on = false; for (const b of [...gamePool(), ...(game.bigPool || [])]) b.group.visible = false; game.dive = false; game.balls = []; confetti.length = 0; unprepScene(); skateStop(); hideStop(); islandStop(); seaStop(); pkStop();
   // (the sound shut down when nothing plays: on an iPad an open sound channel could go on sounding after the game)
   if (!again) { try { game.audio?.suspend(); } catch (e) {} setItem(itemNow); }
-  if (again) { game.again = true; return; } holder.position.x = 0;
+  if (again) { game.again = true; return; } holder.position.x = 0; wearBack(game.wore);
   hud.hidden = true; hintEl.hidden = true; document.querySelector('.top').hidden = false; document.getElementById('stage').classList.remove('playing'); document.querySelectorAll('[data-game]').forEach(b => b.classList.remove('on'));
   if (game.saved.bg !== bgNow) setBg(game.saved.bg); camera.position.copy(game.saved.cam); controls.target.copy(game.saved.target); controls.enabled = true; controls.maxDistance = 10;
   // (back to standing - not to the dance from before the game: its music came straight back, as if the game's sound
@@ -5177,6 +5345,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.10.0 (67d56cb)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.11.0 (bd74812)</div>
 </body>
 </html>
