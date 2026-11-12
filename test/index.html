@@ -119,7 +119,10 @@
   #saveBtn { position: relative; }
   /* Hop over bolden: the stars top left, the cross top right, a hint at the foot of the picture at the start */
   .hud { position: absolute; top: 10px; left: 10px; right: 10px; display: flex; justify-content: space-between; align-items: center; pointer-events: none; z-index: 2; }
-  .hud[hidden], .tap-hint[hidden] { display: none; }
+  .hud[hidden], .tap-hint[hidden], .pk-feet[hidden] { display: none; }
+  .pk-feet { position: absolute; left: max(12px, env(safe-area-inset-left)); right: max(12px, env(safe-area-inset-right)); top: 50%; display: flex; justify-content: space-between; pointer-events: none; z-index: 2; }
+  .pk-feet button { pointer-events: auto; width: 66px; height: 66px; border-radius: 50%; border: 4px solid transparent; background: var(--tile); font-size: 34px; line-height: 1; cursor: pointer; opacity: .7; box-shadow: 0 2px 10px rgba(58, 46, 92, .2); transition: transform .15s, opacity .15s; }
+  .pk-feet button.on { border-color: #FFC233; opacity: 1; transform: scale(1.12); } .pk-feet span { display: inline-block; pointer-events: none; } .pk-feet button:last-child span { transform: scaleX(-1); }
   /* (game mode - the user, 11-11-2026: while a game runs its picture fills the whole window, the tabs and buttons under
      it - only the stars and the cross that stops the game left; kept clear of an iPad's rounded corners and bars) */
   .stage.playing { position: fixed; inset: 0; z-index: 40; width: 100%; height: 100%; max-width: none; aspect-ratio: auto; border-radius: 0; }
@@ -361,6 +364,8 @@
 <!-- (the levels - and in Hop over bolden the three ways to play - chosen without leaving the game: the user, 11-11-2026) -->
 <div class="lvl-pop" id="lvlPop" hidden></div>
 <div class="tap-hint" id="tapHint" hidden>👆 Tryk for at hoppe</div>
+<!-- (Straffespark: which foot kicks, chosen by the child - the user, 12-11-2026: the left button the left foot) -->
+<div class="pk-feet" id="pkFeet" hidden><button data-foot="0" aria-label="Venstre fod"><span>🦶</span></button><button data-foot="1" aria-label="Højre fod"><span>🦶</span></button></div>
 <!-- (who is playing, always in sight: the child's picture and name - tapped: Mine figurer, where the children are) -->
 <button class="who-badge" id="whoBadge" aria-label="Hvem spiller? Tryk for at skifte"></button>
 <div class="quest" id="quest" hidden></div>
@@ -2267,7 +2272,9 @@ const wearSnap = () => ({ now: Object.fromEntries(Object.entries(GARMENTS).map((
 function wearBack(w) { if (!w || Object.entries(w.now).every(([p, n]) => GARMENTS[p].now === n)) return; for (const [p, n] of Object.entries(w.now)) GARMENTS[p].now = n; GARMENTS.suit.before = w.sb; GARMENTS.dress.before = w.db; setGarment('socks', GARMENTS.socks.now); }
 function dressFor(mode) { const pick = gearOf();
   for (const [part, first] of [['suit', () => GARMENTS.dress.now || /flet/.test(hairNow) ? 'dragt-bade' : 'dragt-badebukser'], ['glasses', () => 'briller-svoemme']]) { const G = GARMENTS[part], mine = G.items.filter(i => i[2]?.game === mode && owns(i[0])), on = G.items.find(i => i[0] === G.now)?.[2]?.game;
-    if (mine.length) { if (on !== mode) setGarment(part, mine.find(i => i[0] === pick[part])?.[0] || mine.find(i => i[0] === first())?.[0] || mine[0][0]); } else if (on) setGarment(part, ''); } }
+    if (mine.length) { if (on !== mode) setGarment(part, mine.find(i => i[0] === pick[part])?.[0] || mine.find(i => i[0] === first())?.[0] || mine[0][0]); } else if (on) setGarment(part, ''); }
+  // (into the water barefoot - the user, 12-11-2026: shoes and socks off by itself, and on again after if they were on)
+  if (mode === 'sea' && (GARMENTS.shoe.now || GARMENTS.socks.now)) { GARMENTS.shoe.now = ''; setGarment('socks', ''); } }
 let dressing = 0; const NO_NET = 'Det kan ikke hentes lige nu 📶';
 async function setGarment(part, name) { const G = GARMENTS[part], ask = ++dressing;
   // (a dress is worn instead of a top and trousers, and the other way round; taking the dress off puts back the top and
@@ -4128,7 +4135,7 @@ async function loadFbx() { if (!(await exists('figur.fbx' + FIGUR_V))) return fa
   mixer = new THREE.AnimationMixer(fbx);
   // (set on the floor as it stands - Mixamo moves the hips in its own units, the T-pose's box says little)
   if (await loadMove('staa')) { sample('staa', 0); fbx.position.y -= new THREE.Box3().setFromObject(fbx, true).min.y; fbx.updateMatrixWorld(true); }
-  kick.baseY = fbx.position.y; if (glbActions.staa) { sample('staa', 0); kick.floor = underFloor(); if (bone('LeftLeg')) kick.r = bone('LeftLeg').getWorldPosition(new THREE.Vector3()).y * .36; } kick.ready = true;
+  kick.baseY = fbx.position.y; if (glbActions.staa) { sample('staa', 0); kick.floor = underFloor(); if (bone('LeftLeg')) kick.r = bone('LeftLeg').getWorldPosition(new THREE.Vector3()).y * .36; } kick.ready = true; for (const f of (kick.later || []).splice(0)) f();
   const a = await loadMove(anim) || await loadMove('staa'); mixer.stopAllAction(); a?.reset().play(); holder.visible = true; return true; }
 // (each movement as figur-<id>.json: only the movement, taken out of Mixamo's file - a few hundred KB where the .fbx,
 // the whole figure again, is 13-19 MB. Kept on the spot: the hips may go up and down, not off to the side or away)
@@ -4136,9 +4143,14 @@ const onTheSpot = clip => { const t = clip.tracks.find(tr => tr.name === 'mixamo
   for (let i = 0; i < t.values.length; i += 3) { t.values[i] = t.values[0]; t.values[i + 2] = t.values[2]; } return clip; };
 const moveLoads = {};
 function loadMove(id) { return moveLoads[id] ??= (async () => {
+  // (asked for before the figure was all there - a game started at once - it failed before it was even kept, and was then
+  // kept as failed for good: the figure could not tread water, the user 12-11-2026. Now it waits for the figure)
+  for (let k = 0; !mixer && k < 300; k++) await new Promise(r => setTimeout(r, 100));
   // (not fetched - no internet yet - it said nothing and the figure just stood, the user 05-11-2026: now it says so)
   if (!glbActions[id]) try { glbActions[id] = mixer.clipAction(onTheSpot(THREE.AnimationClip.parse(await (await fetch(`figur-${id}.json${FIGUR_V}`)).json()))); } catch (e) { delete moveLoads[id]; toast(NO_NET); return null; }
-  if (kick.ready) keepPlaying(() => { if (MOVES.spark.some(m => m[0] === id)) kickSetup(id); lifts[id] = liftCurve(id); });
+  // (measured once the figure is ready to be measured - a movement in before that was never measured, and the kick then never came)
+  const measure = () => keepPlaying(() => { if (MOVES.spark.some(m => m[0] === id)) kickSetup(id); lifts[id] = liftCurve(id); });
+  if (kick.ready) measure(); else if (id !== 'staa') (kick.later ??= []).push(measure);
   return glbActions[id]; })(); }
 // (measuring stops every movement - a movement fetched for the first time while a game ran, as after each new version,
 // left the skater frozen bent over on its board, the user said 03-11-2026: what was playing is put back after it)
@@ -4174,7 +4186,7 @@ function kickSetup(id) { const clip = glbActions[id].getClip();
   clip.duration += kick.pre + kick.post;
   // (the kicking foot: the one that comes furthest forward; the contact its fastest moment forward)
   const toes = ['RightToeBase', 'LeftToeBase'].map(n => bone(n)).filter(Boolean), n = 40, len = clip.duration - kick.pre - kick.post, track = toes.map(() => []);
-  for (let k = 0; k <= n; k++) { sample(id, kick.pre + len * k / n); toes.forEach((b, i) => track[i].push(holder.worldToLocal(b.getWorldPosition(new THREE.Vector3())))); }
+  for (let k = 0; k <= n; k++) { sample(id, kick.pre + len * k / n); toes.forEach((b, i) => track[i].push(glb.parent.worldToLocal(b.getWorldPosition(new THREE.Vector3())))); } // (from where the figure stands - in a game it may be off in its own rig)
   const foot = track.reduce((a, b) => Math.max(...b.map(p => p.z)) > Math.max(...a.map(p => p.z)) ? b : a);
   let best = 1, speed = -1; for (let k = 1; k <= n; k++) { const v = foot[k].z - foot[k - 1].z; if (v > speed) { speed = v; best = k; } }
   // (a ball higher than half the way from the floor to the knee, kick.r measured when the figure came - the user,
@@ -4445,6 +4457,15 @@ const SK_SIDE = { geo: null,
   lygte: () => { const G = SK_SIDE.geo; return skPiece([[G.cyl, '#6F7480', 0, 1.2, 0, .05, 2.4, .05], [G.cyl, '#6F7480', 0, .06, 0, .13, .12, .13], [G.box, '#6F7480', -.22, 2.4, 0, .5, .05, .05], [G.ball, '#FFE27A', -.45, 2.32, 0, .13], [G.cone, '#4A4F5A', -.45, 2.44, 0, .17, .12, .17]]); },
   hegn: () => { const G = SK_SIDE.geo, parts = [[G.box, '#FFFFFF', 0, .42, 0, .05, .05, 2.4], [G.box, '#FFFFFF', 0, .22, 0, .05, .05, 2.4]]; for (let k = -2; k <= 2; k++) parts.push([G.box, '#FFFFFF', 0, .3, k * .58, .08, .6, .08], [G.cone, '#FFFFFF', 0, .64, k * .58, .06, .1, .06]); return skPiece(parts); },
   baenk: () => { const G = SK_SIDE.geo; return skPiece([[G.box, '#A9713F', 0, .34, 0, .38, .05, 1.2], [G.box, '#A9713F', .2, .58, 0, .05, .3, 1.2], [G.box, '#5A5F6A', 0, .16, .5, .32, .32, .05], [G.box, '#5A5F6A', 0, .16, -.5, .32, .32, .05]]); },
+  // (the verge - the user, 12-11-2026: more life where the grass meets the road. Tufts of grass leaning in over the white
+  // line, worn earth, pebbles, daisies and dandelions, a toadstool now and then; one piece for each stretch of road side)
+  kant: () => { const G = SK_SIDE.geo, parts = [], R = Math.random, greens = ['#4FB04A', '#5CC257', '#43A046', '#6BD063'];
+    for (let k = 0; k < 2; k++) parts.push([G.peb, R() < .6 ? '#7DBB55' : '#93A455', .12 + R() * .2, .004, (R() - .5) * 2.2, .09 + R() * .1, .01, .2 + R() * .22]);
+    for (let k = 0; k < 6; k++) { const x = (R() - .45) * .5, z = (R() - .5) * 2.3, n = 3 + Math.floor(R() * 3); for (let j = 0; j < n; j++) { const h = .1 + R() * .16; parts.push([G.roof, greens[Math.floor(R() * 4)], x + (R() - .5) * .1, h / 2, z + (R() - .5) * .1, .028, h, .028, R() * 3, (R() - .5) * .7]); } }
+    for (let k = 0; k < 2; k++) parts.push([G.peb, ['#B9B4AE', '#9E9A96', '#D2CDC6'][Math.floor(R() * 3)], (R() - .2) * .35, .018, (R() - .5) * 2.2, .03 + R() * .03, .024, .035 + R() * .035]);
+    for (let k = 0; k < 3; k++) if (R() < .6) { const x = .08 + R() * .35, z = (R() - .5) * 2.2, h = .1 + R() * .1, c = R() < .5 ? '#FFFFFF' : '#FFD23F'; parts.push([G.cyl, '#3F9A45', x, h / 2, z, .01, h, .01], [G.peb, c, x, h + .012, z, .05, .018, .05], [G.peb, '#FFB020', x, h + .028, z, .02]); }
+    if (R() < .1) { const x = .15 + R() * .3, z = (R() - .5) * 2; parts.push([G.cyl, '#FFF4E0', x, .05, z, .022, .1, .022], [G.peb, '#E8384F', x, .11, z, .07, .045, .07]); }
+    return skPiece(parts); },
   blomster: () => { const G = SK_SIDE.geo, parts = []; for (let k = 0; k < 7; k++) { const x = (Math.random() - .5) * .9, z = (Math.random() - .5) * 1.6, h = .16 + Math.random() * .14, c = ['#FF6FA8', '#FFD23F', '#FFFFFF', '#FF8A3D', '#B58CFF'][Math.floor(Math.random() * 5)];
       parts.push([G.cyl, '#3F9A45', x, h / 2, z, .012, h, .012], [G.ball, c, x, h + .03, z, .07, .05, .07], [G.ball, '#FFE27A', x, h + .06, z, .03]); } return skPiece(parts); } };
 // (the house, the leafy tree and the lamp post made at Meshy - the user, 11-11-2026: the things round the road made
@@ -4465,7 +4486,7 @@ function skPropsLoad() { sk.propsLoad ??= Promise.all(Object.entries(SK_PROPS).m
     // (those standing by the road now changed for the new ones)
     const old = sk.sidePools[kind] || []; sk.sidePools[kind] = []; for (const it of sk.side) if (it.kind === kind) { const g = SK_SIDE[kind](); g.scale.copy(it.g.scale); sk.sidePools[kind].push(g); sk.world.add(g); it.g = g; } for (const g of old) { g.visible = false; sk.world.remove(g); } } catch (e) { /* (the simple one stays) */ } })); }
 function skWorldBuild() { if (sk.world) return; const w = sk.world = new THREE.Group();
-  SK_SIDE.geo = { cyl: new THREE.CylinderGeometry(1, 1, 1, 10), ball: new THREE.SphereGeometry(1, 12, 9), cone: new THREE.ConeGeometry(1, 1, 10), box: new THREE.BoxGeometry(1, 1, 1), roof: new THREE.ConeGeometry(1, 1, 4) };
+  SK_SIDE.geo = { cyl: new THREE.CylinderGeometry(1, 1, 1, 10), ball: new THREE.SphereGeometry(1, 12, 9), cone: new THREE.ConeGeometry(1, 1, 10), box: new THREE.BoxGeometry(1, 1, 1), roof: new THREE.ConeGeometry(1, 1, 4), peb: new THREE.SphereGeometry(1, 7, 5) };
   sk.sideMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .85 });
   // (the meadow: grass in soft lighter and darker patches with a few specks, running by under the figure as the road does)
   const cv = document.createElement('canvas'); cv.width = cv.height = 256; const c = cv.getContext('2d'); c.fillStyle = '#62C254'; c.fillRect(0, 0, 256, 256);
@@ -4485,6 +4506,7 @@ function skSidePut(kind, u, x, rot = 0, size = 1) { const pool = sk.sidePools[ki
   g.visible = true; g.scale.setScalar(size); sk.side.push({ g, u, x, rot, kind }); }
 function skSideRow(u) { sk.rowN = (sk.rowN || 0) + 1;
   for (const s of [-1, 1]) { const E = SKW.edge, r = Math.random(), turn = s > 0 ? -Math.PI / 2 : Math.PI / 2;
+    skSidePut('kant', u, s * (E - .04), s > 0 ? 0 : Math.PI);
     if (sk.rowN % 5 === (s > 0 ? 0 : 2)) skSidePut('lygte', u, s * (E + .45), s > 0 ? 0 : Math.PI);
     if (sk.sideSkip[s] > 0) { sk.sideSkip[s]--; continue; }
     if (r < .13) { skSidePut('hus', u, s * (E + 4.2 + Math.random() * 1.5), turn); sk.sideSkip[s] = 1; if (Math.random() < .7) skSidePut('hegn', u, s * (E + 1.5)); }
@@ -4532,7 +4554,11 @@ function skateThing(kind) { const pool = sk.pools[kind] ??= [], free = pool.find
     const tail = add2(new THREE.ConeGeometry(.06, .14, 10), yel, -.26, .32, 0); tail.rotation.z = Math.PI / 2.6; half = .24; len = .4; }
   if (kind === 'bold') { const cv = document.createElement('canvas'); cv.width = 128; cv.height = 8; const c = cv.getContext('2d'); ['#FF4F8B', '#FFFFFF', '#FFC233', '#FFFFFF', '#3DA5FF', '#FFFFFF'].forEach((f, k) => { c.fillStyle = f; c.fillRect(k * 128 / 6, 0, 128 / 6 + 1, 8); });
     const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; body = add(new THREE.SphereGeometry(.26, 28, 18), new THREE.MeshStandardMaterial({ map: t, roughness: .4 }), 0, .26, 0); half = .26; len = .5; }
-  const it = { group: g, kind, half, len, lid, body }; g.visible = false; scene.add(g); pool.push(it); return it; }
+  const it = { group: g, kind, half, len, lid, body }; g.visible = false; scene.add(g); pool.push(it);
+  // (the dog, the cat and the rabbit from Dyr - the user, 12-11-2026: they run over the road from out in the grass)
+  if (SK_PETS[kind]) { it.half = .22; it.len = .5; loadGlbPet(kind + '.glb', kind + '.jpg', SK_PETS[kind], .11, .022).then(m => { m.collar.visible = false; g.add(m.group); it.pet = m; }).catch(() => {}); }
+  return it; }
+const SK_PETS = { 'dyr-kat': .72, 'dyr-hund': .74, 'dyr-kanin': .98 }, skPetsIn = () => Object.keys(SK_PETS).filter(k => (sk.pools[k] || []).some(p => p.pet && !p.group.visible));
 // (the good ones: run into on purpose - a star, a splash, a jump, a present - not bumped into)
 const SK_GOOD = new Set(['stjerne', 'pyt', 'rampe', 'gave']);
 // (a row of things far down the road: one thing - or a bar over two lanes - and, mostly, stars in a free lane; the
@@ -4547,11 +4573,14 @@ function skateRow(from = SKATE.from) { const easy = ['niveau-meget-let', 'niveau
   // (counted in time since the last one was put out: on the faster levels the last ramp was already behind the figure
   // and gone from the road five seconds' ride later)
   const rampNear = sk.rampWait > 0;
-  const kind = pick((easy ? [['kegle', 3], ['kasse', 2], ['pyt', 2], ['rampe', 2], ['and', 1.5], ['gave', .8], ['bold', 1]]
-    : [['kegle', 2.5], ['kasse', 2], ['rail', 1.5], ['bom', 2], ['pyt', 1.5], ['rampe', 2], ['and', 1.5], ['gave', .7], ['bold', 1.5]]).filter(([k]) => k !== 'rampe' || !rampNear));
+  // (the duck taken out - the user, 12-11-2026: it looks artificial beside the animals; back when it is a real 3D model)
+  const pets = skPetsIn();
+  const kind = pick((easy ? [['kegle', 3], ['kasse', 2], ['pyt', 2], ['rampe', 2], ['dyr', 2], ['gave', .8], ['bold', 1]]
+    : [['kegle', 2.5], ['kasse', 2], ['rail', 1.5], ['bom', 2], ['pyt', 1.5], ['rampe', 2], ['dyr', 2.2], ['gave', .7], ['bold', 1.5]]).filter(([k]) => (k !== 'rampe' || !rampNear) && (k !== 'dyr' || pets.length)));
   if (kind === 'bom') { const left = Math.random() < .5; put(skateThing('bom'), (left ? -.5 : .5) * SKATE.lane, from); used.add(left ? -1 : 1); used.add(0); }
   // (the duck and the ball cross the road from one side to the other, timed to be in the middle about as they come by)
-  else if (kind === 'and' || kind === 'bold') { const it = skateThing(kind), dir = Math.random() < .5 ? -1 : 1; put(it, -dir * 1.5 * SKATE.lane, from + 2); it.dir = dir; it.cross = 1.5 * SKATE.lane / ((from + 2) / skateLevel().speed) * (kind === 'and' ? .9 : 1.1); used.add(-1).add(0).add(1); }
+  // (an animal starts well out in the grass, and is at the road as it comes by)
+  else if (kind === 'and' || kind === 'bold' || kind === 'dyr') { const pet = kind === 'dyr', it = skateThing(pet ? pets[Math.floor(Math.random() * pets.length)] : kind), dir = Math.random() < .5 ? -1 : 1, off = pet ? SKW.edge + 2.6 : 1.5 * SKATE.lane; put(it, -dir * off, from + 2); it.dir = dir; it.cross = off / ((from + 2) / skateLevel().speed) * (kind === 'and' ? .9 : pet ? 1 : 1.1); used.add(-1).add(0).add(1); }
   else { const lane = Math.floor(Math.random() * 3) - 1, it = skateThing(kind); put(it, lane * SKATE.lane, from); used.add(lane);
     // (mostly a crate or a cone just past a ramp, in its lane: up the ramp, and over it - the user said 08-11-2026; as
     // far past it as the jump goes at this level's speed, so the figure is in the air as it goes under)
@@ -4566,6 +4595,7 @@ function skateStart() { skateBuild(); Object.assign(sk, { lane: 0, x: 0, lean: 0
   // the user said, 03-11-2026; it was made for a board pointing the way the figure faces. Its push off, Skateboarding
   // (4), is made so too: so in a push the figure faces down the road, its left foot on the board, the right pushing,
   // and turns across the board when it rides off - at the start, and after hitting a thing)
+  for (const k of Object.keys(SK_PETS)) skateThing(k);
   sk.push = false; sk.poseW = 1; Promise.all(['staa', SKATE.push].map(loadMove)).then(() => { if (game.on) { runAnim('staa'); startPush(); } }); }
 function startPush() { const a = glbActions[SKATE.push]; if (!a || !game.on || game.mode !== 'skate') return; sk.push = true; sk.needPush = false; runAnim(SKATE.push, true); }
 function skateStop() { if (!sk.rig?.parent) return; skWorldStop(); holder.add(glb); holder.remove(sk.rig); scene.remove(sk.road); for (const it of sk.live) it.group.visible = false; sk.live = []; for (const b of sk.bits) b.mesh.visible = false; }
@@ -4588,13 +4618,17 @@ function skatePose() { glb.updateMatrixWorld(true); glb.getWorldQuaternion(skAxe
 function skateOwnPose(fwd, right, up, w = 1) {
   for (const [n, s] of [['LeftUpLeg', 1], ['RightUpLeg', -1]]) { turnBone(n, fwd, s * .3 * w); turnBone(n, right, .5 * w); }
   glb.updateMatrixWorld(true); for (const n of ['LeftLeg', 'RightLeg']) turnBone(n, right, -.85 * w); glb.updateMatrixWorld(true); for (const n of ['LeftFoot', 'RightFoot']) turnBone(n, right, .38 * w);
-  for (const [n, s] of [['LeftArm', 1], ['RightArm', -1]]) turnBone(n, fwd, s * 1.05 * w); glb.updateMatrixWorld(true); for (const [n, s] of [['LeftForeArm', 1], ['RightForeArm', -1]]) turnBone(n, fwd, s * .25 * w);
+  for (const [n, s] of [['LeftArm', 1], ['RightArm', -1]]) turnBone(n, fwd, (s * 1.05 + (sk.arm || 0)) * w); glb.updateMatrixWorld(true); for (const [n, s] of [['LeftForeArm', 1], ['RightForeArm', -1]]) turnBone(n, fwd, s * .25 * w);
   turnBone('Spine', right, -.12 * w); turnBone('Spine2', up, .35 * w); glb.updateMatrixWorld(true); turnBone('Neck', up, .4 * w); glb.updateMatrixWorld(true); turnBone('Head', up, .45 * w); glb.updateMatrixWorld(true); }
 function skateTick(dt) { const L = skateLevel(); sk.slow = Math.max(0, sk.slow - dt); sk.wobble = Math.max(0, sk.wobble - dt); sk.rampWait = Math.max(0, (sk.rampWait || 0) - dt);
   // (the push: through - then riding off, the pose growing in as it turns; after a hit, a push again once the wobble is over)
   const pa = glbActions[SKATE.push]; if (sk.push && (!pa?.isRunning() || pa.time >= pa.getClip().duration - .06)) { sk.push = false; runAnim('staa'); }
   if (sk.needPush && sk.wobble <= 0 && !sk.push && !sk.jy) startPush(); // (never up in the air: only once back on the road)
   sk.poseW += ((sk.push ? 0 : 1) - sk.poseW) * Math.min(1, dt * (sk.push ? 12 : 4));
+  // (the arms keep the balance - the user, 12-11-2026: they only moved at the push. A little all the time, one up and the
+  // other down; every few seconds a real see-saw; and into each swing to another lane)
+  { const tt = performance.now() / 1000; if ((sk.armGo = (sk.armGo ?? 2.5) - dt) <= 0) { sk.armGo = 2.5 + Math.random() * 3; sk.armT = 1.5; } sk.armT = Math.max(0, (sk.armT || 0) - dt); const q = 1 - sk.armT / 1.5;
+    sk.arm = .07 * Math.sin(tt * 1.9) + (sk.armT > 0 ? .42 * Math.sin(q * Math.PI * 3) * Math.sin(q * Math.PI) : 0) + Math.max(-.4, Math.min(.4, (sk.lane * SKATE.lane - sk.x) * .7)); }
   // (slower while pushing off, faster with each push)
   const v = L.speed * (sk.slow > 0 ? .45 : 1) * (sk.push && pa ? .45 + .55 * pa.time / pa.getClip().duration : 1);
   // (the lane: glided over, leaning into the turn; a wobble after hitting a thing)
@@ -4617,11 +4651,15 @@ function skateTick(dt) { const L = skateLevel(); sk.slow = Math.max(0, sk.slow -
     if (star) { g.rotation.y += dt * 3; g.position.y = .06 * Math.sin(now * 3.3 + it.x * 3); }
     // (the duck waddles, the ball bounces - both across the road, and on out of it)
     if (it.dir && !it.hit) { it.x += it.dir * it.cross * dt; if (k === 'and') { it.body.rotation.z = .12 * Math.sin(now * 14); it.body.position.y = .025 * Math.abs(Math.sin(now * 14)); }
-      else { it.body.position.y = .26 + .45 * Math.abs(Math.sin(now * 4.5 + it.x)); it.body.rotation.z -= it.dir * it.cross / .26 * dt; } }
-    if (it.hit && !good) { if (k === 'and') { g.position.y += 2.2 * dt; it.body.rotation.z = .4 * Math.sin(now * 40); g.rotation.z = 0; } else { g.rotation.x -= dt * 6; g.position.y = Math.max(0, g.position.y + (it.vy -= 9.8 * dt) * dt); } }
+      else if (k === 'bold') { it.body.position.y = .26 + .45 * Math.abs(Math.sin(now * 4.5 + it.x)); it.body.rotation.z -= it.dir * it.cross / .26 * dt; } }
+    if (it.pet) { it.pet.walk.setEffectiveWeight(1); it.pet.mixer.update(dt * Math.max(.8, Math.min(2.4, it.cross / .55)) * (it.hit ? 1.8 : 1)); if (it.hit) { it.x += it.dir * Math.max(2.5, it.cross * 2.5) * dt; g.position.y = .18 * Math.abs(Math.sin(now * 11)); } }
+    // (the ball knocked away whole, bouncing off to the side - the user, 12-11-2026: landed on from a ramp it tipped over
+    // round its foot, down through the road, and looked broken)
+    else if (it.hit && k === 'bold') { const d = it.dir || 1; it.x += d * 4.5 * dt; it.vy -= 9.8 * dt; it.body.position.y += it.vy * dt; if (it.body.position.y < .26) { it.body.position.y = .26; it.vy = Math.abs(it.vy) * .6; } it.body.rotation.z -= d * 14 * dt; }
+    else if (it.hit && !good) { if (k === 'and') { g.position.y += 2.2 * dt; it.body.rotation.z = .4 * Math.sin(now * 40); g.rotation.z = 0; } else { g.rotation.x -= dt * 6; g.position.y = Math.max(0, g.position.y + (it.vy -= 9.8 * dt) * dt); } }
     if (k === 'gave' && it.hit) { it.lid.position.y += (it.vy -= 9.8 * dt) * dt; it.lid.rotation.x += dt * 7; if (it.lid.position.y < -1) it.lid.visible = false; }
     // (on the bend: across with the road, and turned along it)
-    g.position.x = it.x + skBend(it.u); g.position.z = -it.u; g.rotation.y = star ? now * 3 : -Math.atan(skSlope(it.u)) + (k === 'and' && it.dir < 0 ? Math.PI : 0);
+    g.position.x = it.x + skBend(it.u); g.position.z = -it.u; g.rotation.y = star ? now * 3 : -Math.atan(skSlope(it.u)) + (k === 'and' && it.dir < 0 ? Math.PI : 0) + (SK_PETS[k] ? it.dir * Math.PI / 2 : 0);
     const near = Math.abs(sk.x - it.x) < it.half + .18 && Math.abs(it.u) < it.len / 2 + .22, up = sk.jy > 0;
     // (a thing gives a star only when it was coming straight at the figure and it moved out of the way - standing still
     // in one lane while things went by in the others gave stars for nothing, the user said 03-11-2026)
@@ -4642,6 +4680,8 @@ function skateTick(dt) { const L = skateLevel(); sk.slow = Math.max(0, sk.slow -
         const T = Math.min(1.6, Math.max(.3, land / 2 / vv)); sk.jv = 2.1 / T; sk.jg = 2.1 / (T * T); sk.jt = 2 * T; sk.jy = .001; addStars(2); sfx('boing'); }
       else if (k === 'gave') { it.hit = true; it.vy = 4; it.lid.visible = true; skateBits('guld', g.position.x, .5, g.position.z, 26); addStars(3); for (const t of [0, .12, .24]) sfx('ding', t); }
       else if (k === 'and') { it.hit = true; sk.wobble = .5; sfx('rap'); sfx('rap', .18); }
+      else if (SK_PETS[k]) { it.hit = true; sk.wobble = .5; sfx('boing'); }
+      else if (k === 'bold') { it.hit = true; it.vy = 4.2; sk.slow = 1; sk.wobble = 1; sk.needPush = true; sfx('boing'); sfx('bonk', .05); }
       else { it.hit = true; it.vy = 2.5; sk.slow = 1; sk.wobble = 1; sk.needPush = true; sfx('bonk'); } }
     if (!it.done && !good && it.u < -(it.len / 2 + .3)) { it.done = true; if (it.mine) addStars(1); }
     // (put away just past the figure - a star left in another lane came on up to the camera, big as the picture)
@@ -4914,7 +4954,7 @@ function seaBox() { const [cx, cy, cz] = MODES.sea.cam(wideCam()), halfH = Math.
   b.sand = cy - halfH * .92; b.l = -halfW + 1.05; b.r = halfW - 1.05; b.b = b.sand - .2; b.t = cy + halfH - 1.65; b.edge = halfW + .6; b.cy = cy; b.halfH = halfH;
   sea.sand.position.y = b.sand; sea.ground.position.y = b.sand; }
 function seaStart() { seaBuild(); scene.add(sea.world); holder.add(sea.rig); sea.rig.add(glb); seaBox(); sea.pos.set(0, (sea.box.b + sea.box.t) / 2, 0);
-  Object.assign(sea, { target: null, held: false, swim: false, roll: 0, safe: 1.5, face: 0, tilt: 0, next: .6 }); game.rotY = 0;
+  Object.assign(sea, { target: null, held: false, swim: false, up: false, roll: 0, safe: 1.5, face: 0, tilt: 0, next: .6 }); game.rotY = 0;
   sea.rig.rotation.set(0, 0, 0); floor.visible = false; disc.visible = false; for (const el of [bgNear, bgFar, bgNear2]) el.hidden = true; stage.classList.add('sea');
   for (const s of sea.stars) s.visible = false; for (const f of sea.fish) f.visible = false;
   // (the jellyfish for the level, spread over the picture, none on top of the figure)
@@ -4931,8 +4971,11 @@ function seaTick(dt) { const t = performance.now() / 1000, p = sea.pos, b = sea.
   // (swimming: on towards the finger, turned the way it goes and tipped up or down; there - or rolling - treading water)
   if (sea.target && !sea.roll) { const dx = sea.target.x - p.x, dy = sea.target.y - p.y, d = Math.hypot(dx, dy);
     if (d < .08 && !sea.held) sea.target = null;
-    else if (d >= .08) { const step = Math.min(d, SEA.speed * dt); p.x += dx / d * step; p.y += dy / d * step; if (Math.abs(dx) > .05) sea.face = dx > 0 ? Math.PI / 2 : -Math.PI / 2; sea.tilt = Math.max(-.6, Math.min(.6, Math.atan2(dy, Math.abs(dx) + .3))); } }
-  const swimming = !!sea.target && !sea.roll && (sea.held ? sea.target.distanceTo(p) > .15 : true);
+    // (straight up - from the bottom - it rises upright, treading water, facing out - the user, 12-11-2026)
+    else if (d >= .08) { sea.up = dy > 0 && Math.abs(dx) < (sea.up ? .6 : .35) * dy; const step = Math.min(d, SEA.speed * (sea.up ? .8 : 1) * dt); p.x += dx / d * step; p.y += dy / d * step; if (Math.abs(dx) > .05) sea.face = dx > 0 ? Math.PI / 2 : -Math.PI / 2; sea.tilt = Math.max(-.6, Math.min(.6, Math.atan2(dy, Math.abs(dx) + .3))); } }
+  if (!sea.target || sea.roll) sea.up = false;
+  const moving = !!sea.target && !sea.roll && (sea.held ? sea.target.distanceTo(p) > .15 : true), swimming = moving && !sea.up;
+  { const tv = glbActions['traed-vande']; if (tv) tv.timeScale = moving && sea.up ? 1.7 : 1; }
   if (swimming !== sea.swim && glbActions[swimming ? 'svoem' : 'traed-vande']) { sea.swim = swimming; runAnim(swimming ? 'svoem' : 'traed-vande'); }
   // (Mixamo's Swimming leans only a little forward - nearly upright from the side: tipped forward on top of that while
   // it swims, so it lies in the water, nose up or down the way it goes)
@@ -5125,15 +5168,16 @@ function pkAbeSaved(dt, b) { const m = pk.abe, kp = pk.keeper; pk.t += dt; if (p
     if (!throwing) { m.hold = Math.min(1, m.hold + dt * 8); abeMid(m, b.position); b.position.y = Math.max(kick.r, b.position.y); pkAbeHands(m, b.position, m.hold); }
     else { const u = Math.min(1, m.act.aflever.time / .3), mid = abeMid(m, new THREE.Vector3()), palm = abePalm(m, 1, new THREE.Vector3()), n = m.gloves[1].userData.front.getWorldPosition(new THREE.Vector3()).sub(palm).normalize(); palm.addScaledVector(n, kick.r * .9); b.position.lerpVectors(mid, palm, u); b.position.y = Math.max(kick.r, b.position.y); pkAbeHands(m, b.position, Math.max(0, 1 - u)); }
     const wait = m.now.startsWith('dyk') ? 2.1 : 1; if (pk.t > wait && !throwing) { const a = pkAbePlay('aflever', 0, true, .3); a.timeScale = 1.2; }
-    if (m.now === 'aflever') { kp.position.x *= Math.exp(-dt * 1.6); if (m.act.aflever.time > ABE.release) { pk.phase = 'return'; pk.r = 0; pk.from.copy(b.position); pk.foot++; sfx('swish'); } } }
+    if (m.now === 'aflever') { kp.position.x *= Math.exp(-dt * 1.6); if (m.act.aflever.time > ABE.release) { pk.phase = 'return'; pk.r = 0; pk.from.copy(b.position); sfx('swish'); } } }
   else { pkAbeGrip(m, dt, 0); pk.r += dt / 1.1; kp.position.x *= Math.exp(-dt * 1.6); const u = Math.min(1, pk.r), e = 1 - (1 - u) * (1 - u); b.position.lerpVectors(pk.from, pkRest(), e); b.position.y = kick.r + (pk.from.y - kick.r) * Math.max(0, 1 - u * 4); b.rotation.x += dt * 9 * (1 - u); if (u >= 1) { if (m.now === 'aflever' && m.act.aflever.time < m.act.aflever.getClip().duration - .1) return; runAnim('staa'); pkReady(); } } }
 function pkStart() { pkBuild(); pkAbeLoad(); scene.add(pk.world); holder.add(pk.rig); pk.rig.add(glb); pk.rig.position.set(0, 0, 0); game.rotY = Math.PI;
   floor.visible = false; disc.visible = false; for (const el of [bgNear, bgFar, bgNear2]) el.hidden = true; stage.classList.add('pitch'); controls.maxDistance = 40;
   if (!pk.ball) { pk.ball = makeItem('fodbold'); pk.ball.group.scale.setScalar(kick.r / .158); scene.remove(pk.ball.group); }
   pk.world.add(pk.ball.group); pk.ball.group.visible = true;
-  for (const id of ['spark', 'spark-hoejre', GAME.cheer]) loadMove(id); loadMove('staa').then(() => { if (game.on && game.mode === 'pk') runAnim('staa'); });
-  pkReady(); }
-function pkStop() { if (!pk.world?.parent) return; scene.remove(pk.world); holder.add(glb); holder.remove(pk.rig); stage.classList.remove('pitch'); floor.visible = true; pk.phase = ''; setBg(bgNow); }
+  for (const id of ['spark', 'spark-hoejre', 'loeb-b', GAME.cheer]) loadMove(id); loadMove('staa').then(() => { if (game.on && game.mode === 'pk') runAnim('staa'); });
+  try { pk.foot = playerNow().foot ? 1 : 0; } catch (e) {} pkFeetShow(true); pk.walkBack = false;
+  pkReady(); pkBack(pk.rig.position); }
+function pkStop() { pkFeetShow(false); if (!pk.world?.parent) return; scene.remove(pk.world); holder.add(glb); holder.remove(pk.rig); stage.classList.remove('pitch'); floor.visible = true; pk.phase = ''; setBg(bgNow); }
 // (the ball back on the spot - where the next kicking foot meets it - the bear back in the middle of its goal)
 function pkReady() { pk.phase = 'aim'; pk.saved = false; pk.stood = false; if (pk.abe) { pk.back = pk.keeper.position.x - pk.kx; pk.abe.group.scale.x = 1; pk.abe.hold = 0; pkAbeGrip(pk.abe, 1, 0); pkAbePlay('klar', 0, false, .35); } pk.keeper.position.set(0, 0, PK.goalZ + .35); pk.keeper.rotation.set(0, 0, 0); pk.netBack.position.z = -1; pk.ball.group.position.copy(pkRest()); pk.ball.group.rotation.set(0, 0, 0); }
 const pkKick = () => ['spark', 'spark-hoejre'][pk.foot % 2];
@@ -5141,23 +5185,36 @@ const pkKick = () => ['spark', 'spark-hoejre'][pk.foot % 2];
 // a step to the side - the user, 04-11-2026: the ball lay beside the spot)
 function pkRest() { return new THREE.Vector3(0, kick.r, 0); }
 const pkStand = v => { const k = kicks[pkKick()]; return v.set(k ? k.rest.x : 0, 0, k ? k.rest.z : .35); }, pkWant = new THREE.Vector3();
+// (a run-up - the user, 12-11-2026: it waits some steps behind the ball, runs up to it and kicks; then jogs back there.
+// And the foot is the child's own choice, by the two foot buttons - it was the other foot every time - kept for each player)
+const PK_RUN = { back: 1.5, speed: 3.4, jog: 2.2 }, pkBack = v => { pkStand(v); v.x += Math.sign(v.x) * .45; v.z += PK_RUN.back; return v; }; // (a little to the side: not standing between the one playing and the ball)
+const pkFeet = document.getElementById('pkFeet');
+function pkFeetShow(on) { pkFeet.hidden = !on; pkFeet.querySelectorAll('button').forEach(b => b.classList.toggle('on', +b.dataset.foot === pk.foot % 2)); }
+pkFeet.onclick = e => { const b = e.target.closest('button'); if (!b || (pk.phase !== 'aim')) return; pk.foot = +b.dataset.foot; try { playerNow().foot = pk.foot; savePlayers(); } catch (err) {} pkFeetShow(true); sfx('ding'); };
+function pkKickNow() { const id = pkKick(), a = glbActions[id]; pkStand(pk.rig.position); runAnim(id, true); a.time = Math.max(0, kicks[id].contact - .42); pk.phase = 'kick'; }
 // (a tap anywhere: aimed at the goal where the finger is, kept inside the posts and under the bar)
 function pkTap(e) { if (pk.phase !== 'aim' || !kicks.spark || !kicks['spark-hoejre']) return; const r = renderer.domElement.getBoundingClientRect();
   ilAt.set((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1); ilRay.setFromCamera(ilAt, camera); if (!ilRay.ray.intersectPlane(pkPlane, pkHit)) return;
   game.hint = 0; pk.aim.set(Math.max(-PK.halfW + .3, Math.min(PK.halfW - .3, pkHit.x)), Math.max(.18, Math.min(PK.top - .22, pkHit.y)), PK.goalZ - .15);
-  const id = pkKick(), a = glbActions[id]; pk.ball.group.position.copy(pkRest()); pkStand(pk.rig.position); runAnim(id, true); a.time = Math.max(0, kicks[id].contact - .55); pk.phase = 'kick'; }
+  pk.ball.group.position.copy(pkRest()); pk.walkBack = false;
+  if (glbActions['loeb-b'] && pk.rig.position.distanceTo(pkStand(pkWant)) > .3) { pk.phase = 'run'; runAnim('loeb-b'); glbActions['loeb-b'].timeScale = 1.15; } else pkKickNow(); }
 function pkTick(dt) { const t = performance.now() / 1000, L = pkLevel(), kp = pk.keeper, b = pk.ball.group;
-  if (pk.phase === 'aim' || pk.phase === 'return') pk.rig.position.lerp(pkStand(pkWant), Math.min(1, dt * 5));
+  // (waiting: back to where the run-up starts, jogging there - facing the one playing - then turned to the goal)
+  if (pk.phase === 'aim') { const d = pk.rig.position.distanceTo(pkBack(pkWant));
+    if (d > .12 && glbActions['loeb-b'] && (pk.walkBack || d > .5)) { if (!pk.walkBack) { pk.walkBack = true; runAnim('loeb-b'); glbActions['loeb-b'].timeScale = .8; } pk.rig.position.addScaledVector(pkWant.sub(pk.rig.position).normalize(), Math.min(d, PK_RUN.jog * dt)); }
+    else { if (pk.walkBack) { pk.walkBack = false; glbActions['loeb-b'].timeScale = 1; runAnim('staa'); } pk.rig.position.lerp(pkWant, Math.min(1, dt * 5)); } }
+  // (the run-up: to the ball, and the kick as it gets there)
+  if (pk.phase === 'run') { const d = pk.rig.position.distanceTo(pkStand(pkWant)), step = PK_RUN.speed * dt; if (d <= step + .03) { glbActions['loeb-b'].timeScale = 1; pkKickNow(); } else pk.rig.position.addScaledVector(pkWant.sub(pk.rig.position).normalize(), step); }
   // (the camera far enough back that the whole goal is in the picture, however narrow it is)
   // (never nearer than 13 m from the goal: on a wide picture it came so close the figure hid the goal again)
   const tanH = Math.tan(camera.fov * Math.PI / 360), D = Math.max(camera.aspect > 1.25 ? 16.5 : 13, (PK.halfW + 1) / (tanH * camera.aspect)); // (in game mode on a wide screen as far back as on the tall picture: nearer, the figure's legs and the ball were cut off below)
   // (from above and a little to the side, the goal seen over the figure's head)
   camera.position.set(.9, 3.2, D + PK.goalZ); controls.target.set(0, .7, PK.goalZ + 1.8); camera.lookAt(controls.target);
   // (facing the goal - turned round to the one playing while it cheers a goal)
-  const faceTo = pk.phase === 'after' && !pk.saved ? 2 * Math.PI : Math.PI; game.rotY = (game.rotY ?? Math.PI) + (faceTo - (game.rotY ?? Math.PI)) * Math.min(1, dt * 6); glb.rotation.y = game.rotY;
+  const faceTo = (pk.phase === 'after' && !pk.saved) || (pk.phase === 'aim' && pk.walkBack) ? 2 * Math.PI : Math.PI; game.rotY = (game.rotY ?? Math.PI) + (faceTo - (game.rotY ?? Math.PI)) * Math.min(1, dt * 6); glb.rotation.y = game.rotY;
   // (the bear stepping from side to side, bobbing, until the ball is kicked)
   pk.abe?.mixer.update(dt);
-  if (pk.phase === 'aim' || pk.phase === 'kick') { pk.kx = Math.sin(t * L.sway * 1.6) * .9;
+  if (pk.phase === 'aim' || pk.phase === 'run' || pk.phase === 'kick') { pk.kx = Math.sin(t * L.sway * 1.6) * .9;
     if (pk.abe) { pk.back = (pk.back || 0) * Math.exp(-dt * 4); kp.position.x = pk.kx + pk.back; const v = Math.cos(t * L.sway * 1.6) * .9 * L.sway * 1.6; // (it side-steps while it moves quickly - the other way in the mirror - and is ready, knees bent, as it turns)
       if (Math.abs(v) > .62 && pk.abe.now !== 'side') { pk.abe.group.scale.x = Math.sign(v); pkAbePlay('side'); } else if (Math.abs(v) < .42 && pk.abe.now !== 'klar') pkAbePlay('klar', 0, false, .3); if (pk.abe.now === 'side') pk.abe.act.side.timeScale = Math.min(1.3, Math.abs(v) / .9); }
     else { kp.position.x = pk.kx; kp.position.y = Math.abs(Math.sin(t * L.sway * 3.2)) * .05; pk.kHead.rotation.z = Math.sin(t * 2) * .1; } }
@@ -5190,7 +5247,7 @@ function pkTick(dt) { const t = performance.now() / 1000, L = pkLevel(), kp = pk
     // (saved: the ball drops in front of the bear and rolls a little; goal: the net bulges back and settles)
     if (pk.saved) { b.position.y = Math.max(kick.r, b.position.y - dt * 2.5); b.position.z = Math.min(PK.goalZ + 1.2, b.position.z + dt * 1.2); b.rotation.x += dt * 5; }
     else { pk.netBack.position.z = -1 - .35 * Math.exp(-pk.t * 3) * Math.abs(Math.cos(pk.t * 8)); b.position.z = Math.max(PK.goalZ - .85, b.position.z - dt * 1.5); b.position.y = Math.max(kick.r, b.position.y - dt * 2); }
-    if (pk.t > (pk.abe ? 2.9 : 2.4)) { pk.foot++; runAnim('staa'); pkReady(); } }
+    if (pk.t > (pk.abe ? 2.9 : 2.4)) { runAnim('staa'); pkReady(); } }
   // (the arms go with the kick and the eyes follow the ball up to the goal - the user, 04-11-2026)
   if (pk.phase === 'kick' || pk.phase === 'fly' || (pk.phase === 'after' && pk.saved && pk.t < 1)) { const a = glbActions[pkKick()], k = kicks[pkKick()]; if (a?.isRunning() && k) { const after = a.time - k.contact; kickArms(a.time + .4, k.contact + .4, k.side); const w = Math.max(0, Math.min(1, 1 - (after - 1) / .4)); lookAtBall(b, .85 * w);
     // (head up once it has kicked, to follow the ball - it is seen from behind, so it takes a clear lift - the user, 04-11-2026)
@@ -5458,6 +5515,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.11.0 (76c22f5)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.11.0 (c0db9f6)</div>
 </body>
 </html>
