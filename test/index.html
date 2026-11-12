@@ -4678,11 +4678,52 @@ function skWorldStop() { if (!sk.world?.parent) return; scene.remove(sk.world); 
 function skWorldTick(dt, v) { sk.grassTex.offset.y = (sk.grassTex.offset.y + v * dt / 5) % 1; sk.hills.position.x = -skBend(SKW.far) * .5; for (const c of sk.clouds) { c.position.x += c.userData.v * dt; if (c.position.x > 60) c.position.x = -60; }
   sk.sideGo += v * dt; while (sk.sideGo >= SKW.step) { sk.sideGo -= SKW.step; skSideRow(SKW.far); }
   for (let k = sk.side.length - 1; k >= 0; k--) { const it = sk.side[k]; it.u -= v * dt; if (it.u < SKW.gone) { it.g.visible = false; sk.side.splice(k, 1); continue; }
-    it.g.position.set(it.x + skBend(it.u), 0, -it.u); it.g.rotation.y = it.rot - Math.atan(skSlope(it.u)); } }
+    it.g.position.set(it.x + skBend(it.u) + (Math.abs(it.x) > 1 ? Math.sign(it.x) * skWide(it.u) : 0), 0, -it.u); it.g.rotation.y = it.rot - Math.atan(skSlope(it.u)); } }
 // (the road bends away out towards the skyline, now one way, now the other, and lies straight again as it comes up
 // to the figure - so it is not just straight, the user said 08-11-2026; u how far down the road)
 const skBend = u => sk.curve * .0055 * Math.max(0, u - 5) ** 2, skSlope = u => sk.curve * .011 * Math.max(0, u - 5);
-function skateBits(kind, x, y, z, n) { for (let k = 0; k < n; k++) { let b = sk.bits.find(b => !b.mesh.visible && b.kind === kind);
+// ---- The road forks (the user, 12-11-2026: now and then the road is to part in two, right and left, and the child
+// chooses which way to ride). A long green island with a kerb comes down the middle of the road, a sign on its tip; the
+// road grows wider round it, so there is a road on each side - the left and the right lane, pushed out; the middle lane
+// is shut while it goes by. The sign shows with pictures what is on each side: a long row of stars and a present on
+// one, puddles to splash through on the other. Whoever is in the middle as it comes glides over to the nearer side.
+// u: how far down the road the island's tip is. All of it only pushes things sideways as they are drawn - the lanes
+// the game counts in are the same three.
+const SK_FORK = { len: 16, wide: .72, ease: 5, taper: 3.5, rows: 33 };
+const skWide = u => { const f = sk.fork; if (!f) return 0; const q = u - f.u, e = SK_FORK.ease, k = Math.min((q + e) / e, (SK_FORK.len + e - q) / e); if (k <= 0) return 0; const t = Math.min(1, k); return SK_FORK.wide * t * t * (3 - 2 * t); };
+const skShift = (x, u) => skWide(u) * Math.max(-1, Math.min(1, x / (SKATE.lane * .5)));
+// (the middle lane shut: from a little before the tip - further at speed - till the island is past)
+const skForkShut = () => { const f = sk.fork; return !!f && f.u < Math.max(4.5, skateLevel().speed * 1.3) && f.u + SK_FORK.len > -1; };
+function skForkBuild() { if (sk.forkG) return; const g = sk.forkG = new THREE.Group(), F = SK_FORK, P = [], C = [], ix = [], base = [], grass = new THREE.Color('#58B45A').toArray(), kerb = new THREE.Color('#DADAE0').toArray();
+  // (the island: across it a kerb on each side and a low rounded top of grass; pointed at both ends)
+  const half = q => { const t = Math.min(1, Math.min(q, F.len - q) / F.taper); return (SKATE.lane / 2 + F.wide - .12) * t * t * (3 - 2 * t); };
+  const cross = [[-1, 0, 0, kerb], [-1, 0, .09, kerb], [-1, .07, .09, kerb], [-1, .07, .09, grass], [-.5, 0, .14, grass], [0, 0, .16, grass], [.5, 0, .14, grass], [1, -.07, .09, grass], [1, -.07, .09, kerb], [1, 0, .09, kerb], [1, 0, 0, kerb]], N = cross.length;
+  for (let r = 0; r < F.rows; r++) { const q = r / (F.rows - 1) * F.len, h = half(q); for (const [k, ins, y, col] of cross) { const x = Math.abs(k) === 1 ? k * Math.max(0, h + (h > .1 ? ins * k * k * Math.sign(k) : 0)) : k * h; base.push(x, y * Math.min(1, h / .15), q); P.push(x, y * Math.min(1, h / .15), -q); C.push(...col); } }
+  for (let r = 0; r + 1 < F.rows; r++) for (let k = 0; k + 1 < N; k++) { if (k === 2 || k === 7) continue; const a = r * N + k, b = a + N; ix.push(a, b, a + 1, a + 1, b, b + 1); }
+  const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); geo.setAttribute('color', new THREE.Float32BufferAttribute(C, 3)); geo.setIndex(ix); geo.computeVertexNormals();
+  { const nn = geo.attributes.normal; let up = 0; for (let i = 0; i < nn.count; i++) up += nn.getY(i); if (up < 0) { for (let i = 0; i < ix.length; i += 3) [ix[i + 1], ix[i + 2]] = [ix[i + 2], ix[i + 1]]; geo.setIndex(ix); geo.computeVertexNormals(); } }
+  sk.forkIsle = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .95, side: THREE.DoubleSide })); sk.forkIsle.receiveShadow = true; sk.forkIsle.frustumCulled = false; sk.forkBase = base; g.add(sk.forkIsle);
+  // (the sign on its tip: a white board on two posts, an arrow each way and what is there)
+  const cv = sk.forkCv = document.createElement('canvas'); cv.width = 512; cv.height = 208; const tex = sk.forkTex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
+  const sign = sk.forkSign = new THREE.Group(), board = new THREE.Mesh(new THREE.BoxGeometry(1.7, .7, .05), [skMat('#3A63C8'), skMat('#3A63C8'), skMat('#3A63C8'), skMat('#3A63C8'), new THREE.MeshStandardMaterial({ map: tex, roughness: .6 }), skMat('#3A63C8')]); board.position.y = 1.45; board.castShadow = true; sign.add(board);
+  for (const sx of [-.6, .6]) { const post = new THREE.Mesh(new THREE.CylinderGeometry(.035, .035, 1.15, 10), skMat('#8A8FA3', .4)); post.position.set(sx, .575, -.02); post.castShadow = true; sign.add(post); } g.add(sign); g.visible = false; }
+function skForkSign(good) { const cv = sk.forkCv, c = cv.getContext('2d'), W = cv.width, H = cv.height; c.fillStyle = '#FFFFFF'; c.fillRect(0, 0, W, H); c.strokeStyle = '#3A63C8'; c.lineWidth = 12; c.strokeRect(6, 6, W - 12, H - 12); c.fillStyle = '#3A63C8'; c.fillRect(W / 2 - 4, 18, 8, H - 36);
+  const arrow = (x, d) => { c.beginPath(); c.moveTo(x + d * 52, H / 2); c.lineTo(x - d * 4, H / 2 - 52); c.lineTo(x - d * 4, H / 2 - 22); c.lineTo(x - d * 52, H / 2 - 22); c.lineTo(x - d * 52, H / 2 + 22); c.lineTo(x - d * 4, H / 2 + 22); c.lineTo(x - d * 4, H / 2 + 52); c.closePath(); c.fill(); };
+  arrow(76, -1); arrow(W - 76, 1); c.font = '96px system-ui, "Apple Color Emoji", "Segoe UI Emoji", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
+  c.fillText(good < 0 ? '⭐' : '💦', 186, H / 2 + 6); c.fillText(good < 0 ? '💦' : '⭐', W - 186, H / 2 + 6); sk.forkTex.needsUpdate = true; }
+function skForkStart() { skForkBuild(); if (!sk.forkG.parent) sk.world.add(sk.forkG); const F = SK_FORK, u = SKATE.from + 9, good = Math.random() < .5 ? -1 : 1; sk.fork = { u, good }; skForkSign(good); sk.forkG.visible = true;
+  // (one side: stars all the way and a present at the end; the other: puddles, and a star between them)
+  for (let q = 2; q < F.len - 3; q += 1.5) skPut(skateThing('stjerne'), good * SKATE.lane, u + q); skPut(skateThing('gave'), good * SKATE.lane, u + F.len - 1.5);
+  for (const q of [3, 8.5, 14]) skPut(skateThing('pyt'), -good * SKATE.lane, u + q); for (const q of [5.8, 11.3]) skPut(skateThing('stjerne'), -good * SKATE.lane, u + q);
+  // (bushes and flowers on the island)
+  skSidePut('busk', u + 5, 0, Math.random() * 6.28, .9); skSidePut('blomster', u + 7.6, .1); skSidePut('busk', u + 10.2, -.05, Math.random() * 6.28, 1.05); skSidePut('blomster', u + 12.4, -.1); }
+function skForkTick(dt, v) { const f = sk.fork, F = SK_FORK; if (!f) { if ((sk.forkT -= dt) <= 0 && !sk.jy && !sk.push) { skForkStart(); sk.forkT = 26 + Math.random() * 12; } return; }
+  f.u -= v * dt; if (f.u + F.len + F.ease < SKW.gone) { sk.fork = null; sk.forkG.visible = false; return; }
+  const P = sk.forkIsle.geometry.attributes.position, B = sk.forkBase; for (let i = 0; i < P.count; i++) { const q = B[i * 3 + 2]; P.setXYZ(i, B[i * 3] + skBend(f.u + q), B[i * 3 + 1], -(f.u + q)); } P.needsUpdate = true;
+  sk.forkSign.position.set(skBend(f.u + .5), 0, -(f.u + .5)); sk.forkSign.rotation.y = -Math.atan(skSlope(f.u + .5)); sk.forkSign.visible = f.u > -.8; // (gone once passed: it went by right in front of the picture)
+  // (in the middle as it comes: over to the nearer side - or the way last steered)
+  if (skForkShut() && sk.lane === 0) { sk.lane = sk.x > .03 ? 1 : sk.x < -.03 ? -1 : sk.lastDir || (Math.random() < .5 ? -1 : 1); sfx('swish'); } }
+function skateBits(kind, x, y, z, n) { x += skShift(x, 0); for (let k = 0; k < n; k++) { let b = sk.bits.find(b => !b.mesh.visible && b.kind === kind);
     if (!b) { b = { kind, mesh: new THREE.Mesh(new THREE.SphereGeometry(kind === 'vand' ? .04 : .05, 8, 6), sk.bitMats[kind]), v: new THREE.Vector3() }; scene.add(b.mesh); sk.bits.push(b); }
     const a = Math.random() * Math.PI * 2, s = 1 + Math.random() * 1.5; b.mesh.position.set(x, y, z); b.v.set(Math.cos(a) * s, 2.5 + Math.random() * 2.5, Math.sin(a) * s); b.life = 1; b.mesh.visible = true; } }
 // (the things on the road, each made once and used again: half - half its width; len - its length along the road)
@@ -4721,9 +4762,10 @@ const SK_PETS = { 'dyr-kat': .72, 'dyr-hund': .74, 'dyr-kanin': .98 }, skPetsIn 
 const SK_GOOD = new Set(['stjerne', 'pyt', 'rampe', 'gave']);
 // (a row of things far down the road: one thing - or a bar over two lanes - and, mostly, stars in a free lane; the
 // easiest levels only cones and crates)
+function skPut(it, x, u) { Object.assign(it, { x, u, hit: false, done: false, mine: false, dir: 0, vy: 0, pair: null, over: false }); it.group.position.set(x, 0, -u); it.group.rotation.set(0, 0, 0); it.group.visible = true;
+  if (it.lid) { it.lid.position.set(0, .4, 0); it.lid.rotation.set(0, 0, 0); it.lid.visible = true; } if (it.body) it.body.rotation.set(0, 0, 0); if (it.body) it.body.position.y = it.kind === 'bold' ? .26 : 0; sk.live.push(it); }
 function skateRow(from = SKATE.from) { const easy = ['niveau-meget-let', 'niveau-let'].includes(game.level), r = Math.random(), used = new Set();
-  const put = (it, x, u) => { Object.assign(it, { x, u, hit: false, done: false, mine: false, dir: 0, vy: 0, pair: null, over: false }); it.group.position.set(x, 0, -u); it.group.rotation.set(0, 0, 0); it.group.visible = true;
-    if (it.lid) { it.lid.position.set(0, .4, 0); it.lid.rotation.set(0, 0, 0); it.lid.visible = true; } if (it.body) it.body.rotation.set(0, 0, 0); if (it.body) it.body.position.y = it.kind === 'bold' ? .26 : 0; sk.live.push(it); };
+  const put = skPut;
   // (what comes: a pick weighted for the level - the easiest only the soft things and the fun ones)
   const pick = list => { let s = Math.random() * list.reduce((a, [, w]) => a + w, 0); for (const [k, w] of list) if ((s -= w) < 0) return k; return list[0][0]; };
   // (no ramp within five seconds' ride of the last one, in any lane - the user, 10-11-2026: ramps came one after the other,
@@ -4746,7 +4788,7 @@ function skateRow(from = SKATE.from) { const easy = ['niveau-meget-let', 'niveau
   // (the stars never in the lane the figure rides in now - one has to steer to them, not just stand)
   if (Math.random() < (easy ? .9 : .7)) { const free = [-1, 0, 1].filter(l => !used.has(l) && l !== sk.lane); if (free.length) { const lane = free[Math.floor(Math.random() * free.length)], n = 1 + Math.floor(Math.random() * 3);
     for (let k = 0; k < n; k++) put(skateThing('stjerne'), lane * SKATE.lane, from + (k - (n - 1) / 2) * 1.1); } } }
-function skateStart() { skateBuild(); Object.assign(sk, { lane: 0, x: 0, lean: 0, slow: 0, wobble: 0, next: .3, first: true, curve: 0, curveTo: 0, curveT: 3, jy: 0, jv: 0, spin: 0, rampWait: 0 }); for (const it of sk.live) it.group.visible = false; sk.live = [];
+function skateStart() { skateBuild(); Object.assign(sk, { lane: 0, x: 0, lean: 0, slow: 0, wobble: 0, next: .3, first: true, curve: 0, curveTo: 0, curveT: 3, jy: 0, jv: 0, spin: 0, rampWait: 0, fork: null, forkT: 13, lastDir: 0 }); if (sk.forkG) sk.forkG.visible = false; for (const it of sk.live) it.group.visible = false; sk.live = [];
   holder.add(sk.rig); sk.rig.position.set(0, 0, 0); sk.rig.rotation.set(0, 0, 0); sk.rig.add(glb); scene.add(sk.road); skWorldStart();
   // (riding: the standing with the page's own pose, arms out - Mixamo's riding stood with a foot each side of our board,
   // the user said, 03-11-2026; it was made for a board pointing the way the figure faces. Its push off, Skateboarding
@@ -4757,7 +4799,10 @@ function skateStart() { skateBuild(); Object.assign(sk, { lane: 0, x: 0, lean: 0
 function startPush() { const a = glbActions[SKATE.push]; if (!a || !game.on || game.mode !== 'skate') return; sk.push = true; sk.needPush = false; runAnim(SKATE.push, true); }
 function skateStop() { if (!sk.rig?.parent) return; skWorldStop(); holder.add(glb); holder.remove(sk.rig); scene.remove(sk.road); for (const it of sk.live) it.group.visible = false; sk.live = []; for (const b of sk.bits) b.mesh.visible = false; }
 // (not up in the air off a ramp - only once landed again, the user said 10-11-2026)
-function steer(dir) { if (!game.on || game.mode !== 'skate' || sk.jy > 0) return; const lane = Math.max(-1, Math.min(1, sk.lane + dir)); if (lane === sk.lane) return; sk.lane = lane; game.hint = 0; sfx('swish'); }
+function steer(dir) { if (!game.on || game.mode !== 'skate' || sk.jy > 0) return; let lane = Math.max(-1, Math.min(1, sk.lane + dir));
+  // (at a fork there is no middle: before the island the other side is chosen in one go; beside it one stays on one's side)
+  if (lane === 0 && skForkShut()) { if (sk.fork.u < 1.2) return; lane = dir; }
+  if (lane === sk.lane) return; sk.lane = lane; sk.lastDir = dir; game.hint = 0; sfx('swish'); }
 // (the skater's pose, laid over the standing still each frame - turned about the figure's own axes as it stands now:
 // fwd the way its chest faces, right its right, up)
 const skAxes = { fwd: new THREE.Vector3(), right: new THREE.Vector3(), up: new THREE.Vector3(), q: new THREE.Quaternion() }, skQ = new THREE.Quaternion(), skP = new THREE.Quaternion();
@@ -4791,19 +4836,23 @@ function skateTick(dt) { dt = Math.min(dt, .1); // (never a long jump after a pa
   const v = L.speed * (sk.slow > 0 ? .45 : 1) * (sk.push && pa ? .45 + .55 * pa.time / pa.getClip().duration : 1);
   // (the lane: glided over, leaning into the turn; a wobble after hitting a thing)
   const dx = sk.lane * SKATE.lane - sk.x; sk.x += dx * Math.min(1, dt * 9); sk.lean += (-dx * .45 - sk.lean) * Math.min(1, dt * 10);
-  sk.rig.position.x = sk.x; sk.rig.rotation.z = sk.lean + (sk.wobble > 0 ? Math.sin(sk.wobble * 30) * .14 * sk.wobble : 0);
+  // (out on one side of a fork the picture follows half the way, so the figure is not at its edge)
+  { const pan = skShift(sk.x, 0) * .5; camera.position.x += pan; controls.target.x += pan; camera.lookAt(controls.target); }
+  sk.rig.position.x = sk.x + skShift(sk.x, 0); sk.rig.rotation.z = sk.lean + (sk.wobble > 0 ? Math.sin(sk.wobble * 30) * .14 * sk.wobble : 0);
   // (off a ramp: up in the air, round once, and down on the board again)
   if (sk.jy > 0 || sk.jv > 0) { sk.jv -= sk.jg * dt; sk.jy = Math.max(0, sk.jy + sk.jv * dt); sk.spin = Math.min(Math.PI * 2, sk.spin + dt * Math.PI * 2 / sk.jt); if (!sk.jy) { sk.jv = 0; sk.spin = 0; } }
   sk.rig.position.y = sk.jy; sk.rig.rotation.y = sk.spin;
   // (the bend: a new way every few seconds, eased into)
   if ((sk.curveT -= dt) <= 0) { sk.curveTo = Math.random() < .25 ? 0 : (Math.random() < .5 ? -1 : 1) * (.5 + Math.random() * .5); sk.curveT = 4 + Math.random() * 4; }
   sk.curve += (sk.curveTo - sk.curve) * Math.min(1, dt * .35);
-  { const P = sk.road.geometry.attributes.position; for (let i = 0; i < P.count; i++) P.setX(i, sk.roadX[i] + skBend(26 + P.getY(i))); P.needsUpdate = true; }
+  { const P = sk.road.geometry.attributes.position; for (let i = 0; i < P.count; i++) P.setX(i, sk.roadX[i] + skBend(26 + P.getY(i)) + Math.sign(sk.roadX[i]) * skWide(26 + P.getY(i))); P.needsUpdate = true; }
   for (const b of sk.bits) if (b.mesh.visible) { b.v.y -= 9.8 * dt; b.mesh.position.addScaledVector(b.v, dt); if ((b.life -= dt) <= 0 || b.mesh.position.y < 0) b.mesh.visible = false; }
-  sk.roadTex.offset.y = (sk.roadTex.offset.y + v * dt / 3) % 1; skWorldTick(dt, v); skatePose();
+  sk.roadTex.offset.y = (sk.roadTex.offset.y + v * dt / 3) % 1; skForkTick(dt, v); skWorldTick(dt, v); skatePose();
   // (the first row near: down the far end of the road it took 7 seconds on the easiest level before anything happened, the
   // user 05-11-2026)
-  if ((sk.next -= dt) <= 0) { skateRow(sk.first ? Math.min(SKATE.from, L.speed * 3) : SKATE.from); sk.first = false; sk.next = L.gap * (.85 + Math.random() * .4) - Math.min(.3, game.stars * .008); }
+  // (no row of things where a fork's island is: the fork has its own)
+  if ((sk.next -= dt) <= 0 && sk.fork && SKATE.from > sk.fork.u - 7 && SKATE.from < sk.fork.u + SK_FORK.len + 3) sk.next = .25;
+  if (sk.next <= 0) { skateRow(sk.first ? Math.min(SKATE.from, L.speed * 3) : SKATE.from); sk.first = false; sk.next = L.gap * (.85 + Math.random() * .4) - Math.min(.3, game.stars * .008); }
   const now = performance.now() / 1000;
   for (const it of [...sk.live]) { it.u -= v * dt; const g = it.group, k = it.kind, star = k === 'stjerne', good = SK_GOOD.has(k);
     if (star) { g.rotation.y += dt * 3; g.position.y = .06 * Math.sin(now * 3.3 + it.x * 3); }
@@ -4818,7 +4867,7 @@ function skateTick(dt) { dt = Math.min(dt, .1); // (never a long jump after a pa
     else if (it.hit && !good) { if (k === 'and') { g.position.y += 2.2 * dt; it.body.rotation.z = .4 * Math.sin(now * 40); g.rotation.z = 0; } else { g.rotation.x -= dt * 6; g.position.y = Math.max(0, g.position.y + (it.vy -= 9.8 * dt) * dt); } }
     if (k === 'gave' && it.hit) { it.lid.position.y += (it.vy -= 9.8 * dt) * dt; it.lid.rotation.x += dt * 7; if (it.lid.position.y < -1) it.lid.visible = false; }
     // (on the bend: across with the road, and turned along it)
-    g.position.x = it.x + skBend(it.u); g.position.z = -it.u; g.rotation.y = star ? now * 3 : -Math.atan(skSlope(it.u)) + (k === 'and' && it.dir < 0 ? Math.PI : 0) + (SK_PETS[k] ? it.dir * Math.PI / 2 : 0);
+    g.position.x = it.x + skBend(it.u) + skShift(it.x, it.u); g.position.z = -it.u; g.rotation.y = star ? now * 3 : -Math.atan(skSlope(it.u)) + (k === 'and' && it.dir < 0 ? Math.PI : 0) + (SK_PETS[k] ? it.dir * Math.PI / 2 : 0);
     const near = Math.abs(sk.x - it.x) < it.half + .18 && Math.abs(it.u) < it.len / 2 + .22, up = sk.jy > 0;
     // (a thing gives a star only when it was coming straight at the figure and it moved out of the way - standing still
     // in one lane while things went by in the others gave stars for nothing, the user said 03-11-2026)
@@ -5716,6 +5765,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.11.0 (2c407c1)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.11.0 (dd3645c)</div>
 </body>
 </html>
