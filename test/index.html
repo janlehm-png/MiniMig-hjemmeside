@@ -3864,6 +3864,12 @@ function makePet(kind) { const g = new THREE.Group(), C = { 'dyr-kat': ['#F2994A
   // the user, 04-11-2026: the front paws hung in the air - how far its head turns])
   const RIG = { 'dyr-kat': [.72, .11, .022, -.106, 1, .8, .6, .25], 'dyr-hund': [.74, .12, .022, -.084, 1, 1, .4, .2], 'dyr-kanin': [.98, .125, .14, -.089, 1, .8, .5, .12] }[kind]; if (RIG) { const simple = [...g.children]; simple.forEach(c => { c.visible = false; }); me.collar = null; loadGlbPet(kind + '.glb', kind + '.jpg', RIG[0], RIG[1], RIG[2]).then(m => { g.add(m.group); me.model = m; me.collar = m.collar; m.sitY = RIG[3]; m.sitLeg = RIG[4]; m.sitFoot = RIG[5]; m.sitTip = RIG[6]; m.headTurn = RIG[7]; }).catch(() => { simple.forEach(c => { c.visible = true; }); me.collar = simpleCollar; }); }
   return me; }
+// (a two-legged figure rigged at Meshy - the duck: one skinned mesh with its bones and a walk on the spot, its colour
+// picture beside it; set on the floor, facing +z, as tall as asked)
+async function loadWalker(url, texUrl, height) { const { inner, mesh, clips } = await readGlb(url, texUrl), group = new THREE.Group(), turn = new THREE.Group(); turn.add(inner); group.add(turn); group.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(mesh, true), k = height / (box.max.y - box.min.y); turn.scale.setScalar(k); turn.position.y = -box.min.y * k;
+  const clip = clips[0], hips = clip.tracks.find(t => t.name === 'Hips.position'); if (hips) for (let i = 0; i < hips.values.length; i += 3) { hips.values[i] = hips.values[0]; hips.values[i + 2] = hips.values[2]; }
+  const mixer = new THREE.AnimationMixer(inner), walk = mixer.clipAction(clip); walk.play(); return { group, mixer, walk }; }
 function setPet(name) { if (!PETS.some(p => p[0] === name)) name = ''; petNow = name; if (pet) pet.group.visible = false; pet = name && glb ? pets[name] ??= makePet(name) : null; if (pet) pet.snap = true; renderStyles(); }
 // (an animal rigged at Meshy: a GLB file with one skinned mesh, its bones and a walk. Meshy's rigged file leaves out the
 // texture, so that comes separately. Standing on the floor, facing forward, as tall as asked)
@@ -4497,7 +4503,18 @@ function skWorldBuild() { if (sk.world) return; const w = sk.world = new THREE.G
   const gt = sk.grassTex = new THREE.CanvasTexture(cv); gt.colorSpace = THREE.SRGBColorSpace; gt.wrapS = gt.wrapT = THREE.RepeatWrapping; gt.repeat.set(30, 20); gt.anisotropy = 4;
   const grass = new THREE.Mesh(new THREE.PlaneGeometry(150, 100), new THREE.MeshStandardMaterial({ map: gt, roughness: 1 })); grass.rotation.x = -Math.PI / 2; grass.position.set(0, 0, -36); grass.receiveShadow = true; w.add(grass);
   // (far off: rounded hills in a row, hazy, and clouds drifting over them)
-  sk.hills = new THREE.Group(); for (let k = 0; k < 9; k++) { const h = new THREE.Mesh(SK_SIDE.geo.ball, new THREE.MeshStandardMaterial({ color: ['#58B45A', '#4FA857', '#66C063'][k % 3], roughness: 1 })); h.scale.set(9 + Math.random() * 9, 2.5 + Math.random() * 3.5, 6); h.position.set(-64 + k * 16 + Math.random() * 6, 0, -66 - Math.random() * 8); sk.hills.add(h); } w.add(sk.hills);
+  // (the skyline: mountain peaks - the user, 12-11-2026: the hills there were only pale grey bumps in the haze. Sharp rocky
+  // peaks in two rows, the far ones bigger and bluer, snow on their tops with a ragged edge, flat-sided so the light
+  // shows their faces; low green foothills before them. Not hazed away like the things near the road: their own colours)
+  sk.hills = new THREE.Group(); { const P = [], C = [], col = new THREE.Color(), rock = [new THREE.Color('#38497A'), new THREE.Color('#5F739F')], far = new THREE.Color('#A9BEDC'), snow = new THREE.Color('#FFFFFF'), R = Math.random;
+    const peak = (x, z, r, h, haze) => { const N = 9, rows = 5, ring = []; for (let j = 0; j <= rows; j++) { const v = j / rows, rr = r * (1 - v) ** .8; ring.push(Array.from({ length: N }, (_, i) => { const a = i / N * Math.PI * 2 + j * .35, k = j === rows ? 0 : 1 + (R() - .5) * .5; return [x + Math.cos(a) * rr * k, h * v * (j && j < rows ? .9 + R() * .2 : 1), z + Math.sin(a) * rr * k * .6]; })); }
+      const edge = .68 + R() * .1, put = q => { P.push(...q); const v = q[1] / h; col.copy(rock[0]).lerp(rock[1], Math.min(1, v * 1.4)); if (v > edge + (R() - .5) * .1) col.copy(snow); col.lerp(far, haze); C.push(col.r, col.g, col.b); };
+      for (let j = 0; j < rows; j++) for (let i = 0; i < N; i++) { const a = ring[j][i], b = ring[j][(i + 1) % N], c = ring[j + 1][i], d = ring[j + 1][(i + 1) % N]; for (const q of [a, c, b, b, c, d]) put(q); } };
+    for (let k = 0; k < 11; k++) peak(-75 + k * 15 + R() * 6, -80 - R() * 3, 10 + R() * 6, 7.5 + R() * 5.5, .16);
+    for (let k = 0; k < 10; k++) peak(-68 + k * 15 + R() * 6, -74 - R() * 2, 8 + R() * 4, 4.5 + R() * 3, .05);
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(C, 3)); g.computeVertexNormals();
+    sk.hills.add(new THREE.Mesh(g, new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 1, fog: false, side: THREE.DoubleSide })));
+    for (let k = 0; k < 9; k++) { const h = new THREE.Mesh(SK_SIDE.geo.ball, new THREE.MeshStandardMaterial({ color: ['#6FBF6A', '#64B463', '#7BC873'][k % 3], roughness: 1, fog: false })); h.scale.set(10 + R() * 9, 1.6 + R() * 1.6, 5); h.position.set(-64 + k * 16 + R() * 6, 0, -68 - R() * 3); sk.hills.add(h); } } w.add(sk.hills);
   sk.clouds = []; const white = new THREE.MeshBasicMaterial({ color: 0xFFFFFF, fog: false });
   for (let k = 0; k < 7; k++) { const g = new THREE.Group(); for (let j = 0; j < 4; j++) { const b = new THREE.Mesh(SK_SIDE.geo.ball, white); b.scale.set(1.6 + Math.random() * 1.4, .8 + Math.random() * .5, 1); b.position.set((j - 1.5) * 1.6, Math.random() * .5, 0); g.add(b); }
     g.position.set(-50 + k * 16 + Math.random() * 6, 11 + Math.random() * 8, -70); g.userData.v = .25 + Math.random() * .3; sk.clouds.push(g); w.add(g); }
@@ -4554,8 +4571,9 @@ function skateThing(kind) { const pool = sk.pools[kind] ??= [], free = pool.find
     add2(new THREE.SphereGeometry(.2, 20, 14), yel, 0, .24, 0).scale.set(1.25, .85, 1); add2(new THREE.SphereGeometry(.13, 18, 12), yel, .17, .46, 0); const beak = add2(new THREE.ConeGeometry(.05, .14, 12), skMat('#FF8A1F', .5), .32, .44, 0); beak.rotation.z = -Math.PI / 2;
     for (const z of [-1, 1]) { add2(new THREE.SphereGeometry(.025, 8, 6), skMat('#1A1A22', .3), .26, .5, z * .065); add2(new THREE.BoxGeometry(.12, .02, .1), skMat('#FF8A1F', .5), 0, .01, z * .08); const w = add2(new THREE.SphereGeometry(.1, 12, 8), yel, -.02, .27, z * .17); w.scale.set(1.2, .6, .4); }
     const tail = add2(new THREE.ConeGeometry(.06, .14, 10), yel, -.26, .32, 0); tail.rotation.z = Math.PI / 2.6; half = .24; len = .4;
-    // (the real duck from Meshy in its place - the user, 12-11-2026 - facing the way it walks, its legs stepping)
-    seaModelInto(body, 'dyr-and', Math.PI / 2); }
+    // (the real duck from Meshy in its place - the user, 12-11-2026: with Meshy's skeleton and walk, as the dog, the cat and
+    // the rabbit have theirs - facing the way it walks)
+    const simple = [...body.children]; loadWalker('dyr-and.glb', 'dyr-and.jpg', .62).then(m => { m.group.rotation.y = Math.PI / 2; for (const o of simple) o.visible = false; body.add(m.group); body.userData.walker = m; }).catch(() => {}); }
   if (kind === 'bold') { const cv = document.createElement('canvas'); cv.width = 128; cv.height = 8; const c = cv.getContext('2d'); ['#FF4F8B', '#FFFFFF', '#FFC233', '#FFFFFF', '#3DA5FF', '#FFFFFF'].forEach((f, k) => { c.fillStyle = f; c.fillRect(k * 128 / 6, 0, 128 / 6 + 1, 8); });
     const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; body = add(new THREE.SphereGeometry(.26, 28, 18), new THREE.MeshStandardMaterial({ map: t, roughness: .4 }), 0, .26, 0); half = .26; len = .5; }
   const it = { group: g, kind, half, len, lid, body }; g.visible = false; scene.add(g); pool.push(it);
@@ -4623,7 +4641,8 @@ function skateOwnPose(fwd, right, up, w = 1) {
   glb.updateMatrixWorld(true); for (const n of ['LeftLeg', 'RightLeg']) turnBone(n, right, -.85 * w); glb.updateMatrixWorld(true); for (const n of ['LeftFoot', 'RightFoot']) turnBone(n, right, .38 * w);
   for (const [n, s] of [['LeftArm', 1], ['RightArm', -1]]) turnBone(n, fwd, (s * 1.05 + (sk.arm || 0)) * w); glb.updateMatrixWorld(true); for (const [n, s] of [['LeftForeArm', 1], ['RightForeArm', -1]]) turnBone(n, fwd, s * .25 * w);
   turnBone('Spine', right, -.12 * w); turnBone('Spine2', up, .35 * w); glb.updateMatrixWorld(true); turnBone('Neck', up, .4 * w); glb.updateMatrixWorld(true); turnBone('Head', up, .45 * w); glb.updateMatrixWorld(true); }
-function skateTick(dt) { seaT.value = performance.now() / 1000; const L = skateLevel(); sk.slow = Math.max(0, sk.slow - dt); sk.wobble = Math.max(0, sk.wobble - dt); sk.rampWait = Math.max(0, (sk.rampWait || 0) - dt);
+function skateTick(dt) { dt = Math.min(dt, .1); // (never a long jump after a pause: everything by the road was passed at once and it lay bare for a while)
+  seaT.value = performance.now() / 1000; const L = skateLevel(); sk.slow = Math.max(0, sk.slow - dt); sk.wobble = Math.max(0, sk.wobble - dt); sk.rampWait = Math.max(0, (sk.rampWait || 0) - dt);
   // (the push: through - then riding off, the pose growing in as it turns; after a hit, a push again once the wobble is over)
   const pa = glbActions[SKATE.push]; if (sk.push && (!pa?.isRunning() || pa.time >= pa.getClip().duration - .06)) { sk.push = false; runAnim('staa'); }
   if (sk.needPush && sk.wobble <= 0 && !sk.push && !sk.jy) startPush(); // (never up in the air: only once back on the road)
@@ -4653,7 +4672,8 @@ function skateTick(dt) { seaT.value = performance.now() / 1000; const L = skateL
   for (const it of [...sk.live]) { it.u -= v * dt; const g = it.group, k = it.kind, star = k === 'stjerne', good = SK_GOOD.has(k);
     if (star) { g.rotation.y += dt * 3; g.position.y = .06 * Math.sin(now * 3.3 + it.x * 3); }
     // (the duck waddles, the ball bounces - both across the road, and on out of it)
-    if (it.dir && !it.hit) { it.x += it.dir * it.cross * dt; if (k === 'and') { it.body.rotation.z = .12 * Math.sin(now * 14); it.body.position.y = .025 * Math.abs(Math.sin(now * 14)); }
+    if (k === 'and' && it.body.userData.walker) it.body.userData.walker.mixer.update(dt * (it.hit ? 2.4 : 1.5));
+    if (it.dir && !it.hit) { it.x += it.dir * it.cross * dt; if (k === 'and') { const w = it.body.userData.walker ? .4 : 1; it.body.rotation.z = .12 * w * Math.sin(now * 14); it.body.position.y = .025 * w * Math.abs(Math.sin(now * 14)); }
       else if (k === 'bold') { it.body.position.y = .26 + .45 * Math.abs(Math.sin(now * 4.5 + it.x)); it.body.rotation.z -= it.dir * it.cross / .26 * dt; } }
     if (it.pet) { it.pet.walk.setEffectiveWeight(1); it.pet.mixer.update(dt * Math.max(.8, Math.min(2.4, it.cross / .55)) * (it.hit ? 1.8 : 1)); if (it.hit) { it.x += it.dir * Math.max(2.5, it.cross * 2.5) * dt; g.position.y = .18 * Math.abs(Math.sin(now * 11)); } }
     // (the ball knocked away whole, bouncing off to the side - the user, 12-11-2026: landed on from a ramp it tipped over
@@ -4948,12 +4968,11 @@ function seaStar(gold) { const g = new THREE.Group();
 // cones looked artificial beside the dog, the cat and the rabbit - and more kinds of sea animals were wanted). Each a
 // small GLB file with one mesh and its colour picture, read as the skateboard world's things are (readProp). They have
 // no bones: they move by bending the shape itself as it is drawn - a fish's tail from side to side, a jellyfish's arms
-// swaying and its bell pulsing, a turtle's flippers up and down, a crab's legs and claws, an octopus's arms, a duck's
-// legs. [longest side in metres, the way it moves, standing on the floor]. Made facing +z. Until one is in - or if it
+// swaying and its bell pulsing, a turtle's flippers up and down, a crab's legs and claws, an octopus's arms. [longest side in metres, the way it moves, standing on the floor]. Made facing +z. Until one is in - or if it
 // cannot be fetched - the simple one from before stands in.
 const seaT = { value: 0 };
 const SEA_ANIMALS = { 'hav-klovnfisk': [.36, 'fisk'], 'hav-blaafisk': [.36, 'fisk'], 'hav-kuglefisk': [.32, 'fisk'], 'hav-vandmand': [.62, 'haeng'], 'hav-skildpadde': [1.1, 'luffer'], 'hav-soehest': [.55, 'vip'],
-  'hav-krabbe': [.5, 'ben', true], 'hav-blaeksprutte': [.8, 'arme', true], 'dyr-and': [.66, 'and', true] };
+  'hav-krabbe': [.5, 'ben', true], 'hav-blaeksprutte': [.8, 'arme', true] };
 function seaMat(map, mode, S) { const m = new THREE.MeshStandardMaterial({ map, roughness: .6, metalness: 0 }), f = v => v.toFixed(4);
   const code = { fisk: `float sw = 1. - smoothstep(${f(-S * .5)}, ${f(S * .2)}, transformed.z); transformed.x += sin(seaT * 9. + transformed.z * ${f(7 / S)}) * ${f(S * .1)} * sw;`,
     haeng: `float sw = 1. - smoothstep(${f(-S * .4)}, ${f(-S * .02)}, transformed.y); transformed.xz *= 1. + sin(seaT * 3.) * .06 * (1. - sw); transformed.y *= 1. - sin(seaT * 3.) * .05 * (1. - sw);
@@ -4963,8 +4982,7 @@ function seaMat(map, mode, S) { const m = new THREE.MeshStandardMaterial({ map, 
     ben: `float sw = (1. - smoothstep(0., ${f(S * .16)}, transformed.y)) * step(${f(S * .15)}, abs(transformed.x)); transformed.y += abs(sin(seaT * 10. + transformed.x * ${f(12 / S)})) * ${f(S * .03)} * sw;
       float cl = smoothstep(${f(S * .28)}, ${f(S * .48)}, abs(transformed.x)) * smoothstep(${f(S * .18)}, ${f(S * .36)}, transformed.y); transformed.y += sin(seaT * 4. + sign(transformed.x)) * ${f(S * .04)} * cl;`,
     arme: `float sw = smoothstep(${f(S * .22)}, ${f(S * .5)}, length(transformed.xz)); transformed.y += (sin(seaT * 2.5 + atan(transformed.z, transformed.x) * 3.) * .5 + .5) * ${f(S * .07)} * sw; transformed.y *= 1. + sin(seaT * 2.) * .04 * (1. - sw);`,
-    // (the duck, turned to face +x: its legs swing forward and back, one then the other, the feet lifting)
-    and: `float sw = clamp(1. - transformed.y / ${f(S * .26)}, 0., 1.); float st = sin(seaT * 14.) * sign(transformed.z); transformed.x += st * ${f(S * .1)} * sw; transformed.y += max(0., st) * ${f(S * .05)} * step(.001, sw);` }[mode];
+ }[mode];
   m.onBeforeCompile = sh => { sh.uniforms.seaT = seaT; sh.vertexShader = 'uniform float seaT;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n' + code); };
   m.customProgramCacheKey = () => 'sea-' + mode + S; return m; }
 const seaProps = {};
@@ -4972,7 +4990,7 @@ const seaProps = {};
 function seaModelInto(g, kind, turn = 0) { const [size, mode, floor] = SEA_ANIMALS[kind], simple = [...g.children];
   (seaProps[kind] ??= readProp(kind + '.glb').then(({ geo, map }) => { geo.computeBoundingBox(); const b = geo.boundingBox, d = b.getSize(new THREE.Vector3()), k = size / Math.max(d.x, d.y, d.z);
     geo.translate(-(b.min.x + b.max.x) / 2, floor ? -b.min.y : -(b.min.y + b.max.y) / 2, -(b.min.z + b.max.z) / 2); geo.scale(k, k, k); return { geo, mat: seaMat(map, mode, size) }; }).catch(e => { delete seaProps[kind]; throw e; }))
-    .then(({ geo, mat }) => { const m = new THREE.Mesh(geo, mat); m.rotation.y = turn; m.castShadow = kind === 'dyr-and'; g.add(m); for (const o of simple) o.visible = false; g.userData.model = m; }).catch(() => {});
+    .then(({ geo, mat }) => { const m = new THREE.Mesh(geo, mat); m.rotation.y = turn; g.add(m); for (const o of simple) o.visible = false; g.userData.model = m; }).catch(() => {});
   return g; }
 function seaJelly() { const g = new THREE.Group(), m = new THREE.MeshStandardMaterial({ color: '#FF8FCB', transparent: true, opacity: .75, roughness: .25, emissive: new THREE.Color('#C0408A'), emissiveIntensity: .35 });
   const dome = ilMesh(new THREE.SphereGeometry(.26, 24, 14, 0, Math.PI * 2, 0, Math.PI / 2), m, 0, 0, 0, g, false); dome.scale.y = .85; g.userData.dome = dome;
@@ -5562,6 +5580,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.11.0 (8a53c0c)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.11.0 (0d44dc8)</div>
 </body>
 </html>
