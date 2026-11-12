@@ -652,7 +652,7 @@ const EN = {
   'Undertrøje': 'Tank top', 'T-shirt': 'T-shirt', 'Hættetrøje': 'Hoodie', 'Fodboldtrøje': 'Soccer jersey', 'Undershorts': 'Underwear', 'Trusser': 'Briefs', 'Lange bukser': 'Long pants', 'Shorts': 'Shorts', 'Cowboyshorts': 'Denim shorts', 'Fodboldbukser': 'Soccer shorts',
   'Ingen kjole': 'No dress', 'Ingen dragt': 'No suit', 'Badedragt': 'Swimsuit', 'Badebukser': 'Swim trunks', 'Sommerkjole': 'Summer dress', 'Prinsessekjole': 'Princess dress', 'Havfruekjole': 'Mermaid dress', 'Ingen strømper': 'No socks', 'Ankelstrømper': 'Ankle socks', 'Almindelige strømper': 'Regular socks', 'Fodboldstrømper': 'Soccer socks', 'Knæstrømper': 'Knee socks',
   'Bare fødder': 'Bare feet', 'Sneakers': 'Sneakers', 'Fodboldstøvler': 'Soccer cleats', 'Gummistøvler': 'Rain boots', 'Balletsko': 'Ballet shoes', 'Højhælede': 'High heels',
-  'Ingen hat': 'No hat', 'Kasket': 'Cap', 'Krone': 'Crown', 'Kaninører': 'Bunny ears', 'Sløjfe': 'Bow', 'Ingen briller': 'No glasses', 'Svømmebriller': 'Swim goggles', 'Snorkel': 'Snorkel', 'Rumdragt': 'Space suit', 'Rumhjelm': 'Space helmet', 'Jetpack': 'Jetpack', 'Ingen jetpack': 'No jetpack', 'Rumrejse': 'Space trip', 'Rumrejse': 'Space trip', '👆 Tryk – så flyver du derhen. To hurtige tryk giver fart 🚀': '👆 Tap – and you fly there. Two quick taps give a boost 🚀', 'Skaterhjelm': 'Skate helmet', 'Knæbeskyttere': 'Knee pads', 'Albuebeskyttere': 'Elbow pads', 'Handsker': 'Gloves', 'Ingen knæbeskyttere': 'No knee pads', 'Ingen albuebeskyttere': 'No elbow pads', 'Ingen handsker': 'No gloves', 'Tag udstyret på': 'Put your gear on', '▶ Start': '▶ Start', 'Ingen svømmebriller': 'No goggles', 'Runde': 'Round', 'Solbriller': 'Sunglasses', 'Hjerte': 'Heart',
+  'Ingen hat': 'No hat', 'Kasket': 'Cap', 'Krone': 'Crown', 'Kaninører': 'Bunny ears', 'Sløjfe': 'Bow', 'Ingen briller': 'No glasses', 'Svømmebriller': 'Swim goggles', 'Snorkel': 'Snorkel', 'Rumdragt': 'Space suit', 'Rumhjelm': 'Space helmet', 'Rumstøvler': 'Space boots', 'Jetpack': 'Jetpack', 'Ingen jetpack': 'No jetpack', 'Rumrejse': 'Space trip', 'Rumrejse': 'Space trip', '👆 Tryk – så flyver du derhen. To hurtige tryk giver fart 🚀': '👆 Tap – and you fly there. Two quick taps give a boost 🚀', 'Skaterhjelm': 'Skate helmet', 'Knæbeskyttere': 'Knee pads', 'Albuebeskyttere': 'Elbow pads', 'Handsker': 'Gloves', 'Ingen knæbeskyttere': 'No knee pads', 'Ingen albuebeskyttere': 'No elbow pads', 'Ingen handsker': 'No gloves', 'Tag udstyret på': 'Put your gear on', '▶ Start': '▶ Start', 'Ingen svømmebriller': 'No goggles', 'Runde': 'Round', 'Solbriller': 'Sunglasses', 'Hjerte': 'Heart',
   // (things, pets, backgrounds)
   'Ballon': 'Balloon', 'Bamse': 'Teddy bear', 'Tryllestav': 'Magic wand', 'Is': 'Ice cream', 'Blomst': 'Flower', 'Bold': 'Ball', 'Fodbold': 'Soccer ball', 'Hulahopring': 'Hula hoop',
   'Intet dyr': 'No pet', 'Kat': 'Cat', 'Hund': 'Dog', 'Kanin': 'Rabbit', 'Halsbånd': 'Collar', 'Madskål': 'Food bowl', 'Legebold': 'Play ball',
@@ -1495,11 +1495,11 @@ function setupHairTexture(img, list = hairTexs) {
 // (the socks - and the high heels, made the same way: their own colour, smooth, no ribs)
 function paintSocks(only) { if (typeof GARMENTS === 'undefined') return;
   for (const m of only ? [only] : [...Object.values(GARMENTS.socks.meshes), ...Object.values(GARMENTS.shoe.meshes)]) { if (!m?.userData.sock) continue; const map = m.material.map, cv = map.image, g = cv.getContext('2d'), W = cv.width, H = cv.height, o = m.userData.sock;
-    const part = o.heel ? 'shoe' : 'socks', hex = picked[part] || START[part], n = parseInt(hex.slice(1), 16), sock = [n >> 16 & 255, n >> 8 & 255, n & 255];
+    const part = o.heel || o.boot ? 'shoe' : 'socks', hex = picked[part] || START[part], n = parseInt(hex.slice(1), 16), sock = [n >> 16 & 255, n >> 8 & 255, n & 255];
     const hsl = {}; new THREE.Color().setStyle(hex, THREE.SRGBColorSpace).getHSL(hsl, THREE.SRGBColorSpace); const band = hsl.l > .7 ? [44, 62, 140] : [255, 255, 255];
     const im = g.createImageData(W, H), d = im.data, s = o.stripe ? o.stripe.map(f => f / o.top * H) : null;
     for (let y = 0; y < H; y++) { const b = s ? Math.min(1, Math.max(0, Math.min(y + .5 - s[0], s[1] - y - .5) + .5)) : 0; // (the stripe's edges soft over one row)
-      for (let x = 0; x < W; x++) { const k = (o.heel ? 1 : x % 4 < 2 ? .9 : 1) * (1 + (Math.random() - .5) * (o.heel ? .015 : .04)), i = (y * W + x) * 4;
+      for (let x = 0; x < W; x++) { const k = (o.heel || o.boot ? 1 : x % 4 < 2 ? .9 : 1) * (1 + (Math.random() - .5) * (o.heel || o.boot ? .015 : .04)) * (o.boot && y > H * (1 - .022 / o.top) ? .3 : 1), i = (y * W + x) * 4;
         for (let c = 0; c < 3; c++) d[i + c] = Math.min(255, (sock[c] * (1 - b) + band[c] * b) * k); d[i + 3] = 255; } }
     g.putImageData(im, 0, 0); map.needsUpdate = true; } }
 function recolourHair(hexColour, list = hairTexs) {
@@ -2276,7 +2276,10 @@ const GARMENTS = {
   shoe: { items: [['', 'Bare fødder'], ['sko-sneakers', 'Sneakers', { sole: .02 }], ['sko-fodbold', 'Fodboldstøvler', { file: 'sko-sneakers', sole: .02, studs: true }], ['sko-gummi', 'Gummistøvler', { pale: .9, paleTop: .015 }], ['sko-ballet', 'Balletsko', { paleFrom: .06, flat: .35, solid: .03 }],
     // (high heels, for the dresses - the user, 03-11-2026: made from the feet as the socks are, a shiny shell, the heels
     // raised and a thin heel under each - see heelsTick)
-    ['sko-hoej', 'Højhælede', { made: true, top: .03, out: .0055, heel: true }]], texs: [] },
+    ['sko-hoej', 'Højhælede', { made: true, top: .03, out: .0055, heel: true }],
+    // (space boots - the user, 13-11-2026: the suit's feet looked like socks. Thick, up over the ankles, a dark sole and a
+    // band round the top; in the shoes' colour)
+    ['sko-rum', 'Rumstøvler', { made: true, top: .125, out: .016, boot: true, stripe: [.006, .03], game: 'space' }]], texs: [] },
   // (hats were made on a bald head: on top of hair they are raised - lift, in eyes' distances - or, a cap, made wider)
   hat: { items: [['', 'Ingen hat'], ['hat-kasket', 'Kasket', { grow: 1.12, lift: .1, cap: true }], ['hat-krone', 'Krone', { grow: 1.05, rest: .12 }], ['hat-kanin', 'Kaninører', { grow: 1.12, lift: .3, wrap: .03, ears: .45, thin: .35, scalp: true, flat: .3 }],
     ['hat-sloejfe', 'Sløjfe', { grow: 1.05, lift: .35, move: .02, size: .75 }],
@@ -2300,15 +2303,17 @@ for (const G of Object.values(GARMENTS)) { G.now = G.shown = ''; G.meshes = {}; 
 // the game stops it is dressed again as it was before. game: the game a suit or a piece of gear is for)
 const isGear = n => !!GARMENTS.glasses.items.find(i => i[0] === n)?.[2]?.goggles;
 // (the safety gear, shown together in a row under Udstyr, each put on or taken off by itself)
-const SAFETY = ['hat-skaterhjelm', 'beskyt-knae', 'beskyt-albue', 'handsker-skate', 'hat-rumhjelm', 'udstyr-jetpack'], gearPart = n => Object.keys(GARMENTS).find(p => GARMENTS[p].items.some(i => i[0] === n));
+const SAFETY = ['hat-skaterhjelm', 'beskyt-knae', 'beskyt-albue', 'handsker-skate', 'hat-rumhjelm', 'udstyr-jetpack', 'sko-rum'], gearPart = n => Object.keys(GARMENTS).find(p => GARMENTS[p].items.some(i => i[0] === n));
 const gearOf = () => { try { return playerNow().gear ??= {}; } catch (e) { return {}; } }, gearPick = (k, n) => { try { gearOf()[k] = n; savePlayers(); } catch (e) {} };
 const wearSnap = () => ({ now: Object.fromEntries(Object.entries(GARMENTS).map(([p, g]) => [p, g.now])), sb: GARMENTS.suit.before, db: GARMENTS.dress.before });
 function wearBack(w) { if (!w || Object.entries(w.now).every(([p, n]) => GARMENTS[p].now === n)) return; for (const [p, n] of Object.entries(w.now)) GARMENTS[p].now = n; GARMENTS.suit.before = w.sb; GARMENTS.dress.before = w.db; setGarment('socks', GARMENTS.socks.now); }
 function dressFor(mode) { const pick = gearOf();
-  for (const [part, first] of [['suit', () => GARMENTS.dress.now || /flet/.test(hairNow) ? 'dragt-bade' : 'dragt-badebukser'], ['glasses', () => 'briller-svoemme'], ['hat'], ['knee'], ['elbow'], ['gloves'], ['back']]) { const G = GARMENTS[part], mine = G.items.filter(i => i[2]?.game === mode && owns(i[0])), on = G.items.find(i => i[0] === G.now)?.[2]?.game;
+  for (const [part, first] of [['suit', () => GARMENTS.dress.now || /flet/.test(hairNow) ? 'dragt-bade' : 'dragt-badebukser'], ['glasses', () => 'briller-svoemme'], ['hat'], ['knee'], ['elbow'], ['gloves'], ['back'], ['shoe']]) { const G = GARMENTS[part], mine = G.items.filter(i => i[2]?.game === mode && owns(i[0])), on = G.items.find(i => i[0] === G.now)?.[2]?.game;
     if (mine.length) { if (on !== mode) setGarment(part, mine.find(i => i[0] === pick[part])?.[0] || mine.find(i => i[0] === first?.())?.[0] || mine[0][0]); } else if (on) setGarment(part, ''); }
   // (into the water barefoot - the user, 12-11-2026: shoes and socks off by itself, and on again after if they were on)
-  if ((mode === 'sea' || mode === 'space') && (GARMENTS.shoe.now || GARMENTS.socks.now)) { GARMENTS.shoe.now = ''; setGarment('socks', ''); } }
+  if (mode === 'sea' && (GARMENTS.shoe.now || GARMENTS.socks.now)) { GARMENTS.shoe.now = ''; setGarment('socks', ''); }
+  // (out in space: the boots on the bare feet, inside the suit)
+  if (mode === 'space' && GARMENTS.socks.now) setGarment('socks', ''); }
 // ---- The child dresses the figure for a game the first time (the user, 12-11-2026: the children are to put the right
 // safety gear on the figure themselves - but only the first time; after that it is remembered and the figure dresses by
 // itself, as before). Before the game starts, a bar at the bottom with that game's gear as big pictures, the ones still
@@ -2321,7 +2326,7 @@ function dressAsk(mode) { const m = MODES[mode].from ? 'hop' : mode, needs = dre
   const free = p => p === 'glasses', ok = () => needs.every(([p, l]) => free(p) || l.some(i => i[0] === GARMENTS[p].now));
   const draw = () => { box.innerHTML = ''; for (const [part, list] of needs) { const have = list.some(i => i[0] === GARMENTS[part].now);
       for (const [n, label] of list) { const b = iconButton(`ikoner/valg-${n}.png`, label), on = GARMENTS[part].now === n; b.classList.toggle('on', on); b.classList.toggle('todo', !have && !free(part));
-        b.onclick = () => { if (part === 'suit' || part === 'glasses') gearPick(part, on ? '' : n); if ((m === 'sea' || m === 'space') && (GARMENTS.shoe.now || GARMENTS.socks.now)) { GARMENTS.shoe.now = ''; GARMENTS.socks.now = ''; } setGarment(part, on ? '' : n); draw(); }; box.append(b); } }
+        b.onclick = () => { if (part === 'suit' || part === 'glasses') gearPick(part, on ? '' : n); if (m === 'sea' && (GARMENTS.shoe.now || GARMENTS.socks.now)) { GARMENTS.shoe.now = ''; GARMENTS.socks.now = ''; } if (m === 'space') GARMENTS.socks.now = ''; setGarment(part, on ? '' : n); draw(); }; box.append(b); } }
     go.disabled = !ok(); };
   go.onclick = () => { if (!ok()) return; (gear.done ??= {})[m] = true; try { savePlayers(); } catch (e) {} bar.hidden = true; startGame(mode); };
   document.getElementById('dressX').onclick = () => { bar.hidden = true; const w = dressSnap; dressSnap = null; wearBack(w); };
@@ -2732,7 +2737,8 @@ function makeCloth(name, part, opts) {
   // in the contrast colour that far below the top, [from, to])
   if (socks) { const top = opts.top * H; edges = [{ f: p => p[1] - top, bare: .008 * H }]; out = () => (opts.out || .0035) * H; }
   // (a space suit: all of the body below the neck, a good way out from it - thick and soft)
-  else if (opts.space) { edges = [{ f: p => p[1] - K.neckY - .012 * H, bare: .006 * H }]; out = () => .011 * H; level = -Infinity; }
+  else if (opts.space) { edges = [{ f: p => p[1] - K.neckY - .012 * H, bare: .006 * H }, { f: p => .085 * H - p[1], bare: .008 * H }]; // (down to the ankles: the boots go on over its ends - its feet came out through them)
+    out = () => .011 * H; level = -Infinity; }
   // (gloves: the hands and a little of the wrist, close on the skin, their end turned up as a cuff)
   else if (opts.glove) { const cuff = K.wristX - .03 * H; edges = [{ f: p => cuff - side(p), fold: .016 * H, bare: .008 * H }]; out = () => .0045 * H; level = -Infinity; swimArm = -Infinity; }
   else if (pants) { const hem = opts.hem * H;
@@ -2893,7 +2899,7 @@ function makeCloth(name, part, opts) {
     // (shades: a pocket, and the trimmed edges)
     const rim = hood && opts.hood ? hood(c.p) : 0, shade = (pocket && opts.pocket && !opts.relief && pocket(c.p) ? .8 : 1) * (rim > 0 && rim < .1 ? .92 : 1) * (opts.hood && (b => b > HOOD_A0 && -edges[1].f(c.p) < hoodGap(b, H) - .002 * H)(Math.abs(Math.atan2(c.p[0] - K.mid, c.p[2] - K.nz))) ? .68 : 1) /* (the hood's inside: inside the rim only, ending where it ends - out past it, over the shoulders, it was too dark; the user, 11-11-2026) */ *(edges.some(e => e.trim && -e.f(c.p) < .018 * H) ? .55 : 1) * (c.fold !== undefined ? 1.45 : 1); C.set([shade, shade, shade], i * 3); // (the fold a lighter shade of the cloth)
     // (a space suit's darker rings: round the neck and round the ankles)
-    if (opts.space) { const y = c.p[1], k = y > K.neckY - .012 * H || y > .04 * H && y < .062 * H ? .5 : 1; C.set([k, k, k], i * 3); }
+    if (opts.space) { const y = c.p[1], k = y > K.neckY - .012 * H ? .5 : 1; C.set([k, k, k], i * 3); }
     // (socks: their picture once from the floor (0) to their top (1), so the stripe lies level round the leg)
     if (socks) U[i * 2 + 1] = c.p[1] / (opts.top * H);
     w.applyMatrix4(inv); P.set([w.x, w.y, w.z], i * 3); n.transformDirection(inv); N.set([n.x, n.y, n.z], i * 3);
@@ -2940,7 +2946,7 @@ function makeCloth(name, part, opts) {
   cloth.castShadow = true; cloth.name = name; cloth.frustumCulled = false; cloth.normalizeSkinWeights(); cloth.userData.orig = g.attributes.position.array.slice();
   cloth.position.copy(body.position); cloth.quaternion.copy(body.quaternion); cloth.scale.copy(body.scale);
   body.parent.add(cloth); cloth.bind(body.skeleton, body.bindMatrix); if (picked[part]) recolourHair(picked[part], G.texs); if (G.texs === gearTexs && picked.suit) recolourHair(picked.suit, gearTexs);
-  if (socks) { cloth.userData.sock = opts; paintSocks(cloth); if (opts.heel) { cloth.material.roughness = .28; cloth.material.metalness = .05; } }
+  if (socks) { cloth.userData.sock = opts; paintSocks(cloth); if (opts.heel) { cloth.material.roughness = .28; cloth.material.metalness = .05; } if (opts.boot) cloth.material.roughness = .5; }
   if (opts.hood) hoodRim(cloth, list, wp, dir, edges[1].f, K, H, inv);
   if (opts.relief && !opts.hood && !opts.swim) neckBand(cloth, list, wp, dir, edges[1].f, K, H, inv, opts.trim ? .55 : 1);
   // (the body under it hidden, all but near its edges)
@@ -5903,6 +5909,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.11.0 (84c8963)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.11.0 (4e6f934)</div>
 </body>
 </html>
