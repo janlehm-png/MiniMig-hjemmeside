@@ -4573,7 +4573,7 @@ function skateThing(kind) { const pool = sk.pools[kind] ??= [], free = pool.find
     const tail = add2(new THREE.ConeGeometry(.06, .14, 10), yel, -.26, .32, 0); tail.rotation.z = Math.PI / 2.6; half = .24; len = .4;
     // (the real duck from Meshy in its place - the user, 12-11-2026: with Meshy's skeleton and walk, as the dog, the cat and
     // the rabbit have theirs - facing the way it walks)
-    const simple = [...body.children]; loadWalker('dyr-and.glb', 'dyr-and.jpg', .62).then(m => { m.group.rotation.y = Math.PI / 2; for (const o of simple) o.visible = false; body.add(m.group); body.userData.walker = m; }).catch(() => {}); }
+    const simple = [...body.children]; loadWalker('dyr-and.glb', 'dyr-and.jpg', .42) /* (smaller than the cat and the dog - the user, 12-11-2026: it was out of proportion beside them) */.then(m => { m.group.rotation.y = Math.PI / 2; for (const o of simple) o.visible = false; body.add(m.group); body.userData.walker = m; }).catch(() => {}); }
   if (kind === 'bold') { const cv = document.createElement('canvas'); cv.width = 128; cv.height = 8; const c = cv.getContext('2d'); ['#FF4F8B', '#FFFFFF', '#FFC233', '#FFFFFF', '#3DA5FF', '#FFFFFF'].forEach((f, k) => { c.fillStyle = f; c.fillRect(k * 128 / 6, 0, 128 / 6 + 1, 8); });
     const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; body = add(new THREE.SphereGeometry(.26, 28, 18), new THREE.MeshStandardMaterial({ map: t, roughness: .4 }), 0, .26, 0); half = .26; len = .5; }
   const it = { group: g, kind, half, len, lid, body }; g.visible = false; scene.add(g); pool.push(it);
@@ -5580,6 +5580,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.11.0 (0d44dc8)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.11.0 (ec1328b)</div>
 </body>
 </html>
