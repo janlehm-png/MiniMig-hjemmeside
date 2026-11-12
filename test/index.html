@@ -4457,12 +4457,12 @@ const SK_SIDE = { geo: null,
   lygte: () => { const G = SK_SIDE.geo; return skPiece([[G.cyl, '#6F7480', 0, 1.2, 0, .05, 2.4, .05], [G.cyl, '#6F7480', 0, .06, 0, .13, .12, .13], [G.box, '#6F7480', -.22, 2.4, 0, .5, .05, .05], [G.ball, '#FFE27A', -.45, 2.32, 0, .13], [G.cone, '#4A4F5A', -.45, 2.44, 0, .17, .12, .17]]); },
   hegn: () => { const G = SK_SIDE.geo, parts = [[G.box, '#FFFFFF', 0, .42, 0, .05, .05, 2.4], [G.box, '#FFFFFF', 0, .22, 0, .05, .05, 2.4]]; for (let k = -2; k <= 2; k++) parts.push([G.box, '#FFFFFF', 0, .3, k * .58, .08, .6, .08], [G.cone, '#FFFFFF', 0, .64, k * .58, .06, .1, .06]); return skPiece(parts); },
   baenk: () => { const G = SK_SIDE.geo; return skPiece([[G.box, '#A9713F', 0, .34, 0, .38, .05, 1.2], [G.box, '#A9713F', .2, .58, 0, .05, .3, 1.2], [G.box, '#5A5F6A', 0, .16, .5, .32, .32, .05], [G.box, '#5A5F6A', 0, .16, -.5, .32, .32, .05]]); },
-  // (the verge - the user, 12-11-2026: more life where the grass meets the road. Tufts of grass leaning in over the white
-  // line, worn earth, pebbles, daisies and dandelions, a toadstool now and then; one piece for each stretch of road side)
+  // (the verge - the user, 12-11-2026: more life where the grass meets the road. Tufts of grass - on the grass only, none on the
+  // road, the same day - worn earth, pebbles, daisies and dandelions, a toadstool now and then; one piece for each stretch of road side)
   kant: () => { const G = SK_SIDE.geo, parts = [], R = Math.random, greens = ['#4FB04A', '#5CC257', '#43A046', '#6BD063'];
-    for (let k = 0; k < 2; k++) parts.push([G.peb, R() < .6 ? '#7DBB55' : '#93A455', .12 + R() * .2, .004, (R() - .5) * 2.2, .09 + R() * .1, .01, .2 + R() * .22]);
-    for (let k = 0; k < 6; k++) { const x = (R() - .45) * .5, z = (R() - .5) * 2.3, n = 3 + Math.floor(R() * 3); for (let j = 0; j < n; j++) { const h = .1 + R() * .16; parts.push([G.roof, greens[Math.floor(R() * 4)], x + (R() - .5) * .1, h / 2, z + (R() - .5) * .1, .028, h, .028, R() * 3, (R() - .5) * .7]); } }
-    for (let k = 0; k < 2; k++) parts.push([G.peb, ['#B9B4AE', '#9E9A96', '#D2CDC6'][Math.floor(R() * 3)], (R() - .2) * .35, .018, (R() - .5) * 2.2, .03 + R() * .03, .024, .035 + R() * .035]);
+    for (let k = 0; k < 2; k++) parts.push([G.peb, R() < .6 ? '#7DBB55' : '#93A455', .22 + R() * .2, .004, (R() - .5) * 2.2, .09 + R() * .1, .01, .2 + R() * .22]);
+    for (let k = 0; k < 6; k++) { const x = .09 + R() * .4, z = (R() - .5) * 2.3, n = 3 + Math.floor(R() * 3); for (let j = 0; j < n; j++) { const h = .1 + R() * .16; parts.push([G.roof, greens[Math.floor(R() * 4)], x + (R() - .5) * .1, h / 2, z + (R() - .5) * .1, .028, h, .028, R() * 3, (R() - .5) * .7]); } }
+    for (let k = 0; k < 2; k++) parts.push([G.peb, ['#B9B4AE', '#9E9A96', '#D2CDC6'][Math.floor(R() * 3)], .06 + R() * .3, .018, (R() - .5) * 2.2, .03 + R() * .03, .024, .035 + R() * .035]);
     for (let k = 0; k < 3; k++) if (R() < .6) { const x = .08 + R() * .35, z = (R() - .5) * 2.2, h = .1 + R() * .1, c = R() < .5 ? '#FFFFFF' : '#FFD23F'; parts.push([G.cyl, '#3F9A45', x, h / 2, z, .01, h, .01], [G.peb, c, x, h + .012, z, .05, .018, .05], [G.peb, '#FFB020', x, h + .028, z, .02]); }
     if (R() < .1) { const x = .15 + R() * .3, z = (R() - .5) * 2; parts.push([G.cyl, '#FFF4E0', x, .05, z, .022, .1, .022], [G.peb, '#E8384F', x, .11, z, .07, .045, .07]); }
     return skPiece(parts); },
@@ -4506,7 +4506,7 @@ function skSidePut(kind, u, x, rot = 0, size = 1) { const pool = sk.sidePools[ki
   g.visible = true; g.scale.setScalar(size); sk.side.push({ g, u, x, rot, kind }); }
 function skSideRow(u) { sk.rowN = (sk.rowN || 0) + 1;
   for (const s of [-1, 1]) { const E = SKW.edge, r = Math.random(), turn = s > 0 ? -Math.PI / 2 : Math.PI / 2;
-    skSidePut('kant', u, s * (E - .04), s > 0 ? 0 : Math.PI);
+    skSidePut('kant', u, s * (E + .05), s > 0 ? 0 : Math.PI);
     if (sk.rowN % 5 === (s > 0 ? 0 : 2)) skSidePut('lygte', u, s * (E + .45), s > 0 ? 0 : Math.PI);
     if (sk.sideSkip[s] > 0) { sk.sideSkip[s]--; continue; }
     if (r < .13) { skSidePut('hus', u, s * (E + 4.2 + Math.random() * 1.5), turn); sk.sideSkip[s] = 1; if (Math.random() < .7) skSidePut('hegn', u, s * (E + 1.5)); }
@@ -4556,7 +4556,7 @@ function skateThing(kind) { const pool = sk.pools[kind] ??= [], free = pool.find
     const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; body = add(new THREE.SphereGeometry(.26, 28, 18), new THREE.MeshStandardMaterial({ map: t, roughness: .4 }), 0, .26, 0); half = .26; len = .5; }
   const it = { group: g, kind, half, len, lid, body }; g.visible = false; scene.add(g); pool.push(it);
   // (the dog, the cat and the rabbit from Dyr - the user, 12-11-2026: they run over the road from out in the grass)
-  if (SK_PETS[kind]) { it.half = .22; it.len = .5; loadGlbPet(kind + '.glb', kind + '.jpg', SK_PETS[kind], .11, .022).then(m => { m.collar.visible = false; g.add(m.group); it.pet = m; }).catch(() => {}); }
+  if (SK_PETS[kind]) { it.half = .34; it.len = .5; loadGlbPet(kind + '.glb', kind + '.jpg', SK_PETS[kind], .11, .022).then(m => { m.collar.visible = false; g.add(m.group); it.pet = m; }).catch(() => {}); }
   return it; }
 const SK_PETS = { 'dyr-kat': .72, 'dyr-hund': .74, 'dyr-kanin': .98 }, skPetsIn = () => Object.keys(SK_PETS).filter(k => (sk.pools[k] || []).some(p => p.pet && !p.group.visible));
 // (the good ones: run into on purpose - a star, a splash, a jump, a present - not bumped into)
@@ -4680,7 +4680,9 @@ function skateTick(dt) { const L = skateLevel(); sk.slow = Math.max(0, sk.slow -
         const T = Math.min(1.6, Math.max(.3, land / 2 / vv)); sk.jv = 2.1 / T; sk.jg = 2.1 / (T * T); sk.jt = 2 * T; sk.jy = .001; addStars(2); sfx('boing'); }
       else if (k === 'gave') { it.hit = true; it.vy = 4; it.lid.visible = true; skateBits('guld', g.position.x, .5, g.position.z, 26); addStars(3); for (const t of [0, .12, .24]) sfx('ding', t); }
       else if (k === 'and') { it.hit = true; sk.wobble = .5; sfx('rap'); sfx('rap', .18); }
-      else if (SK_PETS[k]) { it.hit = true; sk.wobble = .5; sfx('boing'); }
+      // (an animal run into is a bump like any other thing - the user, 12-11-2026: one rode straight through them - and it
+      // jumps off out of the way)
+      else if (SK_PETS[k]) { it.hit = true; sk.slow = 1; sk.wobble = 1; sk.needPush = true; sfx('bonk'); sfx('boing', .08); }
       else if (k === 'bold') { it.hit = true; it.vy = 4.2; sk.slow = 1; sk.wobble = 1; sk.needPush = true; sfx('boing'); sfx('bonk', .05); }
       else { it.hit = true; it.vy = 2.5; sk.slow = 1; sk.wobble = 1; sk.needPush = true; sfx('bonk'); } }
     if (!it.done && !good && it.u < -(it.len / 2 + .3)) { it.done = true; if (it.mine) addStars(1); }
@@ -4967,7 +4969,8 @@ function seaStop() { if (!sea.world?.parent) return; scene.remove(sea.world); ho
 function seaTap(e) { const r = renderer.domElement.getBoundingClientRect(); ilAt.set((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1); ilRay.setFromCamera(ilAt, camera);
   if (!ilRay.ray.intersectPlane(seaPlane, seaHit) || sea.roll) return; const b = sea.box; game.hint = 0;
   sea.target = new THREE.Vector3(Math.min(b.r, Math.max(b.l, seaHit.x)), Math.min(b.t, Math.max(b.b, seaHit.y - SEA.hips)), 0); }
-function seaTick(dt) { const t = performance.now() / 1000, p = sea.pos, b = sea.box, L = SEA.levels[game.level] || SEA.levels['niveau-let'];
+function seaTick(dt) { seaBox(); // (the picture's own edges, as it is now - measured only at the start, before the game filled the screen, it was too narrow: the figure stopped after two strokes, far from where the finger was, the user 12-11-2026)
+  const t = performance.now() / 1000, p = sea.pos, b = sea.box, L = SEA.levels[game.level] || SEA.levels['niveau-let'];
   // (swimming: on towards the finger, turned the way it goes and tipped up or down; there - or rolling - treading water)
   if (sea.target && !sea.roll) { const dx = sea.target.x - p.x, dy = sea.target.y - p.y, d = Math.hypot(dx, dy);
     if (d < .08 && !sea.held) sea.target = null;
@@ -5191,7 +5194,9 @@ const PK_RUN = { back: 1.5, speed: 3.4, jog: 2.2 }, pkBack = v => { pkStand(v); 
 const pkFeet = document.getElementById('pkFeet');
 function pkFeetShow(on) { pkFeet.hidden = !on; pkFeet.querySelectorAll('button').forEach(b => b.classList.toggle('on', +b.dataset.foot === pk.foot % 2)); }
 pkFeet.onclick = e => { const b = e.target.closest('button'); if (!b || (pk.phase !== 'aim')) return; pk.foot = +b.dataset.foot; try { playerNow().foot = pk.foot; savePlayers(); } catch (err) {} pkFeetShow(true); sfx('ding'); };
-function pkKickNow() { const id = pkKick(), a = glbActions[id]; pkStand(pk.rig.position); runAnim(id, true); a.time = Math.max(0, kicks[id].contact - .42); pk.phase = 'kick'; }
+// (glide: true from the run-up - the kick begins while it still runs, and it comes to the ball as the foot meets it;
+// the user, 12-11-2026: it stopped at the ball and then kicked)
+function pkKickNow(glide) { const id = pkKick(), a = glbActions[id]; if (!glide) pkStand(pk.rig.position); runAnim(id, true); a.time = Math.max(0, kicks[id].contact - (glide ? .3 : .42)); if (glide) { a.fadeIn(.22); glbActions['loeb-b']?.fadeOut(.22); } pk.glide = !!glide; pk.phase = 'kick'; }
 // (a tap anywhere: aimed at the goal where the finger is, kept inside the posts and under the bar)
 function pkTap(e) { if (pk.phase !== 'aim' || !kicks.spark || !kicks['spark-hoejre']) return; const r = renderer.domElement.getBoundingClientRect();
   ilAt.set((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1); ilRay.setFromCamera(ilAt, camera); if (!ilRay.ray.intersectPlane(pkPlane, pkHit)) return;
@@ -5204,7 +5209,8 @@ function pkTick(dt) { const t = performance.now() / 1000, L = pkLevel(), kp = pk
     if (d > .12 && glbActions['loeb-b'] && (pk.walkBack || d > .5)) { if (!pk.walkBack) { pk.walkBack = true; runAnim('loeb-b'); glbActions['loeb-b'].timeScale = .8; } pk.rig.position.addScaledVector(pkWant.sub(pk.rig.position).normalize(), Math.min(d, PK_RUN.jog * dt)); }
     else { if (pk.walkBack) { pk.walkBack = false; glbActions['loeb-b'].timeScale = 1; runAnim('staa'); } pk.rig.position.lerp(pkWant, Math.min(1, dt * 5)); } }
   // (the run-up: to the ball, and the kick as it gets there)
-  if (pk.phase === 'run') { const d = pk.rig.position.distanceTo(pkStand(pkWant)), step = PK_RUN.speed * dt; if (d <= step + .03) { glbActions['loeb-b'].timeScale = 1; pkKickNow(); } else pk.rig.position.addScaledVector(pkWant.sub(pk.rig.position).normalize(), step); }
+  if (pk.phase === 'run') { const d = pk.rig.position.distanceTo(pkStand(pkWant)), step = PK_RUN.speed * dt; if (d <= PK_RUN.speed * .22) pkKickNow(true); else pk.rig.position.addScaledVector(pkWant.sub(pk.rig.position).normalize(), step); }
+  if (pk.phase === 'kick' && pk.glide) { const a = glbActions[pkKick()], left = kicks[pkKick()].contact - a.time, d = pk.rig.position.distanceTo(pkStand(pkWant)); if (left <= dt || d < .005) { pk.rig.position.copy(pkWant); pk.glide = false; } else pk.rig.position.addScaledVector(pkWant.sub(pk.rig.position).normalize(), Math.min(d, Math.min(PK_RUN.speed, 1.6 * d / left) * dt)); }
   // (the camera far enough back that the whole goal is in the picture, however narrow it is)
   // (never nearer than 13 m from the goal: on a wide picture it came so close the figure hid the goal again)
   const tanH = Math.tan(camera.fov * Math.PI / 360), D = Math.max(camera.aspect > 1.25 ? 16.5 : 13, (PK.halfW + 1) / (tanH * camera.aspect)); // (in game mode on a wide screen as far back as on the tall picture: nearer, the figure's legs and the ball were cut off below)
@@ -5515,6 +5521,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.11.0 (c0db9f6)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.11.0 (0fb649b)</div>
 </body>
 </html>
