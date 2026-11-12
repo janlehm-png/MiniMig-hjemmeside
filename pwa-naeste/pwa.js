@@ -32,8 +32,8 @@ panel.innerHTML = en ? `<button type="button" class="pwa-help">For grown-ups</bu
 </div>
 <h3>Playing without internet</h3>
 <p>MiniMig keeps everything on this device, about 120 MB in all. First the figure, all the moves and the games (about 40 MB), so you can play without internet. After that, clothes, hair, hats and pets download by themselves in the background while there is internet. Please use Wi-Fi the first time.</p>
-<p>In the <strong>Message</strong> box below you can see whether the game is ready. Wait until it says <strong>“The game can now be used without internet”</strong> before you turn off your internet connection.</p>
-<div class="pwa-message" role="status" aria-live="polite" aria-atomic="true"><strong>Message</strong>
+<p>The first time, it takes a little while to download the game. After that it can be used without internet.</p>
+<div class="pwa-message" role="status" aria-live="polite" aria-atomic="true" hidden><strong>Message</strong>
 <p class="pwa-status">The game is downloading. Please wait, and stay connected to the internet.</p></div>
 <p>The browser may later clear the saved files if the device is short of space. If so, open MiniMig with internet again, and the files can download again.</p>
 <h3>Pictures out of the game</h3>
@@ -70,8 +70,8 @@ panel.innerHTML = en ? `<button type="button" class="pwa-help">For grown-ups</bu
 </div>
 <h3>Spil uden internet</h3>
 <p>MiniMig gemmer det hele på denne enhed, omkring 120 MB i alt. Først figuren, alle bevægelser og spillene (omkring 40 MB), så I kan spille uden internet. Bagefter hentes tøj, hår, hatte og kæledyr af sig selv i baggrunden, mens der er internet. Brug gerne wifi første gang.</p>
-<p>I boksen <strong>Besked</strong> nedenfor kan du se, om spillet er klar. Vent, til der står <strong>“Spillet kan nu bruges uden internet”</strong>, før du slår internetforbindelsen fra.</p>
-<div class="pwa-message" role="status" aria-live="polite" aria-atomic="true"><strong>Besked</strong>
+<p>Første gang tager det lidt tid at hente spillet. Derefter kan det bruges uden internet.</p>
+<div class="pwa-message" role="status" aria-live="polite" aria-atomic="true" hidden><strong>Besked</strong>
 <p class="pwa-status">Spillet hentes. Vent lidt, og behold internetforbindelsen.</p></div>
 <p>Browseren kan senere rydde de gemte filer, hvis enheden mangler plads. Åbn i så fald MiniMig med internetforbindelse igen, så filerne kan hentes på ny.</p>
 <h3>Billeder ud af spillet</h3>

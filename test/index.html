@@ -2789,7 +2789,7 @@ function makeCloth(name, part, opts) {
   // in the contrast colour that far below the top, [from, to])
   // (moon boots: as thick all the way, round the foot, the ankle and the leg - out every way, where the socks only go out
   // sideways; their sole a flat slab of its own under them, see bootSoles)
-  if (socks) { const top = opts.top * H; edges = [{ f: p => p[1] - top, bare: .008 * H }]; out = () => (opts.out || .0035) * H; if (opts.boot) level = -Infinity; }
+  if (socks) { const top = opts.top * H; edges = [{ f: p => p[1] - top, bare: .008 * H }]; out = opts.boot ? p => (opts.out - .014 * clamp((p[1] - top + .05 * H) / (.04 * H))) * H : () => (opts.out || .0035) * H; if (opts.boot) level = -Infinity; } // (a boot's top drawn in closer round the leg - the user, 14-11-2026)
   // (a space suit: all of the body below the neck, a good way out from it - thick and soft)
   else if (opts.space) { edges = [{ f: p => p[1] - K.neckY - .012 * H, bare: .006 * H }, { f: p => .085 * H - p[1], bare: .008 * H }]; // (down to the ankles: the boots go on over its ends - its feet came out through them)
     out = () => .011 * H; level = -Infinity; }
@@ -5964,6 +5964,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.11.0 (5818c47)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.11.0 (bdfd847)</div>
 </body>
 </html>
