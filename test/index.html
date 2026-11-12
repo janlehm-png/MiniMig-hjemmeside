@@ -4479,7 +4479,9 @@ async function readProp(url) { const buf = await (await fetch(url)).arrayBuffer(
   await new Promise((ok, bad) => { img.onload = ok; img.onerror = bad; img.src = src; }); const map = new THREE.Texture(img); map.flipY = false; map.colorSpace = THREE.SRGBColorSpace; map.needsUpdate = true;
   return { geo, map }; }
 // (height: how tall, in metres; turn: turned so its front - the house's door, the lamp's arm - is where the simple one's was)
-const SK_PROPS = { hus: ['skate-hus.glb', 2.9, 0], trae: ['skate-trae.glb', 2.5, 0], lygte: ['skate-lygte.glb', 2.7, Math.PI] };
+// (and the fir, the bush, the tulips, the bench and the fence - the user, 12-11-2026, when there were points for them)
+const SK_PROPS = { hus: ['skate-hus.glb', 2.9, 0], trae: ['skate-trae.glb', 2.5, 0], lygte: ['skate-lygte.glb', 2.7, Math.PI], gran: ['skate-gran.glb', 2.6, 0], busk: ['skate-busk.glb', .8, 0], blomster: ['skate-blomster.glb', .5, 0],
+  baenk: ['skate-baenk.glb', .8, -Math.PI / 2], hegn: ['skate-hegn.glb', .75, Math.PI / 2] };
 function skPropsLoad() { sk.propsLoad ??= Promise.all(Object.entries(SK_PROPS).map(async ([kind, [url, height, turn]]) => { try { const { geo, map } = await readProp(url);
     geo.computeBoundingBox(); const b = geo.boundingBox, k = height / (b.max.y - b.min.y); geo.translate(-(b.min.x + b.max.x) / 2, -b.min.y, -(b.min.z + b.max.z) / 2); geo.scale(k, k, k); if (turn) geo.rotateY(turn);
     const mat = new THREE.MeshStandardMaterial({ map, roughness: .8, metalness: 0 }); SK_SIDE[kind] = () => new THREE.Mesh(geo, mat);
@@ -4551,7 +4553,9 @@ function skateThing(kind) { const pool = sk.pools[kind] ??= [], free = pool.find
   if (kind === 'and') { body = new THREE.Group(); g.add(body); const yel = skMat('#FFD23F', .55), add2 = (geo, m, x, y, z) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.castShadow = true; body.add(o); return o; };
     add2(new THREE.SphereGeometry(.2, 20, 14), yel, 0, .24, 0).scale.set(1.25, .85, 1); add2(new THREE.SphereGeometry(.13, 18, 12), yel, .17, .46, 0); const beak = add2(new THREE.ConeGeometry(.05, .14, 12), skMat('#FF8A1F', .5), .32, .44, 0); beak.rotation.z = -Math.PI / 2;
     for (const z of [-1, 1]) { add2(new THREE.SphereGeometry(.025, 8, 6), skMat('#1A1A22', .3), .26, .5, z * .065); add2(new THREE.BoxGeometry(.12, .02, .1), skMat('#FF8A1F', .5), 0, .01, z * .08); const w = add2(new THREE.SphereGeometry(.1, 12, 8), yel, -.02, .27, z * .17); w.scale.set(1.2, .6, .4); }
-    const tail = add2(new THREE.ConeGeometry(.06, .14, 10), yel, -.26, .32, 0); tail.rotation.z = Math.PI / 2.6; half = .24; len = .4; }
+    const tail = add2(new THREE.ConeGeometry(.06, .14, 10), yel, -.26, .32, 0); tail.rotation.z = Math.PI / 2.6; half = .24; len = .4;
+    // (the real duck from Meshy in its place - the user, 12-11-2026 - facing the way it walks, its legs stepping)
+    seaModelInto(body, 'dyr-and', Math.PI / 2); }
   if (kind === 'bold') { const cv = document.createElement('canvas'); cv.width = 128; cv.height = 8; const c = cv.getContext('2d'); ['#FF4F8B', '#FFFFFF', '#FFC233', '#FFFFFF', '#3DA5FF', '#FFFFFF'].forEach((f, k) => { c.fillStyle = f; c.fillRect(k * 128 / 6, 0, 128 / 6 + 1, 8); });
     const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; body = add(new THREE.SphereGeometry(.26, 28, 18), new THREE.MeshStandardMaterial({ map: t, roughness: .4 }), 0, .26, 0); half = .26; len = .5; }
   const it = { group: g, kind, half, len, lid, body }; g.visible = false; scene.add(g); pool.push(it);
@@ -4573,10 +4577,9 @@ function skateRow(from = SKATE.from) { const easy = ['niveau-meget-let', 'niveau
   // (counted in time since the last one was put out: on the faster levels the last ramp was already behind the figure
   // and gone from the road five seconds' ride later)
   const rampNear = sk.rampWait > 0;
-  // (the duck taken out - the user, 12-11-2026: it looks artificial beside the animals; back when it is a real 3D model)
   const pets = skPetsIn();
-  const kind = pick((easy ? [['kegle', 3], ['kasse', 2], ['pyt', 2], ['rampe', 2], ['dyr', 2], ['gave', .8], ['bold', 1]]
-    : [['kegle', 2.5], ['kasse', 2], ['rail', 1.5], ['bom', 2], ['pyt', 1.5], ['rampe', 2], ['dyr', 2.2], ['gave', .7], ['bold', 1.5]]).filter(([k]) => (k !== 'rampe' || !rampNear) && (k !== 'dyr' || pets.length)));
+  const kind = pick((easy ? [['kegle', 3], ['kasse', 2], ['pyt', 2], ['rampe', 2], ['and', 1.2], ['dyr', 1.6], ['gave', .8], ['bold', 1]]
+    : [['kegle', 2.5], ['kasse', 2], ['rail', 1.5], ['bom', 2], ['pyt', 1.5], ['rampe', 2], ['and', 1.2], ['dyr', 1.8], ['gave', .7], ['bold', 1.5]]).filter(([k]) => (k !== 'rampe' || !rampNear) && (k !== 'dyr' || pets.length)));
   if (kind === 'bom') { const left = Math.random() < .5; put(skateThing('bom'), (left ? -.5 : .5) * SKATE.lane, from); used.add(left ? -1 : 1); used.add(0); }
   // (the duck and the ball cross the road from one side to the other, timed to be in the middle about as they come by)
   // (an animal starts well out in the grass, and is at the road as it comes by)
@@ -4620,7 +4623,7 @@ function skateOwnPose(fwd, right, up, w = 1) {
   glb.updateMatrixWorld(true); for (const n of ['LeftLeg', 'RightLeg']) turnBone(n, right, -.85 * w); glb.updateMatrixWorld(true); for (const n of ['LeftFoot', 'RightFoot']) turnBone(n, right, .38 * w);
   for (const [n, s] of [['LeftArm', 1], ['RightArm', -1]]) turnBone(n, fwd, (s * 1.05 + (sk.arm || 0)) * w); glb.updateMatrixWorld(true); for (const [n, s] of [['LeftForeArm', 1], ['RightForeArm', -1]]) turnBone(n, fwd, s * .25 * w);
   turnBone('Spine', right, -.12 * w); turnBone('Spine2', up, .35 * w); glb.updateMatrixWorld(true); turnBone('Neck', up, .4 * w); glb.updateMatrixWorld(true); turnBone('Head', up, .45 * w); glb.updateMatrixWorld(true); }
-function skateTick(dt) { const L = skateLevel(); sk.slow = Math.max(0, sk.slow - dt); sk.wobble = Math.max(0, sk.wobble - dt); sk.rampWait = Math.max(0, (sk.rampWait || 0) - dt);
+function skateTick(dt) { seaT.value = performance.now() / 1000; const L = skateLevel(); sk.slow = Math.max(0, sk.slow - dt); sk.wobble = Math.max(0, sk.wobble - dt); sk.rampWait = Math.max(0, (sk.rampWait || 0) - dt);
   // (the push: through - then riding off, the pose growing in as it turns; after a hit, a push again once the wobble is over)
   const pa = glbActions[SKATE.push]; if (sk.push && (!pa?.isRunning() || pa.time >= pa.getClip().duration - .06)) { sk.push = false; runAnim('staa'); }
   if (sk.needPush && sk.wobble <= 0 && !sk.push && !sk.jy) startPush(); // (never up in the air: only once back on the road)
@@ -4905,6 +4908,11 @@ function seaBuild() { if (sea.world) return; const w = sea.world = new THREE.Gro
   // (little air bubbles rising all the time, only to look at)
   const dotM = new THREE.MeshStandardMaterial({ color: '#E8F8FF', transparent: true, opacity: .55, roughness: .1, depthWrite: false });
   for (let k = 0; k < 26; k++) { const d = ilMesh(new THREE.SphereGeometry(.03 + (k % 4) * .015, 10, 8), dotM, 0, 0, -.5 - (k % 5) * .6, w, false); d.receiveShadow = false; d.userData.v = .3 + (k % 5) * .12; sea.dots.push(d); }
+  // (more sea animals, only to look at - the user, 12-11-2026: a crab going sideways along the sand, an octopus sitting by
+  // a rock waving its arms, a seahorse bobbing by the seaweed, and a turtle swimming slowly by far behind)
+  sea.crab = seaModelInto(new THREE.Group(), 'hav-krabbe'); sea.crab.position.set(-1.2, 0, -.9); sea.octo = seaModelInto(new THREE.Group(), 'hav-blaeksprutte'); sea.octo.position.set(3.7, 0, -1.5); sea.octo.rotation.y = -.35;
+  sea.horse = seaModelInto(new THREE.Group(), 'hav-soehest', Math.PI / 2); sea.horse.position.set(-3.2, 1.2, -1.3); sea.ground.add(sea.crab, sea.octo, sea.horse);
+  sea.turtle = seaModelInto(new THREE.Group(), 'hav-skildpadde', -Math.PI / 2); w.add(sea.turtle);
   sea.rig = new THREE.Group(); }
 // (crawl strokes over Mixamo's Swimming - the user, 03-11-2026: it looked as if the figure only floated about. Its
 // breaststroke sweeps the arms out flat to the sides, which from the side hardly shows. Here the arms go round in big
@@ -4936,20 +4944,51 @@ function seaStar(gold) { const g = new THREE.Group();
   const bub = ilMesh(new THREE.SphereGeometry(gold ? .34 : .27, 24, 18), new THREE.MeshStandardMaterial({ color: gold ? '#FFF0B3' : '#CFF3FF', transparent: true, opacity: .28, roughness: .05, metalness: .1, depthWrite: false }), 0, 0, 0, g, false);
   bub.receiveShadow = false; g.userData.gold = gold; g.visible = false; sea.world.add(g); return g; }
 // (a jellyfish: a pink glassy dome with a frill and wavy tentacles under it, pulsing as it floats)
+// ---- The animals made at Meshy (the user, 12-11-2026: the fish, the jellyfish and the duck put together of balls and
+// cones looked artificial beside the dog, the cat and the rabbit - and more kinds of sea animals were wanted). Each a
+// small GLB file with one mesh and its colour picture, read as the skateboard world's things are (readProp). They have
+// no bones: they move by bending the shape itself as it is drawn - a fish's tail from side to side, a jellyfish's arms
+// swaying and its bell pulsing, a turtle's flippers up and down, a crab's legs and claws, an octopus's arms, a duck's
+// legs. [longest side in metres, the way it moves, standing on the floor]. Made facing +z. Until one is in - or if it
+// cannot be fetched - the simple one from before stands in.
+const seaT = { value: 0 };
+const SEA_ANIMALS = { 'hav-klovnfisk': [.36, 'fisk'], 'hav-blaafisk': [.36, 'fisk'], 'hav-kuglefisk': [.32, 'fisk'], 'hav-vandmand': [.62, 'haeng'], 'hav-skildpadde': [1.1, 'luffer'], 'hav-soehest': [.55, 'vip'],
+  'hav-krabbe': [.5, 'ben', true], 'hav-blaeksprutte': [.8, 'arme', true], 'dyr-and': [.66, 'and', true] };
+function seaMat(map, mode, S) { const m = new THREE.MeshStandardMaterial({ map, roughness: .6, metalness: 0 }), f = v => v.toFixed(4);
+  const code = { fisk: `float sw = 1. - smoothstep(${f(-S * .5)}, ${f(S * .2)}, transformed.z); transformed.x += sin(seaT * 9. + transformed.z * ${f(7 / S)}) * ${f(S * .1)} * sw;`,
+    haeng: `float sw = 1. - smoothstep(${f(-S * .4)}, ${f(-S * .02)}, transformed.y); transformed.xz *= 1. + sin(seaT * 3.) * .06 * (1. - sw); transformed.y *= 1. - sin(seaT * 3.) * .05 * (1. - sw);
+      transformed.x += sin(seaT * 3. + transformed.y * ${f(9 / S)} + transformed.z * 4.) * ${f(S * .07)} * sw; transformed.z += cos(seaT * 2.6 + transformed.y * ${f(8 / S)} + transformed.x * 4.) * ${f(S * .05)} * sw;`,
+    luffer: `float sw = smoothstep(${f(S * .2)}, ${f(S * .48)}, abs(transformed.x)); transformed.y += sin(seaT * 3.2 + transformed.z * 2.) * ${f(S * .14)} * sw;`,
+    vip: `float sw = 1. - smoothstep(${f(-S * .45)}, 0., transformed.y); transformed.z += sin(seaT * 2.) * ${f(S * .05)} * sw;`,
+    ben: `float sw = (1. - smoothstep(0., ${f(S * .16)}, transformed.y)) * step(${f(S * .15)}, abs(transformed.x)); transformed.y += abs(sin(seaT * 10. + transformed.x * ${f(12 / S)})) * ${f(S * .03)} * sw;
+      float cl = smoothstep(${f(S * .28)}, ${f(S * .48)}, abs(transformed.x)) * smoothstep(${f(S * .18)}, ${f(S * .36)}, transformed.y); transformed.y += sin(seaT * 4. + sign(transformed.x)) * ${f(S * .04)} * cl;`,
+    arme: `float sw = smoothstep(${f(S * .22)}, ${f(S * .5)}, length(transformed.xz)); transformed.y += (sin(seaT * 2.5 + atan(transformed.z, transformed.x) * 3.) * .5 + .5) * ${f(S * .07)} * sw; transformed.y *= 1. + sin(seaT * 2.) * .04 * (1. - sw);`,
+    // (the duck, turned to face +x: its legs swing forward and back, one then the other, the feet lifting)
+    and: `float sw = clamp(1. - transformed.y / ${f(S * .26)}, 0., 1.); float st = sin(seaT * 14.) * sign(transformed.z); transformed.x += st * ${f(S * .1)} * sw; transformed.y += max(0., st) * ${f(S * .05)} * step(.001, sw);` }[mode];
+  m.onBeforeCompile = sh => { sh.uniforms.seaT = seaT; sh.vertexShader = 'uniform float seaT;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n' + code); };
+  m.customProgramCacheKey = () => 'sea-' + mode + S; return m; }
+const seaProps = {};
+// (into g, turned so far round; what stood in g before is put away once it is there)
+function seaModelInto(g, kind, turn = 0) { const [size, mode, floor] = SEA_ANIMALS[kind], simple = [...g.children];
+  (seaProps[kind] ??= readProp(kind + '.glb').then(({ geo, map }) => { geo.computeBoundingBox(); const b = geo.boundingBox, d = b.getSize(new THREE.Vector3()), k = size / Math.max(d.x, d.y, d.z);
+    geo.translate(-(b.min.x + b.max.x) / 2, floor ? -b.min.y : -(b.min.y + b.max.y) / 2, -(b.min.z + b.max.z) / 2); geo.scale(k, k, k); return { geo, mat: seaMat(map, mode, size) }; }).catch(e => { delete seaProps[kind]; throw e; }))
+    .then(({ geo, mat }) => { const m = new THREE.Mesh(geo, mat); m.rotation.y = turn; m.castShadow = kind === 'dyr-and'; g.add(m); for (const o of simple) o.visible = false; g.userData.model = m; }).catch(() => {});
+  return g; }
 function seaJelly() { const g = new THREE.Group(), m = new THREE.MeshStandardMaterial({ color: '#FF8FCB', transparent: true, opacity: .75, roughness: .25, emissive: new THREE.Color('#C0408A'), emissiveIntensity: .35 });
   const dome = ilMesh(new THREE.SphereGeometry(.26, 24, 14, 0, Math.PI * 2, 0, Math.PI / 2), m, 0, 0, 0, g, false); dome.scale.y = .85; g.userData.dome = dome;
   ilMesh(new THREE.TorusGeometry(.25, .025, 8, 24), m, 0, 0, 0, g, false).rotation.x = Math.PI / 2;
   for (const s of [-1, 1]) ilMesh(new THREE.SphereGeometry(.03, 8, 6), ilM('#3A2E5C', .3), s * .08, .12, .2, g, false);
   g.userData.legs = []; for (let k = 0; k < 6; k++) { const a = k / 6 * Math.PI * 2, leg = new THREE.Group(); leg.position.set(Math.cos(a) * .16, 0, Math.sin(a) * .16); g.add(leg);
     const t = ilMesh(new THREE.CylinderGeometry(.018, .008, .45, 6), m, 0, -.22, 0, leg, false); g.userData.legs.push(leg); }
-  sea.world.add(g); return g; }
+  seaModelInto(g, 'hav-vandmand'); sea.world.add(g); return g; }
 // (a little fish friend: a round body, a tail, an eye - in the clothes' colours)
 const FISH_COLS = ['#FF7A2F', '#FFC233', '#13BFA6', '#FF6FB1', '#7A4DFF', '#2FB872', '#E8384F', '#3D8BFF'];
 function seaFish(k) { const g = new THREE.Group(), c = FISH_COLS[k % FISH_COLS.length];
   const body = ilMesh(new THREE.SphereGeometry(.11, 16, 12), ilM(c, .45, c), 0, 0, 0, g, false); body.scale.set(1.4, 1, .6);
   const tail = ilMesh(new THREE.ConeGeometry(.08, .13, 4), ilM(c, .45, c), -.19, 0, 0, g, false); tail.rotation.z = Math.PI / 2; tail.scale.z = .3; g.userData.tail = tail;
   for (const s of [-1, 1]) ilMesh(new THREE.SphereGeometry(.022, 8, 6), ilM('#1C1A22', .3), .09, .03, s * .055, g, false);
-  g.userData.at = new THREE.Vector3(); sea.world.add(g); return g; }
+  // (three kinds of real fish, one after the other, made facing the way they swim)
+  seaModelInto(g, ['hav-klovnfisk', 'hav-blaafisk', 'hav-kuglefisk'][k % 3], Math.PI / 2); g.userData.at = new THREE.Vector3(); sea.world.add(g); return g; }
 // (where the figure may swim: inside the picture as the camera sees it, over the sand - worked out as it starts)
 function seaBox() { const [cx, cy, cz] = MODES.sea.cam(wideCam()), halfH = Math.tan(camera.fov * Math.PI / 360) * cz, halfW = halfH * camera.aspect, b = sea.box;
   // (the hips kept a body's length from the sides: lying in the water the head reaches far ahead of them)
@@ -5015,6 +5054,8 @@ function seaTick(dt) { seaBox(); // (the picture's own edges, as it is now - mea
     const was = f.position.x; f.position.lerp(f.userData.at, Math.min(1, dt * 3)); const vx = f.position.x - was;
     if (Math.abs(vx) > .0005) f.rotation.y = vx > 0 ? 0 : Math.PI; f.userData.tail.rotation.y = Math.sin(t * 12 + k) * .5; });
   // (the seaweed swaying, the light beams brightening and fading, the little bubbles rising and coming round again)
+  seaT.value = t; sea.crab.position.x = -1.2 + Math.sin(t * .3) * 1.7; sea.horse.position.y = 1.2 + Math.sin(t * 1.3) * .12; sea.horse.rotation.z = Math.sin(t * .9) * .08;
+  { const c = (t * .035) % 1; sea.turtle.position.set(b.edge + 1.5 - c * (2 * b.edge + 3), b.cy + .9 + Math.sin(t * .5) * .3, -2.6); sea.turtle.rotation.z = Math.cos(t * .5) * .1; }
   for (const wd of sea.weeds) wd.segs.forEach((g, k) => { g.rotation.z = Math.sin(t * 1.1 + wd.t + k * .5) * .12; });
   sea.rays.forEach((r, k) => { r.material.opacity = .07 + .05 * Math.sin(t * .6 + k * 1.7); });
   for (const d of sea.dots) { d.position.y += d.userData.v * dt; d.position.x += Math.sin(t * 2 + d.userData.v * 9) * .1 * dt; if (d.position.y > b.cy + b.halfH + .3) d.position.set((Math.random() - .5) * 2 * b.edge, b.sand, d.position.z); } }
@@ -5521,6 +5562,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.11.0 (0fb649b)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.11.0 (8a53c0c)</div>
 </body>
 </html>
