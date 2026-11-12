@@ -4218,7 +4218,7 @@ function makeItem(kind) {
       add(ball(.03), fur, s * .075, .12, .03, 1, 1.3, 1, b); add(ball(.036), fur, s * .05, .02, .045, 1, .9, 1.2, b); add(ball(.02), pale, s * .05, .02, .085, 1, 1, .3, b);
       add(ball(.009), black, s * .026, .245, .062, 1, 1, .6, b); }
     add(ball(.03), pale, 0, .205, .058, 1.2, .9, .8, b); add(ball(.011), black, 0, .215, .085, 1.2, .9, .8, b);
-    add(heart(.075, .02), mat('#E8384F', .3, '#E8384F'), 0, .1, .085, 1, 1, 1, b); }
+    add(heart(.075, .02), mat('#E8384F', .3, '#E8384F'), 0, .1, .085, 1, 1, 1, b); propInto(b, 'ting-bamse.glb', .34); }
   if (kind === 'tryllestav') { add(stick(.008, .26), brown, 0, .06, 0); add(ball(.016), gold, 0, -.075, 0); add(stick(.013, .015), gold, 0, .19, 0);
     add(star(.07, .032, .022), mat('#FFC233', .3, '#FFC233'), 0, .26, 0);
     for (const [x, y, s] of [[.08, .33, .016], [.095, .27, .011]]) add(star(s, s * .4, .004), mat('#FFFFFF', .2), x, y, 0); }
@@ -4529,7 +4529,7 @@ const MODES = {
 const OWN_WORLD = ['island', 'sea', 'hide', 'pk', 'space'];
 // (the games that show nothing of the background chosen for the figure: those, and the skateboard game - the user,
 // 11-11-2026: a background changed showed in the skateboard game too, which made no sense)
-const NO_BG = [...OWN_WORLD, 'skate'];
+const NO_BG = [...OWN_WORLD, 'skate', 'side', 'back', 'front'];
 const game = { on: false, mode: 'side', level: 'niveau-let', stars: 0, balls: [], pool: [], jumpT: -1, busy: 0, cheer: 0, next: 0, hint: 0, saved: null, again: false };
 const levelNow = () => LEVELS.find(l => l[0] === game.level)[2];
 // (a beach ball: segments in four bright colours and white, a white cap at each end - drawn once for all four balls)
@@ -4567,7 +4567,7 @@ function startGame(mode = game.mode) { if (game.on || !glb) return; if (!game.ag
   // (five balls made once and used again)
   // (a ball chosen under Ting - Bold or Fodbold - is the game's ball, not one in the hand as well)
   if (mode === 'skate') skateStart(); else if (mode === 'island') islandStart(); else if (mode === 'sea') seaStart(); else if (mode === 'space') spaceStart(); else if (mode === 'hide') hideStart(); else if (mode === 'pk') pkStart(); else {
-    useGameBall(BALL_ITEMS.includes(itemNow) ? itemNow : '');
+    useGameBall(BALL_ITEMS.includes(itemNow) ? itemNow : ''); hopWorldStart(mode);
     game.bigPool ??= [goldBall(), goldBall()]; Object.assign(game, { dive: false, sinceBig: 0 });
     const run = levelNow().run; Promise.all([run, GAME.jump, GAME.trip, GAME.cheer, GAME.dive].map(loadMove)).then(() => { if (game.on) runAnim(run); }); }
   hintEl.textContent = tr(mode === 'skate' ? '👈 Tryk i siden for at svinge 👉' : mode === 'island' ? '👆 Tryk hvor du vil gå hen' : mode === 'space' ? '👆 Tryk – så flyver du derhen. To hurtige tryk giver fart 🚀' : mode === 'sea' ? '👆 Tryk eller træk – så svømmer du derhen' : mode === 'hide' ? '🔍 Hvor er jeg? Tryk på busken' : mode === 'pk' ? '👆 Tryk i målet, hvor bolden skal hen' : '👆 Tryk for at hoppe');
@@ -4575,7 +4575,7 @@ function startGame(mode = game.mode) { if (game.on || !glb) return; if (!game.ag
   if (MODES[mode].from) game.hopWay = mode; // (the way last chosen in Hop over bolden)
   document.querySelectorAll('[data-game]').forEach(b => b.classList.toggle('on', b.dataset.game === mode || b.dataset.game === 'hop' && !!MODES[mode].from)); prepScene(); }
 // (again: only stopped to start once more - at another level or in another way - the figure's own setting not put back)
-function stopGame(again) { if (!game.on) return; game.on = false; for (const b of [...gamePool(), ...(game.bigPool || [])]) b.group.visible = false; game.dive = false; game.balls = []; confetti.length = 0; unprepScene(); skateStop(); hideStop(); islandStop(); seaStop(); spaceStop(); pkStop();
+function stopGame(again) { if (!game.on) return; game.on = false; for (const b of [...gamePool(), ...(game.bigPool || [])]) b.group.visible = false; game.dive = false; game.balls = []; confetti.length = 0; unprepScene(); skateStop(); hopWorldStop(); hideStop(); islandStop(); seaStop(); spaceStop(); pkStop();
   // (the sound shut down when nothing plays: on an iPad an open sound channel could go on sounding after the game)
   if (!again) { try { game.audio?.suspend(); } catch (e) {} setItem(itemNow); }
   if (again) { game.again = true; return; } holder.position.x = 0; wearBack(game.wore); try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) {}
@@ -4769,10 +4769,20 @@ function skSideRow(u) { sk.rowN = (sk.rowN || 0) + 1;
 function skWorldStart() { skWorldBuild(); skPropsLoad(); scene.add(sk.world); for (const it of sk.side) it.g.visible = false; sk.side = []; sk.sideGo = 0; sk.sideSkip = { '-1': 0, 1: 0 };
   for (let u = 3; u < SKW.far; u += SKW.step) skSideRow(u);
   scene.fog = new THREE.Fog(0xCDEBFF, 36, 88); floor.visible = false; disc.visible = false; for (const el of [bgNear, bgFar, bgNear2]) el.hidden = true; stage.classList.add('street'); }
+// ---- Hop over bolden in a world of its own (the user, 14-11-2026: more round about it, from all three sides): the
+// skateboard game's meadow - trees, firs, bushes, houses, fences, benches, flowers, the mountains far off - with a sandy
+// path where the figure runs, gliding by the way it runs: from the side the world is turned a quarter round and only
+// what stands behind the path is shown, so nothing passes in front of the figure; from in front it runs backwards, the
+// things coming from behind the camera and going off into the distance.
+function hopWorldStart(mode) { skWorldBuild(); Object.assign(sk, { curve: 0, curveTo: 0, fork: null }); skWorldStart();
+  if (!sk.path) { sk.path = new THREE.Mesh(new THREE.PlaneGeometry(SKW.edge * 2, 150), new THREE.MeshStandardMaterial({ color: '#E3CC97', roughness: 1 })); sk.path.rotation.x = -Math.PI / 2; sk.path.position.set(0, .003, -36); sk.path.receiveShadow = true; sk.world.add(sk.path); }
+  const turn = mode === 'side' ? -Math.PI / 2 : 0; sk.world.rotation.y = turn; sk.hills.rotation.y = -turn; sk.path.visible = true; sk.hop = { dir: mode === 'front' ? -1 : 1, side: mode === 'side' }; }
+function hopWorldStop() { if (!sk.hop) return; sk.hop = null; sk.world.rotation.y = 0; sk.hills.rotation.y = 0; sk.path.visible = false; skWorldStop(); }
+function hopWorldTick(dt) { if (!sk.hop || !game.on) return; skWorldTick(dt, levelNow().speed * (game.cheer ? 0 : game.busy ? .35 : 1) * sk.hop.dir); if (sk.hop.side) for (const it of sk.side) if (it.x > 0) it.g.visible = false; }
 function skWorldStop() { if (!sk.world?.parent) return; scene.remove(sk.world); scene.fog = null; stage.classList.remove('street'); floor.visible = true; setBg(bgNow); }
 function skWorldTick(dt, v) { sk.grassTex.offset.y = (sk.grassTex.offset.y + v * dt / 5) % 1; sk.hills.position.x = -skBend(SKW.far) * .5; for (const c of sk.clouds) { c.position.x += c.userData.v * dt; if (c.position.x > 60) c.position.x = -60; }
-  sk.sideGo += v * dt; while (sk.sideGo >= SKW.step) { sk.sideGo -= SKW.step; skSideRow(SKW.far); }
-  for (let k = sk.side.length - 1; k >= 0; k--) { const it = sk.side[k]; it.u -= v * dt; if (it.u < SKW.gone) { it.g.visible = false; sk.side.splice(k, 1); continue; }
+  sk.sideGo += Math.abs(v) * dt; while (sk.sideGo >= SKW.step) { sk.sideGo -= SKW.step; skSideRow(v < 0 ? SKW.gone : SKW.far); }
+  for (let k = sk.side.length - 1; k >= 0; k--) { const it = sk.side[k]; it.u -= v * dt; if (it.u < SKW.gone - .01 || it.u > SKW.far + 3) { it.g.visible = false; sk.side.splice(k, 1); continue; }
     it.g.position.set(it.x + skBend(it.u) + (Math.abs(it.x) > 1 ? Math.sign(it.x) * skWide(it.u) : 0), 0, -it.u); it.g.rotation.y = it.rot - Math.atan(skSlope(it.u)); } }
 // (the road bends away out towards the skyline, now one way, now the other, and lies straight again as it comes up
 // to the figure - so it is not just straight, the user said 08-11-2026; u how far down the road)
@@ -5041,7 +5051,15 @@ const ISLAND = { r: 6.5, grass: 4.4, speed: 1.7, shells: { 'niveau-meget-let': 2
 const il = { world: null, rig: null, target: null, walking: false, shells: [], chest: null, open: 0, parrot: null, found: 0, need: 3, blocks: [], cam: new THREE.Vector3(), look: new THREE.Vector3(), camNow: new THREE.Vector3(), lookNow: new THREE.Vector3(), walk: null };
 const ilM = (c, r = .8, e) => new THREE.MeshStandardMaterial({ color: c, roughness: r, ...(e ? { emissive: new THREE.Color(e), emissiveIntensity: .4 } : {}) });
 function ilMesh(geo, mat, x, y, z, parent, shadow = true) { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = shadow; m.receiveShadow = true; parent.add(m); return m; }
-function islandBuild() { if (il.world) return; const w = il.world = new THREE.Group();
+// (a model from Meshy put into a group in place of the simple thing built there - the user, 14-11-2026: the island's
+// palms, rocks, bushes, stump and parrot, and the teddy, as real 3D models in the icons' style. One mesh with its colour
+// picture, standing on the group's floor, so tall (by 'h') or so wide (by 'w'); what stood in the group is put away once
+// it is there, and stays if it cannot be fetched)
+function propInto(g, url, size, turn = 0, hide = [...g.children], by = 'h') { const cache = propInto.cache ??= {};
+  (cache[url] ??= readProp(url).then(({ geo, map }) => { geo.computeBoundingBox(); const b = geo.boundingBox, d = b.getSize(new THREE.Vector3()); geo.translate(-(b.min.x + b.max.x) / 2, -b.min.y, -(b.min.z + b.max.z) / 2);
+    return { geo, mat: new THREE.MeshStandardMaterial({ map, roughness: .7, metalness: 0 }), d }; }).catch(e => { delete cache[url]; throw e; }))
+    .then(({ geo, mat, d }) => { const m = new THREE.Mesh(geo, mat); m.scale.setScalar(size / (by === 'h' ? d.y : Math.max(d.x, d.z))); m.rotation.y = turn; m.castShadow = true; m.receiveShadow = true; g.add(m); for (const o of hide) o.visible = false; }).catch(() => {}); return g; }
+function islandBuild() { if (il.world) return; const w = il.world = new THREE.Group(); il.bushes = [];
   // (the sea round about, the sandy island with a pale rim where the waves are, the grass on top)
   const sea = ilMesh(new THREE.CircleGeometry(60, 64), ilM('#3BB7E8', .3), 0, -.12, 0, w, false); sea.rotation.x = -Math.PI / 2; il.sea = sea;
   ilMesh(new THREE.CylinderGeometry(ISLAND.r + .5, ISLAND.r + 1.1, .2, 64), ilM('#BFEFFF', .5), 0, -.17, 0, w, false);
@@ -5053,18 +5071,20 @@ function islandBuild() { if (il.world) return; const w = il.world = new THREE.Gr
     const top = new THREE.Group(); top.position.set(.43, h, 0); p.add(top);
     for (let k = 0; k < 7; k++) { const g = new THREE.Group(); g.rotation.y = k / 7 * Math.PI * 2; top.add(g); const leaf = ilMesh(new THREE.ConeGeometry(.22, 1.6, 6), ilM('#3E9A3A', .7), .7, -.1, 0, g); leaf.scale.set(1, 1, .25); leaf.rotation.z = -1.9; }
     for (let k = 0; k < 3; k++) ilMesh(new THREE.SphereGeometry(.11, 12, 10), ilM('#7A4A22', .6), Math.cos(k * 2.1) * .12, -.12, Math.sin(k * 2.1) * .12, top);
-    il.blocks.push([x, z, .4]); };
+    propInto(p, 'oe-palme.glb', h * .9); il.blocks.push([x, z, .4]); };
   palm(-2.8, -2.4, 3.4, .3); palm(3, -3.2, 3.8, 2); palm(-4.4, 2, 3, 4); palm(3.8, 2.6, 3.2, 1); palm(.4, -5, 3.6, 5);
-  for (const [x, z, s] of [[-5.2, -2, .5], [5.4, -.5, .4], [1.8, 5.2, .55], [-2.2, 5, .35], [-4.6, 3.4, .3]]) { const r = ilMesh(new THREE.DodecahedronGeometry(s, 0), ilM('#9A97A8', .9), x, s * .5, z, w); r.scale.y = .7; r.rotation.set(x, z, 0); il.blocks.push([x, z, s + .25]); }
-  for (const [x, z] of [[-1.6, -3.6], [4.2, .6], [-3.6, -.3], [1.5, 3.2]]) { ilMesh(new THREE.SphereGeometry(.55, 16, 12), ilM('#4FAE45', .85), x, .35, z, w).scale.y = .75; il.blocks.push([x, z, .7]);
-    for (let k = 0; k < 4; k++) ilMesh(new THREE.SphereGeometry(.07, 8, 6), ilM('#E8384F', .4), x + Math.cos(k * 1.7) * .45, .5 + (k % 2) * .12, z + Math.sin(k * 1.7) * .45, w, false); }
+  for (const [x, z, s] of [[-5.2, -2, .5], [5.4, -.5, .4], [1.8, 5.2, .55], [-2.2, 5, .35], [-4.6, 3.4, .3]]) { const rg = new THREE.Group(); rg.position.set(x, 0, z); rg.rotation.y = x * 2; w.add(rg); const r = ilMesh(new THREE.DodecahedronGeometry(s, 0), ilM('#9A97A8', .9), 0, s * .5, 0, rg); r.scale.y = .7; r.rotation.set(x, z, 0); propInto(rg, 'oe-sten.glb', s * 2.6, 0, undefined, 'w'); il.blocks.push([x, z, s + .25]); }
+  // (shells and a starfish here and there on the sand, only to look at)
+  for (const [x, z, t] of [[-5.6, .6, 1], [4.9, 3.4, 3], [-.4, 5.8, 5], [5.7, -2.6, 2]]) { const mg = new THREE.Group(); mg.position.set(x, 0, z); mg.rotation.y = t; w.add(mg); propInto(mg, 'oe-musling.glb', .8, 0, [], 'w'); }
+  for (const [x, z] of [[-1.6, -3.6], [4.2, .6], [-3.6, -.3], [1.5, 3.2]]) { const bg = new THREE.Group(); bg.position.set(x, 0, z); bg.rotation.y = x; w.add(bg); il.bushes.push(bg); ilMesh(new THREE.SphereGeometry(.55, 16, 12), ilM('#4FAE45', .85), 0, .35, 0, bg).scale.y = .75; il.blocks.push([x, z, .7]);
+    for (let k = 0; k < 4; k++) ilMesh(new THREE.SphereGeometry(.07, 8, 6), ilM('#E8384F', .4), Math.cos(k * 1.7) * .45, .5 + (k % 2) * .12, Math.sin(k * 1.7) * .45, bg, false); propInto(bg, 'oe-busk.glb', 1.45, 0, undefined, 'w'); }
   // (the parrot on a stump by the middle: red, wings blue and yellow, a bobbing head)
-  ilMesh(new THREE.CylinderGeometry(.28, .34, .55, 14), ilM('#8A5A2E'), -1.4, .27, -1.2, w); il.blocks.push([-1.4, -1.2, .6], [2.4, -1.6, .75]); const pr = il.parrot = new THREE.Group(); pr.position.set(-1.4, .55, -1.2); w.add(pr);
+  { const sg = new THREE.Group(); sg.position.set(-1.4, 0, -1.2); w.add(sg); ilMesh(new THREE.CylinderGeometry(.28, .34, .55, 14), ilM('#8A5A2E'), 0, .27, 0, sg); propInto(sg, 'oe-stub.glb', .58); } il.blocks.push([-1.4, -1.2, .6], [2.4, -1.6, .75]); const pr = il.parrot = new THREE.Group(); pr.position.set(-1.4, .55, -1.2); w.add(pr);
   ilMesh(new THREE.SphereGeometry(.17, 16, 12), ilM('#E8384F', .5), 0, .2, 0, pr).scale.set(1, 1.35, 1);
   il.parrotHead = ilMesh(new THREE.SphereGeometry(.12, 16, 12), ilM('#E8384F', .5), 0, .47, .03, pr);
   ilMesh(new THREE.ConeGeometry(.04, .11, 10), ilM('#FFC233', .4), 0, -.02, .13, il.parrotHead).rotation.x = Math.PI / 2 + .5;
   for (const s of [-1, 1]) { ilMesh(new THREE.SphereGeometry(.025, 8, 6), ilM('#1C1A22', .3), s * .06, .03, .09, il.parrotHead, false); const wing = ilMesh(new THREE.SphereGeometry(.12, 12, 8), ilM('#3D8BFF', .5), s * .15, .2, -.02, pr); wing.scale.set(.35, 1.1, .8); }
-  ilMesh(new THREE.ConeGeometry(.08, .3, 8), ilM('#FFC233', .5), 0, -.08, -.12, pr).rotation.x = -2.6;
+  ilMesh(new THREE.ConeGeometry(.08, .3, 8), ilM('#FFC233', .5), 0, -.08, -.12, pr).rotation.x = -2.6; propInto(pr, 'oe-papegoeje.glb', .62);
   // (the chest: wood with gold bands, its lid on a hinge at the back, a golden lock while it is shut)
   const ch = il.chest = new THREE.Group(); ch.position.set(2.4, 0, -1.6); ch.rotation.y = -.5; w.add(ch);
   ilMesh(new THREE.BoxGeometry(.9, .5, .6), ilM('#9C5B2A', .7), 0, .25, 0, ch); for (const x of [-.32, .32]) ilMesh(new THREE.BoxGeometry(.07, .52, .62), ilM('#FFC233', .3), x, .25, 0, ch);
@@ -5478,9 +5498,9 @@ function hideBuild() { if (hd.group) return; const g = hd.group = new THREE.Grou
   for (const [x, z] of HIDE.bushes) { const b = new THREE.Group(); b.position.set(x, 0, z); g.add(b);
     for (const [dx, dz, r, y] of [[0, 0, .72, .55], [-.5, .18, .5, .36], [.5, .12, .55, .4]]) ilMesh(new THREE.SphereGeometry(r, 18, 14), ilM('#3FA03A', .85), dx, y, dz, b).scale.y = .85;
     for (let k = 0; k < 7; k++) ilMesh(new THREE.SphereGeometry(.07, 8, 6), ilM(['#FF6FB1', '#FFC233', '#FFFFFF'][k % 3], .4), Math.cos(k * 1.9) * .6, .45 + (k % 3) * .2, Math.sin(k * 1.9) * .25 + .4, b, false);
-    hd.spots.push({ obj: b, x, z }); }
+    propInto(b, 'oe-busk.glb', 2.1, 0, undefined, 'w'); hd.spots.push({ obj: b, x, z }); }
   // (and the island's own round bushes in the middle part - the picture shows that part - and the treasure chest)
-  for (const m of il.world.children) if (m.geometry?.type === 'SphereGeometry' && m.geometry.parameters.radius === .55 && Math.abs(m.position.x) < 3.3 && Math.abs(m.position.z) < 3.4) hd.spots.push({ obj: m, x: m.position.x, z: m.position.z });
+  for (const m of il.bushes) if (Math.abs(m.position.x) < 3.3 && Math.abs(m.position.z) < 3.4) hd.spots.push({ obj: m, x: m.position.x, z: m.position.z });
   hd.spots.push({ obj: il.chest, x: il.chest.position.x, z: il.chest.position.z }); }
 function hideStart() { islandBuild(); hideBuild(); scene.add(il.world); il.world.add(hd.group); holder.add(il.rig); il.rig.add(glb); il.rig.position.set(...HIDE.start); il.rig.visible = true; il.rig.scale.setScalar(1);
   for (const s of il.shells) s.visible = false; il.lock.visible = true; il.glow.visible = false; il.lid.rotation.x = 0; for (const c of il.gold) c.visible = false;
@@ -5963,7 +5983,7 @@ addEventListener('resize', resize); resize(); new ResizeObserver(resize).observe
 renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElapsedTime();
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
-  try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.11.0 (bdfd847)</div>
+  try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.11.0 (e4cd1d8)</div>
 </body>
 </html>
