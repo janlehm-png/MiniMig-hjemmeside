@@ -116,6 +116,7 @@
   @media (hover: hover) and (pointer: fine) { #scene { cursor: grab; } #scene:active { cursor: grabbing; } .stage.playing #scene { cursor: pointer; } }
   /* saving: the star, Mine figurer, the new MiniMig and the camera - first of the groups on the right, as tabs with
      their sign for a picture (they sat on the figure's picture until 03-11-2026; the user wanted the picture clear) */
+  .tabgroup button .emo img { vertical-align: top; }
   .tabgroup button .emo { height: 32px; font-size: 25px; line-height: 32px; pointer-events: none; }
   .emo-coins { position: relative; display: inline-block; padding-right: 6px; }
   .mini-coin { position: absolute; bottom: -1px; display: grid; place-items: center; border-radius: 50%; width: 15px; height: 15px; border: 1px solid #8E8BA0; background: radial-gradient(circle at 35% 30%, #FFFFFF, #CFCDD8 60%, #A9A6B8); color: #3A3550; font: 800 8px/1 system-ui, sans-serif; left: -6px; }
@@ -388,19 +389,19 @@
        a new MiniMig, the camera saves a picture out of the page - behind a grown-up's sum. Put first of the groups by
        the page -->
   <div class="tabgroup" id="saving">
-    <button id="keepBtn"><span class="emo" aria-hidden="true">⭐</span><span>Gem</span></button>
-    <button id="figsBtn"><span class="emo" aria-hidden="true">🖼️</span><span>Mine figurer</span></button>
-    <button id="newBtn"><span class="emo" aria-hidden="true">✨</span><span>Ny figur</span></button>
-    <button id="saveBtn" class="grown"><span class="emo" aria-hidden="true">📷</span><span>Send foto</span><span class="lock-badge" id="lockBadge" hidden aria-hidden="true">🔓</span></button>
-    <button id="soundBtn" class="grown"><span class="emo" aria-hidden="true">🔊</span><span>Lyd</span></button>
-    <button id="timeBtn" class="hold-btn grown"><span class="emo" aria-hidden="true">⏱️</span><span>Tid</span></button>
+    <button id="keepBtn"><img src="ikoner/knap-gem.png" alt=""><span>Gem</span></button>
+    <button id="figsBtn"><img src="ikoner/knap-figurer.png" alt=""><span>Mine figurer</span></button>
+    <button id="newBtn"><img src="ikoner/knap-ny.png" alt=""><span>Ny figur</span></button>
+    <button id="saveBtn" class="grown"><img src="ikoner/knap-foto.png" alt=""><span>Send foto</span><span class="lock-badge" id="lockBadge" hidden aria-hidden="true">🔓</span></button>
+    <button id="soundBtn" class="grown"><img src="ikoner/knap-lyd.png" alt=""><span>Lyd</span></button>
+    <button id="timeBtn" class="hold-btn grown"><img src="ikoner/knap-tid.png" alt=""><span>Tid</span></button>
     <!-- (the coins are on the button too - the user, 04-11-2026) -->
-    <button id="starBtn"><span class="emo emo-coins" aria-hidden="true">🏆<i class="mini-coin">5</i><i class="mini-coin gold">20</i></span><span>Stjerner og mønter</span></button>
+    <button id="starBtn"><img src="ikoner/knap-stjerner.png" alt=""><span>Stjerner og mønter</span></button>
     <!-- (the language: a globe and the other language's name - no flag, English being spoken under many - the user, 04-11-2026) -->
     <button id="langBtn" class="grown"><span class="emo" aria-hidden="true"></span><span></span></button>
     <!-- (on minimig.dk only: the website's "Til voksne" - home screen, offline, privacy - from its pwa.js) -->
     <!-- (drawn here: an iPad shows the family emoji as a grey outline - the user, 04-11-2026) -->
-    <button id="adultBtn" hidden><span class="emo" aria-hidden="true"><svg viewBox="0 0 32 32" width="30" height="30"><circle cx="11.5" cy="8" r="5" fill="#F2C09A"/><path d="M7 7a5 5 0 0 1 9-1.5C13 7 10 7.500 7 7z" fill="#6B4226"/><path d="M4 30V20a7.500 7.500 0 0 1 15 0v10z" fill="#4F7BE8"/><circle cx="23.500" cy="15" r="4" fill="#F7CFAE"/><path d="M19.500 14.500a4 4 0 0 1 8 0c-3-.2-5.500-.8-8 0z" fill="#E0A63A"/><path d="M18 30v-5a5.500 5.500 0 0 1 11 0v5z" fill="#F0628F"/></svg></span><span>Til voksne</span></button>
+    <button id="adultBtn" hidden><img src="ikoner/knap-voksne.png" alt=""><span>Til voksne</span></button>
   </div>
   <!-- (the movements' group, put after the other three groups by the page) -->
   <div class="tabgroup" id="moves">
@@ -706,7 +707,7 @@ disc.rotation.x = -Math.PI / 2; disc.position.y = .001; scene.add(disc);
 
 // ---- colours: the figure's painted texture, recoloured (below) ----
 // (the parts, each with the app's icon for its tab, in ikoner/; the fixed colours are gone - the sliders alone)
-const CHOICES = [['skin', 'Hud', 'hud'], ['hair', 'Hår', 'haar'], ['eyes', 'Øjne', 'oejne'], ['brows', 'Bryn', 'bryn'], ['nose', 'Næse', 'naese'], ['mouth', 'Mund', 'mund'], ['ears', 'Ører', 'oerer'], ['pynt', 'Pynt', 'kinder'], ['shirt', 'Trøje', 'troeje'], ['pants', 'Bukser', 'bukser'], ['dress', 'Kjole', 'kjoler'], ['gear-skate', 'Skateboard', 'spil-skate'], ['gear-sea', 'Svømning', 'spil-hav'], ['gear-space', 'Rumrejse', 'spil-rum'],
+const CHOICES = [['skin', 'Hud', 'hud'], ['hair', 'Hår', 'haar'], ['eyes', 'Øjne', 'oejne'], ['brows', 'Bryn', 'bryn'], ['nose', 'Næse', 'naese'], ['mouth', 'Mund', 'mund'], ['ears', 'Ører', 'oerer'], ['pynt', 'Pynt', 'kinder'], ['shirt', 'Trøje', 'troeje'], ['pants', 'Bukser', 'bukser'], ['dress', 'Kjole', 'kjoler'], ['gear-skate', 'Skateboard', 'fane-skate'], ['gear-sea', 'Svømning', 'fane-svoem'], ['gear-space', 'Rumrejse', 'fane-rum'],
   ['socks', 'Strømper', 'stroemper'], ['shoe', 'Sko', 'sko'], ['hat', 'Hat', 'hat'], ['glasses', 'Briller', 'briller'], ['item', 'Ting', 'ting'], ['name', 'Navn', 'navn'], ['bg', 'Baggrund', 'baggrund']];
 const picked = {}, START = { skin: '#EDB98A', hair: '#4A2C1D', eyes: '#7A4220', brows: '#4A2C1D', mouth: '#C0505A', pynt: '#FF5A6E', nose: '#EDB98A', shirt: '#FF7A2F', pants: '#2C3E8C', dress: '#3D8BFF', suit: '#3D8BFF', socks: '#3D8BFF', item: '#E8384F', shoe: '#3D8BFF', hat: '#3D8BFF', glasses: '#3D8BFF' }; let partNow = 'shirt';
 const apply = (part, c) => { picked[part] = c; recolour(part, c); if (part === 'shirt' || part === 'dress') chestName(); };
@@ -822,6 +823,8 @@ for (const el of Object.values(S)) el.addEventListener('input', () => { paintTra
   for (const [id, name, icon, list] of MAIN) { const m = iconButton(`ikoner/${icon}.png`, name); m.dataset.main = id; m.onclick = () => tapMain(id); mains.append(m);
     for (const part of list) { const [, label, pic] = CHOICES.find(c => c[0] === part), b = iconButton(`ikoner/${pic}.png`, label); b.dataset.part = part; b.hidden = true; b.onclick = () => tapTab(part, () => lookFor(part)); subs.append(b); } } }
 document.getElementById('parts').append(document.getElementById('moves'), document.getElementById('games')); document.getElementById('parts').prepend(document.getElementById('saving'));
+// (the grown-ups' buttons - the lilac ones - in a group of their own, last of all: furthest to the right - the user, 13-11-2026)
+{ const g = Object.assign(document.createElement('div'), { className: 'tabgroup', id: 'grownups' }); for (const b of document.querySelectorAll('#saving .grown, #adultBtn')) g.append(b); document.getElementById('parts').append(g); }
 showSwatches();
 
 // The AI figure's colours are painted into one picture (its texture). Each pixel of it is sorted once by its colour
@@ -1509,7 +1512,7 @@ function paintSocks(only) { if (typeof GARMENTS === 'undefined') return;
     const hsl = {}; new THREE.Color().setStyle(hex, THREE.SRGBColorSpace).getHSL(hsl, THREE.SRGBColorSpace); const band = hsl.l > .7 ? [44, 62, 140] : [255, 255, 255];
     const im = g.createImageData(W, H), d = im.data, s = o.stripe ? o.stripe.map(f => f / o.top * H) : null;
     for (let y = 0; y < H; y++) { const b = s ? Math.min(1, Math.max(0, Math.min(y + .5 - s[0], s[1] - y - .5) + .5)) : 0; // (the stripe's edges soft over one row)
-      for (let x = 0; x < W; x++) { const k = (o.heel || o.boot ? 1 : x % 4 < 2 ? .9 : 1) * (1 + (Math.random() - .5) * (o.heel || o.boot ? .015 : .04)) * (o.boot && y > H * (1 - .024 / o.top) ? .3 : 1), i = (y * W + x) * 4;
+      for (let x = 0; x < W; x++) { const k = (o.heel || o.boot ? 1 : x % 4 < 2 ? .9 : 1) * (1 + (Math.random() - .5) * (o.heel || o.boot ? .015 : .04)) * (o.boot && (y / H * o.top) % .03 < .0035 && y / H * o.top > .04 ? .84 : 1), i = (y * W + x) * 4;
         for (let c = 0; c < 3; c++) d[i + c] = Math.min(255, (sock[c] * (1 - b) + band[c] * b) * k); d[i + 3] = 255; } }
     g.putImageData(im, 0, 0); map.needsUpdate = true; } }
 function recolourHair(hexColour, list = hairTexs) {
@@ -2292,7 +2295,7 @@ const GARMENTS = {
     ['sko-hoej', 'Højhælede', { made: true, top: .03, out: .0055, heel: true }],
     // (space boots - the user, 13-11-2026: the suit's feet looked like socks. Thick, up over the ankles, a dark sole and a
     // band round the top; in the shoes' colour)
-    ['sko-rum', 'Rumstøvler', { made: true, top: .125, out: .016, boot: true, stripe: [.006, .03], game: 'space' }]], texs: [] },
+    ['sko-rum', 'Rumstøvler', { made: true, top: .17, out: .03, boot: true, stripe: [.008, .036], game: 'space' }]], texs: [] },
   // (hats were made on a bald head: on top of hair they are raised - lift, in eyes' distances - or, a cap, made wider)
   hat: { items: [['', 'Ingen hat'], ['hat-kasket', 'Kasket', { grow: 1.12, lift: .1, cap: true }], ['hat-krone', 'Krone', { grow: 1.05, rest: .12 }], ['hat-kanin', 'Kaninører', { grow: 1.12, lift: .3, wrap: .03, ears: .45, thin: .35, scalp: true, flat: .3 }],
     ['hat-sloejfe', 'Sløjfe', { grow: 1.05, lift: .35, move: .02, size: .75 }],
@@ -2725,6 +2728,26 @@ function clothMarks() { if (hairBase.marks) return hairBase.marks;
 // hem; cuff: the legs turned up that much. Tops: from length below the hips to the neck, sleeve: how far down the arm,
 // from the shoulder (0) to the wrist (1); fold: the sleeves turned up that much; vneck, hood and pocket, and trim: the
 // neck and sleeves edged darker. cloth: the weave - twill, denim or smooth)
+// (a moon boot's sole: a flat slab under each foot, one colour, its sides straight up and down and its top and bottom
+// level, a little wider than the boot all round - shaped after the foot's own outline; on the foot bone, so it stays
+// flat. The figure stands that much higher with the boots on - see bootLift)
+const BOOT_SOLE = .05, bootLift = () => typeof GARMENTS !== 'undefined' && hairBase?.whole && GARMENTS.shoe.shown === 'sko-rum' ? BOOT_SOLE * hairBase.whole.H : 0;
+function bootSoles(cloth, opts) { const { pts, H } = hairBase.whole, K = clothMarks(), body = hairBase.body, bones = body.skeleton.bones, at = hairBase.at, bsi = body.geometry.attributes.skinIndex, bsw = body.geometry.attributes.skinWeight;
+  const armSet = new Set(bones.flatMap((b, j) => /Arm|Hand/.test(b.name) ? [j] : [])), isArm = j => { let a = 0; for (let c = 0; c < 4; c++) if (armSet.has(bsi.getComponent(j, c))) a += bsw.getComponent(j, c); return a > .5; };
+  const parts = [], NB = 48, topY = .016 * H, botY = -BOOT_SOLE * H, bev = .007 * H;
+  for (const sx of [-1, 1]) { const foot = bones.findIndex((b, j) => /Foot$/.test(b.name) && Math.sign(at[j].x - K.mid) === sx); if (foot < 0) continue; const near = []; let cx = 0, cz = 0;
+    for (let j = 0; j < pts.length / 6; j++) if (pts[j * 6 + 1] < .06 * H && Math.sign(pts[j * 6] - K.mid) === sx && !isArm(j)) { near.push(pts[j * 6], pts[j * 6 + 2]); cx += pts[j * 6]; cz += pts[j * 6 + 2]; }
+    if (near.length < 40) continue; cx /= near.length / 2; cz /= near.length / 2; const R = new Float32Array(NB);
+    for (let i = 0; i < near.length; i += 2) { const b = Math.floor((Math.atan2(near[i + 1] - cz, near[i] - cx) / (2 * Math.PI) + 1) * NB) % NB; R[b] = Math.max(R[b], Math.hypot(near[i] - cx, near[i + 1] - cz)); }
+    for (let it = 0; it < NB; it++) for (let b = 0; b < NB; b++) if (!R[b]) R[b] = R[(b + 1) % NB] || R[(b + NB - 1) % NB];
+    for (let it = 0; it < 3; it++) { const w = R.slice(); for (let b = 0; b < NB; b++) R[b] = Math.max(w[b], (w[(b + NB - 1) % NB] + 2 * w[b] + w[(b + 1) % NB]) / 4); }
+    const P = [new THREE.Vector3(cx, topY, cz)], ix = [], ring = (inset, y) => { for (let b = 0; b < NB; b++) { const a = (b + .5) / NB * 2 * Math.PI, r = R[b] + opts.out * H + .014 * H - inset; P.push(new THREE.Vector3(cx + Math.cos(a) * r, y, cz + Math.sin(a) * r)); } };
+    ring(bev, topY); ring(0, topY - bev); ring(0, botY + bev); ring(bev, botY); P.push(new THREE.Vector3(cx, botY, cz));
+    for (let b = 0; b < NB; b++) { const b2 = (b + 1) % NB; ix.push(0, 1 + b2, 1 + b); for (let r = 0; r < 3; r++) { const p0 = 1 + r * NB + b, p1 = 1 + r * NB + b2; ix.push(p0, p1, p0 + NB, p1, p1 + NB, p0 + NB); } ix.push(P.length - 1, 1 + 3 * NB + b, 1 + 3 * NB + b2); }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P.flatMap(v => v.toArray()), 3)); g.setIndex(ix); g.computeVertexNormals();
+    if (g.attributes.normal.getY(0) < 0) { for (let i = 0; i < ix.length; i += 3) [ix[i + 1], ix[i + 2]] = [ix[i + 2], ix[i + 1]]; g.setIndex(ix); g.computeVertexNormals(); }
+    parts.push({ geo: g, w: () => [[foot, 1]] }); }
+  if (parts.length) gearMesh(parts, new THREE.MeshStandardMaterial({ color: 0x2C3552, roughness: .75, metalness: 0, side: THREE.DoubleSide }), cloth); }
 function makeCloth(name, part, opts) {
   // (all of the body's triangles, three corners each in turn - not its index, which hides what other trousers cover: made
   // after those had been on, the shorts had a hole there and only their hem and waistband showed)
@@ -2741,9 +2764,9 @@ function makeCloth(name, part, opts) {
   let edges, out, level = Infinity, tuckIn = null, swimArm = -Infinity;
   // (socks: the feet and legs up to their top - opts.top, in fractions of the height - close on the skin; stripe: a band
   // in the contrast colour that far below the top, [from, to])
-  // (boots: thick all round the foot - under it too, a sole twice and a half as thick as at first, the user 13-11-2026 -
-  // going over softly to the leg of the boot above; out every way, down too, where the socks only go out sideways)
-  if (socks) { const top = opts.top * H; edges = [{ f: p => p[1] - top, bare: .008 * H }]; out = opts.boot ? p => (opts.out + .016 * clamp((.075 * H - p[1]) / (.025 * H))) * H : () => (opts.out || .0035) * H; if (opts.boot) level = -Infinity; }
+  // (moon boots: as thick all the way, round the foot, the ankle and the leg - out every way, where the socks only go out
+  // sideways; their sole a flat slab of its own under them, see bootSoles)
+  if (socks) { const top = opts.top * H; edges = [{ f: p => p[1] - top, bare: .008 * H }]; out = () => (opts.out || .0035) * H; if (opts.boot) level = -Infinity; }
   // (a space suit: all of the body below the neck, a good way out from it - thick and soft)
   else if (opts.space) { edges = [{ f: p => p[1] - K.neckY - .012 * H, bare: .006 * H }, { f: p => .085 * H - p[1], bare: .008 * H }]; // (down to the ankles: the boots go on over its ends - its feet came out through them)
     out = () => .011 * H; level = -Infinity; }
@@ -2954,7 +2977,7 @@ function makeCloth(name, part, opts) {
   cloth.castShadow = true; cloth.name = name; cloth.frustumCulled = false; cloth.normalizeSkinWeights(); cloth.userData.orig = g.attributes.position.array.slice();
   cloth.position.copy(body.position); cloth.quaternion.copy(body.quaternion); cloth.scale.copy(body.scale);
   body.parent.add(cloth); cloth.bind(body.skeleton, body.bindMatrix); if (picked[part]) recolourHair(picked[part], G.texs); if (G.texs === gearTexs && picked.suit) recolourHair(picked.suit, gearTexs);
-  if (socks) { cloth.userData.sock = opts; paintSocks(cloth); if (opts.heel) { cloth.material.roughness = .28; cloth.material.metalness = .05; } if (opts.boot) cloth.material.roughness = .5; }
+  if (socks) { cloth.userData.sock = opts; paintSocks(cloth); if (opts.heel) { cloth.material.roughness = .28; cloth.material.metalness = .05; } if (opts.boot) { cloth.material.roughness = .5; bootSoles(cloth, opts); } }
   if (opts.hood) hoodRim(cloth, list, wp, dir, edges[1].f, K, H, inv);
   if (opts.relief && !opts.hood && !opts.swim) neckBand(cloth, list, wp, dir, edges[1].f, K, H, inv, opts.trim ? .55 : 1);
   // (the body under it hidden, all but near its edges)
@@ -5863,7 +5886,7 @@ musicBtn.onclick = () => { musicOn = !musicOn; try { localStorage.setItem('minim
 const infoBtn = document.getElementById('infoBtn'), infoPop = document.getElementById('infoPop'); let infoTimer = 0;
 // (the globe: the page loaded anew in the other language, with the figure on the screen - not in a game)
 { const b = document.getElementById('langBtn'), [ic, nm] = b.children; nm.textContent = T('Skift sprog', 'Language'); // (not the other language's name: more may come - the user 09-11-2026)
-  ic.innerHTML = '<svg viewBox="0 0 32 32" width="30" height="30" style="vertical-align:middle"><circle cx="16" cy="16" r="14" fill="#7CC4F5" stroke="#3B82C4" stroke-width="2"/><path d="M16 2c-5 4-7.500 9-7.500 14S11 26 16 30c5-4 7.500-9 7.500-14S21 6 16 2zM2 16h28M4.500 9h23M4.500 23h23" fill="none" stroke="#3B82C4" stroke-width="1.800"/></svg>';
+  ic.innerHTML = '<img src="ikoner/knap-sprog.png" alt="">';
   // (behind the grown-up's sum, as the other lilac buttons - the language is for grown-ups, the user 09-11-2026)
   b.onclick = () => { if (game.on) { toast('Stop spillet først'); return; } askGrownUp(() => { try { localStorage.setItem('minimig-test.sprog', T('en', 'da')); } catch (e) {} keepLast(); location.reload(); }); }; }
 // (two quick taps zoomed the page on an iPad, whatever the page's style says - the second tap is dropped, the user
@@ -5915,8 +5938,8 @@ addEventListener('resize', resize); resize(); new ResizeObserver(resize).observe
 // the next frame only after this one, so one error froze the figure for good)
 renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElapsedTime();
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
-  if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
+  if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.11.0 (e2d81ed)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.11.0 (74d7c04)</div>
 </body>
 </html>
