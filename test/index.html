@@ -303,6 +303,18 @@
   .sheet { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; background: rgba(20, 14, 40, .55);
     padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
   .sheet[hidden] { display: none; }
+  #dressBar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 45; background: var(--tile); color: var(--ink); border-radius: 24px 24px 0 0; display: grid; gap: 10px; box-shadow: 0 -8px 24px rgba(58, 46, 92, .3);
+    padding: 12px max(16px, env(safe-area-inset-right, 0px)) max(14px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+  #dressBar[hidden] { display: none; }
+  #dressItems { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+  #dressItems button { width: 116px; position: relative; border: 2px solid var(--line); background: #FFF8E1; color: var(--ink); border-radius: 16px; font: 600 13px/1.15 system-ui, sans-serif; cursor: pointer; }
+  #dressItems button img { max-width: 84px; }
+  #dressItems button.on { border-color: #2FB457; box-shadow: 0 0 0 2px #2FB457 inset; }
+  #dressItems button.todo { animation: dressPulse 1.1s ease-in-out infinite; }
+  #dressItems button.on::after { content: '✓'; position: absolute; top: 0; right: 6px; color: #2E9E4F; font: 800 22px/1.2 system-ui, sans-serif; }
+  #dressGo { justify-self: center; font: 700 1.35rem/1 system-ui, sans-serif; padding: 14px 44px; border-radius: 999px; border: 0; background: #2FB457; color: #fff; cursor: pointer; animation: dressPulse 1.1s ease-in-out infinite; }
+  #dressGo:disabled { background: #C9C9D2; cursor: default; animation: none; }
+  @keyframes dressPulse { 50% { transform: scale(1.07); } }
   .sheet-card { background: var(--tile); color: var(--ink); border-radius: 24px; padding: 16px; width: min(440px, 100%); max-height: 100%; overflow: auto;
     display: grid; gap: 12px; box-shadow: 0 10px 30px rgba(58, 46, 92, .3); }
   .sheet-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
@@ -529,6 +541,11 @@
   </div>
 </div>
 <!-- the time, for grown-ups (held 3 seconds, then the sum): how long a day MiniMig may be played - the user, 08-11-2026 -->
+<div id="dressBar" hidden>
+  <div class="sheet-head"><h2>Tag udstyret på</h2><button class="sheet-x" id="dressX" aria-label="Luk">✕</button></div>
+  <div class="choices" id="dressItems"></div>
+  <button id="dressGo" disabled>▶ Start</button>
+</div>
 <div class="sheet" id="timeSheet" hidden>
   <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="timeTitle">
     <div class="sheet-head"><h2 id="timeTitle">Tid</h2><button class="sheet-x" data-close aria-label="Luk">✕</button></div>
@@ -633,7 +650,7 @@ const EN = {
   'Undertrøje': 'Tank top', 'T-shirt': 'T-shirt', 'Hættetrøje': 'Hoodie', 'Fodboldtrøje': 'Soccer jersey', 'Undershorts': 'Underwear', 'Trusser': 'Briefs', 'Lange bukser': 'Long pants', 'Shorts': 'Shorts', 'Cowboyshorts': 'Denim shorts', 'Fodboldbukser': 'Soccer shorts',
   'Ingen kjole': 'No dress', 'Ingen dragt': 'No suit', 'Badedragt': 'Swimsuit', 'Badebukser': 'Swim trunks', 'Sommerkjole': 'Summer dress', 'Prinsessekjole': 'Princess dress', 'Havfruekjole': 'Mermaid dress', 'Ingen strømper': 'No socks', 'Ankelstrømper': 'Ankle socks', 'Almindelige strømper': 'Regular socks', 'Fodboldstrømper': 'Soccer socks', 'Knæstrømper': 'Knee socks',
   'Bare fødder': 'Bare feet', 'Sneakers': 'Sneakers', 'Fodboldstøvler': 'Soccer cleats', 'Gummistøvler': 'Rain boots', 'Balletsko': 'Ballet shoes', 'Højhælede': 'High heels',
-  'Ingen hat': 'No hat', 'Kasket': 'Cap', 'Krone': 'Crown', 'Kaninører': 'Bunny ears', 'Sløjfe': 'Bow', 'Ingen briller': 'No glasses', 'Svømmebriller': 'Swim goggles', 'Snorkel': 'Snorkel', 'Ingen svømmebriller': 'No goggles', 'Runde': 'Round', 'Solbriller': 'Sunglasses', 'Hjerte': 'Heart',
+  'Ingen hat': 'No hat', 'Kasket': 'Cap', 'Krone': 'Crown', 'Kaninører': 'Bunny ears', 'Sløjfe': 'Bow', 'Ingen briller': 'No glasses', 'Svømmebriller': 'Swim goggles', 'Snorkel': 'Snorkel', 'Skaterhjelm': 'Skate helmet', 'Knæbeskyttere': 'Knee pads', 'Albuebeskyttere': 'Elbow pads', 'Handsker': 'Gloves', 'Ingen knæbeskyttere': 'No knee pads', 'Ingen albuebeskyttere': 'No elbow pads', 'Ingen handsker': 'No gloves', 'Tag udstyret på': 'Put your gear on', '▶ Start': '▶ Start', 'Ingen svømmebriller': 'No goggles', 'Runde': 'Round', 'Solbriller': 'Sunglasses', 'Hjerte': 'Heart',
   // (things, pets, backgrounds)
   'Ballon': 'Balloon', 'Bamse': 'Teddy bear', 'Tryllestav': 'Magic wand', 'Is': 'Ice cream', 'Blomst': 'Flower', 'Bold': 'Ball', 'Fodbold': 'Soccer ball', 'Hulahopring': 'Hula hoop',
   'Intet dyr': 'No pet', 'Kat': 'Cat', 'Hund': 'Dog', 'Kanin': 'Rabbit', 'Halsbånd': 'Collar', 'Madskål': 'Food bowl', 'Legebold': 'Play ball',
@@ -1782,7 +1799,7 @@ function measureHead(fbx) {
   const sk = body.skeleton, bone = re => sk.bones.findIndex(b => re.test(b.name));
   const back = i => sk.bones[i].matrixWorld.clone().multiply(sk.boneInverses[i]).multiply(body.bindMatrix).invert();
   const head = bone(/Head$/), chest = bone(/Spine2$/), hips = bone(/Hips$/); if (head < 0 || chest < 0) { console.warn('hår: fandt ikke hoved og bryst'); return; }
-  hairBase = { eyes: eyes.map(e => new THREE.Vector3(e[0], e[1], e[2]).divideScalar(e[3])), body, head, chest, headBack: back(head), chestBack: back(chest),
+  hairBase = { eyes: eyes.map(e => new THREE.Vector3(e[0], e[1], e[2]).divideScalar(e[3])), body, head, chest, headBack: back(head), chestBack: back(chest), at: sk.bones.map(b => b.getWorldPosition(new THREE.Vector3())),
     hips, hipY: sk.bones[Math.max(0, hips)].getWorldPosition(new THREE.Vector3()).y };
   // (the figure's surface from the chin to the chest, its points in a grid of little boxes: long hair is laid on it)
   const [L, R] = hairBase.eyes, apart = L.distanceTo(R), eyeY = (L.y + R.y) / 2, box = .4 * apart, grid = new Map();
@@ -2079,7 +2096,9 @@ var styleLists = () => ({ hair: [HAIRS, hairNow, setHair], eyes: [EYES, eyesNow,
   // them - taken out of Briller; what is chosen here is what the figure puts on by itself for the game, see dressFor)
   glasses: [GARMENTS.glasses.items.filter(i => !i[2]?.goggles), GARMENTS.glasses.now, n => setGarment('glasses', n)],
   suit: [GARMENTS.suit.items, GARMENTS.suit.now, n => { gearPick('suit', n); setGarment('suit', n); },
-    [[['', 'Ingen svømmebriller'], ...GARMENTS.glasses.items.filter(i => i[2]?.goggles)], isGear(GARMENTS.glasses.now) ? GARMENTS.glasses.now : '', n => { gearPick('glasses', n); if (n || isGear(GARMENTS.glasses.now)) setGarment('glasses', n); }, 'udstyr']],
+    [[['', 'Ingen svømmebriller'], ...GARMENTS.glasses.items.filter(i => i[2]?.goggles)], isGear(GARMENTS.glasses.now) ? GARMENTS.glasses.now : '', n => { gearPick('glasses', n); if (n || isGear(GARMENTS.glasses.now)) setGarment('glasses', n); }, 'udstyr',
+      // (and the safety gear in a row of its own, each thing on or off by itself)
+      [SAFETY.map(n => [n, GARMENTS[gearPart(n)].items.find(i => i[0] === n)[1]]), SAFETY.filter(n => GARMENTS[gearPart(n)].now === n), n => setGarment(gearPart(n), GARMENTS[gearPart(n)].now === n ? '' : n)]]],
   ...Object.fromEntries(Object.entries(MOVES).map(([g, list]) => ['move-' + g, [list, moveNow[g], playMove]])), 'game-hop': gameList() });
 // (a style being fetched is fetched once: two taps on it made two heads of hair, and the first stayed on for good. One
 // that cannot come - no internet the first time - is tried again the next time it is chosen)
@@ -2256,25 +2275,52 @@ const GARMENTS = {
     ['sko-hoej', 'Højhælede', { made: true, top: .03, out: .0055, heel: true }]], texs: [] },
   // (hats were made on a bald head: on top of hair they are raised - lift, in eyes' distances - or, a cap, made wider)
   hat: { items: [['', 'Ingen hat'], ['hat-kasket', 'Kasket', { grow: 1.12, lift: .1, cap: true }], ['hat-krone', 'Krone', { grow: 1.05, rest: .12 }], ['hat-kanin', 'Kaninører', { grow: 1.12, lift: .3, wrap: .03, ears: .45, thin: .35, scalp: true, flat: .3 }],
-    ['hat-sloejfe', 'Sløjfe', { grow: 1.05, lift: .35, move: .02, size: .75 }]], texs: [], head: true },
+    ['hat-sloejfe', 'Sløjfe', { grow: 1.05, lift: .35, move: .02, size: .75 }],
+    // (the skateboard helmet, a model from Meshy - see makeHelmet. The user, 12-11-2026)
+    ['hat-skaterhjelm', 'Skaterhjelm', { helmet: true, cap: true, game: 'skate' }]], texs: [], head: true },
   glasses: { items: [['', 'Ingen briller'], ['briller-runde', 'Runde', { fwd: .12 }], ['briller-sol', 'Solbriller', { pale: .7, lens: .1, dark: true, cap: 1.15 }],
     ['briller-hjerte', 'Hjerte', { lens: .1, fwd: .1, cap: 1.15 }], ['briller-stjerne', 'Stjerne', { lens: .1, cap: 1.15 }],
     // (for the swim world: swim goggles, and the same with a snorkel - made here, see makeGoggles. The user, 11-11-2026)
-    ['briller-svoemme', 'Svømmebriller', { goggles: true, game: 'sea' }], ['briller-snorkel', 'Snorkel', { goggles: true, snorkel: true, game: 'sea' }]], texs: [], head: true } };
+    ['briller-svoemme', 'Svømmebriller', { goggles: true, game: 'sea' }], ['briller-snorkel', 'Snorkel', { goggles: true, snorkel: true, game: 'sea' }]], texs: [], head: true },
+  // (safety gear - the user, 12-11-2026: knee pads, elbow pads and gloves, for the skateboard first; the same ones for the
+  // snowboard and the bike to come. The pads built here - makePads - the gloves made from the hands as socks from the feet)
+  knee: { items: [['', 'Ingen knæbeskyttere'], ['beskyt-knae', 'Knæbeskyttere', { pad: 'knee', game: 'skate' }]], texs: [] },
+  elbow: { items: [['', 'Ingen albuebeskyttere'], ['beskyt-albue', 'Albuebeskyttere', { pad: 'elbow', game: 'skate' }]], texs: [] },
+  gloves: { items: [['', 'Ingen handsker'], ['handsker-skate', 'Handsker', { made: true, glove: true, cloth: 'smooth', game: 'skate' }]], texs: [] } };
 // (now: what is chosen, shown: what the figure has on - the same once all of it is loaded)
 for (const G of Object.values(GARMENTS)) { G.now = G.shown = ''; G.meshes = {}; G.loading = {}; }
 // (the figure dresses for a game by itself when it starts - the user, 11-11-2026: the gear made for that game, the one
 // chosen under Udstyr or else a first choice, put on in place of what it wore; gear made for another game taken off. When
 // the game stops it is dressed again as it was before. game: the game a suit or a piece of gear is for)
 const isGear = n => !!GARMENTS.glasses.items.find(i => i[0] === n)?.[2]?.goggles;
+// (the safety gear, shown together in a row under Udstyr, each put on or taken off by itself)
+const SAFETY = ['hat-skaterhjelm', 'beskyt-knae', 'beskyt-albue', 'handsker-skate'], gearPart = n => Object.keys(GARMENTS).find(p => GARMENTS[p].items.some(i => i[0] === n));
 const gearOf = () => { try { return playerNow().gear ??= {}; } catch (e) { return {}; } }, gearPick = (k, n) => { try { gearOf()[k] = n; savePlayers(); } catch (e) {} };
 const wearSnap = () => ({ now: Object.fromEntries(Object.entries(GARMENTS).map(([p, g]) => [p, g.now])), sb: GARMENTS.suit.before, db: GARMENTS.dress.before });
 function wearBack(w) { if (!w || Object.entries(w.now).every(([p, n]) => GARMENTS[p].now === n)) return; for (const [p, n] of Object.entries(w.now)) GARMENTS[p].now = n; GARMENTS.suit.before = w.sb; GARMENTS.dress.before = w.db; setGarment('socks', GARMENTS.socks.now); }
 function dressFor(mode) { const pick = gearOf();
-  for (const [part, first] of [['suit', () => GARMENTS.dress.now || /flet/.test(hairNow) ? 'dragt-bade' : 'dragt-badebukser'], ['glasses', () => 'briller-svoemme']]) { const G = GARMENTS[part], mine = G.items.filter(i => i[2]?.game === mode && owns(i[0])), on = G.items.find(i => i[0] === G.now)?.[2]?.game;
-    if (mine.length) { if (on !== mode) setGarment(part, mine.find(i => i[0] === pick[part])?.[0] || mine.find(i => i[0] === first())?.[0] || mine[0][0]); } else if (on) setGarment(part, ''); }
+  for (const [part, first] of [['suit', () => GARMENTS.dress.now || /flet/.test(hairNow) ? 'dragt-bade' : 'dragt-badebukser'], ['glasses', () => 'briller-svoemme'], ['hat'], ['knee'], ['elbow'], ['gloves']]) { const G = GARMENTS[part], mine = G.items.filter(i => i[2]?.game === mode && owns(i[0])), on = G.items.find(i => i[0] === G.now)?.[2]?.game;
+    if (mine.length) { if (on !== mode) setGarment(part, mine.find(i => i[0] === pick[part])?.[0] || mine.find(i => i[0] === first?.())?.[0] || mine[0][0]); } else if (on) setGarment(part, ''); }
   // (into the water barefoot - the user, 12-11-2026: shoes and socks off by itself, and on again after if they were on)
   if (mode === 'sea' && (GARMENTS.shoe.now || GARMENTS.socks.now)) { GARMENTS.shoe.now = ''; setGarment('socks', ''); } }
+// ---- The child dresses the figure for a game the first time (the user, 12-11-2026: the children are to put the right
+// safety gear on the figure themselves - but only the first time; after that it is remembered and the figure dresses by
+// itself, as before). Before the game starts, a bar at the bottom with that game's gear as big pictures, the ones still
+// to be put on moving a little; a tap puts one on the figure, standing above. The green start button works once all of it
+// is on (swim goggles and snorkel are free to leave off). Kept for each child - gear.done.
+let dressSnap = null;
+const dressNeeds = mode => Object.entries(GARMENTS).map(([part, G]) => [part, G.items.filter(i => i[2]?.game === mode && owns(i[0]))]).filter(([, l]) => l.length);
+function dressAsk(mode) { const m = MODES[mode].from ? 'hop' : mode, needs = dressNeeds(m), gear = gearOf(); if (!needs.length || gear.done?.[m]) return false;
+  const bar = document.getElementById('dressBar'), box = document.getElementById('dressItems'), go = document.getElementById('dressGo'); dressSnap ??= wearSnap();
+  const free = p => p === 'glasses', ok = () => needs.every(([p, l]) => free(p) || l.some(i => i[0] === GARMENTS[p].now));
+  const draw = () => { box.innerHTML = ''; for (const [part, list] of needs) { const have = list.some(i => i[0] === GARMENTS[part].now);
+      for (const [n, label] of list) { const b = iconButton(`ikoner/valg-${n}.png`, label), on = GARMENTS[part].now === n; b.classList.toggle('on', on); b.classList.toggle('todo', !have && !free(part));
+        b.onclick = () => { if (part === 'suit' || part === 'glasses') gearPick(part, on ? '' : n); if (m === 'sea' && (GARMENTS.shoe.now || GARMENTS.socks.now)) { GARMENTS.shoe.now = ''; GARMENTS.socks.now = ''; } setGarment(part, on ? '' : n); draw(); }; box.append(b); } }
+    go.disabled = !ok(); };
+  go.onclick = () => { if (!ok()) return; (gear.done ??= {})[m] = true; try { savePlayers(); } catch (e) {} bar.hidden = true; startGame(mode); };
+  document.getElementById('dressX').onclick = () => { bar.hidden = true; const w = dressSnap; dressSnap = null; wearBack(w); };
+  // (the whole figure in the picture, so the knees show too)
+  draw(); bar.hidden = false; try { goal = { target: new THREE.Vector3(0, 1.05, 0), camera: new THREE.Vector3(0, 1.25, farZ), far: true }; closeUp = false; } catch (e) {} return true; }
 let dressing = 0; const NO_NET = 'Det kan ikke hentes lige nu 📶';
 async function setGarment(part, name) { const G = GARMENTS[part], ask = ++dressing;
   // (a dress is worn instead of a top and trousers, and the other way round; taking the dress off puts back the top and
@@ -2291,7 +2337,7 @@ async function setGarment(part, name) { const G = GARMENTS[part], ask = ++dressi
   // (everything changed at once, when all of it is loaded - the underwear went skin coloured and the last dress stayed on
   // while a new one loaded; a choice made meanwhile wins)
   for (const [p, g] of Object.entries(GARMENTS)) if (g.now && !g.meshes[g.now]) { const n = g.now;
-    g.loading[n] ??= g.items.find(i => i[0] === n)?.[2]?.goggles ? Promise.resolve(makeGoggles(n, p, g.items.find(i => i[0] === n)[2])) : g.head ? loadHair(n, g.texs, p, g.items.find(i => i[0] === n)?.[2] || {})
+    g.loading[n] ??= g.items.find(i => i[0] === n)?.[2]?.helmet ? makeHelmet(n) : g.items.find(i => i[0] === n)?.[2]?.pad ? Promise.resolve(makePads(n, g.items.find(i => i[0] === n)[2])) : g.items.find(i => i[0] === n)?.[2]?.goggles ? Promise.resolve(makeGoggles(n, p, g.items.find(i => i[0] === n)[2])) : g.head ? loadHair(n, g.texs, p, g.items.find(i => i[0] === n)?.[2] || {})
       : g.items.find(i => i[0] === n)?.[2]?.made ? Promise.resolve(makeCloth(n, p, g.items.find(i => i[0] === n)[2])) : loadCloth(n, p);
     // (one that cannot come - no internet the first time - holds nothing else up, and is tried again the next time)
     g.meshes[n] = await g.loading[n].catch(() => null); if (!g.meshes[n]) { delete g.loading[n]; if (p === part && ask === dressing) toast(NO_NET); } }
@@ -2308,7 +2354,7 @@ async function setGarment(part, name) { const G = GARMENTS[part], ask = ++dressi
 // the hair. The snorkel a tube from a clear mouthpiece in the mouth - shown open round it, see mouthLook - out to the
 // left, up the cheek outside the goggles, clipped on to the strap, and up well past the head, bending back at its top.
 // All of it on the head, as hair is, in the glasses' colour. Made anew when the hair changes - see regoggle)
-var gearTexs = [];
+var gearTexs = []; for (const p of ['knee', 'elbow', 'gloves']) GARMENTS[p].texs = gearTexs;
 function makeGoggles(name, part, opts) { if (!hairBase?.whole) return null;
   const G = GARMENTS[part], [L, R] = hairBase.eyes, a = L.distanceTo(R), eyeY = (L.y + R.y) / 2, pts = hairBase.whole.pts, mid = (L.x + R.x) / 2, V = (x, y, z) => new THREE.Vector3(x, y, z);
   // (the face near the eyes and mouth in little squares: how far forward it comes in each)
@@ -2401,6 +2447,94 @@ function makeGoggles(name, part, opts) { if (!hairBase?.whole) return null;
   const lens = mesh(glass, new THREE.MeshStandardMaterial({ color: 0xEAF6FF, transparent: true, opacity: .18, roughness: .05, metalness: 0, side: THREE.DoubleSide, depthWrite: false }));
   for (const x of [soft, lens]) { frame.add(x); x.bind(body.skeleton, body.bindMatrix); }
   if (picked.suit) recolourHair(picked.suit, gearTexs); return frame; }
+// ---- Safety gear (the user, 12-11-2026: the children are to put the right safety gear on the figure themselves). Hard
+// things, built as shapes of their own in the figure as it was made and following its bones - gearMesh: each part its
+// corners, how each follows the bones, and a shade.
+function gearMesh(parts, mat, parent) { const body = hairBase.body; let n = 0; for (const q of parts) { if (q.geo.index) q.geo = q.geo.toNonIndexed(); n += q.geo.attributes.position.count; }
+  const P = new Float32Array(n * 3), N = new Float32Array(n * 3), U = new Float32Array(n * 2), C = new Float32Array(n * 3), si = new Uint16Array(n * 4), sw = new Float32Array(n * 4), v = new THREE.Vector3(), q = new THREE.Vector3(); let o = 0;
+  for (const part of parts) { const A = part.geo.attributes.position, B = part.geo.attributes.normal, T = part.geo.attributes.uv, back = part.back || hairBase.whole.inv;
+    for (let i = 0; i < A.count; i++, o++) { v.fromBufferAttribute(A, i); part.w(v).slice(0, 4).forEach(([b, k], e) => { si[o * 4 + e] = b; sw[o * 4 + e] = k; });
+      if (T && part.uv) U.set([T.getX(i), T.getY(i)], o * 2); else U.set([(v.x + v.z) * 3, v.y * 3], o * 2); C.set(part.shade || [1, 1, 1], o * 3);
+      q.fromBufferAttribute(B, i).transformDirection(back); v.applyMatrix4(back); P.set([v.x, v.y, v.z], o * 3); N.set([q.x, q.y, q.z], o * 3); } }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(P, 3)); g.setAttribute('normal', new THREE.BufferAttribute(N, 3)); g.setAttribute('uv', new THREE.BufferAttribute(U, 2)); g.setAttribute('color', new THREE.BufferAttribute(C, 3));
+  g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(si, 4)); g.setAttribute('skinWeight', new THREE.Float32BufferAttribute(sw, 4));
+  const m = new THREE.SkinnedMesh(g, mat); m.castShadow = true; m.frustumCulled = false;
+  if (parent) parent.add(m); else { m.position.copy(body.position); m.quaternion.copy(body.quaternion); m.scale.copy(body.scale); body.parent.add(m); } m.bind(body.skeleton, body.bindMatrix); return m; }
+// (knee and elbow pads as real ones are: a soft black pad round the front of the joint, a hard rounded cap on it in the
+// gear's colour, and two black straps round the limb above and below. Laid on the limb by a table of how far out it
+// comes all the way round, at each height along it - so they fit this figure - and following the two bones that meet
+// there, the upper one above the joint, the lower one below, going over between them as the skin does)
+function makePads(name, opts) { if (!hairBase?.whole || !hairBase.at) return null;
+  const { pts, H } = hairBase.whole, K = clothMarks(), body = hairBase.body, bones = body.skeleton.bones, at = hairBase.at, bi = re => bones.findIndex(b => re.test(b.name)), knee = opts.pad === 'knee';
+  const geo = body.geometry, bsi = geo.attributes.skinIndex, bsw = geo.attributes.skinWeight, armSet = new Set(bones.flatMap((b, j) => /Arm|Hand/.test(b.name) ? [j] : []));
+  const isArm = j => { let a = 0; for (let c = 0; c < 4; c++) if (armSet.has(bsi.getComponent(j, c))) a += bsw.getComponent(j, c); return a > .5; };
+  const soft = [], hard = [], hh = (knee ? .05 : .042) * H, NB = 32, NT = 9, clamp = v => Math.min(1, Math.max(0, v));
+  for (const sd of ['Left', 'Right']) { const up = bi(new RegExp(sd + (knee ? 'UpLeg$' : 'Arm$'))), lo = bi(new RegExp(sd + (knee ? 'Leg$' : 'ForeArm$'))), end = bi(new RegExp(sd + (knee ? 'Foot$' : 'Hand$'))); if (up < 0 || lo < 0 || end < 0) continue;
+    // (along the limb, towards the body; the way the pad faces - a knee forwards, an elbow backwards - and across)
+    const J = at[lo].clone(), d = at[up].clone().sub(at[end]).normalize(), f = new THREE.Vector3(0, 0, knee ? 1 : -1); f.addScaledVector(d, -f.dot(d)).normalize(); const g = new THREE.Vector3().crossVectors(d, f).normalize();
+    // (the limb's own points near the joint: its middle, then how far out it comes in each direction at each height)
+    const near = [], sx = Math.sign(J.x - K.mid), rel = new THREE.Vector3(); let cf = 0, cg = 0;
+    for (let j = 0; j < pts.length / 6; j++) { if (isArm(j) === knee || Math.sign(pts[j * 6] - K.mid) !== sx) continue; rel.set(pts[j * 6], pts[j * 6 + 1], pts[j * 6 + 2]).sub(J); const t = rel.dot(d); if (Math.abs(t) > hh * 1.4) continue;
+      const a = rel.dot(f), b = rel.dot(g); if (Math.hypot(a, b) > .12 * H) continue; near.push(t, a, b); cf += a; cg += b; }
+    if (near.length < 30) continue; cf /= near.length / 3; cg /= near.length / 3;
+    const R = Array.from({ length: NT }, () => new Float32Array(NB)), row = t => Math.min(NT - 1, Math.max(0, Math.floor((t / (hh * 1.4) + 1) / 2 * NT)));
+    for (let i = 0; i < near.length; i += 3) { const a = near[i + 1] - cf, b = near[i + 2] - cg, k = row(near[i]), bin = Math.floor((Math.atan2(b, a) / (2 * Math.PI) + 1) * NB) % NB; R[k][bin] = Math.max(R[k][bin], Math.hypot(a, b)); }
+    for (const r of R) { for (let it = 0; it < NB; it++) for (let b = 0; b < NB; b++) if (!r[b]) r[b] = r[(b + 1) % NB] || r[(b + NB - 1) % NB]; for (let it = 0; it < 2; it++) { const w = r.slice(); for (let b = 0; b < NB; b++) r[b] = Math.max(w[b], (w[(b + NB - 1) % NB] + 2 * w[b] + w[(b + 1) % NB]) / 4); } }
+    for (let k = 0; k < NT; k++) if (!R[k][0]) R[k].set(R[Math.min(NT - 1, k + 1)][0] ? R[Math.min(NT - 1, k + 1)] : R[Math.max(0, k - 1)]);
+    const rad = (th, t) => { const x = Math.min(NT - 1, Math.max(0, (t / (hh * 1.4) + 1) / 2 * NT - .5)), k0 = Math.floor(x), k1 = Math.min(NT - 1, k0 + 1), u = x - k0, y = ((th / (2 * Math.PI) + 2) % 1) * NB, b0 = Math.floor(y) % NB, b1 = (b0 + 1) % NB, w = y - Math.floor(y);
+      const of = k => R[k][b0] * (1 - w) + R[k][b1] * w; return of(k0) * (1 - u) + of(k1) * u; };
+    const C = J.clone().addScaledVector(f, cf).addScaledVector(g, cg), spot = (th, t, h) => C.clone().addScaledVector(d, t).addScaledVector(f, Math.cos(th) * (rad(th, t) + h)).addScaledVector(g, Math.sin(th) * (rad(th, t) + h));
+    const weigh = v => { const k = clamp(.5 + v.clone().sub(J).dot(d) / (.05 * H)); return k >= 1 ? [[up, 1]] : k <= 0 ? [[lo, 1]] : [[up, k], [lo, 1 - k]]; };
+    const mesh = (P, ix) => { const q = new THREE.BufferGeometry(); q.setAttribute('position', new THREE.Float32BufferAttribute(P.flatMap(v => v.toArray()), 3)); q.setIndex(ix); q.computeVertexNormals();
+      // (facing out from the limb)
+      const nn = new THREE.Vector3().fromBufferAttribute(q.attributes.normal, 0), outw = P[0].clone().sub(C); outw.addScaledVector(d, -outw.dot(d)); if (nn.dot(outw) < 0) { for (let i = 0; i < ix.length; i += 3) [ix[i + 1], ix[i + 2]] = [ix[i + 2], ix[i + 1]]; q.setIndex(ix); q.computeVertexNormals(); } return q; };
+    // (a rounded patch: a dome with rounded corners so far round the limb and so far along it, its edge standing up
+    // from the limb and its middle that much higher; closed down to the limb all round)
+    const patch = (thMax, half, base, edge, bulge) => { const NR = 9, NA = 44, P = [spot(0, 0, base + edge + bulge)], ix = [], se = c => Math.sign(c) * Math.abs(c) ** (2 / 3.2);
+      for (let r = 1; r <= NR + 1; r++) { const rho = Math.min(1, r / NR), h = r > NR ? base - .003 * H : base + edge + bulge * (1 - rho ** 2.6) ** .55; for (let a = 0; a < NA; a++) { const ph = a / NA * 2 * Math.PI; P.push(spot(rho * se(Math.cos(ph)) * thMax, rho * se(Math.sin(ph)) * half, h)); } }
+      for (let a = 0; a < NA; a++) ix.push(0, 1 + a, 1 + (a + 1) % NA);
+      for (let r = 0; r < NR; r++) for (let a = 0; a < NA; a++) { const p0 = 1 + r * NA + a, p1 = 1 + r * NA + (a + 1) % NA; ix.push(p0, p0 + NA, p1 + NA, p0, p1 + NA, p1); } return mesh(P, ix); };
+    // (a strap all the way round the limb between two heights)
+    const strap = (t0, t1, h) => { const NA = 40, P = [], ix = [], rows = [[t0, -.002 * H], [t0, h], [t1, h], [t1, -.002 * H]]; for (const [t, hgt] of rows) for (let a = 0; a < NA; a++) P.push(spot(a / NA * 2 * Math.PI, t, hgt));
+      for (let r = 0; r < 3; r++) for (let a = 0; a < NA; a++) { const p0 = r * NA + a, p1 = r * NA + (a + 1) % NA; ix.push(p0, p0 + NA, p1 + NA, p0, p1 + NA, p1); }
+      const q = new THREE.BufferGeometry(); q.setAttribute('position', new THREE.Float32BufferAttribute(P.flatMap(v => v.toArray()), 3)); q.setIndex(ix); q.computeVertexNormals();
+      const nn = new THREE.Vector3().fromBufferAttribute(q.attributes.normal, NA), outw = P[NA].clone().sub(C); outw.addScaledVector(d, -outw.dot(d)); if (nn.dot(outw) < 0) { for (let i = 0; i < ix.length; i += 3) [ix[i + 1], ix[i + 2]] = [ix[i + 2], ix[i + 1]]; q.setIndex(ix); q.computeVertexNormals(); } return q; };
+    soft.push({ geo: patch(knee ? 1.7 : 1.55, hh, .0015 * H, .0045 * H, .004 * H), w: weigh }, { geo: strap(hh * .38, hh * .8, .0035 * H), w: weigh }, { geo: strap(-hh * .8, -hh * .38, .0035 * H), w: weigh });
+    hard.push({ geo: patch(knee ? .95 : .85, hh * .7, .0075 * H, .004 * H, (knee ? .012 : .01) * H), w: weigh }); }
+  if (!hard.length) return null;
+  // (the cap shiny plastic in the gear's colour, the pad and straps black cloth)
+  const cv = document.createElement('canvas'); cv.width = cv.height = 64; const cx = cv.getContext('2d'); cx.fillStyle = '#2C48AA'; cx.fillRect(0, 0, 64, 64);
+  const cap = gearMesh(hard, new THREE.MeshStandardMaterial({ map: setupHairTexture(cv, gearTexs), roughness: .3, metalness: 0, side: THREE.DoubleSide })); cap.name = name;
+  gearMesh(soft, new THREE.MeshStandardMaterial({ color: 0x26262C, roughness: .9, metalness: 0, side: THREE.DoubleSide }), cap);
+  if (picked.suit) recolourHair(picked.suit, gearTexs); return cap; }
+// (the skateboard helmet: a model made at Meshy from a picture - udstyr-skaterhjelm.glb, its opening down, its front
+// forwards. Set on the bare head, as wide and as deep as it plus the shell, its top just over the head's; on the head
+// bone. The hair under it is left out as under the cap - hatHair. A black strap from each side down round the chin,
+// lying on the cheeks. Coloured as the hats are)
+async function makeHelmet(name) { if (!hairBase?.whole) return null; const { geo: src, map } = await readProp('udstyr-skaterhjelm.glb'), geo = src.clone();
+  const { pts } = hairBase.whole, [L, R] = hairBase.eyes, a = L.distanceTo(R), eyeY = (L.y + R.y) / 2, mid = (L.x + R.x) / 2, body = hairBase.body, bsi = body.geometry.attributes.skinIndex, bsw = body.geometry.attributes.skinWeight, V = (x, y, z) => new THREE.Vector3(x, y, z);
+  // (the head's own points; over the ears: how wide and how deep it is, and its top)
+  const hp = []; for (let j = 0; j < pts.length / 6; j++) { let w = 0; for (let c = 0; c < 4; c++) if (bsi.getComponent(j, c) === hairBase.head) w += bsw.getComponent(j, c); if (w > .5) hp.push(pts[j * 6], pts[j * 6 + 1], pts[j * 6 + 2]); }
+  let top = -Infinity, hw = 0, z0 = Infinity, z1 = -Infinity; for (let i = 0; i < hp.length; i += 3) { top = Math.max(top, hp[i + 1]); if (hp[i + 1] > eyeY + .75 * a) { hw = Math.max(hw, Math.abs(hp[i] - mid)); z0 = Math.min(z0, hp[i + 2]); z1 = Math.max(z1, hp[i + 2]); } }
+  const cz = (z0 + z1) / 2, hd = (z1 - z0) / 2; geo.computeBoundingBox(); const b = geo.boundingBox.clone(), kx = hw * 1.17 / ((b.max.x - b.min.x) / 2), kz = hd * 1.15 / ((b.max.z - b.min.z) / 2), ky = (kx + kz) / 2, topY = top + .09 * a;
+  geo.translate(-(b.min.x + b.max.x) / 2, -b.max.y, -(b.min.z + b.max.z) / 2); geo.scale(kx, ky, kz); geo.translate(mid, topY, cz);
+  const tex = setupHairTexture(map.image, GARMENTS.hat.texs); tex.flipY = false; tex.needsUpdate = true; Object.assign(GARMENTS.hat.texs.at(-1), { cap: 1.25 });
+  const onHead = () => [[hairBase.head, 1]], shell = gearMesh([{ geo, w: onHead, uv: true, back: hairBase.headBack }], new THREE.MeshStandardMaterial({ map: tex, roughness: .32, metalness: 0, side: THREE.DoubleSide })); shell.name = name;
+  // (the strap: from under the helmet's sides, down and forwards under the chin; each point of it out on the skin there)
+  const rimY = topY - (b.max.y - b.min.y) * ky + .25 * a; let chinY = Infinity, chinZ = cz; for (let i = 0; i < hp.length; i += 3) if (Math.abs(hp[i] - mid) < .3 * a && hp[i + 2] > cz + .35 * hd && hp[i + 1] < chinY) { chinY = hp[i + 1]; chinZ = hp[i + 2]; }
+  const O = V(mid, rimY, cz), down = V(0, chinY - rimY, (chinZ - cz) * .8).normalize(), X = V(1, 0, 0), nrm = new THREE.Vector3().crossVectors(X, down).normalize(), q = new THREE.Vector3(), NS = 25, rs = [];
+  for (let k = 0; k < NS; k++) { const be = (k / (NS - 1) - .5) * Math.PI, dir = X.clone().multiplyScalar(Math.sin(be)).addScaledVector(down, Math.cos(be)); let r = 0;
+    for (let i = 0; i < hp.length; i += 3) { q.set(hp[i], hp[i + 1], hp[i + 2]).sub(O); if (Math.abs(q.dot(nrm)) > .14 * a) continue; const along = q.dot(dir), len = Math.hypot(q.dot(X), q.dot(down)); if (len > 0 && along / len > .975) r = Math.max(r, along); } rs.push(r); }
+  for (let k = 0; k < NS; k++) if (!rs[k]) rs[k] = rs.slice(k).find(v => v) || rs.slice(0, k).reverse().find(v => v) || hw;
+  // (not out round the ears: no further out than the head is over them)
+  for (let k = 0; k < NS; k++) rs[k] = Math.min(rs[k], hw * 1.03);
+  for (let it = 0; it < 2; it++) { const w = rs.slice(); for (let k = 1; k < NS - 1; k++) rs[k] = (w[k - 1] + 2 * w[k] + w[k + 1]) / 4; }
+  const path = rs.map((r, k) => { const be = (k / (NS - 1) - .5) * Math.PI; return O.clone().addScaledVector(X, Math.sin(be) * (r + .03 * a)).addScaledVector(down, Math.cos(be) * (r + .03 * a)); });
+  // (its ends up inside the helmet's sides)
+  path.unshift(path[0].clone().add(V(0, .3 * a, 0))); path.push(path.at(-1).clone().add(V(0, .3 * a, 0)));
+  const tube = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(path), 72, .04 * a, 8, false);
+  gearMesh([{ geo: tube, w: onHead, back: hairBase.headBack }], new THREE.MeshStandardMaterial({ color: 0x26262C, roughness: .85, metalness: 0, side: THREE.DoubleSide }), shell);
+  if (picked.hat) recolourHair(picked.hat, GARMENTS.hat.texs); return shell; }
 // (the goggles made anew for the hair now on: their strap lies on it)
 function regoggle() { const G = GARMENTS.glasses; let had = false;
   for (const [n, , o] of G.items) if (o?.goggles && (G.meshes[n] || G.loading[n])) { const m = G.meshes[n]; if (m) { const i = gearTexs.findIndex(t => t.texture === m.material.map); if (i >= 0) gearTexs.splice(i, 1); m.parent?.remove(m); m.traverse(x => x.geometry?.dispose()); had = true; } delete G.meshes[n]; delete G.loading[n]; }
@@ -2566,10 +2700,12 @@ function makeCloth(name, part, opts) {
   // so it cannot come through it anyway)
   // (and how far out from the body it lies at each point)
   // (level: below it the garment is put out sideways only, so its bottom edge stays straight)
-  let edges, out, level = Infinity, tuckIn = null, swimArm = Infinity;
+  let edges, out, level = Infinity, tuckIn = null, swimArm = -Infinity;
   // (socks: the feet and legs up to their top - opts.top, in fractions of the height - close on the skin; stripe: a band
   // in the contrast colour that far below the top, [from, to])
   if (socks) { const top = opts.top * H; edges = [{ f: p => p[1] - top, bare: .008 * H }]; out = () => (opts.out || .0035) * H; }
+  // (gloves: the hands and a little of the wrist, close on the skin, their end turned up as a cuff)
+  else if (opts.glove) { const cuff = K.wristX - .03 * H; edges = [{ f: p => cuff - side(p), fold: .016 * H, bare: .008 * H }]; out = () => .0045 * H; level = -Infinity; swimArm = -Infinity; }
   else if (pants) { const hem = opts.hem * H;
     // (briefs: the leg openings on the slant, from the crotch up over the hips)
     // (under: in the middle that much further down, in under the crotch - the user, 04-11-2026)
@@ -2772,7 +2908,7 @@ function makeCloth(name, part, opts) {
   if (rel) { cloth.material.normalMap = rel.map; cloth.material.normalScale.set(1, 1); }
   cloth.castShadow = true; cloth.name = name; cloth.frustumCulled = false; cloth.normalizeSkinWeights(); cloth.userData.orig = g.attributes.position.array.slice();
   cloth.position.copy(body.position); cloth.quaternion.copy(body.quaternion); cloth.scale.copy(body.scale);
-  body.parent.add(cloth); cloth.bind(body.skeleton, body.bindMatrix); if (picked[part]) recolourHair(picked[part], G.texs);
+  body.parent.add(cloth); cloth.bind(body.skeleton, body.bindMatrix); if (picked[part]) recolourHair(picked[part], G.texs); if (G.texs === gearTexs && picked.suit) recolourHair(picked.suit, gearTexs);
   if (socks) { cloth.userData.sock = opts; paintSocks(cloth); if (opts.heel) { cloth.material.roughness = .28; cloth.material.metalness = .05; } }
   if (opts.hood) hoodRim(cloth, list, wp, dir, edges[1].f, K, H, inv);
   if (opts.relief && !opts.hood && !opts.swim) neckBand(cloth, list, wp, dir, edges[1].f, K, H, inv, opts.trim ? .55 : 1);
@@ -3460,7 +3596,7 @@ async function wearFigure(f) { const ask = ++dressingUp;
   // (a dress last: it takes off the top and trousers. No dress: taken off at once - a new MiniMig in just its underwear
   // kept the dress on before, as only a top or trousers put on took it off; the user, 03-11-2026)
   if (!f.wear.dress) { GARMENTS.dress.now = ''; GARMENTS.dress.before = null; } if (!f.wear.suit) { GARMENTS.suit.now = ''; GARMENTS.suit.before = null; }
-  for (const p of ['shirt', 'pants', 'socks', 'shoe', 'hat', 'glasses', 'dress', 'suit']) { if (p === 'dress' && !f.wear.dress || p === 'suit' && !f.wear.suit) continue; await setGarment(p, f.wear[p] || ''); if (ask !== dressingUp) return; }
+  for (const p of ['shirt', 'pants', 'socks', 'shoe', 'hat', 'glasses', 'dress', 'suit', 'knee', 'elbow', 'gloves']) { if (p === 'dress' && !f.wear.dress || p === 'suit' && !f.wear.suit) continue; await setGarment(p, f.wear[p] || ''); if (ask !== dressingUp) return; }
   chestName(); renderStyles(); }
 // (a picture of the figure as it stands now: the whole of it on the app's sun, or a profile picture - the head and
 // shoulders, square. Made with a camera of its own in front of it, so wherever it has been turned it is seen from the front)
@@ -4325,11 +4461,11 @@ function goldBall() { if (!goldMat) { const cv = document.createElement('canvas'
 function startDive() { const a = glbActions[GAME.dive]; if (!a) return false; game.dive = true; game.hint = 0; runAnim(GAME.dive, true); a.time = GAME.diveFrom; sfx('boing'); sfx('boing', .12); return true; }
 function setLevel(id) { game.level = id; renderStyles(); stopGame(true); startGame(game.mode); }
 const hud = document.getElementById('hud'), starsEl = document.getElementById('stars'), hintEl = document.getElementById('tapHint');
-function startGame(mode = game.mode) { if (game.on || !glb) return; game.mode = mode; const M = MODES[mode]; game.on = true; Object.assign(game, { stars: 0, jumpT: -1, busy: 0, cheer: 0, cheerWait: false, rotY: M.face, next: 1.5, hint: 4, record: false, counted: false });
+function startGame(mode = game.mode) { if (game.on || !glb) return; if (!game.again && dressAsk(mode)) return; game.mode = mode; const M = MODES[mode]; game.on = true; Object.assign(game, { stars: 0, jumpT: -1, busy: 0, cheer: 0, cheerWait: false, rotY: M.face, next: 1.5, hint: 4, record: false, counted: false });
   // (on a computer the browser's own bars go too, where it lets them - not on an iPad, where that is not to be relied on:
   // there the game is opened from its icon on the home screen)
   if (matchMedia('(hover: hover) and (pointer: fine)').matches && !navigator.maxTouchPoints) try { document.documentElement.requestFullscreen?.()?.catch?.(() => {}); } catch (e) {}
-  if (!game.again) game.wore = wearSnap(); dressFor(MODES[mode].from ? 'hop' : mode);
+  if (!game.again) { game.wore = dressSnap || wearSnap(); dressSnap = null; } dressFor(MODES[mode].from ? 'hop' : mode);
   if (!game.again) game.saved = { cam: camera.position.clone(), target: controls.target.clone(), anim, bg: bgNow, spin }; game.again = false; spin = false; document.getElementById('spin').classList.remove('on');
   goal = null; closeUp = false; controls.enabled = false; controls.maxDistance = 14; holder.position.x = M.x;
   // (the plain sun has no ground to run on: the football field then, until the game stops)
@@ -5580,6 +5716,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.11.0 (ec1328b)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.11.0 (2c407c1)</div>
 </body>
 </html>
