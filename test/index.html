@@ -4527,7 +4527,7 @@ const MODES = {
     put: (p, u) => p.set(0, p.y, u), roll: (g, d) => { g.rotation.x -= d; } },
   // (the skateboard game: seen from behind and above, the figure across its board, riding into the picture - see skateTick)
   skate: { x: 0, face: Math.PI / 2, cheer: Math.PI / 2, cam: w => [0, 3.7, w ? 6.6 : 9.6, 0, .8, -5] },
-  snow: { x: 0, face: Math.PI / 2, cheer: Math.PI / 2, cam: w => [0, 3.7, w ? 6.6 : 9.6, 0, .8, -5] },
+  snow: { x: 0, face: Math.PI / 2, cheer: Math.PI / 2, cam: w => [0, 4.3, w ? 6.6 : 9.6, 0, -.5, -5] },
   // (the treasure hunt: the figure walks about an island of its own - the camera follows it, see islandTick)
   island: { x: 0, face: 0, cheer: 0, cam: w => [0, 7, 9, 0, 0, 0] },
   // (Svømmeverden: under the sea, seen from the side - the figure swims about the picture, see seaTick)
@@ -4741,8 +4741,12 @@ function skPropsLoad() { sk.propsLoad ??= Promise.all(Object.entries(SK_PROPS).m
     geo.computeBoundingBox(); const b = geo.boundingBox, k = height / (b.max.y - b.min.y); geo.translate(-(b.min.x + b.max.x) / 2, -b.min.y, -(b.min.z + b.max.z) / 2); geo.scale(k, k, k); if (turn) geo.rotateY(turn);
     const mat = new THREE.MeshStandardMaterial({ map, roughness: .8, metalness: 0 }); SK_SIDE[kind] = () => new THREE.Mesh(geo, mat);
     // (those standing by the road now changed for the new ones)
-    const old = sk.sidePools[kind] || []; sk.sidePools[kind] = []; for (const it of sk.side) if (it.kind === kind) { const g = SK_SIDE[kind](); g.scale.copy(it.g.scale); sk.sidePools[kind].push(g); sk.world.add(g); it.g = g; } for (const g of old) { g.visible = false; sk.world.remove(g); } } catch (e) { /* (the simple one stays) */ } })); }
+    const old = sk.sidePools[kind] || []; sk.sidePools[kind] = []; for (const it of sk.side) if (it.kind === kind) { const g = SK_SIDE[kind](); g.scale.copy(it.g.scale); sk.sidePools[kind].push(g); sk.ground.add(g); it.g = g; } for (const g of old) { g.visible = false; sk.world.remove(g); } } catch (e) { /* (the simple one stays) */ } })); }
 function skWorldBuild() { if (sk.world) return; const w = sk.world = new THREE.Group();
+  // (the ground and all that stands or lies on it in a layer of its own: for the snowboard run it is tipped so it goes
+  // down ahead - a ski slope - each thing lowered by how far ahead it is but still standing upright; the mountains and
+  // clouds stay where they are. The user, 14-11-2026: it is to be like riding down a ski hill)
+  sk.ground = new THREE.Group(); sk.ground.matrixAutoUpdate = false; w.add(sk.ground);
   SK_SIDE.geo = { cyl: new THREE.CylinderGeometry(1, 1, 1, 10), ball: new THREE.SphereGeometry(1, 12, 9), cone: new THREE.ConeGeometry(1, 1, 10), box: new THREE.BoxGeometry(1, 1, 1), roof: new THREE.ConeGeometry(1, 1, 4), peb: new THREE.SphereGeometry(1, 7, 5) };
   sk.sideMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .85 });
   // (the meadow: grass in soft lighter and darker patches with a few specks, running by under the figure as the road does)
@@ -4750,7 +4754,7 @@ function skWorldBuild() { if (sk.world) return; const w = sk.world = new THREE.G
   for (let i = 0; i < 60; i++) { c.fillStyle = `rgba(${Math.random() < .5 ? '120,215,100' : '70,170,70'},${(.1 + Math.random() * .16).toFixed(2)})`; c.beginPath(); c.ellipse(Math.random() * 256, Math.random() * 256, 14 + Math.random() * 30, 8 + Math.random() * 16, Math.random() * 3, 0, 6.3); c.fill(); }
   for (let i = 0; i < 500; i++) { c.fillStyle = `rgba(40,130,50,${(Math.random() * .35).toFixed(2)})`; c.fillRect(Math.random() * 256, Math.random() * 256, 1.5, 3); }
   const gt = sk.grassTex = new THREE.CanvasTexture(cv); gt.colorSpace = THREE.SRGBColorSpace; gt.wrapS = gt.wrapT = THREE.RepeatWrapping; gt.repeat.set(30, 20); gt.anisotropy = 4;
-  const grass = new THREE.Mesh(new THREE.PlaneGeometry(150, 100), new THREE.MeshStandardMaterial({ map: gt, roughness: 1 })); grass.rotation.x = -Math.PI / 2; grass.position.set(0, 0, -36); grass.receiveShadow = true; w.add(grass); sk.grass = grass;
+  const grass = new THREE.Mesh(new THREE.PlaneGeometry(150, 100), new THREE.MeshStandardMaterial({ map: gt, roughness: 1 })); grass.rotation.x = -Math.PI / 2; grass.position.set(0, 0, -36); grass.receiveShadow = true; sk.ground.add(grass); sk.grass = grass;
   // (far off: rounded hills in a row, hazy, and clouds drifting over them)
   // (the skyline: mountain peaks - the user, 12-11-2026: the hills there were only pale grey bumps in the haze. Sharp rocky
   // peaks in two rows, the far ones bigger and bluer, snow on their tops with a ragged edge, flat-sided so the light
@@ -4770,7 +4774,7 @@ function skWorldBuild() { if (sk.world) return; const w = sk.world = new THREE.G
   sk.side = []; sk.sidePools = {}; sk.sideSkip = { '-1': 0, 1: 0 }; }
 // (a row of things, one or two each side of the road, u down it: lamp posts and fences close by, flowers and benches at
 // the verge, bushes and trees further out, houses behind them, and now and then a tree far out in the meadow)
-function skSidePut(kind, u, x, rot = 0, size = 1) { const pool = sk.sidePools[kind] ??= []; let g = pool.find(p => !p.visible); if (!g) { g = SK_SIDE[kind](); pool.push(g); sk.world.add(g); }
+function skSidePut(kind, u, x, rot = 0, size = 1) { const pool = sk.sidePools[kind] ??= []; let g = pool.find(p => !p.visible); if (!g) { g = SK_SIDE[kind](); pool.push(g); sk.ground.add(g); }
   g.visible = true; g.scale.setScalar(size); sk.side.push({ g, u, x, rot, kind }); }
 function skSideRow(u) { sk.rowN = (sk.rowN || 0) + 1;
   for (const s of [-1, 1]) { const E = SKW.edge, r = Math.random(), turn = s > 0 ? -Math.PI / 2 : Math.PI / 2;
@@ -4793,13 +4797,14 @@ function skTheme(snow) { sk.snow = !!snow; skWorldBuild(); if (!sk.road) return;
     sk.snowTex = tex(c => { c.fillStyle = '#F6FAFF'; c.fillRect(0, 0, 256, 256); for (let i = 0; i < 900; i++) { c.fillStyle = `rgba(${Math.random() < .5 ? '170,200,235' : '255,255,255'},${(Math.random() * .35).toFixed(3)})`; c.beginPath(); c.arc(Math.random() * 256, Math.random() * 256, 1 + Math.random() * 3, 0, 7); c.fill(); } }); sk.snowTex.repeat.set(30, 20);
     sk.pisteTex = tex(c => { c.fillStyle = '#E4EFFB'; c.fillRect(0, 0, 256, 256); c.fillStyle = 'rgba(150,185,225,.35)'; for (let x = 4; x < 256; x += 8) c.fillRect(x, 0, 2, 256);
       const rw = SKATE.lane * 3 + .3; c.fillStyle = 'rgba(90,140,205,.55)'; for (const q of [-1, 1]) c.fillRect((.5 + q * SKATE.lane / 2 / rw) * 256 - 2, 0, 4, 128); c.fillStyle = '#4F86D9'; c.fillRect(0, 0, 6, 256); c.fillRect(250, 0, 6, 256); }); sk.pisteTex.repeat.set(1, 20); }
+  { const k = snow ? SNOW_SLOPE : 0; sk.ground.matrix.set(1, 0, 0, 0, 0, 1, k, 0, 0, 0, 1, 0, 0, 0, 0, 1); sk.ground.matrixWorldNeedsUpdate = true; sk.hills.position.y = snow ? -11 : 0; }
   sk.grass.material.map = snow ? sk.snowTex : sk.grassTex; sk.grass.material.needsUpdate = true; sk.road.material.map = snow ? sk.pisteTex : sk.roadTex; sk.road.material.needsUpdate = true;
   // (the snowboard in the skateboard's place)
   if (snow && !sk.snowBoard) { sk.snowBoard = new THREE.Group(); sk.snowBoard.position.y = .02; sk.board.add(sk.snowBoard); propInto(sk.snowBoard, 'udstyr-snowboard.glb', 1.3, SNOW_BOARD_TURN, [], 'w'); }
   for (const o of sk.boardParts || []) o.visible = !snow; if (sk.snowBoard) sk.snowBoard.visible = !!snow;
   // (the low green hills before the mountains white too)
   for (const h of sk.hills.children.slice(1)) { h.userData.green ??= h.material.color.clone(); h.material.color.copy(snow ? new THREE.Color('#EEF4FC') : h.userData.green); } }
-const SNOW_BOARD_TURN = Math.PI / 2;
+const SNOW_BOARD_TURN = Math.PI / 2, SNOW_SLOPE = .24;
 function skWorldStart() { skWorldBuild(); skPropsLoad(); scene.add(sk.world); for (const it of sk.side) it.g.visible = false; sk.side = []; sk.sideGo = 0; sk.sideSkip = { '-1': 0, 1: 0 };
   for (let u = 3; u < SKW.far; u += SKW.step) skSideRow(u);
   scene.fog = new THREE.Fog(0xCDEBFF, 36, 88); floor.visible = false; disc.visible = false; for (const el of [bgNear, bgFar, bgNear2]) el.hidden = true; stage.classList.add('street'); }
@@ -4809,7 +4814,7 @@ function skWorldStart() { skWorldBuild(); skPropsLoad(); scene.add(sk.world); fo
 // what stands behind the path is shown, so nothing passes in front of the figure; from in front it runs backwards, the
 // things coming from behind the camera and going off into the distance.
 function hopWorldStart(mode) { skWorldBuild(); skateBuild(); skTheme(false); Object.assign(sk, { curve: 0, curveTo: 0, fork: null }); skWorldStart();
-  if (!sk.path) { sk.path = new THREE.Mesh(new THREE.PlaneGeometry(SKW.edge * 2, 150), new THREE.MeshStandardMaterial({ color: '#E3CC97', roughness: 1 })); sk.path.rotation.x = -Math.PI / 2; sk.path.position.set(0, .003, -36); sk.path.receiveShadow = true; sk.world.add(sk.path); }
+  if (!sk.path) { sk.path = new THREE.Mesh(new THREE.PlaneGeometry(SKW.edge * 2, 150), new THREE.MeshStandardMaterial({ color: '#E3CC97', roughness: 1 })); sk.path.rotation.x = -Math.PI / 2; sk.path.position.set(0, .003, -36); sk.path.receiveShadow = true; sk.ground.add(sk.path); }
   const turn = mode === 'side' ? -Math.PI / 2 : 0; sk.world.rotation.y = turn; sk.hills.rotation.y = -turn; sk.path.visible = true; sk.hop = { dir: mode === 'front' ? -1 : 1, side: mode === 'side' }; }
 function hopWorldStop() { if (!sk.hop) return; sk.hop = null; sk.world.rotation.y = 0; sk.hills.rotation.y = 0; sk.path.visible = false; skWorldStop(); }
 function hopWorldTick(dt) { if (!sk.hop || !game.on) return; skWorldTick(dt, levelNow().speed * (game.cheer ? 0 : game.busy ? .35 : 1) * sk.hop.dir); if (sk.hop.side) for (const it of sk.side) if (it.x > 0) it.g.visible = false; }
@@ -4850,7 +4855,7 @@ function skForkSign(good) { const cv = sk.forkCv, c = cv.getContext('2d'), W = c
   const arrow = (x, d) => { c.beginPath(); c.moveTo(x + d * 52, H / 2); c.lineTo(x - d * 4, H / 2 - 52); c.lineTo(x - d * 4, H / 2 - 22); c.lineTo(x - d * 52, H / 2 - 22); c.lineTo(x - d * 52, H / 2 + 22); c.lineTo(x - d * 4, H / 2 + 22); c.lineTo(x - d * 4, H / 2 + 52); c.closePath(); c.fill(); };
   arrow(76, -1); arrow(W - 76, 1); c.font = '96px system-ui, "Apple Color Emoji", "Segoe UI Emoji", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
   c.fillText(good < 0 ? '⭐' : '💦', 186, H / 2 + 6); c.fillText(good < 0 ? '💦' : '⭐', W - 186, H / 2 + 6); sk.forkTex.needsUpdate = true; }
-function skForkStart() { skForkBuild(); if (!sk.forkG.parent) sk.world.add(sk.forkG); const F = SK_FORK, u = SKATE.from + 9, good = Math.random() < .5 ? -1 : 1; sk.fork = { u, good }; skForkSign(good); sk.forkG.visible = true;
+function skForkStart() { skForkBuild(); if (!sk.forkG.parent) sk.ground.add(sk.forkG); const F = SK_FORK, u = SKATE.from + 9, good = Math.random() < .5 ? -1 : 1; sk.fork = { u, good }; skForkSign(good); sk.forkG.visible = true;
   // (one side: stars all the way and a present at the end; the other: puddles, and a star between them)
   for (let q = 2; q < F.len - 3; q += 1.5) skPut(skateThing('stjerne'), good * SKATE.lane, u + q); skPut(skateThing('gave'), good * SKATE.lane, u + F.len - 1.5);
   for (const q of [3, 8.5, 14]) skPut(skateThing('pyt'), -good * SKATE.lane, u + q); for (const q of [5.8, 11.3]) skPut(skateThing('stjerne'), -good * SKATE.lane, u + q);
@@ -4879,7 +4884,12 @@ function skateThing(kind) { const pool = sk.pools[kind] ??= [], free = pool.find
   let lid = null, body = null;
   if (kind === 'pyt') { const m = new THREE.MeshStandardMaterial({ color: '#4FA8F0', roughness: .08, metalness: .1, transparent: true, opacity: .85 }); const o = add(new THREE.CircleGeometry(.36, 28), m, 0, .012, 0); o.rotation.x = -Math.PI / 2; o.scale.set(1, 1.5, 1); o.castShadow = false; half = .32; len = .9; }
   if (kind === 'rampe') { const s = new THREE.Shape(); s.moveTo(-.5, 0); s.lineTo(.5, 0); s.lineTo(.5, .32); s.closePath(); const geo = new THREE.ExtrudeGeometry(s, { depth: .58, bevelEnabled: false }); geo.translate(0, 0, -.29); geo.rotateY(Math.PI / 2);
-    add(geo, skMat('#FFB020', .5), 0, 0, 0); for (const z of [-.25, .1]) { const st = add(new THREE.BoxGeometry(.6, .012, .1), skMat('#2B2153', .6), 0, 0, 0); st.position.set(0, .16 - z * .32 + .01, z); st.rotation.x = Math.atan2(.32, 1); } half = .3; len = 1; }
+    add(geo, skMat('#FFB020', .5), 0, 0, 0); for (const z of [-.25, .1]) { const st = add(new THREE.BoxGeometry(.6, .012, .1), skMat('#2B2153', .6), 0, 0, 0); st.position.set(0, .16 - z * .32 + .01, z); st.rotation.x = Math.atan2(.32, 1); } half = .3; len = 1;
+    // (on the snowboard run a jump of snow instead - the user, 14-11-2026: a rounded white kicker one rides up and off,
+    // a blue line on its lip, as on a ski hill)
+    g.userData.wood = [...g.children]; { const k = new THREE.Shape(); k.moveTo(-.85, 0); k.quadraticCurveTo(.05, .03, .5, .46); k.lineTo(.6, .46); k.quadraticCurveTo(.78, .3, .9, 0); k.closePath();
+      const kg = new THREE.ExtrudeGeometry(k, { depth: .7, bevelEnabled: true, bevelSize: .05, bevelThickness: .05, bevelSegments: 3, curveSegments: 16 }); kg.translate(0, 0, -.35); kg.rotateY(Math.PI / 2);
+      const snow = new THREE.Group(); snow.add(new THREE.Mesh(kg, skMat('#D6E4F6', .95))); const lip = new THREE.Mesh(new THREE.BoxGeometry(.8, .05, .1), skMat('#3F7BD9', .6)); lip.position.set(0, .485, -.55); snow.add(lip); for (const sx of [-.48, .48]) { const pole = new THREE.Mesh(new THREE.CylinderGeometry(.02, .02, .75, 8), skMat('#3F7BD9', .5)); pole.position.set(sx, .37, -.45); snow.add(pole); const flag = new THREE.Mesh(new THREE.BoxGeometry(.02, .16, .24), skMat('#FF5A4E', .6)); flag.position.set(sx, .66, -.33); snow.add(flag); } snow.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } }); snow.visible = false; g.add(snow); g.userData.snow = snow; } }
   if (kind === 'gave') { add(new THREE.BoxGeometry(.44, .4, .44), skMat('#E8384F', .5), 0, .2, 0); for (const r of [0, Math.PI / 2]) { const band = add(new THREE.BoxGeometry(.46, .41, .08), skMat('#FFD23F', .4), 0, .2, 0); band.rotation.y = r; }
     lid = new THREE.Group(); lid.position.y = .4; g.add(lid); for (const [geo, m, y] of [[new THREE.BoxGeometry(.5, .1, .5), skMat('#E8384F', .5), .05], [new THREE.BoxGeometry(.52, .11, .09), skMat('#FFD23F', .4), .05]]) { const o = new THREE.Mesh(geo, m); o.position.y = y; o.castShadow = true; lid.add(o); }
     for (const s of [-1, 1]) { const bow = new THREE.Mesh(new THREE.TorusGeometry(.08, .03, 8, 16), skMat('#FFD23F', .4)); bow.position.set(s * .08, .16, 0); bow.rotation.y = Math.PI / 2; bow.castShadow = true; lid.add(bow); } half = .26; len = .44; }
@@ -4892,7 +4902,7 @@ function skateThing(kind) { const pool = sk.pools[kind] ??= [], free = pool.find
     const simple = [...body.children]; loadWalker('dyr-and.glb', 'dyr-and.jpg', .42) /* (smaller than the cat and the dog - the user, 12-11-2026: it was out of proportion beside them) */.then(m => { m.group.rotation.y = Math.PI / 2; for (const o of simple) o.visible = false; body.add(m.group); body.userData.walker = m; }).catch(() => {}); }
   if (kind === 'bold') { const cv = document.createElement('canvas'); cv.width = 128; cv.height = 8; const c = cv.getContext('2d'); ['#FF4F8B', '#FFFFFF', '#FFC233', '#FFFFFF', '#3DA5FF', '#FFFFFF'].forEach((f, k) => { c.fillStyle = f; c.fillRect(k * 128 / 6, 0, 128 / 6 + 1, 8); });
     const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; body = add(new THREE.SphereGeometry(.26, 28, 18), new THREE.MeshStandardMaterial({ map: t, roughness: .4 }), 0, .26, 0); half = .26; len = .5; }
-  const it = { group: g, kind, half, len, lid, body }; g.visible = false; scene.add(g); pool.push(it);
+  const it = { group: g, kind, half, len, lid, body }; g.visible = false; (sk.ground || scene).add(g); pool.push(it);
   // (the dog, the cat and the rabbit from Dyr - the user, 12-11-2026: they run over the road from out in the grass)
   if (SK_PETS[kind]) { it.half = .34; it.len = .5; loadGlbPet(kind + '.glb', kind + '.jpg', SK_PETS[kind], .11, .022).then(m => { m.collar.visible = false; g.add(m.group); it.pet = m; }).catch(() => {}); }
   return it; }
@@ -4901,7 +4911,7 @@ const SK_PETS = { 'dyr-kat': .54, 'dyr-hund': .58, 'dyr-kanin': .58 }, skPetsIn 
 const SK_GOOD = new Set(['stjerne', 'pyt', 'rampe', 'gave']);
 // (a row of things far down the road: one thing - or a bar over two lanes - and, mostly, stars in a free lane; the
 // easiest levels only cones and crates)
-function skPut(it, x, u) { Object.assign(it, { x, u, hit: false, done: false, mine: false, dir: 0, vy: 0, pair: null, over: false }); it.group.position.set(x, 0, -u); it.group.rotation.set(0, 0, 0); it.group.visible = true;
+function skPut(it, x, u) { Object.assign(it, { x, u, hit: false, done: false, mine: false, dir: 0, vy: 0, pair: null, over: false }); { const ud = it.group.userData; if (ud.snow) { ud.snow.visible = !!sk.snow; for (const o of ud.wood) o.visible = !sk.snow; } } it.group.position.set(x, 0, -u); it.group.rotation.set(0, 0, 0); it.group.visible = true;
   if (it.lid) { it.lid.position.set(0, .4, 0); it.lid.rotation.set(0, 0, 0); it.lid.visible = true; } if (it.body) it.body.rotation.set(0, 0, 0); if (it.body) it.body.position.y = it.kind === 'bold' ? .26 : 0; sk.live.push(it); }
 function skateRow(from = SKATE.from) { const easy = ['niveau-meget-let', 'niveau-let'].includes(game.level), r = Math.random(), used = new Set();
   const put = skPut;
@@ -4914,7 +4924,7 @@ function skateRow(from = SKATE.from) { const easy = ['niveau-meget-let', 'niveau
   const rampNear = sk.rampWait > 0;
   const pets = skPetsIn();
   const kind = pick((easy ? [['kegle', 3], ['kasse', 2], ['pyt', 2], ['rampe', 2], ['and', 1.2], ['dyr', 1.6], ['gave', .8], ['bold', 1]]
-    : [['kegle', 2.5], ['kasse', 2], ['rail', 1.5], ['bom', 2], ['pyt', 1.5], ['rampe', 2], ['and', 1.2], ['dyr', 1.8], ['gave', .7], ['bold', 1.5]]).filter(([k]) => (k !== 'rampe' || !rampNear) && (k !== 'dyr' || pets.length) && !(sk.snow && ['pyt', 'and', 'bold'].includes(k))));
+    : [['kegle', 2.5], ['kasse', 2], ['rail', 1.5], ['bom', 2], ['pyt', 1.5], ['rampe', 2], ['and', 1.2], ['dyr', 1.8], ['gave', .7], ['bold', 1.5]]).filter(([k]) => (k !== 'rampe' || !rampNear) && (k !== 'dyr' || pets.length) && !(sk.snow && ['pyt', 'and', 'bold', 'kasse', 'rail', 'bom'].includes(k))));
   if (kind === 'bom') { const left = Math.random() < .5; put(skateThing('bom'), (left ? -.5 : .5) * SKATE.lane, from); used.add(left ? -1 : 1); used.add(0); }
   // (the duck and the ball cross the road from one side to the other, timed to be in the middle about as they come by)
   // (an animal starts well out in the grass, and is at the road as it comes by)
@@ -4922,13 +4932,13 @@ function skateRow(from = SKATE.from) { const easy = ['niveau-meget-let', 'niveau
   else { const lane = Math.floor(Math.random() * 3) - 1, it = skateThing(kind); put(it, lane * SKATE.lane, from); used.add(lane);
     // (mostly a crate or a cone just past a ramp, in its lane: up the ramp, and over it - the user said 08-11-2026; as
     // far past it as the jump goes at this level's speed, so the figure is in the air as it goes under)
-    if (kind === 'rampe') sk.rampWait = 5;
-    if (kind === 'rampe' && Math.random() < .75) { const ob = skateThing(Math.random() < .55 ? 'kasse' : 'kegle'); put(ob, lane * SKATE.lane, from + Math.max(.95, .45 * skateLevel().speed - .4)); it.pair = ob; } }
+    if (kind === 'rampe') sk.rampWait = sk.snow ? 3 : 5;
+    if (kind === 'rampe' && Math.random() < .75) { const ob = skateThing(!sk.snow && Math.random() < .55 ? 'kasse' : 'kegle'); put(ob, lane * SKATE.lane, from + Math.max(.95, .45 * skateLevel().speed - .4)); it.pair = ob; } }
   // (the stars never in the lane the figure rides in now - one has to steer to them, not just stand)
   if (Math.random() < (easy ? .9 : .7)) { const free = [-1, 0, 1].filter(l => !used.has(l) && l !== sk.lane); if (free.length) { const lane = free[Math.floor(Math.random() * free.length)], n = 1 + Math.floor(Math.random() * 3);
     for (let k = 0; k < n; k++) put(skateThing('stjerne'), lane * SKATE.lane, from + (k - (n - 1) / 2) * 1.1); } } }
 function skateStart(snow) { skateBuild(); skTheme(snow); Object.assign(sk, { lane: 0, x: 0, lean: 0, slow: 0, wobble: 0, next: .3, first: true, curve: 0, curveTo: 0, curveT: 3, jy: 0, jv: 0, spin: 0, rampWait: 0, fork: null, forkT: snow ? Infinity : 13, lastDir: 0 }); if (sk.forkG) sk.forkG.visible = false; for (const it of sk.live) it.group.visible = false; sk.live = [];
-  holder.add(sk.rig); sk.rig.position.set(0, 0, 0); sk.rig.rotation.set(0, 0, 0); sk.rig.add(glb); scene.add(sk.road); skWorldStart();
+  holder.add(sk.rig); sk.rig.position.set(0, 0, 0); sk.rig.rotation.set(0, 0, 0); sk.rig.add(glb); sk.ground.add(sk.road); skWorldStart();
   // (riding: the standing with the page's own pose, arms out - Mixamo's riding stood with a foot each side of our board,
   // the user said, 03-11-2026; it was made for a board pointing the way the figure faces. Its push off, Skateboarding
   // (4), is made so too: so in a push the figure faces down the road, its left foot on the board, the right pushing,
@@ -4936,7 +4946,7 @@ function skateStart(snow) { skateBuild(); skTheme(snow); Object.assign(sk, { lan
   for (const k of Object.keys(SK_PETS)) skateThing(k);
   sk.push = false; sk.poseW = 1; Promise.all(['staa', SKATE.push].map(loadMove)).then(() => { if (game.on) { runAnim('staa'); startPush(); } }); }
 function startPush() { const a = glbActions[SKATE.push]; if (!a || !game.on || !onBoard(game.mode) || sk.snow) return; sk.push = true; sk.needPush = false; runAnim(SKATE.push, true); }
-function skateStop() { if (!sk.rig?.parent) return; skWorldStop(); holder.add(glb); holder.remove(sk.rig); scene.remove(sk.road); for (const it of sk.live) it.group.visible = false; sk.live = []; for (const b of sk.bits) b.mesh.visible = false; }
+function skateStop() { if (!sk.rig?.parent) return; skWorldStop(); holder.add(glb); holder.remove(sk.rig); sk.road.parent?.remove(sk.road); for (const it of sk.live) it.group.visible = false; sk.live = []; for (const b of sk.bits) b.mesh.visible = false; }
 // (not up in the air off a ramp - only once landed again, the user said 10-11-2026)
 function steer(dir) { if (!game.on || !onBoard(game.mode) || sk.jy > 0) return; let lane = Math.max(-1, Math.min(1, sk.lane + dir));
   // (at a fork there is no middle: before the island the other side is chosen in one go; beside it one stays on one's side)
@@ -4980,7 +4990,7 @@ function skateTick(dt) { dt = Math.min(dt, .1); // (never a long jump after a pa
   sk.rig.position.x = sk.x + skShift(sk.x, 0); sk.rig.rotation.z = sk.lean + (sk.wobble > 0 ? Math.sin(sk.wobble * 30) * .14 * sk.wobble : 0);
   // (off a ramp: up in the air, round once, and down on the board again)
   if (sk.jy > 0 || sk.jv > 0) { sk.jv -= sk.jg * dt; sk.jy = Math.max(0, sk.jy + sk.jv * dt); sk.spin = Math.min(Math.PI * 2, sk.spin + dt * Math.PI * 2 / sk.jt); if (!sk.jy) { sk.jv = 0; sk.spin = 0; } }
-  sk.rig.position.y = sk.jy; sk.rig.rotation.y = sk.spin;
+  sk.rig.position.y = sk.jy; sk.rig.rotation.y = sk.spin; sk.rig.rotation.x = sk.snow ? -Math.atan(SNOW_SLOPE) * .7 : 0; // (leaning down the hill with the board)
   // (the bend: a new way every few seconds, eased into)
   if ((sk.curveT -= dt) <= 0) { sk.curveTo = Math.random() < .25 ? 0 : (Math.random() < .5 ? -1 : 1) * (.5 + Math.random() * .5); sk.curveT = 4 + Math.random() * 4; }
   sk.curve += (sk.curveTo - sk.curve) * Math.min(1, dt * .35);
@@ -6018,6 +6028,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.11.0 (f6743e0)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.11.0 (e3d0929)</div>
 </body>
 </html>
