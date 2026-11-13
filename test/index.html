@@ -422,6 +422,7 @@
     <button data-game="hop"><img src="ikoner/spil-hop.png" alt=""><span>Hop over bolden</span></button>
     <button data-game="skate"><img src="ikoner/spil-skate.png" alt=""><span>Skate&shy;board</span></button>
     <button data-game="snow"><img src="ikoner/spil-snow.png" alt=""><span>Snow&shy;board</span></button>
+    <button data-game="skihop"><img src="ikoner/spil-skihop.png" alt=""><span>Ski&shy;hop</span></button>
     <button data-game="island"><img src="ikoner/spil-oe.png" alt=""><span>Skatte&shy;jagt</span></button>
     <button data-game="sea"><img src="ikoner/spil-hav.png" alt=""><span>Svømme&shy;verden</span></button>
     <button data-game="space"><img src="ikoner/spil-rum.png" alt=""><span>Rum&shy;rejse</span></button>
@@ -643,7 +644,7 @@ const EN = {
   'Undertrøje': 'Tank top', 'T-shirt': 'T-shirt', 'Hættetrøje': 'Hoodie', 'Fodboldtrøje': 'Soccer jersey', 'Undershorts': 'Underwear', 'Trusser': 'Briefs', 'Lange bukser': 'Long pants', 'Shorts': 'Shorts', 'Cowboyshorts': 'Denim shorts', 'Fodboldbukser': 'Soccer shorts',
   'Ingen kjole': 'No dress', 'Ingen dragt': 'No suit', 'Badedragt': 'Swimsuit', 'Badebukser': 'Swim trunks', 'Sommerkjole': 'Summer dress', 'Prinsessekjole': 'Princess dress', 'Havfruekjole': 'Mermaid dress', 'Ingen strømper': 'No socks', 'Ankelstrømper': 'Ankle socks', 'Almindelige strømper': 'Regular socks', 'Fodboldstrømper': 'Soccer socks', 'Knæstrømper': 'Knee socks',
   'Bare fødder': 'Bare feet', 'Sneakers': 'Sneakers', 'Fodboldstøvler': 'Soccer cleats', 'Gummistøvler': 'Rain boots', 'Balletsko': 'Ballet shoes', 'Højhælede': 'High heels',
-  'Ingen hat': 'No hat', 'Kasket': 'Cap', 'Krone': 'Crown', 'Kaninører': 'Bunny ears', 'Sløjfe': 'Bow', 'Ingen briller': 'No glasses', 'Svømmebriller': 'Swim goggles', 'Snorkel': 'Snorkel', 'Rumdragt': 'Space suit', 'Rumhjelm': 'Space helmet', 'Rumstøvler': 'Space boots', 'Skidragt': 'Ski suit', 'Skihjelm': 'Ski helmet', 'Skibriller': 'Ski goggles', 'Skihandsker': 'Ski gloves', 'Skistøvler': 'Ski boots', 'Jetpack': 'Jetpack', 'Ingen jetpack': 'No jetpack', 'Rumrejse': 'Space trip', 'Rumrejse': 'Space trip', '👆 Tryk – så flyver du derhen. To hurtige tryk giver fart 🚀': '👆 Tap – and you fly there. Two quick taps give a boost 🚀', 'Skaterhjelm': 'Skate helmet', 'Knæbeskyttere': 'Knee pads', 'Albuebeskyttere': 'Elbow pads', 'Handsker': 'Gloves', 'Ingen knæbeskyttere': 'No knee pads', 'Ingen albuebeskyttere': 'No elbow pads', 'Ingen handsker': 'No gloves', 'Ansigt': 'Face', 'Tøj': 'Clothes', 'Mere': 'More', 'Svømning': 'Swimming', 'Start': 'Start', 'Ingen svømmebriller': 'No goggles', 'Runde': 'Round', 'Solbriller': 'Sunglasses', 'Hjerte': 'Heart',
+  'Ingen hat': 'No hat', 'Kasket': 'Cap', 'Krone': 'Crown', 'Kaninører': 'Bunny ears', 'Sløjfe': 'Bow', 'Ingen briller': 'No glasses', 'Svømmebriller': 'Swim goggles', 'Snorkel': 'Snorkel', 'Rumdragt': 'Space suit', 'Rumhjelm': 'Space helmet', 'Rumstøvler': 'Space boots', 'Sne': 'Snow', 'Skihop': 'Ski jump', '👆 Tryk for at køre – og tryk igen ved kanten for at hoppe!': '👆 Tap to go – and tap again at the edge to jump!', 'Skidragt': 'Ski suit', 'Skihjelm': 'Ski helmet', 'Skibriller': 'Ski goggles', 'Skihandsker': 'Ski gloves', 'Skistøvler': 'Ski boots', 'Jetpack': 'Jetpack', 'Ingen jetpack': 'No jetpack', 'Rumrejse': 'Space trip', 'Rumrejse': 'Space trip', '👆 Tryk – så flyver du derhen. To hurtige tryk giver fart 🚀': '👆 Tap – and you fly there. Two quick taps give a boost 🚀', 'Skaterhjelm': 'Skate helmet', 'Knæbeskyttere': 'Knee pads', 'Albuebeskyttere': 'Elbow pads', 'Handsker': 'Gloves', 'Ingen knæbeskyttere': 'No knee pads', 'Ingen albuebeskyttere': 'No elbow pads', 'Ingen handsker': 'No gloves', 'Ansigt': 'Face', 'Tøj': 'Clothes', 'Mere': 'More', 'Svømning': 'Swimming', 'Start': 'Start', 'Ingen svømmebriller': 'No goggles', 'Runde': 'Round', 'Solbriller': 'Sunglasses', 'Hjerte': 'Heart',
   // (things, pets, backgrounds)
   'Ballon': 'Balloon', 'Bamse': 'Teddy bear', 'Tryllestav': 'Magic wand', 'Is': 'Ice cream', 'Blomst': 'Flower', 'Bold': 'Ball', 'Fodbold': 'Soccer ball', 'Hulahopring': 'Hula hoop',
   'Intet dyr': 'No pet', 'Kat': 'Cat', 'Hund': 'Dog', 'Kanin': 'Rabbit', 'Halsbånd': 'Collar', 'Madskål': 'Food bowl', 'Legebold': 'Play ball',
@@ -708,7 +709,7 @@ disc.rotation.x = -Math.PI / 2; disc.position.y = .001; scene.add(disc);
 
 // ---- colours: the figure's painted texture, recoloured (below) ----
 // (the parts, each with the app's icon for its tab, in ikoner/; the fixed colours are gone - the sliders alone)
-const CHOICES = [['skin', 'Hud', 'hud'], ['hair', 'Hår', 'haar'], ['eyes', 'Øjne', 'oejne'], ['brows', 'Bryn', 'bryn'], ['nose', 'Næse', 'naese'], ['mouth', 'Mund', 'mund'], ['ears', 'Ører', 'oerer'], ['pynt', 'Pynt', 'kinder'], ['shirt', 'Trøje', 'troeje'], ['pants', 'Bukser', 'bukser'], ['dress', 'Kjole', 'kjoler'], ['gear-skate', 'Skateboard', 'fane-skate'], ['gear-sea', 'Svømning', 'fane-svoem'], ['gear-space', 'Rumrejse', 'fane-rum'], ['gear-pk', 'Straffespark', 'fane-straffe'], ['gear-snow', 'Snowboard', 'fane-snow'],
+const CHOICES = [['skin', 'Hud', 'hud'], ['hair', 'Hår', 'haar'], ['eyes', 'Øjne', 'oejne'], ['brows', 'Bryn', 'bryn'], ['nose', 'Næse', 'naese'], ['mouth', 'Mund', 'mund'], ['ears', 'Ører', 'oerer'], ['pynt', 'Pynt', 'kinder'], ['shirt', 'Trøje', 'troeje'], ['pants', 'Bukser', 'bukser'], ['dress', 'Kjole', 'kjoler'], ['gear-skate', 'Skateboard', 'fane-skate'], ['gear-sea', 'Svømning', 'fane-svoem'], ['gear-space', 'Rumrejse', 'fane-rum'], ['gear-pk', 'Straffespark', 'fane-straffe'], ['gear-snow', 'Sne', 'fane-snow'],
   ['socks', 'Strømper', 'stroemper'], ['shoe', 'Sko', 'sko'], ['hat', 'Hat', 'hat'], ['glasses', 'Briller', 'briller'], ['item', 'Ting', 'ting'], ['name', 'Navn', 'navn'], ['bg', 'Baggrund', 'baggrund']];
 const picked = {}, START = { skin: '#EDB98A', hair: '#4A2C1D', eyes: '#7A4220', brows: '#4A2C1D', mouth: '#C0505A', pynt: '#FF5A6E', nose: '#EDB98A', shirt: '#FF7A2F', pants: '#2C3E8C', dress: '#3D8BFF', suit: '#3D8BFF', socks: '#3D8BFF', item: '#E8384F', shoe: '#3D8BFF', hat: '#3D8BFF', glasses: '#3D8BFF' }; let partNow = 'shirt';
 const apply = (part, c) => { picked[part] = c; recolour(part, c); if (part === 'shirt' || part === 'dress') chestName(); };
@@ -773,7 +774,7 @@ function renderStyles() { const all = typeof styleLists === 'undefined' ? null :
   // start button, which works when all of it is on - swim goggles and snorkel are free to leave off)
   if (partNow.startsWith('gear-') && hairBase && typeof dressNeeds !== 'undefined') { const g = partNow.slice(5), box = document.getElementById('styles'), needs = dressNeeds(g).filter(([p]) => p !== 'glasses'), ok = needs.every(([p, l]) => l.some(i => i[0] === GARMENTS[p].now));
     if (dressWant === g) for (const [p, l] of needs) if (!l.some(i => i[0] === GARMENTS[p].now)) for (const b of box.children) if (l.some(i => i[0] === b.dataset.n)) b.classList.add('todo');
-    const go = document.createElement('button'); go.className = 'gear-go'; go.textContent = '▶'; go.setAttribute('aria-label', tr('Start')); go.disabled = !ok; go.onclick = () => document.querySelector(`[data-game="${g}"]`)?.click(); box.append(go); } }
+    const go = document.createElement('button'); go.className = 'gear-go'; go.textContent = '▶'; go.setAttribute('aria-label', tr('Start')); go.disabled = !ok; go.onclick = () => document.querySelector(`[data-game="${dressGame && gearGame(dressGame) === g ? dressGame : g}"]`)?.click(); box.append(go); } }
 // ---- the star shop (the user, 03-11-2026: "Særlige ting låses"): the most special things cost stars, the rest stays free.
 // Each child buys with their own stars and owns what they bought (score.owned); a thing worn already, or on a saved
 // figure, stays on - only choosing it again asks for the stars ----
@@ -2342,10 +2343,12 @@ function dressFor(mode) { const pick = gearOf();
 // instead (the user, 13-11-2026: a three-year-old cannot read a message; and there the gear's colour can be chosen
 // first, which the bar there was before did not let one). The things missing move a little; with all of it on, the green
 // button there starts the game. Kept for each child - gear.done.
+// (the ski jump uses the snowboard's gear: one set of ski clothes for both)
+const gearGame = m => m === 'skihop' ? 'snow' : m; var dressGame = '';
 const dressNeeds = mode => Object.entries(GARMENTS).map(([part, G]) => [part, G.items.filter(i => i[2]?.game === mode && owns(i[0]))]).filter(([, l]) => l.length);
-function dressAsk(mode) { const m = MODES[mode].from ? 'hop' : mode, needs = dressNeeds(m), gear = gearOf(); if (!needs.length || gear.done?.[m]) return false;
+function dressAsk(mode) { const m = gearGame(MODES[mode].from ? 'hop' : mode), needs = dressNeeds(m), gear = gearOf(); if (!needs.length || gear.done?.[m]) return false;
   if (needs.every(([p, l]) => p === 'glasses' || l.some(i => i[0] === GARMENTS[p].now))) { (gear.done ??= {})[m] = true; try { savePlayers(); } catch (e) {} return false; }
-  dressSnap ??= wearSnap(); boxOpen = true; partNow = 'gear-' + m; showSwatches(); dressWant = m; renderStyles();
+  dressSnap ??= wearSnap(); dressGame = mode; boxOpen = true; partNow = 'gear-' + m; showSwatches(); dressWant = m; renderStyles();
   try { goal = { target: new THREE.Vector3(0, 1.05, 0), camera: new THREE.Vector3(0, 1.25, farZ), far: true }; closeUp = false; document.getElementById('subs').scrollIntoView({ block: 'nearest', inline: 'center' }); } catch (e) {} return true; }
 let dressing = 0; const NO_NET = 'Det kan ikke hentes lige nu 📶';
 async function setGarment(part, name) { const G = GARMENTS[part], ask = ++dressing;
@@ -4182,7 +4185,7 @@ function petTick(dt) { if (!pet) { if (bowl) bowl.visible = false; if (ball) bal
   const running = runMove || ['side', 'back', 'front', 'skate', 'snow'].includes(mode), floorY = mode === 'sea' ? petAt.y - .45 : 0; let tx = petAt.x + ox, tz = petAt.z + oz; const J = petJob;
   if (J.kind === 'eat') { tx = toyBowl.x + .1; tz = toyBowl.z - .3; face = Math.atan2(toyBowl.x - tx, toyBowl.z - tz); }
   else if (J.kind === 'ball') { if (J.flying > 0) { J.flying -= dt; const u = 1 - Math.max(0, J.flying) / .55; ball.position.set(J.from.x + (J.bx - J.from.x) * u, .11 + Math.sin(u * Math.PI) * .45, J.from.z + (J.bz - J.from.z) * u); ball.rotation.x += dt * 12; tx = J.bx; tz = J.bz; } else if (J.t === 0) { tx = J.bx; tz = J.bz; if (Math.hypot(g.position.x - tx, g.position.z - tz) < .3) { J.t = 1; sfx('ding'); } } else { tx = toyRest.x; tz = toyRest.z - .3; const fx = Math.sin(pet.face), fz = Math.cos(pet.face); ball.position.set(g.position.x + fx * .36, .11, g.position.z + fz * .36); if (Math.hypot(g.position.x - tx, g.position.z - tz) < .1) { J.kind = ''; ball.position.set(toyRest.x, .11, toyRest.z); } } }
-  g.visible = holder.visible && mode !== 'sea' && mode !== 'space' && mode !== 'skate' && mode !== 'snow' && mode !== 'pk' && !(mode === 'hide' && !il.rig.visible); // (not in the sea - the user, 04-11-2026)
+  g.visible = holder.visible && mode !== 'sea' && mode !== 'space' && mode !== 'skate' && mode !== 'snow' && mode !== 'skihop' && mode !== 'pk' && !(mode === 'hide' && !il.rig.visible); // (not in the sea - the user, 04-11-2026)
   if (pet.snap) { g.position.set(tx, floorY, tz); pet.snap = false; } const x0 = g.position.x, z0 = g.position.z, k = 1 - Math.exp(-dt * (running ? 9 : J.kind === 'ball' ? (J.t ? 2.6 : 5) : 3.2)); g.position.x += (tx - x0) * k; g.position.z += (tz - z0) * k; pet.y = (pet.y ?? floorY) + (floorY - (pet.y ?? floorY)) * k;
   const vx = g.position.x - x0, vz = g.position.z - z0, speed = dt ? Math.hypot(vx, vz) / dt : 0, moving = running || speed > .35, t = performance.now() / 1000;
   const faceTo = !running && speed > .35 ? Math.atan2(vx, vz) : face ?? pet.face; let d = faceTo - pet.face; d = Math.atan2(Math.sin(d), Math.cos(d)); pet.face += d * Math.min(1, dt * 7); g.rotation.y = pet.face;
@@ -4537,9 +4540,11 @@ const MODES = {
   // (Gemmeleg: the whole island from in front and above - see hideTick)
   hide: { x: 0, face: 0, cheer: 0, cam: w => [0, w ? 7 : 9, w ? 10.5 : 14, 0, 0, -.6] },
   // (Straffespark: from behind the figure, the goal ahead - see pkTick)
-  pk: { x: 0, face: Math.PI, cheer: 0, cam: w => [0, 2.3, w ? 4.6 : 6.4, 0, .9, -6] } };
+  pk: { x: 0, face: Math.PI, cheer: 0, cam: w => [0, 2.3, w ? 4.6 : 6.4, 0, .9, -6] },
+  // (Skihop: the hill seen from the side - the camera follows the jumper, see sjTick)
+  skihop: { x: 0, face: Math.PI / 2, cheer: Math.PI / 2, cam: w => [0, 3, w ? 13 : 17, 0, 1, 0] } };
 // (the games with a world of their own instead of the background picture)
-const OWN_WORLD = ['island', 'sea', 'hide', 'pk', 'space'];
+const OWN_WORLD = ['island', 'sea', 'hide', 'pk', 'space', 'skihop'];
 // (the games that show nothing of the background chosen for the figure: those, and the skateboard game - the user,
 // 11-11-2026: a background changed showed in the skateboard game too, which made no sense)
 const NO_BG = [...OWN_WORLD, 'skate', 'snow', 'side', 'back', 'front'];
@@ -4574,24 +4579,24 @@ function startGame(mode = game.mode) { if (game.on || !glb) return; if (!game.ag
   if (matchMedia('(hover: hover) and (pointer: fine)').matches && !navigator.maxTouchPoints) try { document.documentElement.requestFullscreen?.()?.catch?.(() => {}); } catch (e) {}
   // (nothing held in the hand on the skateboard, in the water, out in space or at the penalty spot - the user, 14-11-2026:
   // no swimming about with a balloon; it is back in the hand when the game stops)
-  if (!game.again) game.held = itemNow; if (['skate', 'snow', 'sea', 'space', 'pk'].includes(mode) && itemNow) setItem('');
-  if (!game.again) { game.wore = dressSnap || wearSnap(); dressSnap = null; dressWant = ''; } dressFor(MODES[mode].from ? 'hop' : mode);
+  if (!game.again) game.held = itemNow; if (['skate', 'snow', 'skihop', 'sea', 'space', 'pk'].includes(mode) && itemNow) setItem('');
+  if (!game.again) { game.wore = dressSnap || wearSnap(); dressSnap = null; dressWant = ''; } dressFor(gearGame(MODES[mode].from ? 'hop' : mode));
   if (!game.again) game.saved = { cam: camera.position.clone(), target: controls.target.clone(), anim, bg: bgNow, spin }; game.again = false; spin = false; document.getElementById('spin').classList.remove('on');
   goal = null; closeUp = false; controls.enabled = false; controls.maxDistance = 14; holder.position.x = M.x;
   // (the plain sun has no ground to run on: the football field then, until the game stops)
   if (bgNow === 'bg-sol' && !NO_BG.includes(mode)) setBg('bg-fodboldbane');
   // (five balls made once and used again)
   // (a ball chosen under Ting - Bold or Fodbold - is the game's ball, not one in the hand as well)
-  if (onBoard(mode)) skateStart(mode === 'snow'); else if (mode === 'island') islandStart(); else if (mode === 'sea') seaStart(); else if (mode === 'space') spaceStart(); else if (mode === 'hide') hideStart(); else if (mode === 'pk') pkStart(); else {
+  if (onBoard(mode)) skateStart(mode === 'snow'); else if (mode === 'island') islandStart(); else if (mode === 'sea') seaStart(); else if (mode === 'space') spaceStart(); else if (mode === 'hide') hideStart(); else if (mode === 'pk') pkStart(); else if (mode === 'skihop') sjStart(); else {
     useGameBall(BALL_ITEMS.includes(itemNow) ? itemNow : ''); hopWorldStart(mode);
     game.bigPool ??= [goldBall(), goldBall()]; Object.assign(game, { dive: false, sinceBig: 0 });
     const run = levelNow().run; Promise.all([run, GAME.jump, GAME.trip, GAME.cheer, GAME.dive].map(loadMove)).then(() => { if (game.on) runAnim(run); }); }
-  hintEl.textContent = tr(onBoard(mode) ? '👈 Tryk i siden for at svinge 👉' : mode === 'island' ? '👆 Tryk hvor du vil gå hen' : mode === 'space' ? '👆 Tryk – så flyver du derhen. To hurtige tryk giver fart 🚀' : mode === 'sea' ? '👆 Tryk eller træk – så svømmer du derhen' : mode === 'hide' ? '🔍 Hvor er jeg? Tryk på busken' : mode === 'pk' ? '👆 Tryk i målet, hvor bolden skal hen' : '👆 Tryk for at hoppe');
+  hintEl.textContent = tr(onBoard(mode) ? '👈 Tryk i siden for at svinge 👉' : mode === 'island' ? '👆 Tryk hvor du vil gå hen' : mode === 'space' ? '👆 Tryk – så flyver du derhen. To hurtige tryk giver fart 🚀' : mode === 'sea' ? '👆 Tryk eller træk – så svømmer du derhen' : mode === 'hide' ? '🔍 Hvor er jeg? Tryk på busken' : mode === 'skihop' ? '👆 Tryk for at køre – og tryk igen ved kanten for at hoppe!' : mode === 'pk' ? '👆 Tryk i målet, hvor bolden skal hen' : '👆 Tryk for at hoppe');
   hud.hidden = false; hintEl.hidden = false; try { showLvl(); } catch (e) {} document.querySelector('.top').hidden = true; document.getElementById('stage').classList.add('playing'); showStars(); showRecord();
   if (MODES[mode].from) game.hopWay = mode; // (the way last chosen in Hop over bolden)
   document.querySelectorAll('[data-game]').forEach(b => b.classList.toggle('on', b.dataset.game === mode || b.dataset.game === 'hop' && !!MODES[mode].from)); prepScene(); }
 // (again: only stopped to start once more - at another level or in another way - the figure's own setting not put back)
-function stopGame(again) { if (!game.on) return; game.on = false; for (const b of [...gamePool(), ...(game.bigPool || [])]) b.group.visible = false; game.dive = false; game.balls = []; confetti.length = 0; unprepScene(); skateStop(); hopWorldStop(); hideStop(); islandStop(); seaStop(); spaceStop(); pkStop();
+function stopGame(again) { if (!game.on) return; game.on = false; for (const b of [...gamePool(), ...(game.bigPool || [])]) b.group.visible = false; game.dive = false; game.balls = []; confetti.length = 0; unprepScene(); skateStop(); hopWorldStop(); hideStop(); islandStop(); seaStop(); spaceStop(); pkStop(); sjStop();
   // (the sound shut down when nothing plays: on an iPad an open sound channel could go on sounding after the game)
   if (!again) { try { game.audio?.suspend(); } catch (e) {} setItem(game.held ?? itemNow); game.held = undefined; }
   if (again) { game.again = true; return; } holder.position.x = 0; wearBack(game.wore); try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) {}
@@ -4628,6 +4633,7 @@ function gameTick(dt) { confettiTick(dt); if (!game.on || !glb) return; const r 
   if (game.mode === 'space') { spaceTick(dt); return; }
   if (game.mode === 'hide') { hideTick(dt); return; }
   if (game.mode === 'pk') { pkTick(dt); return; }
+  if (game.mode === 'skihop') { sjTick(dt); return; }
   // (the jump: up and down in a smooth arc over the ball, the run again when it lands)
   // (the fifth star mostly comes in the air: the cheer then waits for the landing - before, the landing put the run back
   // in the middle of the cheer, the figure running on the spot facing out, no balls, as if waiting for a tap)
@@ -5680,6 +5686,66 @@ function pkAbeSaved(dt, b) { const m = pk.abe, kp = pk.keeper; pk.t += dt; if (p
     const wait = m.now.startsWith('dyk') ? 2.1 : 1; if (pk.t > wait && !throwing) { const a = pkAbePlay('aflever', 0, true, .3); a.timeScale = 1.2; }
     if (m.now === 'aflever') { kp.position.x *= Math.exp(-dt * 1.6); if (m.act.aflever.time > ABE.release) { pk.phase = 'return'; pk.r = 0; pk.from.copy(b.position); sfx('swish'); } } }
   else { pkAbeGrip(m, dt, 0); pk.r += dt / 1.1; kp.position.x *= Math.exp(-dt * 1.6); const u = Math.min(1, pk.r), e = 1 - (1 - u) * (1 - u); b.position.lerpVectors(pk.from, pkRest(), e); b.position.y = kick.r + (pk.from.y - kick.r) * Math.max(0, 1 - u * 4); b.rotation.x += dt * 9 * (1 - u); if (u >= 1) { if (m.now === 'aflever' && m.act.aflever.time < m.act.aflever.getClip().duration - .1) return; runAnim('staa'); pkReady(); } } }
+// ---- Skihop (the user, 14-11-2026: a ski jump hill, with skis, poles and the ski gear). Seen from the side. A tap sets
+// the figure off down the in-run, crouched; a second tap at the edge is the take-off - the nearer the edge, the better
+// the jump (no tap: a little hop off the end, so nothing is ever lost). It flies leaning out over its skis, held in a V,
+// lands on the hill and glides out on the flat; the length in metres shows, and gives one to five stars. Then up again.
+// Five levels: faster in-run, and the tap must be nearer the edge. The gear is the snowboard's (gearGame).
+const SJ = { x0: -13, g: 6.5, levels: { 'niveau-meget-let': [7, 2.6], 'niveau-let': [7.6, 2], 'niveau-mellem': [8.2, 1.5], 'niveau-svaer': [8.8, 1.15], 'niveau-meget-svaer': [9.4, .85] } };
+const sj = { world: null, rig: null, phase: '', x: 0, y: 0, v: 0, vx: 0, vy: 0, tap: null, t: 0, q: 0, stopT: 0, tuck: 0, fly: 0 };
+// (the hill's height along it: the in-run curving down to a level edge; a drop; the landing hill, steep and then out flat)
+const sjHill = x => x < 0 ? 2.2 + .045 * Math.max(x, SJ.x0 - .4) ** 2 : x < 4 ? 1.4 - .06 * x * x : x < 34 ? .44 - .5 * (x - 4) : x < 44 ? -14.56 - .5 * (x - 34) + .025 * (x - 34) ** 2 : -17.06;
+const sjSlope = x => (sjHill(x + .04) - sjHill(x - .04)) / .08;
+function sjBuild() { if (sj.world) return; const w = sj.world = new THREE.Group(), P = [], C = [], z0 = -9, z1 = 3.4, top = [.97, .98, 1], wall = [.8, .87, .96];
+  const quad = (a, b, c, d, col) => { for (const q of [a, b, c, a, c, d]) { P.push(...q); C.push(...col); } };
+  const run = (xa, xb) => { for (let x = xa; x < xb - 1e-6; x += .5) { const x2 = Math.min(xb, x + .5), ya = sjHill(xa < 0 ? Math.min(x, -1e-4) : x), yb = sjHill(xa < 0 ? Math.min(x2, -1e-4) : x2);
+      quad([x, ya, z1], [x2, yb, z1], [x2, yb, z0], [x, ya, z0], top); quad([x, -26, z1], [x2, -26, z1], [x2, yb, z1], [x, ya, z1], wall); } };
+  run(SJ.x0 - 4, 0); run(0, 62); quad([0, sjHill(0), z1], [0, sjHill(0), z0], [0, sjHill(-1e-4), z0], [0, sjHill(-1e-4), z1], wall);
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(C, 3)); g.computeVertexNormals();
+  const hill = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .95, side: THREE.DoubleSide })); hill.receiveShadow = true; w.add(hill);
+  // (lines across the landing hill every ten metres shown, a red one far down; the in-run's two blue tracks; a start bar)
+  const bar = (x, col, wide = z1 - z0, zc = (z0 + z1) / 2, thick = .12) => { const m = new THREE.Mesh(new THREE.BoxGeometry(thick, .03, wide), skMat(col, .7)); m.position.set(x, sjHill(x) + .02, zc); m.rotation.z = Math.atan(sjSlope(x)); w.add(m); };
+  for (const [x, col] of [[10, '#4F86D9'], [15, '#4F86D9'], [20, '#4F86D9'], [25, '#E8384F'], [30, '#4F86D9']]) bar(x, col);
+  for (let x = SJ.x0; x < -.3; x += .5) for (const z of [-.16, .16]) bar(x + .25, '#7FA8E6', .09, z, .52);
+  const gate = new THREE.Mesh(new THREE.BoxGeometry(.08, .08, 1.6), skMat('#E8384F', .5)); gate.position.set(SJ.x0 - .55, sjHill(SJ.x0) + .75, 0); w.add(gate); for (const z of [-.8, .8]) { const post = new THREE.Mesh(new THREE.BoxGeometry(.08, .8, .08), skMat('#8A5A2E', .8)); post.position.set(SJ.x0 - .55, sjHill(SJ.x0) + .38, z); w.add(post); }
+  // (firs behind the hill, and flags by the lines)
+  for (const [x, z, h] of [[-9, -5.5, 2.6], [-2, -7, 3.2], [5, -5, 2.4], [11, -7.2, 3.4], [17, -5.2, 2.6], [23, -7.5, 3.6], [29, -5, 2.8], [36, -7, 3.2], [43, -5.5, 2.6], [50, -7.4, 3.4], [56, -5.2, 2.8]]) { const t = new THREE.Group(); t.position.set(x, sjHill(x), z); w.add(t); propInto(t, 'skate-gran.glb', h, 0, []); }
+  for (const x of [10, 15, 20, 25, 30]) { const f = new THREE.Group(); f.position.set(x, sjHill(x), z1 - .3); w.add(f); const pole = new THREE.Mesh(new THREE.CylinderGeometry(.025, .025, 1, 8), skMat('#8A8FA3', .5)); pole.position.y = .5; const flag = new THREE.Mesh(new THREE.BoxGeometry(.34, .2, .02), skMat(x === 25 ? '#E8384F' : '#FFC233', .6)); flag.position.set(.18, .88, 0); f.add(pole, flag); }
+  // (the skis, a pair under the feet; the poles, one for each hand)
+  sj.skis = new THREE.Group(); sj.ski = [-1, 1].map(q => { const k = new THREE.Group(); k.position.z = q * .14; sj.skis.add(k); propInto(k, 'udstyr-ski.glb', 1.75, SJ_SKI_TURN, [], 'w'); return k; }); w.add(sj.skis);
+  sj.poles = [0, 1].map(() => { const k = new THREE.Group(); w.add(k); propInto(k, 'udstyr-skistav.glb', 1.05, 0, []); return k; });
+  sj.rig = new THREE.Group(); }
+const SJ_SKI_TURN = 0;
+function sjReset() { sj.camX = undefined; Object.assign(sj, { phase: 'ready', x: SJ.x0, y: sjHill(SJ.x0), v: 0, vx: 0, vy: 0, tap: null, t: 0, q: 0, stopT: 0 }); if (glbActions.staa) runAnim('staa'); hintEl.textContent = tr('👆 Tryk for at køre – og tryk igen ved kanten for at hoppe!'); hintEl.hidden = false; game.hint = 5; }
+function sjStart() { sjBuild(); skWorldBuild(); sj.world.add(sk.hills); sk.hills.position.set(20, -14, 34); for (const h of sk.hills.children.slice(1)) { h.userData.green ??= h.material.color.clone(); h.material.color.set('#EEF4FC'); } scene.add(sj.world); holder.add(sj.rig); sj.rig.add(glb); sj.rig.rotation.set(0, 0, 0); game.rotY = Math.PI / 2;
+  floor.visible = false; disc.visible = false; for (const el of [bgNear, bgFar, bgNear2]) el.hidden = true; stage.classList.add('street'); sj.tuck = 0; sj.fly = 0; sjReset(); Promise.all(['staa', 'jubel'].map(loadMove)).then(() => { if (game.on && game.mode === 'skihop' && sj.phase === 'ready') runAnim('staa'); }); }
+function sjStop() { if (!sj.world?.parent) return; scene.remove(sj.world); sk.world.add(sk.hills); sk.hills.position.set(0, 0, 0); for (const h of sk.hills.children.slice(1)) if (h.userData.green) h.material.color.copy(h.userData.green); holder.add(glb); holder.remove(sj.rig); stage.classList.remove('street'); floor.visible = true; sj.phase = ''; setBg(bgNow); }
+function sjTap() { if (sj.phase === 'ready') { sj.phase = 'inrun'; sj.v = 1.2; game.hint = 0; sfx('swish'); } else if (sj.phase === 'inrun' && sj.tap === null && sj.x > -6.5) sj.tap = sj.x; }
+function sjTick(dt) { dt = Math.min(dt, .05); const [v0, win] = SJ.levels[game.level] || SJ.levels['niveau-let'];
+  if (sj.phase === 'ready') { sj.t += dt; if (sj.t > 7) sjTap(); }
+  else if (sj.phase === 'inrun') { const sl = sjSlope(Math.min(sj.x, -.05)); sj.v = Math.min(v0, sj.v + (2 + 8 * Math.max(0, -sl)) * dt); sj.x += sj.v * dt / Math.hypot(1, sl); sj.y = sjHill(Math.min(-1e-4, sj.x));
+    // (off the edge: how good the take-off was by how near the edge the tap came)
+    if (sj.x >= 0) { sj.q = sj.tap === null ? .08 : Math.max(.12, 1 - Math.abs(sj.tap + .35) / (win * 2.2)); sj.vx = v0 * (.9 + .16 * sj.q); sj.vy = 1.5 + 4 * sj.q; sj.x = 0; sj.phase = 'air'; sfx('swish'); } }
+  else if (sj.phase === 'air') { sj.vy -= SJ.g * dt; sj.x += sj.vx * dt; sj.y += sj.vy * dt;
+    if (sj.y <= sjHill(sj.x)) { sj.y = sjHill(sj.x); sj.phase = 'land'; sj.t = 0; sj.v = sj.vx; const m = Math.round(sj.x * 2), n = Math.max(1, Math.min(5, 1 + Math.round(sj.q * 4))); addStars(n); sfx('ding'); if (n > 2) sfx('ding', .14); if (n > 4) sfx('ding', .28); hintEl.textContent = `${m} m  ${'⭐'.repeat(n)}`; hintEl.hidden = false; game.hint = 3.2; } }
+  else if (sj.phase === 'land') { sj.t += dt; const sl = sjSlope(sj.x); sj.v = Math.max(0, sj.v + (-sl * 5 - 2.6 - (sj.x > 42 ? 7 : 0)) * dt); sj.x = Math.min(58, sj.x + sj.v * dt / Math.hypot(1, sl)); sj.y = sjHill(sj.x);
+    if (sj.v < .25 || sj.x >= 58) { if (!sj.stopT) { sj.stopT = sj.t; if (glbActions.jubel) runAnim('jubel'); } if (sj.t - sj.stopT > 2.4) sjReset(); } }
+  // (the pose: crouched in the in-run, stretched out and leaning forward in the air, a little bent after landing)
+  const air = sj.phase === 'air', ground = Math.atan(sjSlope(sj.phase === 'inrun' || sj.phase === 'ready' ? Math.min(sj.x, -.05) : Math.max(sj.x, .05))), k = Math.min(1, dt * 7);
+  sj.tuck += ((sj.phase === 'inrun' ? 1 : sj.phase === 'land' && !sj.stopT ? .45 : 0) - sj.tuck) * k; sj.fly += ((air ? 1 : 0) - sj.fly) * k;
+  sj.rig.position.set(sj.x, sj.y, 0); sj.rig.rotation.z += ((air ? -.95 : sj.phase === 'ready' || sj.stopT ? 0 : ground) - sj.rig.rotation.z) * k; glb.rotation.y = game.rotY = Math.PI / 2;
+  glb.updateMatrixWorld(true); glb.getWorldQuaternion(skAxes.q); const { fwd, right, up, q } = skAxes; fwd.set(0, 0, 1).applyQuaternion(q); right.set(-1, 0, 0).applyQuaternion(q); up.set(0, 1, 0).applyQuaternion(q);
+  if (!sj.stopT) { const W = sj.tuck; if (W > .01) { for (const n of ['LeftUpLeg', 'RightUpLeg']) turnBone(n, right, 1.15 * W); glb.updateMatrixWorld(true); for (const n of ['LeftLeg', 'RightLeg']) turnBone(n, right, -1.9 * W); glb.updateMatrixWorld(true); for (const n of ['LeftFoot', 'RightFoot']) turnBone(n, right, .75 * W); turnBone('Spine', right, SJ_LEAN * W); }
+    const A = Math.max(W * .9, sj.fly * .25); if (A > .01) for (const n of ['LeftArm', 'RightArm']) turnBone(n, right, SJ_ARMS * A); glb.updateMatrixWorld(true);
+    // (the feet kept down on the skis as the legs bend)
+    const lo = Math.min(...['LeftFoot', 'RightFoot', 'LeftToeBase', 'RightToeBase'].map(n => sj.rig.worldToLocal(bone(n).getWorldPosition(new THREE.Vector3())).y)); glb.position.y += .09 + bootLift() * .5 - lo; }
+  glb.updateMatrixWorld(true);
+  // (the skis under the feet: along the hill on the ground, nearly level and spread in a V in the air; the poles in the hands, trailing back)
+  sj.skis.position.set(sj.x, sj.y + .03, 0); sj.skis.rotation.z += ((air ? .12 : sj.phase === 'ready' || sj.stopT ? 0 : ground) - sj.skis.rotation.z) * k; sj.ski.forEach((s, i) => { s.rotation.y = (i ? -1 : 1) * .2 * sj.fly; });
+  ['LeftHand', 'RightHand'].forEach((n, i) => { const h = bone(n); if (!h) return; const at = h.getWorldPosition(new THREE.Vector3()), th = -1.05 + .25 * sj.fly - .5 * sj.tuck, len = 1.02; sj.poles[i].rotation.z = th; sj.poles[i].position.set(at.x + Math.sin(th) * len, at.y - Math.cos(th) * len, at.z); });
+  // (the camera along with the jumper, a little ahead)
+  const cz = wideCam() ? 15 : 22, ahead = air ? 1.6 : .9; sj.camX = (sj.camX ?? sj.x) + (sj.x + ahead - (sj.camX ?? sj.x)) * Math.min(1, dt * 6); camera.position.set(sj.camX, sj.y + 2.6, cz); controls.target.set(sj.camX, sj.y + .2, 0); camera.lookAt(controls.target); }
+const SJ_LEAN = .85, SJ_ARMS = -1.1;
 function pkStart() { pkBuild(); pkAbeLoad(); scene.add(pk.world); holder.add(pk.rig); pk.rig.add(glb); pk.rig.position.set(0, 0, 0); game.rotY = Math.PI;
   floor.visible = false; disc.visible = false; for (const el of [bgNear, bgFar, bgNear2]) el.hidden = true; stage.classList.add('pitch'); controls.maxDistance = 40;
   if (!pk.ball) { pk.ball = makeItem('fodbold'); pk.ball.group.scale.setScalar(kick.r / .158); scene.remove(pk.ball.group); }
@@ -5765,7 +5831,7 @@ function pkTick(dt) { const t = performance.now() / 1000, L = pkLevel(), kp = pk
   if (pk.phase === 'kick' || pk.phase === 'fly' || (pk.phase === 'after' && pk.saved && pk.t < 1)) { const a = glbActions[pkKick()], k = kicks[pkKick()]; if (a?.isRunning() && k) { const after = a.time - k.contact; kickArms(a.time + .4, k.contact + .4, k.side); const w = Math.max(0, Math.min(1, 1 - (after - 1) / .4)); lookAtBall(b, .85 * w);
     // (head up once it has kicked, to follow the ball - it is seen from behind, so it takes a clear lift - the user, 04-11-2026)
     const lift = Math.min(1, Math.max(0, after) / .25) * w; if (lift > 0) { glb.getWorldQuaternion(kaQ); turnBone('Head', new THREE.Vector3(1, 0, 0).applyQuaternion(kaQ), -.55 * lift); turnBone('Spine2', new THREE.Vector3(1, 0, 0).applyQuaternion(kaQ), -.12 * lift); } } } }
-const GAME_NAMES = [['hop', 'Hop over bolden'], ['skate', 'Skateboard'], ['snow', 'Snowboard'], ['island', 'Skattejagt'], ['sea', 'Svømmeverden'], ['space', 'Rumrejse'], ['hide', 'Gemmeleg'], ['pk', 'Straffespark']];
+const GAME_NAMES = [['hop', 'Hop over bolden'], ['skate', 'Skateboard'], ['snow', 'Snowboard'], ['island', 'Skattejagt'], ['sea', 'Svømmeverden'], ['space', 'Rumrejse'], ['hide', 'Gemmeleg'], ['pk', 'Straffespark'], ['skihop', 'Skihop']];
 // (with two players or more: their pictures on top, the one shown marked - tapping another shows that child's stars)
 let starShown = null;
 function showStarSheet(id = starShown || players.now) { starShown = id; const p = players.list.find(q => q.id === id) || playerNow(), s = p.score, have = krOf(s), many = players.list.length > 1;
@@ -5824,7 +5890,7 @@ document.getElementById('kidList').addEventListener('click', e => { const b = e.
 showPlayer();
 function showRecord() { const el = document.getElementById('record'); el.textContent = '🏆 ' + bestNow(); el.classList.toggle('beaten', !!game.record); document.getElementById('hudKr').textContent = `💰 ${krOf(score)}`; }
 document.getElementById('stage').addEventListener('pointerdown', e => { if (!game.on || e.target.closest('button')) return; e.preventDefault();
-  if (onBoard(game.mode)) { const r = e.currentTarget.getBoundingClientRect(); steer(e.clientX < r.left + r.width / 2 ? -1 : 1); } else if (game.mode === 'island') islandTap(e); else if (game.mode === 'sea') { sea.held = true; seaTap(e); } else if (game.mode === 'space') { sp.held = true; spaceTap(e, true); } else if (game.mode === 'hide') hideTap(e); else if (game.mode === 'pk') pkTap(e); else jump(); });
+  if (onBoard(game.mode)) { const r = e.currentTarget.getBoundingClientRect(); steer(e.clientX < r.left + r.width / 2 ? -1 : 1); } else if (game.mode === 'island') islandTap(e); else if (game.mode === 'sea') { sea.held = true; seaTap(e); } else if (game.mode === 'space') { sp.held = true; spaceTap(e, true); } else if (game.mode === 'hide') hideTap(e); else if (game.mode === 'pk') pkTap(e); else if (game.mode === 'skihop') sjTap(); else jump(); });
 // (under the sea a finger held down and moved leads the figure along)
 document.getElementById('stage').addEventListener('pointermove', e => { if (game.on && game.mode === 'sea' && sea.held) seaTap(e); if (game.on && game.mode === 'space' && sp.held) spaceTap(e); });
 for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) document.getElementById('stage').addEventListener(ev, () => { sea.held = false; sp.held = false; });
@@ -6028,6 +6094,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.11.0 (e3d0929)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.11.0 (f13474d)</div>
 </body>
 </html>
