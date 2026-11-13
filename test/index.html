@@ -368,7 +368,7 @@
 <button class="info-btn" id="infoBtn" aria-label="Sådan gør du" aria-expanded="false" hidden>i</button>
 <div class="info-pop" id="infoPop" hidden>👆 Træk for at dreje figuren<br>🤏 Knib for at zoome<br>👕 Tryk på navnet på trøjen, så siger figuren det – med din egen indtalte stemme, hvis du har indtalt en</div>
 <!-- Hop over bolden: the stars won, and the cross that ends the game; a hint at the start -->
-<div class="hud" id="hud" hidden><span class="hud-left"><span class="hud-face" id="hudFace" hidden></span><span class="stars" id="stars">⭐ 0</span><span class="record" id="record" title="Din rekord">🏆 0</span><span class="record" id="hudKr" title="Din konto">💰 0</span></span><span class="hud-right"><button class="game-x game-lvl" id="gameLvl" aria-label="Sværhedsgrad" aria-expanded="false"><img alt=""></button><button class="game-x" id="gameExit" aria-label="Stop spillet">✕</button></span></div>
+<div class="hud" id="hud" hidden><span class="hud-left"><span class="hud-face" id="hudFace" hidden></span><span class="stars" id="stars">⭐ 0</span><span class="record" id="record" title="Din rekord">🏆 0</span><span class="record" id="hudKr" title="Dine mønter">💰 0</span></span><span class="hud-right"><button class="game-x game-lvl" id="gameLvl" aria-label="Sværhedsgrad" aria-expanded="false"><img alt=""></button><button class="game-x" id="gameExit" aria-label="Stop spillet">✕</button></span></div>
 <!-- (the levels - and in Hop over bolden the three ways to play - chosen without leaving the game: the user, 11-11-2026) -->
 <div class="lvl-pop" id="lvlPop" hidden></div>
 <div class="tap-hint" id="tapHint" hidden>👆 Tryk for at hoppe</div>
@@ -492,8 +492,8 @@
 <!-- the stars kept: all of them, and the best of each game at each level (on this device) -->
 <div class="sheet" id="starSheet" hidden>
   <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="starTitle">
-    <div class="sheet-head"><h2 id="starTitle">Din konto</h2><button class="sheet-x" data-close aria-label="Luk">✕</button></div>
-    <p class="note star-sub">Stjernerne fra spillene bliver til kroner på din konto – jo sværere niveau, jo flere. For kronerne køber du ting i butikken.</p>
+    <div class="sheet-head"><h2 id="starTitle">Dine mønter</h2><button class="sheet-x" data-close aria-label="Luk">✕</button></div>
+    <p class="note star-sub">Stjernerne fra spillene bliver til mønter – jo sværere niveau, jo flere. For mønterne får du ting i butikken.</p>
     <div class="who who-small" id="starWho"></div>
     <div class="star-total" id="starTotal">⭐ 0</div>
     <p class="note" id="starNote"></p>
@@ -624,7 +624,7 @@ import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
 // EN holds the English for it; tr(text) gives it in the language chosen, T(da, en) is for texts with a number or name in ----
 // (?lang=en: the way in from the website's English pages, kept from then on)
 const LANG = (() => { let l = new URLSearchParams(location.search).get('lang'); l = l === 'en' || l === 'da' ? l : null; try { if (l) localStorage.setItem('minimig-test.sprog', l); else l = localStorage.getItem('minimig-test.sprog'); } catch (e) {} return l || (/^da\b/i.test(navigator.language || '') ? 'da' : 'en'); })(); // (American English - the user, 04-11-2026)
-const T = (da, en) => LANG === 'en' ? en : da, krTxt = n => T(`${n} kr`, n == 1 ? '1 coin' : `${n} coins`);
+const T = (da, en) => LANG === 'en' ? en : da, krTxt = n => T(n == 1 ? '1 mønt' : `${n} mønter`, n == 1 ? '1 coin' : `${n} coins`);
 const EN = {
   // (the tabs)
   'Hud': 'Skin', 'Hår': 'Hair', 'Øjne': 'Eyes', 'Bryn': 'Brows', 'Næse': 'Nose', 'Mund': 'Mouth', 'Ører': 'Ears', 'Pynt': 'Face art', 'Trøje': 'Top', 'Bukser': 'Pants', 'Kjole': 'Dress', 'Udstyr': 'Gear', 'Strømper': 'Socks', 'Sko': 'Shoes', 'Hat': 'Hat', 'Briller': 'Glasses', 'Ting': 'Things', 'Navn': 'Name', 'Baggrund': 'Back­ground',
@@ -658,13 +658,13 @@ const EN = {
   '⭐ Gemt!': '⭐ Saved!', 'Kunne ikke gemme': 'Could not save', '✨ Ny MiniMig!': '✨ New MiniMig!', '👋 Hej!': '👋 Hello!', '📷 Gemt som barnets MiniMig': '📷 Saved as the child’s MiniMig', 'Hvem køber?': 'Who is buying?', 'Hvem spiller?': 'Who is playing?', 'Hvem spiller? Tryk for at skifte': 'Who is playing? Tap to change', 'Slet?': 'Delete?',
   'Der er plads til 5 – tryk ✕ for at tage en ud': 'There is room for 5 – tap ✕ to take one out', 'Vælg nogle bevægelser først': 'Choose some moves first', 'Tag ud': 'Take out', '▶ Dans!': '▶ Dance!', '⏹ Stop': '⏹ Stop',
   'Din egen stemme siger navnet – tryk på navnet på trøjen for at høre det igen': 'Your own voice says the name – tap the name on the top to hear it again', 'Skriv dit navn først ✏️': 'Write your name first ✏️', 'Mikrofonen kunne ikke bruges': 'The microphone could not be used',
-  '🔓 Deling uden voksen er slået til': '🔓 Sharing without a grown-up is on', 'Din konto': 'Your account', 'Spil et af spillene for at samle stjerner.': 'Play one of the games to collect stars.', '⭐ giver': '⭐ gives',
+  '🔓 Deling uden voksen er slået til': '🔓 Sharing without a grown-up is on', 'Din konto': 'Your account', 'Dine mønter': 'Your coins', 'Spil et af spillene for at samle stjerner.': 'Play one of the games to collect stars.', '⭐ giver': '⭐ gives',
   'Navn': 'Name', 'Gem figuren på skærmen som barnets MiniMig': 'Save the figure on the screen as the child’s MiniMig', 'Slet spiller': 'Delete player',
   // (the page's own texts)
   '👆 Træk for at dreje figuren': '👆 Drag to turn the figure', '🤏 Knib for at zoome': '🤏 Pinch to zoom', '👕 Tryk på navnet på trøjen, så siger figuren det – med din egen indtalte stemme, hvis du har indtalt en': '👕 Tap the name on the top and the figure says it – in your own recorded voice, if you have recorded one',
   'Indtal selv': 'Record yourself', 'Gem ✓': 'Save ✓', 'Farve': 'Color', 'Styrke': 'Strength', 'Lys': 'Light', 'Gem billede': 'Save picture', 'Hele figuren': 'The whole figure', 'Profilbillede': 'Profile picture', 'Slå fra igen': 'Turn off again',
   'Skal barnet kunne dele billeder uden at spørge?': 'May the child share pictures without asking?', 'Nej, spørg hver gang': 'No, ask every time', 'Ja, i 1 time': 'Yes, for 1 hour', 'Ja, resten af i dag': 'Yes, for the rest of today', 'Ja, indtil jeg slår det fra igen': 'Yes, until I turn it off', '(kræver et sværere regnestykke)': '(needs a harder math problem)', 'Gælder kun på denne enhed. Et navn på trøjen kommer med på billedet.': 'Applies to this device only. A name on the top will be in the picture.',
-  'Spørg en voksen': 'Ask a grown-up', 'Stjernerne fra spillene bliver til kroner på din konto – jo sværere niveau, jo flere. For kronerne køber du ting i butikken.': 'The stars from the games become coins in your account – the harder the level, the more. With the coins you buy things in the shop.', '🏆 = din rekord i det spil på det niveau.': '🏆 = your record in that game at that level.', '🔒 Stjernebutik': '🔒 Star shop', 'Tryk på en ting med 🔒, og betal med mønter. Hvert barn køber for sig selv.': 'Tap a thing with 🔒 and pay with coins. Each child buys for themselves.', '🧾 Det har du købt': '🧾 What you have bought',
+  'Spørg en voksen': 'Ask a grown-up', 'Stjernerne fra spillene bliver til mønter – jo sværere niveau, jo flere. For mønterne får du ting i butikken.': 'The stars from the games become coins in your account – the harder the level, the more. With the coins you buy things in the shop.', '🏆 = din rekord i det spil på det niveau.': '🏆 = your record in that game at that level.', '🔒 Stjernebutik': '🔒 Star shop', 'Tryk på en ting med 🔒, og betal med mønter. Hvert barn køber for sig selv.': 'Tap a thing with 🔒 and pay with coins. Each child buys for themselves.', '🧾 Det har du købt': '🧾 What you have bought',
   'Køb': 'Buy', '🤝 Hjælp': '🤝 Help', 'Betal ✓': 'Pay ✓', 'Børn og spillere': 'Children and players', 'Hvert barn har sin egen MiniMig og sine egne stjerner. Byg barnets figur, og tryk 📷 – så gemmes figuren på skærmen som barnets MiniMig. Under Mine figurer trykker barnet bare på sit billede. Gemmes kun på denne enhed.': 'Each child has their own MiniMig and their own stars. Build the child’s figure and tap 📷 – the figure on the screen is then saved as the child’s MiniMig. Under My figures the child just taps their picture. Kept on this device only.', '➕ Ny spiller': '➕ New player',
   'For voksne: vælg hvilke lyde MiniMig må lave. Valget huskes på denne enhed.': 'For grown-ups: choose which sounds MiniMig may make. The choice is remembered on this device.', '🎮 Musik i spillene': '🎮 Music in the games', '💃 Musik til dansene': '💃 Music for the dances', '🔔 Lydeffekter – boing, bonk og ta-da': '🔔 Sound effects – boing, bonk and ta-da', '🗣️ Stemmen, der siger navnet': '🗣️ The voice saying the name', 'Slå al lyd fra': 'All sound off', 'Slå al lyd til': 'All sound on',
   'Tid': 'Time', 'For voksne: hvor længe må der spilles om dagen? Når tiden er brugt, holder MiniMig pause til i morgen. Valget huskes på denne enhed.': 'For grown-ups: how long may MiniMig be played each day? When the time is used up, MiniMig takes a break until tomorrow. The choice is remembered on this device.',
@@ -788,18 +788,18 @@ function shopThing(n) { for (const top of Object.values(styleLists())) for (cons
 // 04-11-2026: tapped up on to the counter until they make the price, one on the counter tapped takes it off again. The
 // account changes money by itself: any coin may be used as long as the kroner are there. 🤝 lays them out for the
 // youngest. Paid: confetti, it goes on, and it is written in the child's list; not enough: how many are missing)
-const COINS = [1, 2, 5, 10, 20], coinHtml = v => `<button class="coin c${v}" data-coin="${v}" aria-label="${v} kroner">${v}</button>`;
+const COINS = [1, 2, 5, 10, 20], coinHtml = v => `<button class="coin c${v}" data-coin="${v}" aria-label="${v} mønter">${v}</button>`;
 let buying = null, onDisk = [];
 function showCoins() { const s = playerNow().score, have = krOf(s), price = SHOP[buying], sum = onDisk.reduce((a, b) => a + b, 0), out = document.getElementById('coinSum'), rest = have - sum;
   document.getElementById('coinDisk').innerHTML = onDisk.map(coinHtml).join('');
   document.getElementById('coinTray').innerHTML = COINS.map(coinHtml).join(''); document.querySelectorAll('#coinTray .coin').forEach(b => { b.disabled = +b.dataset.coin > rest; });
-  out.textContent = sum > price ? T(`${sum} kr – det er for meget! Tryk på en mønt for at tage den af`, `${sum} coins – that is too much! Tap a coin to take it off`) : T(`${sum} af ${price} kr`, `${sum} of ${price} coins`); out.className = 'coin-sum' + (sum === price ? ' ok' : sum > price ? ' over' : '');
+  out.textContent = sum > price ? T(`${sum} kr – det er for meget! Tryk på en mønt for at tage den af`, `${sum} coins – that is too much! Tap a coin to take it off`) : T(`${sum} af ${price} mønter`, `${sum} of ${price} coins`); out.className = 'coin-sum' + (sum === price ? ' ok' : sum > price ? ' over' : '');
   document.getElementById('buyYes').disabled = sum !== price; }
 function askBuy(n, who) { if (who) setPlayer(who); else if (players.list.length > 1) { document.getElementById('whoTitle').textContent = tr('Hvem køber?'); askWho(() => askBuy(n, players.now)); return; }
   const have = krOf(playerNow().score), price = SHOP[n]; buying = n; onDisk = []; soundOut()?.resume();
   document.getElementById('buyImg').src = `ikoner/valg-${n}.png`; document.getElementById('buyTitle').textContent = tr(shopThing(n).label);
   document.getElementById('buyPrice').textContent = krTxt(price);
-  document.getElementById('buyNote').textContent = have >= price ? T(`Du har ${have} kr på din konto`, `You have ${have} coins in your account`) : T(`Du har ${have} kr – du mangler ${price - have} kr. Spil et spil, og saml flere stjerner!`, `You have ${have} coins – you need ${price - have} more. Play a game and collect more stars!`);
+  document.getElementById('buyNote').textContent = have >= price ? T(`Du har ${have} mønter`, `You have ${have} coins in your account`) : T(`Du har ${have} mønter – du mangler ${price - have}. Spil et spil, og saml flere stjerner!`, `You have ${have} coins – you need ${price - have} more. Play a game and collect more stars!`);
   document.getElementById('coinPay').hidden = have < price; showCoins(); document.getElementById('buySheet').hidden = false; }
 document.getElementById('coinTray').addEventListener('click', e => { const b = e.target.closest('[data-coin]'); if (!b || b.disabled) return; onDisk.push(+b.dataset.coin); sfx('ding'); showCoins(); });
 document.getElementById('coinDisk').addEventListener('click', e => { const b = e.target.closest('[data-coin]'); if (!b) return; onDisk.splice(onDisk.indexOf(+b.dataset.coin), 1); sfx('swish'); showCoins(); });
@@ -2567,6 +2567,7 @@ async function makeSpaceHelmet(name) { if (!hairBase?.whole) return null; const 
     const x = pts[j * 6], y = pts[j * 6 + 1], z = pts[j * 6 + 2]; top = Math.max(top, y); low = Math.min(low, y); hw = Math.max(hw, Math.abs(x - mid)); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }
   geo.computeBoundingBox(); const b = geo.boundingBox.clone(), size = Math.max(hw * 2, top - low, z1 - z0) * 1.72, k = size / Math.max(b.max.x - b.min.x, b.max.z - b.min.z), cy = (top + low) / 2 + .1 * a, cz = (z0 + z1) / 2 + .05 * a;
   geo.translate(-(b.min.x + b.max.x) / 2, -(b.min.y + b.max.y) / 2, -(b.min.z + b.max.z) / 2); geo.scale(k, k, k); geo.translate(mid, cy, cz);
+  { const P = geo.attributes.position, from = cy - .1 * size, span = .36 * size; for (let i = 0; i < P.count; i++) { const t = Math.min(1, Math.max(0, (from - P.getY(i)) / span)), q = 1 - .4 * t * t * (3 - 2 * t); P.setX(i, mid + (P.getX(i) - mid) * q); P.setZ(i, cz + (P.getZ(i) - cz) * q); } geo.computeVertexNormals(); } // (narrower down at the shoulders - the user, 14-11-2026)
   const onHead = () => [[hairBase.head, 1]], shell = gearMesh([{ geo, w: onHead, uv: true, back: hairBase.headBack }], new THREE.MeshStandardMaterial({ map, roughness: .3, metalness: 0, side: THREE.DoubleSide })); shell.name = name;
   const glass = new THREE.SphereGeometry(Math.min(b.max.x - b.min.x, b.max.y - b.min.y, b.max.z - b.min.z) * k * .455, 32, 24); glass.translate(mid, cy, cz);
   const bubble = gearMesh([{ geo: glass, w: onHead, back: hairBase.headBack }], new THREE.MeshStandardMaterial({ color: 0xCFE8FF, transparent: true, opacity: .16, roughness: .03, metalness: .1, depthWrite: false }), shell); bubble.castShadow = false; bubble.renderOrder = 3; return shell; }
@@ -4116,7 +4117,7 @@ async function readGlb(url, texUrl) { const tex = await new THREE.TextureLoader(
   const bones = skin.joints.map(i => nodes[i]), ibm = read(skin.inverseBindMatrices).data, inverses = bones.map((_, i) => new THREE.Matrix4().fromArray(ibm, i * 16)), mesh = nodes.find(o => o.isSkinnedMesh); mesh.bind(new THREE.Skeleton(bones, inverses), new THREE.Matrix4());
   const clips = j.animations.map(A => new THREE.AnimationClip(A.name || 'walk', -1, A.channels.map(c => { const s = A.samplers[c.sampler], name = nodes[c.target.node].name, Track = { translation: THREE.VectorKeyframeTrack, rotation: THREE.QuaternionKeyframeTrack, scale: THREE.VectorKeyframeTrack }[c.target.path], prop = { translation: 'position', rotation: 'quaternion', scale: 'scale' }[c.target.path]; return new Track(name + '.' + prop, read(s.input).data, read(s.output).data, s.interpolation === 'STEP' ? THREE.InterpolateDiscrete : THREE.InterpolateLinear); })));
   return { inner, bones, mesh, clips }; }
-async function loadGlbPet(url, texUrl, height, collarSize, collarDrop) { const { inner, bones, mesh, clips } = await readGlb(url, texUrl), clip = clips[0];
+async function loadGlbPet(url, texUrl, height, collarSize, collarDrop) { const { inner, bones, mesh, clips } = await readGlb(url, texUrl), clip = clips[0]; clip.tracks = clip.tracks.filter(t => !t.name.endsWith('.scale')); // (walking, the animal keeps its size - it shrank: the walk set every bone's size too)
   const group = new THREE.Group(), turn = new THREE.Group(); turn.add(inner); group.add(turn); group.updateMatrixWorld(true); const bone = name => bones.find(b => b.name === name);
   const a = bone('head').getWorldPosition(new THREE.Vector3()), b = bone('Hips').getWorldPosition(new THREE.Vector3()); turn.rotation.y = -Math.atan2(a.x - b.x, a.z - b.z); group.updateMatrixWorld(true);
   const box = new THREE.Box3().setFromObject(mesh, true), k = height / (box.max.y - box.min.y); turn.scale.setScalar(k); turn.position.y = -box.min.y * k;
@@ -4168,7 +4169,7 @@ function petTick(dt) { if (!pet) { if (bowl) bowl.visible = false; if (ball) bal
   // other side - it rolled over the cat - and during one it goes a little further off and sits looking on; the user, 04-11-2026)
   const rolling = !mode && MOVES.kolboette.some(m => m[0] === anim), runMove = !mode && MOVES.loeb.some(m => m[0] === anim);
   // (the things: the collar with it everywhere; the bowl and the ball by the figure outside the games, and its errands to them)
-  const hasBowl = petToys.includes('dyr-skaal'), hasBall = petToys.includes('dyr-bold'), toysOut = !mode && holder.visible && !rolling; if (pet.collar) pet.collar.visible = petToys.includes('dyr-halsbaand'); if (hasBowl && !bowl) { bowl = makeBowl(); bowl.position.set(toyBowl.x, 0, toyBowl.z); } if (hasBall && !ball) { ball = makePetBall(); ball.position.set(toyRest.x, .11, toyRest.z); } if (bowl) bowl.visible = hasBowl && toysOut; if (ball) ball.visible = hasBall && toysOut; if (!toysOut || runMove) { if (petJob.kind === 'ball') ball?.position.set(toyRest.x, .11, toyRest.z); petJob.kind = ''; } if (!hasBowl && petJob.kind === 'eat' || !hasBall && petJob.kind === 'ball') petJob.kind = '';
+  const hasBowl = petToys.includes('dyr-skaal'), hasBall = petToys.includes('dyr-bold'), toysOut = !mode && holder.visible && !rolling && [...MOVES.staa, ...MOVES.vink].some(m => m[0] === anim); if (pet.collar) pet.collar.visible = petToys.includes('dyr-halsbaand'); if (hasBowl && !bowl) { bowl = makeBowl(); bowl.position.set(toyBowl.x, 0, toyBowl.z); } if (hasBall && !ball) { ball = makePetBall(); ball.position.set(toyRest.x, .11, toyRest.z); } if (bowl) bowl.visible = hasBowl && toysOut; if (ball) ball.visible = hasBall && toysOut; if (!toysOut || runMove) { if (petJob.kind === 'ball') ball?.position.set(toyRest.x, .11, toyRest.z); petJob.kind = ''; } if (!hasBowl && petJob.kind === 'eat' || !hasBall && petJob.kind === 'ball') petJob.kind = '';
   let behind = mode === 'sea' ? -Math.sign(Math.sin(game.rotY ?? 0)) || -1 : 1, [ox, oz, face] = { '': rolling ? [-.88, .15, .45] : [-.62, .5, .5], side: [pet.model ? -.73 : -.9, .35, Math.PI / 2], back: [.75, .35, Math.PI], front: [.75, -.15, 0], skate: [0, 1.25, Math.PI], sea: [behind * 1, .2, null], island: [-.75, .5, null], hide: [.85, .5, 0], pk: [-.8, .3, Math.PI] }[mode] ?? [.62, .5, .5];
   const running = runMove || ['side', 'back', 'front', 'skate'].includes(mode), floorY = mode === 'sea' ? petAt.y - .45 : 0; let tx = petAt.x + ox, tz = petAt.z + oz; const J = petJob;
   if (J.kind === 'eat') { tx = toyBowl.x + .1; tz = toyBowl.z - .3; face = Math.atan2(toyBowl.x - tx, toyBowl.z - tz); }
@@ -4868,7 +4869,7 @@ function skateThing(kind) { const pool = sk.pools[kind] ??= [], free = pool.find
   // (the dog, the cat and the rabbit from Dyr - the user, 12-11-2026: they run over the road from out in the grass)
   if (SK_PETS[kind]) { it.half = .34; it.len = .5; loadGlbPet(kind + '.glb', kind + '.jpg', SK_PETS[kind], .11, .022).then(m => { m.collar.visible = false; g.add(m.group); it.pet = m; }).catch(() => {}); }
   return it; }
-const SK_PETS = { 'dyr-kat': .72, 'dyr-hund': .74, 'dyr-kanin': .98 }, skPetsIn = () => Object.keys(SK_PETS).filter(k => (sk.pools[k] || []).some(p => p.pet && !p.group.visible));
+const SK_PETS = { 'dyr-kat': .54, 'dyr-hund': .58, 'dyr-kanin': .58 }, skPetsIn = () => Object.keys(SK_PETS).filter(k => (sk.pools[k] || []).some(p => p.pet && !p.group.visible));
 // (the good ones: run into on purpose - a star, a splash, a jump, a present - not bumped into)
 const SK_GOOD = new Set(['stjerne', 'pyt', 'rampe', 'gave']);
 // (a row of things far down the road: one thing - or a bar over two lanes - and, mostly, stars in a free lane; the
@@ -5733,7 +5734,7 @@ let starShown = null;
 function showStarSheet(id = starShown || players.now) { starShown = id; const p = players.list.find(q => q.id === id) || playerNow(), s = p.score, have = krOf(s), many = players.list.length > 1;
   const who = document.getElementById('starWho'); who.hidden = !many;
   who.innerHTML = many ? players.list.map(q => `<button data-who="${q.id}" class="${q.id === p.id ? 'on' : ''}">${playerFace(q)}<span>${esc(q.name) || '&nbsp;'}</span></button>`).join('') : '';
-  document.getElementById('starTitle').textContent = p.name ? T(`${p.name}s konto`, `${p.name}’s account`) : tr('Din konto');
+  document.getElementById('starTitle').textContent = p.name ? T(`${p.name}s mønter`, `${p.name}’s coins`) : tr('Dine mønter');
   document.getElementById('starTotal').textContent = `💰 ${krTxt(have)}`;
   document.getElementById('starNote').textContent = s.games ? T(`⭐ ${s.total} stjerner samlet i ${s.games} spil på denne enhed.`, `⭐ ${s.total} stars collected in ${s.games} games on this device.`) : tr('Spil et af spillene for at samle stjerner.');
   document.getElementById('starTable').innerHTML = `<tr><th></th>${LEVELS.map(([id, name]) => `<th><img src="ikoner/valg-${id}.png" alt="${tr(name)}"></th>`).join('')}</tr><tr><td>${tr('⭐ giver')}</td>${LEVELS.map(([id]) => `<td>${krTxt(starWorth(id))}</td>`).join('')}</tr>` +
@@ -5947,7 +5948,7 @@ const infoBtn = document.getElementById('infoBtn'), infoPop = document.getElemen
   last = e.timeStamp; }, { passive: false });
   document.addEventListener('dblclick', e => e.preventDefault(), { passive: false }); }
 // (on the test page only: a button with kroner, to try the shop without playing for them - the user, 04-11-2026)
-if (location.pathname.includes('/test/')) { const b = document.createElement('button'); b.textContent = '+100 kr'; b.style.cssText = 'position:fixed;top:28px;left:50%;transform:translateX(-50%);z-index:999;background:#FFC233;color:#5A3A00;border:0;border-radius:10px;padding:5px 12px;font:700 13px system-ui,sans-serif;cursor:pointer'; b.onclick = () => { krOf(score); score.kr += 100; saveScore(); showRecord(); toast(`💰 ${score.kr} kr`); if (!document.getElementById('starSheet').hidden) showStarSheet(); }; document.body.append(b); }
+if (location.pathname.includes('/test/')) { const b = document.createElement('button'); b.textContent = '+100'; b.style.cssText = 'position:fixed;top:28px;left:50%;transform:translateX(-50%);z-index:999;background:#FFC233;color:#5A3A00;border:0;border-radius:10px;padding:5px 12px;font:700 13px system-ui,sans-serif;cursor:pointer'; b.onclick = () => { krOf(score); score.kr += 100; saveScore(); showRecord(); toast(`💰 ${score.kr}`); if (!document.getElementById('starSheet').hidden) showStarSheet(); }; document.body.append(b); }
 // (one more line while the child isn't saved with a name yet - the user, 04-11-2026: how to keep one's own player)
 const infoSave = document.createElement('span'); infoSave.innerHTML = T('<br>🙂 Gem dig selv som spiller: Byg din figur, og tryk på billedet nederst i højre hjørne. Vælg »Børn og spillere – for voksne«, og få en voksen til at løse regnestykket. Skriv navnet, og tryk 📷', '<br>🙂 Save yourself as a player: Build your figure and tap the picture in the bottom right corner. Choose “Children and players – for grown-ups” and get a grown-up to solve the math problem. Write the name and tap 📷');
 const infoVersion = document.createElement('small'); infoVersion.style.cssText = 'display:block;margin-top:6px;opacity:.65;font-weight:600'; infoVersion.textContent = 'Version ' + document.querySelector('meta[name="minimig-version"]').content;
@@ -5990,6 +5991,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.11.0 (bdb090e)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.11.0 (72e4fdd)</div>
 </body>
 </html>
