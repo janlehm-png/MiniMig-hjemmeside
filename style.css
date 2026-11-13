@@ -73,3 +73,11 @@ footer a { color: var(--muted); }
 
 nav { display:flex; flex-wrap:wrap; justify-content:center; gap:8px; }
 nav a { display:inline-flex; align-items:center; min-height:44px; }
+
+/* (the site is still being made, and an app is on its way - for the few who test it now, the user 13-11-2026) */
+.dev-note { background: #FFF1C2; color: #4A3700; border-bottom: 1px solid #F2D98A; font-size: .95rem; line-height: 1.5; }
+.dev-note p { max-width: 860px; margin: 0 auto; padding: 10px 20px; text-align: center; }
+.test-tag { align-self: center; background: var(--pink); color: #fff; border-radius: 999px; padding: 3px 9px; font-size: .7rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+.badges { display: flex; flex-wrap: wrap; gap: 10px; align-items: stretch; }
+.badge.soon { background: transparent; color: var(--muted); border: 2px dashed var(--muted); cursor: default; }
+@media (prefers-color-scheme: dark) { .dev-note { background: #3A2F12; color: #FFE7A3; border-color: #5A4A1C; } }

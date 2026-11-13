@@ -1,9 +1,9 @@
 (() => {
 'use strict';
-const root = new URL('./', document.currentScript.src);
+const root = new URL('./', document.currentScript.src), onTest = root.pathname.endsWith('/test/'), site = onTest ? new URL('../', root) : root;
 // (the language: on the website the page's own; in the game as the game has it - it runs after this, so it is worked out here too)
 const en = (() => { if (!document.getElementById('scene')) return document.documentElement.lang === 'en';
- let l = new URLSearchParams(location.search).get('lang'); if (l !== 'en' && l !== 'da') { try { l = localStorage.getItem('minimig3d.sprog'); } catch (e) { l = null; } }
+ let l = new URLSearchParams(location.search).get('lang'); if (l !== 'en' && l !== 'da') { try { l = localStorage.getItem((onTest ? 'minimig-test' : 'minimig3d') + '.sprog'); } catch (e) { l = null; } }
  return (l || (/^da\b/i.test(navigator.language || '') ? 'da' : 'en')) === 'en'; })();
 const say = (da, english) => en ? english : da;
 const panel = document.createElement('aside');
@@ -31,7 +31,7 @@ panel.innerHTML = en ? `<button type="button" class="pwa-help">For grown-ups</bu
 <p>Tap <strong>Install MiniMig</strong> if the button appears. Otherwise open the browser’s menu in Chrome and choose <strong>Install app</strong> or <strong>Add to Home screen</strong>. Confirm that you want to add it.</p>
 </div>
 <h3>Playing without internet</h3>
-<p>MiniMig keeps the essentials on this device – about 25 MB with the figure, the standard hair, the icons and the backgrounds – so you can also play without internet. That is why it takes a little longer the first time. Clothes, hair, hats, moves and pets are saved the first time your child uses them, so they may take a moment to appear. If your child uses everything, the game takes up about 120 MB.</p>
+<p>MiniMig keeps everything on this device, about 135 MB in all. First the figure, all the moves and the games (about 40 MB), so you can play without internet. After that, clothes, hair, hats and pets download by themselves in the background while there is internet. Please use Wi-Fi the first time.</p>
 <p>The first time, it takes a little while to download the game. After that it can be used without internet.</p>
 <div class="pwa-message" role="status" aria-live="polite" aria-atomic="true" hidden><strong>Message</strong>
 <p class="pwa-status">The game is downloading. Please wait, and stay connected to the internet.</p></div>
@@ -69,7 +69,7 @@ panel.innerHTML = en ? `<button type="button" class="pwa-help">For grown-ups</bu
 <p>Tryk på <strong>Installér MiniMig</strong>, hvis knappen vises. Ellers åbner du browserens menu i Chrome og vælger <strong>Installér app</strong> eller <strong>Føj til startskærm</strong>. Bekræft tilføjelsen.</p>
 </div>
 <h3>Spil uden internet</h3>
-<p>MiniMig gemmer det vigtigste på denne enhed – omkring 25 MB med figuren, standardhåret, ikonerne og baggrundene – så I også kan spille uden internet. Derfor tager det lidt længere tid første gang. Tøj, hår, hatte, bevægelser og kæledyr gemmes første gang barnet bruger dem, så der kan gå et øjeblik, før de dukker op. Bruger barnet det hele, fylder spillet omkring 120 MB.</p>
+<p>MiniMig gemmer det hele på denne enhed, omkring 135 MB i alt. Først figuren, alle bevægelser og spillene (omkring 40 MB), så I kan spille uden internet. Bagefter hentes tøj, hår, hatte og kæledyr af sig selv i baggrunden, mens der er internet. Brug gerne wifi første gang.</p>
 <p>Første gang tager det lidt tid at hente spillet. Derefter kan det bruges uden internet.</p>
 <div class="pwa-message" role="status" aria-live="polite" aria-atomic="true" hidden><strong>Besked</strong>
 <p class="pwa-status">Spillet hentes. Vent lidt, og behold internetforbindelsen.</p></div>
@@ -89,8 +89,8 @@ panel.innerHTML = en ? `<button type="button" class="pwa-help">For grown-ups</bu
 document.body.append(panel);
 const dialog = panel.querySelector('dialog'), status = panel.querySelector('.pwa-status');
 const install = panel.querySelector('.pwa-install');
-panel.querySelector('.pwa-privacy').href = new URL(say('privatliv/', 'en/privacy/'), root);
-panel.querySelector('.pwa-support').href = new URL(say('support/', 'en/support/'), root);
+panel.querySelector('.pwa-privacy').href = new URL(say('privatliv/', 'en/privacy/'), site);
+panel.querySelector('.pwa-support').href = new URL(say('support/', 'en/support/'), site);
 const NOT_READY = say('Spillet er ikke klar til brug uden internet. Kontrollér internetforbindelsen, og åbn MiniMig igen.', 'The game isn’t ready to use without internet. Check your internet connection and open MiniMig again.');
 panel.querySelector('.pwa-help').onclick = () => dialog.showModal();
 const standalone = matchMedia('(display-mode: standalone)');
@@ -107,11 +107,29 @@ install.onclick = async () => { const event = prompt; prompt = null; installUI()
 window.addEventListener('appinstalled', () => { prompt = null; installUI(); });
 standalone.addEventListener('change', installUI); installUI();
 function checkReady() { navigator.serviceWorker.controller?.postMessage({type:'CHECK_OFFLINE'}); }
+const READY = say('Spillet kan nu bruges uden internet.', 'The game can now be used without internet.');
+function showRest(have, total, stopped) { status.textContent = READY + ' ' + (have >= total ? say('Alt tøj og hår er også hentet.', 'All clothes and hair are downloaded too.') : stopped ? say('Noget tøj og hår mangler stadig. Det hentes, næste gang der er internet.', 'Some clothes and hair are still missing. They download next time there is internet.') : say(`Tøj og hår hentes stadig af sig selv: ${have} af ${total}.`, `Clothes and hair are still downloading by themselves: ${have} of ${total}.`)); }
+// The rest - clothes, hair, hats, pets - one file at a time behind the game, each kept by the service worker as it passes
+// through it. It stops without internet and goes on next time (the user's test, 05-11-2026: they were missing without internet).
+let fetching = false;
+async function getRest(missing, total) { if(fetching || !missing.length || navigator.connection?.saveData) return; fetching = true;
+ let have = total - missing.length;
+ try { for(const url of missing) { const response = await fetch(url); if(!response.ok) throw new Error(url); await response.arrayBuffer(); showRest(++have, total); } }
+ catch(error) { showRest(have, total, true); }
+ fetching = false; }
+addEventListener('online', checkReady);
 if (!('serviceWorker' in navigator) || !isSecureContext) { status.textContent = say('Denne browser kan ikke gøre spillet klar til brug uden internet. Prøv at åbne https://minimig.dk/ i en opdateret browser.', 'This browser can’t get the game ready to use without internet. Try opening https://minimig.dk/ in an up-to-date browser.'); return; }
 navigator.serviceWorker.addEventListener('message', event => {
- if(event.data?.type === 'OFFLINE_STATUS') status.textContent = event.data.ready ? say('Spillet kan nu bruges uden internet.', 'The game can now be used without internet.') : NOT_READY;
+ if(event.data?.type !== 'OFFLINE_STATUS') return;
+ const {ready, total, missing = []} = event.data;
+ if(!ready) { status.textContent = NOT_READY; return; }
+ if(total === undefined) { status.textContent = READY; return; } // (the previous version's service worker, until the new one takes over)
+ showRest(total - missing.length, total); getRest(missing, total);
 });
-navigator.serviceWorker.addEventListener('controllerchange', () => { if(reloading) location.reload(); else checkReady(); });
+// (reloading the page lets a waiting version take over by itself, but the page it shows is still the old one - it took two
+// reloads to see a new version. A page just opened and not yet touched goes straight on to the new one)
+const hadController = !!navigator.serviceWorker.controller;
+navigator.serviceWorker.addEventListener('controllerchange', () => { if(reloading || (hadController && !touched && performance.now() < 15000)) { reloading = true; location.reload(); } else checkReady(); });
 // A new version is fetched quietly in the background and then put in by itself, never in the middle of play: at once
 // if MiniMig has only just been opened and nobody has touched it yet, otherwise when it is put away (the app closed,
 // another app opened, the screen locked). The figure is kept in local storage, so the reload loses nothing.
@@ -121,14 +139,16 @@ function applyUpdate() {
 }
 // (an installed app is rarely opened afresh - it just comes back from the background - so it looks for a new version then)
 document.addEventListener('visibilitychange', () => { if(document.hidden) applyUpdate(); else registration?.update().catch(() => {}); });
+navigator.storage?.persist?.().catch(() => {}); // (asks the browser not to clear the saved game when space runs short)
 navigator.serviceWorker.register(new URL('service-worker.js', root), {scope:root.pathname, updateViaCache:'none'}).then(reg => {
  registration = reg;
  const waiting = applyUpdate;
  waiting(); checkReady();
- reg.addEventListener('updatefound', () => {
-  const worker = reg.installing;
-  worker?.addEventListener('statechange', () => { waiting(); if(worker.state === 'redundant') status.textContent = NOT_READY; });
- });
+ const watch = () => { const worker = reg.installing;
+  worker?.addEventListener('statechange', () => { waiting(); if(worker.state === 'redundant') status.textContent = NOT_READY; }); };
+ // (one may already be on its way: opening the page starts it before this runs, and it then waited till the page was closed)
+ watch(); reg.addEventListener('updatefound', watch);
+ reg.update().catch(() => {}); // (the browser looks by itself only now and then: the page kept showing the old version when reloaded)
  navigator.serviceWorker.ready.then(checkReady);
 }).catch(() => { status.textContent = NOT_READY; });
 })();

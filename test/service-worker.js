@@ -1,5 +1,5 @@
 'use strict';
-importScripts('./precache-manifest.js?v=309C971AB8E8B2E5');
+importScripts('./precache-manifest.js?v=F6DA4E52C6DCF2E3');
 const PREFIX = 'minimig-' + encodeURIComponent(self.registration.scope) + '-';
 // One cache for all versions. Each file is kept under its own hash, so a new version fetches only the files that changed
 // (each new version used to throw away everything, so what had been played with no longer worked without internet).
@@ -47,6 +47,9 @@ self.addEventListener('fetch', event => {
  if(event.request.method !== 'GET') return;
  const url = new URL(event.request.url);
  if(url.origin !== self.location.origin || !url.href.startsWith(self.registration.scope)) return;
+ // (the game's address without its last slash, minimig.dk/bygogspil: the server's own redirect needs internet, so
+ // without it the game didn't open - sent on to the address with the slash here)
+ if(event.request.mode === 'navigate' && url.pathname + '/' === GAME) { url.pathname = GAME; event.respondWith(Response.redirect(url.href, 301)); return; }
  // Version/retry query strings on game images resolve to this release's assets.
  url.search = ''; url.hash = '';
  if(url.pathname.endsWith('/')) url.pathname += 'index.html';

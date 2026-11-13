@@ -31,7 +31,7 @@ panel.innerHTML = en ? `<button type="button" class="pwa-help">For grown-ups</bu
 <p>Tap <strong>Install MiniMig</strong> if the button appears. Otherwise open the browser’s menu in Chrome and choose <strong>Install app</strong> or <strong>Add to Home screen</strong>. Confirm that you want to add it.</p>
 </div>
 <h3>Playing without internet</h3>
-<p>MiniMig keeps everything on this device, about 120 MB in all. First the figure, all the moves and the games (about 40 MB), so you can play without internet. After that, clothes, hair, hats and pets download by themselves in the background while there is internet. Please use Wi-Fi the first time.</p>
+<p>MiniMig keeps everything on this device, about 135 MB in all. First the figure, all the moves and the games (about 40 MB), so you can play without internet. After that, clothes, hair, hats and pets download by themselves in the background while there is internet. Please use Wi-Fi the first time.</p>
 <p>The first time, it takes a little while to download the game. After that it can be used without internet.</p>
 <div class="pwa-message" role="status" aria-live="polite" aria-atomic="true" hidden><strong>Message</strong>
 <p class="pwa-status">The game is downloading. Please wait, and stay connected to the internet.</p></div>
@@ -69,7 +69,7 @@ panel.innerHTML = en ? `<button type="button" class="pwa-help">For grown-ups</bu
 <p>Tryk på <strong>Installér MiniMig</strong>, hvis knappen vises. Ellers åbner du browserens menu i Chrome og vælger <strong>Installér app</strong> eller <strong>Føj til startskærm</strong>. Bekræft tilføjelsen.</p>
 </div>
 <h3>Spil uden internet</h3>
-<p>MiniMig gemmer det hele på denne enhed, omkring 120 MB i alt. Først figuren, alle bevægelser og spillene (omkring 40 MB), så I kan spille uden internet. Bagefter hentes tøj, hår, hatte og kæledyr af sig selv i baggrunden, mens der er internet. Brug gerne wifi første gang.</p>
+<p>MiniMig gemmer det hele på denne enhed, omkring 135 MB i alt. Først figuren, alle bevægelser og spillene (omkring 40 MB), så I kan spille uden internet. Bagefter hentes tøj, hår, hatte og kæledyr af sig selv i baggrunden, mens der er internet. Brug gerne wifi første gang.</p>
 <p>Første gang tager det lidt tid at hente spillet. Derefter kan det bruges uden internet.</p>
 <div class="pwa-message" role="status" aria-live="polite" aria-atomic="true" hidden><strong>Besked</strong>
 <p class="pwa-status">Spillet hentes. Vent lidt, og behold internetforbindelsen.</p></div>
