@@ -707,7 +707,7 @@ disc.rotation.x = -Math.PI / 2; disc.position.y = .001; scene.add(disc);
 
 // ---- colours: the figure's painted texture, recoloured (below) ----
 // (the parts, each with the app's icon for its tab, in ikoner/; the fixed colours are gone - the sliders alone)
-const CHOICES = [['skin', 'Hud', 'hud'], ['hair', 'Hår', 'haar'], ['eyes', 'Øjne', 'oejne'], ['brows', 'Bryn', 'bryn'], ['nose', 'Næse', 'naese'], ['mouth', 'Mund', 'mund'], ['ears', 'Ører', 'oerer'], ['pynt', 'Pynt', 'kinder'], ['shirt', 'Trøje', 'troeje'], ['pants', 'Bukser', 'bukser'], ['dress', 'Kjole', 'kjoler'], ['gear-skate', 'Skateboard', 'fane-skate'], ['gear-sea', 'Svømning', 'fane-svoem'], ['gear-space', 'Rumrejse', 'fane-rum'],
+const CHOICES = [['skin', 'Hud', 'hud'], ['hair', 'Hår', 'haar'], ['eyes', 'Øjne', 'oejne'], ['brows', 'Bryn', 'bryn'], ['nose', 'Næse', 'naese'], ['mouth', 'Mund', 'mund'], ['ears', 'Ører', 'oerer'], ['pynt', 'Pynt', 'kinder'], ['shirt', 'Trøje', 'troeje'], ['pants', 'Bukser', 'bukser'], ['dress', 'Kjole', 'kjoler'], ['gear-skate', 'Skateboard', 'fane-skate'], ['gear-sea', 'Svømning', 'fane-svoem'], ['gear-space', 'Rumrejse', 'fane-rum'], ['gear-pk', 'Straffespark', 'fane-straffe'],
   ['socks', 'Strømper', 'stroemper'], ['shoe', 'Sko', 'sko'], ['hat', 'Hat', 'hat'], ['glasses', 'Briller', 'briller'], ['item', 'Ting', 'ting'], ['name', 'Navn', 'navn'], ['bg', 'Baggrund', 'baggrund']];
 const picked = {}, START = { skin: '#EDB98A', hair: '#4A2C1D', eyes: '#7A4220', brows: '#4A2C1D', mouth: '#C0505A', pynt: '#FF5A6E', nose: '#EDB98A', shirt: '#FF7A2F', pants: '#2C3E8C', dress: '#3D8BFF', suit: '#3D8BFF', socks: '#3D8BFF', item: '#E8384F', shoe: '#3D8BFF', hat: '#3D8BFF', glasses: '#3D8BFF' }; let partNow = 'shirt';
 const apply = (part, c) => { picked[part] = c; recolour(part, c); if (part === 'shirt' || part === 'dress') chestName(); };
@@ -726,10 +726,10 @@ var petPick = false; // (a pet tapped last under Ting: its colours can't be chan
 // Udstyr has a tab for each game with gear: all that game's things together, with the gear's colour, and a green
 // button that starts the game once all of it is on)
 const MAIN = [['face', 'Ansigt', 'gruppe-ansigt', ['skin', 'hair', 'eyes', 'brows', 'nose', 'mouth', 'ears', 'glasses', 'pynt']], ['wear', 'Tøj', 'gruppe-toej', ['shirt', 'pants', 'dress', 'socks', 'shoe', 'hat']],
-  ['gear', 'Udstyr', 'gruppe-udstyr', ['gear-skate', 'gear-sea', 'gear-space']], ['more', 'Mere', 'gruppe-mere', ['item', 'name', 'bg']]], mainOf = part => MAIN.find(m => m[3].includes(part))?.[0] || '', lastSub = {};
+  ['gear', 'Udstyr', 'gruppe-udstyr', ['gear-skate', 'gear-sea', 'gear-space', 'gear-pk']], ['more', 'Mere', 'gruppe-mere', ['item', 'name', 'bg']]], mainOf = part => MAIN.find(m => m[3].includes(part))?.[0] || '', lastSub = {};
 var mainNow = '', dressSnap = null, dressWant = '';
 // (the colour of a game's gear is the suits' colour - and the skateboard helmet's with it)
-function colourPart() { return partNow.startsWith('gear-') ? 'suit' : partNow; }
+function colourPart() { return partNow === 'gear-pk' ? 'shirt' : partNow.startsWith('gear-') ? 'suit' : partNow; } // (the football kit's colour is the shirt's)
 function applyTab(c) { apply(colourPart(), c); if (partNow.startsWith('gear-') && typeof GARMENTS !== 'undefined' && GARMENTS.hat.now === 'hat-skaterhjelm') apply('hat', c); }
 function tapMain(id) { if (mainNow === id) { mainNow = ''; boxOpen = false; showSwatches(); return; } mainNow = id; boxOpen = true; partNow = lastSub[id] || MAIN.find(m => m[0] === id)[3][0]; showSwatches(); lookFor(partNow); }
 function showSwatches() { const move = /^(move|game)-/.test(partNow); if (!move) slidersFrom(picked[colourPart()] || START[colourPart()]);
@@ -2115,7 +2115,7 @@ var styleLists = () => ({ hair: [HAIRS, hairNow, setHair], eyes: [EYES, eyesNow,
       // (and the safety gear in a row of its own, each thing on or off by itself)
       [SAFETY.map(n => [n, GARMENTS[gearPart(n)].items.find(i => i[0] === n)[1]]), SAFETY.filter(n => GARMENTS[gearPart(n)].now === n), n => setGarment(gearPart(n), GARMENTS[gearPart(n)].now === n ? '' : n)]]],
   // (Udstyr, a tab for each game: all its things in one row, each put on or taken off by itself)
-  ...Object.fromEntries(['skate', 'sea', 'space'].map(g => { const items = Object.values(GARMENTS).flatMap(G => G.items.filter(i => i[2]?.game === g).map(i => [i[0], i[1]]));
+  ...Object.fromEntries(['skate', 'sea', 'space', 'pk'].map(g => { const items = Object.values(GARMENTS).flatMap(G => G.items.filter(i => i[2]?.game === g).map(i => [i[0], i[1]]));
     return ['gear-' + g, [items, items.map(i => i[0]).filter(n => GARMENTS[gearPart(n)].now === n), n => { const part = gearPart(n), on = GARMENTS[part].now === n; if (part === 'suit' || part === 'glasses') gearPick(part, on ? '' : n); setGarment(part, on ? '' : n); }]]; })),
   ...Object.fromEntries(Object.entries(MOVES).map(([g, list]) => ['move-' + g, [list, moveNow[g], playMove]])), 'game-hop': gameList() });
 // (a style being fetched is fetched once: two taps on it made two heads of hair, and the first stayed on for good. One
@@ -2273,10 +2273,10 @@ const GARMENTS = {
   // that stood out)
   shirt: { items: [['', 'Undertrøje'], ['toej-tshirt', 'T-shirt', { made: true, sleeve: .3, length: .01, relief: 'tshirt' }],
     ['toej-haette', 'Hættetrøje', { made: true, sleeve: 1.035, length: .01, hood: true, wrist: true, pocket: true, relief: true, cloth: 'smooth' }],
-    ['toej-fodbold', 'Fodboldtrøje', { made: true, sleeve: .32, length: .01, tuck: true, trim: true, relief: 'fodbold', cloth: 'smooth' }]], texs: clothTexs },
+    ['toej-fodbold', 'Fodboldtrøje', { made: true, sleeve: .32, length: .01, tuck: true, trim: true, relief: 'fodbold', cloth: 'smooth', game: 'pk', keep: true }]], texs: clothTexs },
   // (the folds lower than at first - the user - and the long trousers turned up a little too)
   pants: { items: [['', 'Undershorts'], ['bukser-trusser', 'Trusser', { made: true, hem: .41, brief: .07, under: .012, rise: .012, noBand: true, white: true }], ['bukser-lange', 'Lange bukser', { made: true, hem: .06, loose: .004, cuff: .014 }], ['bukser-shorts', 'Shorts', { made: true, hem: .3, cuff: .018 }],
-    ['bukser-cowboy', 'Cowboyshorts', { made: true, hem: .24, cuff: .02, cloth: 'denim' }], ['bukser-fodbold', 'Fodboldbukser', { made: true, hem: .295, loose: .004, loops: false, cloth: 'smooth' }]], texs: [], waist: true },
+    ['bukser-cowboy', 'Cowboyshorts', { made: true, hem: .24, cuff: .02, cloth: 'denim' }], ['bukser-fodbold', 'Fodboldbukser', { made: true, hem: .295, loose: .004, loops: false, cloth: 'smooth', game: 'pk', keep: true }]], texs: [], waist: true },
   dress: { items: [['', 'Ingen kjole'], ['kjole-sommer', 'Sommerkjole'], ['kjole-prinsesse', 'Prinsessekjole', { hang: .5, armsOut: 12 }], ['kjole-havfrue', 'Havfruekjole', { skirt: false, margin: .012, reach: 8, tail: true, snug: .2, waist: .15 }]], texs: [], skirt: true, noArms: true },
   // (suits, worn instead of a top and trousers - or a dress - as a dress is: the swimsuit and swim trunks for the swim
   // world first; ski, space and motocross suits to come. The user, 11-11-2026. Made from the body, as the tops are)
@@ -2288,8 +2288,8 @@ const GARMENTS = {
   socks: { items: [['', 'Ingen strømper'], ['stroemper-ankel', 'Ankelstrømper', { made: true, top: .045, cloth: 'knit' }],
     // (ordinary socks, halfway between the ankle socks and the football socks - the user, 11-11-2026)
     ['stroemper-almindelige', 'Almindelige strømper', { made: true, top: .13, cloth: 'knit' }],
-    ['stroemper-fodbold', 'Fodboldstrømper', { made: true, top: .2, stripe: [.012, .026], cloth: 'knit' }], ['stroemper-hoeje', 'Knæstrømper', { made: true, top: .24, cloth: 'knit' }]], texs: [] },
-  shoe: { items: [['', 'Bare fødder'], ['sko-sneakers', 'Sneakers', { sole: .02 }], ['sko-fodbold', 'Fodboldstøvler', { file: 'sko-sneakers', sole: .02, studs: true }], ['sko-gummi', 'Gummistøvler', { pale: .9, paleTop: .015 }], ['sko-ballet', 'Balletsko', { paleFrom: .06, flat: .35, solid: .03 }],
+    ['stroemper-fodbold', 'Fodboldstrømper', { made: true, top: .2, stripe: [.012, .026], cloth: 'knit', game: 'pk', keep: true }], ['stroemper-hoeje', 'Knæstrømper', { made: true, top: .24, cloth: 'knit' }]], texs: [] },
+  shoe: { items: [['', 'Bare fødder'], ['sko-sneakers', 'Sneakers', { sole: .02 }], ['sko-fodbold', 'Fodboldstøvler', { file: 'sko-sneakers', sole: .02, studs: true, game: 'pk', keep: true }], ['sko-gummi', 'Gummistøvler', { pale: .9, paleTop: .015 }], ['sko-ballet', 'Balletsko', { paleFrom: .06, flat: .35, solid: .03 }],
     // (high heels, for the dresses - the user, 03-11-2026: made from the feet as the socks are, a shiny shell, the heels
     // raised and a thin heel under each - see heelsTick)
     ['sko-hoej', 'Højhælede', { made: true, top: .03, out: .0055, heel: true }],
@@ -2324,10 +2324,13 @@ const gearOf = () => { try { return playerNow().gear ??= {}; } catch (e) { retur
 const wearSnap = () => ({ now: Object.fromEntries(Object.entries(GARMENTS).map(([p, g]) => [p, g.now])), sb: GARMENTS.suit.before, db: GARMENTS.dress.before });
 function wearBack(w) { if (!w || Object.entries(w.now).every(([p, n]) => GARMENTS[p].now === n)) return; for (const [p, n] of Object.entries(w.now)) GARMENTS[p].now = n; GARMENTS.suit.before = w.sb; GARMENTS.dress.before = w.db; setGarment('socks', GARMENTS.socks.now); }
 function dressFor(mode) { const pick = gearOf();
-  for (const [part, first] of [['suit', () => GARMENTS.dress.now || /flet/.test(hairNow) ? 'dragt-bade' : 'dragt-badebukser'], ['glasses', () => 'briller-svoemme'], ['hat'], ['knee'], ['elbow'], ['gloves'], ['back'], ['shoe']]) { const G = GARMENTS[part], mine = G.items.filter(i => i[2]?.game === mode && owns(i[0])), on = G.items.find(i => i[0] === G.now)?.[2]?.game;
-    if (mine.length) { if (on !== mode) setGarment(part, mine.find(i => i[0] === pick[part])?.[0] || mine.find(i => i[0] === first?.())?.[0] || mine[0][0]); } else if (on) setGarment(part, ''); }
+  for (const [part, first] of [['suit', () => GARMENTS.dress.now || /flet/.test(hairNow) ? 'dragt-bade' : 'dragt-badebukser'], ['glasses', () => 'briller-svoemme'], ['hat'], ['knee'], ['elbow'], ['gloves'], ['back'], ['shoe'], ['shirt'], ['pants'], ['socks']]) { const G = GARMENTS[part], mine = G.items.filter(i => i[2]?.game === mode && owns(i[0])), on = G.items.find(i => i[0] === G.now)?.[2]?.game;
+    if (mine.length) { if (on !== mode) setGarment(part, mine.find(i => i[0] === pick[part])?.[0] || mine.find(i => i[0] === first?.())?.[0] || mine[0][0]); } else if (on && !G.items.find(i => i[0] === G.now)?.[2]?.keep) setGarment(part, ''); }
   // (into the water barefoot - the user, 12-11-2026: shoes and socks off by itself, and on again after if they were on)
-  if (mode === 'sea' && (GARMENTS.shoe.now || GARMENTS.socks.now)) { GARMENTS.shoe.now = ''; setGarment('socks', ''); }
+  // (and no hat under the water - the user, 14-11-2026: what does not make sense in a game is left off, and put back after)
+  if (mode === 'sea' && (GARMENTS.shoe.now || GARMENTS.socks.now || GARMENTS.hat.now)) { GARMENTS.shoe.now = ''; GARMENTS.hat.now = ''; setGarment('socks', ''); }
+  // (on a skateboard in shoes one can ride in: sneakers, unless it has football boots or rubber boots on)
+  if (mode === 'skate' && !['sko-sneakers', 'sko-fodbold', 'sko-gummi'].includes(GARMENTS.shoe.now)) setGarment('shoe', 'sko-sneakers');
   // (out in space: the boots on the bare feet, inside the suit)
   if (mode === 'space' && GARMENTS.socks.now) setGarment('socks', ''); }
 // ---- The child dresses the figure for a game the first time (the user, 12-11-2026: the children are to put the right
@@ -4170,7 +4173,7 @@ function petTick(dt) { if (!pet) { if (bowl) bowl.visible = false; if (ball) bal
   const running = runMove || ['side', 'back', 'front', 'skate'].includes(mode), floorY = mode === 'sea' ? petAt.y - .45 : 0; let tx = petAt.x + ox, tz = petAt.z + oz; const J = petJob;
   if (J.kind === 'eat') { tx = toyBowl.x + .1; tz = toyBowl.z - .3; face = Math.atan2(toyBowl.x - tx, toyBowl.z - tz); }
   else if (J.kind === 'ball') { if (J.flying > 0) { J.flying -= dt; const u = 1 - Math.max(0, J.flying) / .55; ball.position.set(J.from.x + (J.bx - J.from.x) * u, .11 + Math.sin(u * Math.PI) * .45, J.from.z + (J.bz - J.from.z) * u); ball.rotation.x += dt * 12; tx = J.bx; tz = J.bz; } else if (J.t === 0) { tx = J.bx; tz = J.bz; if (Math.hypot(g.position.x - tx, g.position.z - tz) < .3) { J.t = 1; sfx('ding'); } } else { tx = toyRest.x; tz = toyRest.z - .3; const fx = Math.sin(pet.face), fz = Math.cos(pet.face); ball.position.set(g.position.x + fx * .36, .11, g.position.z + fz * .36); if (Math.hypot(g.position.x - tx, g.position.z - tz) < .1) { J.kind = ''; ball.position.set(toyRest.x, .11, toyRest.z); } } }
-  g.visible = holder.visible && mode !== 'sea' && mode !== 'space' && !(mode === 'hide' && !il.rig.visible); // (not in the sea - the user, 04-11-2026)
+  g.visible = holder.visible && mode !== 'sea' && mode !== 'space' && mode !== 'skate' && mode !== 'pk' && !(mode === 'hide' && !il.rig.visible); // (not in the sea - the user, 04-11-2026)
   if (pet.snap) { g.position.set(tx, floorY, tz); pet.snap = false; } const x0 = g.position.x, z0 = g.position.z, k = 1 - Math.exp(-dt * (running ? 9 : J.kind === 'ball' ? (J.t ? 2.6 : 5) : 3.2)); g.position.x += (tx - x0) * k; g.position.z += (tz - z0) * k; pet.y = (pet.y ?? floorY) + (floorY - (pet.y ?? floorY)) * k;
   const vx = g.position.x - x0, vz = g.position.z - z0, speed = dt ? Math.hypot(vx, vz) / dt : 0, moving = running || speed > .35, t = performance.now() / 1000;
   const faceTo = !running && speed > .35 ? Math.atan2(vx, vz) : face ?? pet.face; let d = faceTo - pet.face; d = Math.atan2(Math.sin(d), Math.cos(d)); pet.face += d * Math.min(1, dt * 7); g.rotation.y = pet.face;
@@ -4559,6 +4562,9 @@ function startGame(mode = game.mode) { if (game.on || !glb) return; if (!game.ag
   // (on a computer the browser's own bars go too, where it lets them - not on an iPad, where that is not to be relied on:
   // there the game is opened from its icon on the home screen)
   if (matchMedia('(hover: hover) and (pointer: fine)').matches && !navigator.maxTouchPoints) try { document.documentElement.requestFullscreen?.()?.catch?.(() => {}); } catch (e) {}
+  // (nothing held in the hand on the skateboard, in the water, out in space or at the penalty spot - the user, 14-11-2026:
+  // no swimming about with a balloon; it is back in the hand when the game stops)
+  if (!game.again) game.held = itemNow; if (['skate', 'sea', 'space', 'pk'].includes(mode) && itemNow) setItem('');
   if (!game.again) { game.wore = dressSnap || wearSnap(); dressSnap = null; dressWant = ''; } dressFor(MODES[mode].from ? 'hop' : mode);
   if (!game.again) game.saved = { cam: camera.position.clone(), target: controls.target.clone(), anim, bg: bgNow, spin }; game.again = false; spin = false; document.getElementById('spin').classList.remove('on');
   goal = null; closeUp = false; controls.enabled = false; controls.maxDistance = 14; holder.position.x = M.x;
@@ -4577,7 +4583,7 @@ function startGame(mode = game.mode) { if (game.on || !glb) return; if (!game.ag
 // (again: only stopped to start once more - at another level or in another way - the figure's own setting not put back)
 function stopGame(again) { if (!game.on) return; game.on = false; for (const b of [...gamePool(), ...(game.bigPool || [])]) b.group.visible = false; game.dive = false; game.balls = []; confetti.length = 0; unprepScene(); skateStop(); hopWorldStop(); hideStop(); islandStop(); seaStop(); spaceStop(); pkStop();
   // (the sound shut down when nothing plays: on an iPad an open sound channel could go on sounding after the game)
-  if (!again) { try { game.audio?.suspend(); } catch (e) {} setItem(itemNow); }
+  if (!again) { try { game.audio?.suspend(); } catch (e) {} setItem(game.held ?? itemNow); game.held = undefined; }
   if (again) { game.again = true; return; } holder.position.x = 0; wearBack(game.wore); try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) {}
   hud.hidden = true; hintEl.hidden = true; document.getElementById('lvlPop').hidden = true; document.querySelector('.top').hidden = false; document.getElementById('stage').classList.remove('playing'); document.querySelectorAll('[data-game]').forEach(b => b.classList.remove('on'));
   if (game.saved.bg !== bgNow) setBg(game.saved.bg); camera.position.copy(game.saved.cam); controls.target.copy(game.saved.target); controls.enabled = true; controls.maxDistance = 10;
@@ -5984,6 +5990,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.11.0 (e4cd1d8)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.11.0 (bdb090e)</div>
 </body>
 </html>
