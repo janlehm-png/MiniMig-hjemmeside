@@ -1,5 +1,5 @@
 'use strict';
-importScripts('./precache-manifest.js?v=B90A8B87C48B68E3');
+importScripts('./precache-manifest.js?v=E3C6FCED8A3151A6');
 const PREFIX = 'minimig-' + encodeURIComponent(self.registration.scope) + '-';
 const CACHE = PREFIX + self.MINIMIG_VERSION;
 const URLS = self.MINIMIG_FILES.map(path => new URL(path, self.registration.scope).href);
