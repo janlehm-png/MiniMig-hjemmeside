@@ -4417,7 +4417,7 @@ const lifts = {}, LIFT_JOINTS = [['HeadTop_End', .03], ['Head', .13], ['Neck', .
   ['LeftArm', .05], ['RightArm', .05], ['LeftForeArm', .045], ['RightForeArm', .045], ['LeftHand', .04], ['RightHand', .04], ['LeftUpLeg', .08], ['RightUpLeg', .08],
   ['LeftLeg', .06], ['RightLeg', .06], ['LeftFoot', .05], ['RightFoot', .05], ['LeftToeBase', .03], ['RightToeBase', .03]], lv = new THREE.Vector3();
 // (measured against the figure standing, whose feet are on the floor however thick the joints are counted)
-const underFloor = () => Math.max(...LIFT_JOINTS.map(([j, r]) => bone(j) ? r - holder.worldToLocal(bone(j).getWorldPosition(lv)).y : -9));
+const underFloor = () => Math.max(...LIFT_JOINTS.map(([j, r]) => bone(j) ? r - (glb.parent || holder).worldToLocal(bone(j).getWorldPosition(lv)).y : -9));
 function liftCurve(id) { const clip = glbActions[id].getClip(), n = 24, lift = []; if (clip.duration < .05) return null;
   for (let k = 0; k <= n; k++) { sample(id, clip.duration * k / n); lift.push(Math.max(0, underFloor() - kick.floor)); }
   if (Math.max(...lift) < .005) return null;
@@ -5698,9 +5698,15 @@ function sjBuild() { if (sj.world) return; const w = sj.world = new THREE.Group(
   const quad = (a, b, c, d, col) => { for (const q of [a, b, c, a, c, d]) { P.push(...q); C.push(...col); } };
   const run = (xa, xb) => { for (let x = xa; x < xb - 1e-6; x += .5) { const x2 = Math.min(xb, x + .5), ya = sjHill(xa < 0 ? Math.min(x, -1e-4) : x), yb = sjHill(xa < 0 ? Math.min(x2, -1e-4) : x2);
       quad([x, ya, z1], [x2, yb, z1], [x2, yb, z0], [x, ya, z0], top); quad([x, -26, z1], [x2, -26, z1], [x2, yb, z1], [x, ya, z1], wall); } };
-  run(SJ.x0 - 4, 0); run(0, 62); quad([0, sjHill(0), z1], [0, sjHill(0), z0], [0, sjHill(-1e-4), z0], [0, sjHill(-1e-4), z1], wall);
+  run(SJ.x0 - 4, 0); run(0, 92); quad([0, sjHill(0), z1], [0, sjHill(0), z0], [0, sjHill(-1e-4), z0], [0, sjHill(-1e-4), z1], wall);
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(C, 3)); g.computeVertexNormals();
   const hill = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .95, side: THREE.DoubleSide })); hill.receiveShadow = true; w.add(hill);
+  // (snow out to both sides of the hill, shown only while the camera is round at the front - seen from the side the hill
+  // is a cut-through slice, but from the front the slice stood alone in the air; faded in and out with the camera's turn)
+  { P.length = 0; C.length = 0; const strip = (xa, xb, za, zb) => { for (let x = xa; x < xb - 1e-6; x += .5) { const x2 = Math.min(xb, x + .5), ya = sjHill(xa < 0 ? Math.min(x, -1e-4) : x), yb = sjHill(xa < 0 ? Math.min(x2, -1e-4) : x2); quad([x, ya, zb], [x2, yb, zb], [x2, yb, za], [x, ya, za], top); } };
+    for (const [za, zb] of [[-46, z0], [z1, 34]]) { strip(SJ.x0 - 4, 0, za, zb); strip(0, 92, za, zb); quad([0, sjHill(0), zb], [0, sjHill(0), za], [0, sjHill(-1e-4), za], [0, sjHill(-1e-4), zb], wall); }
+    const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); sg.setAttribute('color', new THREE.Float32BufferAttribute(C, 3)); sg.computeVertexNormals();
+    sj.sides = new THREE.Mesh(sg, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .95, side: THREE.DoubleSide, transparent: true, opacity: 0 })); sj.sides.receiveShadow = true; sj.sides.visible = false; w.add(sj.sides); }
   // (lines across the landing hill every ten metres shown, a red one far down; the in-run's two blue tracks; a start bar)
   const bar = (x, col, wide = z1 - z0, zc = (z0 + z1) / 2, thick = .12) => { const m = new THREE.Mesh(new THREE.BoxGeometry(thick, .03, wide), skMat(col, .7)); m.position.set(x, sjHill(x) + .02, zc); m.rotation.z = Math.atan(sjSlope(x)); w.add(m); };
   for (const [x, col] of [[10, '#4F86D9'], [15, '#4F86D9'], [20, '#4F86D9'], [25, '#E8384F'], [30, '#4F86D9']]) bar(x, col);
@@ -5714,7 +5720,7 @@ function sjBuild() { if (sj.world) return; const w = sj.world = new THREE.Group(
   sj.poles = [0, 1].map(() => { const k = new THREE.Group(); w.add(k); propInto(k, 'udstyr-skistav.glb', 1.05, 0, []); return k; });
   sj.rig = new THREE.Group(); }
 const SJ_SKI_TURN = 0;
-function sjReset() { sj.camX = undefined; Object.assign(sj, { phase: 'ready', x: SJ.x0, y: sjHill(SJ.x0), v: 0, vx: 0, vy: 0, tap: null, t: 0, q: 0, stopT: 0 }); if (glbActions.staa) runAnim('staa'); hintEl.textContent = tr('👆 Tryk for at køre – og tryk igen ved kanten for at hoppe!'); hintEl.hidden = false; game.hint = 5; }
+function sjReset() { sj.camX = undefined; sj.turn = 0; sj.cheer = 0; Object.assign(sj, { phase: 'ready', x: SJ.x0, y: sjHill(SJ.x0), v: 0, vx: 0, vy: 0, tap: null, t: 0, q: 0, stopT: 0 }); if (glbActions.staa) runAnim('staa'); hintEl.textContent = tr('👆 Tryk for at køre – og tryk igen ved kanten for at hoppe!'); hintEl.hidden = false; game.hint = 5; }
 function sjStart() { sjBuild(); skWorldBuild(); sj.world.add(sk.hills); sk.hills.position.set(20, -14, 34); for (const h of sk.hills.children.slice(1)) { h.userData.green ??= h.material.color.clone(); h.material.color.set('#EEF4FC'); } scene.add(sj.world); holder.add(sj.rig); sj.rig.add(glb); sj.rig.rotation.set(0, 0, 0); game.rotY = Math.PI / 2;
   floor.visible = false; disc.visible = false; for (const el of [bgNear, bgFar, bgNear2]) el.hidden = true; stage.classList.add('street'); sj.tuck = 0; sj.fly = 0; sjReset(); Promise.all(['staa', 'jubel'].map(loadMove)).then(() => { if (game.on && game.mode === 'skihop' && sj.phase === 'ready') runAnim('staa'); }); }
 function sjStop() { if (!sj.world?.parent) return; scene.remove(sj.world); sk.world.add(sk.hills); sk.hills.position.set(0, 0, 0); for (const h of sk.hills.children.slice(1)) if (h.userData.green) h.material.color.copy(h.userData.green); holder.add(glb); holder.remove(sj.rig); stage.classList.remove('street'); floor.visible = true; sj.phase = ''; setBg(bgNow); }
@@ -5740,10 +5746,19 @@ function sjTick(dt) { dt = Math.min(dt, .05); const [v0, win] = SJ.levels[game.l
   glb.updateMatrixWorld(true);
   // (the skis under the feet: along the hill on the ground, nearly level and spread in a V in the air; the poles in the hands, trailing back)
   sj.skis.position.set(sj.x, sj.y + .03, 0); sj.skis.rotation.z += ((air ? .12 : sj.phase === 'ready' || sj.stopT ? 0 : ground) - sj.skis.rotation.z) * k; sj.ski.forEach((s, i) => { s.rotation.y = (i ? -1 : 1) * .2 * sj.fly; });
-  ['LeftHand', 'RightHand'].forEach((n, i) => { const h = bone(n); if (!h) return; const at = h.getWorldPosition(new THREE.Vector3()), th = -1.05 + .25 * sj.fly - .5 * sj.tuck, len = 1.02; sj.poles[i].rotation.z = th; sj.poles[i].position.set(at.x + Math.sin(th) * len, at.y - Math.cos(th) * len, at.z); });
+  // (the handle in the fist, a little out from the wrist along the forearm - the user, 14-11-2026: in the cheer the
+  // handles were not in the hands; and in the cheer the poles point up and back, lifted with the arms)
+  sj.cheer = (sj.cheer || 0) + ((sj.stopT ? 1 : 0) - (sj.cheer || 0)) * k;
+  ['LeftHand', 'RightHand'].forEach((n, i) => { const h = bone(n), fa = bone(n.replace('Hand', 'ForeArm')); if (!h) return; const at = h.getWorldPosition(new THREE.Vector3()), th = -1.05 + .25 * sj.fly - .5 * sj.tuck - 1.75 * sj.cheer, len = 1.02;
+    if (fa) { const d = at.clone().sub(fa.getWorldPosition(new THREE.Vector3())); at.addScaledVector(d, SJ_GRIP / (d.length() || 1)); }
+    sj.poles[i].rotation.z = th; sj.poles[i].position.set(at.x + Math.sin(th) * len, at.y - Math.cos(th) * len, at.z); });
   // (the camera along with the jumper, a little ahead)
-  const cz = wideCam() ? 15 : 22, ahead = air ? 1.6 : .9; sj.camX = (sj.camX ?? sj.x) + (sj.x + ahead - (sj.camX ?? sj.x)) * Math.min(1, dt * 6); camera.position.set(sj.camX, sj.y + 2.6, cz); controls.target.set(sj.camX, sj.y + .2, 0); camera.lookAt(controls.target); }
-const SJ_LEAN = .85, SJ_ARMS = -1.1;
+  // (after the take-off it swings round to the front, so the jump, the landing and the cheer are seen coming towards
+  // one - the user, 14-11-2026; not quite straight on, so the hill and its lines still show - and back at the next start)
+  sj.turn += ((air || sj.phase === 'land' ? 1 : 0) - sj.turn) * Math.min(1, dt * 2.4); const e = sj.turn * sj.turn * (3 - 2 * sj.turn), a = SJ_FRONT * e; sj.sides.visible = e > .01; sj.sides.material.opacity = Math.min(1, e * 2.5);
+  const cz = wideCam() ? 15 : 22, ahead = (air ? 1.6 : .9) * (1 - e); sj.camX = (sj.camX ?? sj.x) + (sj.x + ahead - (sj.camX ?? sj.x)) * Math.min(1, dt * 6);
+  camera.position.set(sj.camX + Math.sin(a) * cz, sj.y + 2.6 - .6 * e, Math.cos(a) * cz); controls.target.set(sj.camX, sj.y + .2 + .5 * e, 0); camera.lookAt(controls.target); }
+const SJ_LEAN = .85, SJ_ARMS = -1.1, SJ_GRIP = .09, SJ_FRONT = 1.36;
 function pkStart() { pkBuild(); pkAbeLoad(); scene.add(pk.world); holder.add(pk.rig); pk.rig.add(glb); pk.rig.position.set(0, 0, 0); game.rotY = Math.PI;
   floor.visible = false; disc.visible = false; for (const el of [bgNear, bgFar, bgNear2]) el.hidden = true; stage.classList.add('pitch'); controls.maxDistance = 40;
   if (!pk.ball) { pk.ball = makeItem('fodbold'); pk.ball.group.scale.setScalar(kick.r / .158); scene.remove(pk.ball.group); }
@@ -6092,6 +6107,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.12.0 (2065e0c)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.12.0 (6abef74)</div>
 </body>
 </html>
