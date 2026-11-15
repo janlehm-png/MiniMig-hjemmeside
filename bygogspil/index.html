@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>MiniMig &ndash; byg og spil</title>
-<meta name="minimig-version" content="0.12.0">
+<meta name="minimig-version" content="0.13.0">
 <!-- (the number of this version, shown under the i - see VERSIONER.md - raised for each package and each fix put out) -->
 <!-- (the same icon as version 1 on a home screen, under the name MiniMig 2 - the icons lie in the website's billeder/;
      the user, 03-11-2026, sharing version 2 with testers) -->
@@ -110,6 +110,9 @@
   .music-btn { position: absolute; top: 10px; left: 10px; z-index: 2; width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--line); background: var(--tile);
     font-size: 19px; line-height: 1; padding: 0; cursor: pointer; box-shadow: 0 2px 8px rgba(58, 46, 92, .15); }
   .music-btn[hidden] { display: none; }
+  .beat-btn { left: 56px; } /* (the beat chosen - tapped, the next of three) */
+  /* (on a phone the choices in Cypher and Dansestudie cover the bottom corner: the music buttons go under the stars) */
+  @media (max-width: 600px) { .stage.playing.cypher .music-btn, .stage.playing.dsroom .music-btn, .stage.playing.dsshow .music-btn { top: 56px; bottom: auto; } }
   .stage.playing .music-btn { top: auto; bottom: 10px; } /* (the stars sit top left in the game) */
   .info-btn[hidden], .info-pop[hidden], .stage.playing .info-btn, .stage.playing .info-pop { display: none; }
   /* (on a computer the mouse shows it can zoom the figure - the wheel - and grabs it while turning it) */
@@ -264,6 +267,23 @@
   .hide-cover span { font-size: 64px; text-shadow: 0 3px 10px rgba(0, 0, 0, .25); }
   /* (Straffespark: a summer sky over the pitch) */
   .stage.pitch, .stage.street { background: linear-gradient(#6EC8FF, #BDE7FF 60%, #E6F6FF); }
+  .stage.cypher { background: linear-gradient(#3B2A6E, #C2557A 55%, #FFB067); }
+  .cy-pick { position: absolute; left: 50%; bottom: max(14px, env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 3; background: rgba(255, 255, 255, .93); border-radius: 22px; padding: 10px 14px 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; box-shadow: 0 6px 24px rgba(40, 20, 80, .35); max-width: calc(100% - 24px); box-sizing: border-box; }
+  .cy-pick[hidden] { display: none; }
+  .stage.dsroom { background: #F1E4F4; } .stage.dsshow { background: #15101F; }
+  .ds-pick { gap: 6px; padding: 8px 12px 10px; } .ds-top { display: flex; gap: 12px; align-items: center; justify-content: center; flex-wrap: wrap; }
+  .ds-row { display: flex; gap: 6px; } .ds-row button { position: relative; width: 52px; height: 52px; border-radius: 12px; border: 2px dashed #C9C2E0; background: #F6F3FF; font: 800 1rem/1 system-ui, sans-serif; color: #B9B0D6; padding: 0; }
+  .ds-row button.full { border: 2px solid #7A4DFF; background: #fff; cursor: pointer; } .ds-row button img { width: 46px; height: 46px; object-fit: contain; pointer-events: none; }
+  .ds-row button .x { position: absolute; top: -6px; right: -6px; width: 18px; height: 18px; border-radius: 50%; background: #E8384F; color: #fff; font: 800 11px/18px system-ui, sans-serif; pointer-events: none; }
+  .ds-go { font: 800 1.1rem/1.2 system-ui, sans-serif; padding: 12px 20px; border-radius: 16px; border: 0; background: #2FB872; color: #fff; cursor: pointer; } .ds-go[disabled] { background: #C9C2E0; }
+  .ds-styles { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; } .ds-styles button { display: flex; align-items: center; gap: 5px; padding: 6px 12px; border-radius: 999px; border: 2px solid #E4DDF6; background: #fff; font: 700 .9rem/1.1 system-ui, sans-serif; color: #3A2E5C; cursor: pointer; }
+  .ds-styles button.on { border-color: #7A4DFF; background: #EFE8FF; } .ds-styles .emo { font-size: 1.15rem; }
+  .ds-pick .ds-opts { flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; max-width: 100%; padding-bottom: 2px; gap: 6px; } .ds-pick .ds-opts button { width: 78px; flex: none; padding: 4px 2px 6px; font-size: .78rem; } .ds-pick .ds-opts button img { width: 48px; height: 48px; }
+  .cy-title { font: 800 1.15rem/1.2 system-ui, sans-serif; color: #3A2E5C; display: flex; gap: 10px; align-items: center; }
+  .cy-dots span { display: inline-block; width: 14px; height: 14px; border-radius: 50%; background: #D9D2EE; margin: 0 2px; } .cy-dots span.on { background: #2FB872; } .cy-dots span.now { background: #FFC233; }
+  .cy-opts { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .cy-opts button { width: 98px; padding: 6px 4px 8px; border-radius: 16px; border: 3px solid #E4DDF6; background: #fff; font: 700 .85rem/1.15 system-ui, sans-serif; color: #3A2E5C; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; }
+  .cy-opts button img { width: 64px; height: 64px; object-fit: contain; pointer-events: none; }
   .quest { position: absolute; top: 64px; left: 50%; transform: translateX(-50%); display: flex; gap: 4px; align-items: center; padding: 4px 12px; border-radius: 999px; background: rgba(255, 255, 255, .85); box-shadow: 0 2px 10px rgba(58, 46, 92, .18); font-size: 26px; line-height: 1.2; pointer-events: none; z-index: 2; }
   .quest[hidden] { display: none; }
   .quest .q-shell { opacity: .3; filter: grayscale(1); transition: opacity .3s, transform .3s; }
@@ -374,6 +394,10 @@
 <!-- (the levels - and in Hop over bolden the three ways to play - chosen without leaving the game: the user, 11-11-2026) -->
 <div class="lvl-pop" id="lvlPop" hidden></div>
 <div class="tap-hint" id="tapHint" hidden>👆 Tryk for at hoppe</div>
+<!-- (Cypher: the round's four parts chosen one at a time - the user, 15-11-2026) -->
+<div class="cy-pick" id="cyPick" hidden><div class="cy-title" id="cyTitle"></div><div class="cy-opts" id="cyOpts"></div></div>
+<!-- (Dansestudie: the row of dances, the styles, the dances of the style chosen, and the button that shows the dance on the stage) -->
+<div class="cy-pick ds-pick" id="dsPick" hidden><div class="ds-top"><div class="md-row ds-row" id="dsRow"></div><button class="ds-go" id="dsGo">▶ Vis dansen!</button></div><div class="ds-styles" id="dsStyles"></div><div class="cy-opts ds-opts" id="dsOpts"></div></div>
 <!-- (Straffespark: which foot kicks, chosen by the child - the user, 12-11-2026: the left button the left foot) -->
 <div class="pk-feet" id="pkFeet" hidden><button data-foot="0" aria-label="Venstre fod"><span>🦶</span></button><button data-foot="1" aria-label="Højre fod"><span>🦶</span></button></div>
 <!-- (who is playing, always in sight: the child's picture and name - tapped: Mine figurer, where the children are) -->
@@ -382,7 +406,8 @@
 <!-- Gemmeleg: on the harder levels the picture is covered while the figure hides -->
 <div class="hide-cover" id="hideCover" hidden>🙈<span id="hideCount"></span></div>
 <!-- (the dances' music on and off - only while a dance runs) -->
-<button class="music-btn" id="musicBtn" aria-label="Musik til og fra" hidden>🎵</button>
+<button class="music-btn" id="musicBtn" aria-label="Musik til og fra" hidden>🎵</button><button class="music-btn beat-btn" id="beatBtn" aria-label="Skift beat" hidden>🎤</button>
+<!-- (Skihop: the jump seen from the front or from behind - the child's choice, remembered) -->
 <canvas id="confetti"></canvas>
 </div>
 <div class="panel">
@@ -410,13 +435,19 @@
     <button data-anim="staa" class="on"><img src="ikoner/stilling-staa.png" alt=""><span>Stå</span></button>
     <button data-anim="vink"><img src="ikoner/stilling-vink.png" alt=""><span>Vink</span></button>
     <button data-anim="hop"><img src="ikoner/stilling-hop.png" alt=""><span>Hop</span></button>
-    <button data-anim="dans"><img src="ikoner/stilling-dans.png" alt=""><span>Dans</span></button>
     <button data-anim="loeb"><img src="ikoner/stilling-loeb.png" alt=""><span>Løb</span></button>
     <button data-anim="jubel"><img src="ikoner/stilling-jubel.png" alt=""><span>Jubel</span></button>
     <button data-anim="kolboette"><img src="ikoner/stilling-kolboette.png" alt=""><span>Kolbøtte</span></button>
     <button data-anim="spark"><img src="ikoner/stilling-spark.png" alt=""><span>Spark</span></button>
     <button id="spin"><img src="ikoner/stilling-drej.png" alt=""><span>Drej rundt</span></button>
-    <button id="myDanceTab"><img src="ikoner/stilling-mindans.png" alt=""><span>Min dans</span></button>
+  </div>
+  <!-- (the dances in a group of their own - the user, 15-11-2026: the dances, Min dans and the dance games together under one tab) -->
+  <div class="tabgroup" id="dance">
+    <!-- (Danse and Min dans hidden - the user, 15-11-2026: all of it is in Cypher and Dansestudie; kept, so they can come back) -->
+    <button data-anim="dans" hidden><img src="ikoner/stilling-dans.png" alt=""><span>Danse</span></button>
+    <button id="myDanceTab" hidden><img src="ikoner/stilling-mindans.png" alt=""><span>Min dans</span></button>
+    <button data-game="cypher"><img src="ikoner/spil-cypher.png" alt=""><span>Cypher</span></button>
+    <button data-game="studio"><img src="ikoner/spil-dansestudie.png" alt=""><span>Danse&shy;studie</span></button>
   </div>
   <!-- the games, after the movements (the first: Hop over bolden, 03-11-2026) -->
   <div class="tabgroup" id="games">
@@ -636,7 +667,7 @@ const EN = {
   'Stå': 'Stand', 'Vink': 'Wave', 'Hop': 'Jump', 'Dans': 'Dance', 'Løb': 'Run', 'Jubel': 'Cheer', 'Kolbøtte': 'Roll', 'Spark': 'Kick', 'Drej rundt': 'Spin', 'Min dans': 'My dance',
   'Hop over bolden': 'Jump the ball', 'Skateboard': 'Skate­board', 'Skattejagt': 'Treasure hunt', 'Svømmeverden': 'Swim world', 'Gemmeleg': 'Hide and seek', 'Straffespark': 'Penalty kick',
   // (hair, face)
-  'Kort': 'Short', 'Krøller': 'Curls', 'Strit': 'Spiky', 'Fletninger': 'Braids', 'Fletning': 'Braid',
+  'Kort': 'Short', 'Krøller': 'Curls', 'Bølger': 'Waves', 'Strit': 'Spiky', 'Fletninger': 'Braids', 'Fletning': 'Braid',
   'Naturlige': 'Natural', 'Tynde': 'Thin', 'Tykke': 'Thick', 'Høje': 'High', 'Sure': 'Angry', 'Triste': 'Sad', 'Ingen': 'None', 'Glade': 'Happy', 'Blink': 'Wink', 'Vipper': 'Lashes', 'Stjerner': 'Stars', 'Hjerter': 'Hearts',
   'Smil': 'Smile', 'Grin': 'Grin', 'Tunge': 'Tongue', 'Åh': 'Oh', 'Kys': 'Kiss', 'Trist': 'Sad',
   'Røde kinder': 'Rosy cheeks', 'Fregner': 'Freckles', 'Stjerne': 'Star', 'Glimmer': 'Glitter', 'Regnbue': 'Rainbow', 'Plaster': 'Bandage', 'Skønhedsplet': 'Beauty mark',
@@ -646,7 +677,7 @@ const EN = {
   'Undertrøje': 'Tank top', 'T-shirt': 'T-shirt', 'Hættetrøje': 'Hoodie', 'Fodboldtrøje': 'Soccer jersey', 'Undershorts': 'Underwear', 'Trusser': 'Briefs', 'Lange bukser': 'Long pants', 'Shorts': 'Shorts', 'Cowboyshorts': 'Denim shorts', 'Fodboldbukser': 'Soccer shorts',
   'Ingen kjole': 'No dress', 'Ingen dragt': 'No suit', 'Badedragt': 'Swimsuit', 'Badebukser': 'Swim trunks', 'Sommerkjole': 'Summer dress', 'Prinsessekjole': 'Princess dress', 'Havfruekjole': 'Mermaid dress', 'Ingen strømper': 'No socks', 'Ankelstrømper': 'Ankle socks', 'Almindelige strømper': 'Regular socks', 'Fodboldstrømper': 'Soccer socks', 'Knæstrømper': 'Knee socks',
   'Bare fødder': 'Bare feet', 'Sneakers': 'Sneakers', 'Fodboldstøvler': 'Soccer cleats', 'Gummistøvler': 'Rain boots', 'Balletsko': 'Ballet shoes', 'Højhælede': 'High heels',
-  'Ingen hat': 'No hat', 'Kasket': 'Cap', 'Krone': 'Crown', 'Kaninører': 'Bunny ears', 'Sløjfe': 'Bow', 'Ingen briller': 'No glasses', 'Svømmebriller': 'Swim goggles', 'Snorkel': 'Snorkel', 'Rumdragt': 'Space suit', 'Rumhjelm': 'Space helmet', 'Rumstøvler': 'Space boots', 'Sne': 'Snow', 'Skihop': 'Ski jump', '👆 Tryk for at køre – og tryk igen ved kanten for at hoppe!': '👆 Tap to go – and tap again at the edge to jump!', 'Skidragt': 'Ski suit', 'Skihjelm': 'Ski helmet', 'Skibriller': 'Ski goggles', 'Skihandsker': 'Ski gloves', 'Skistøvler': 'Ski boots', 'Jetpack': 'Jetpack', 'Ingen jetpack': 'No jetpack', 'Rumrejse': 'Space trip', 'Rumrejse': 'Space trip', '👆 Tryk – så flyver du derhen. To hurtige tryk giver fart 🚀': '👆 Tap – and you fly there. Two quick taps give a boost 🚀', 'Skaterhjelm': 'Skate helmet', 'Knæbeskyttere': 'Knee pads', 'Albuebeskyttere': 'Elbow pads', 'Handsker': 'Gloves', 'Ingen knæbeskyttere': 'No knee pads', 'Ingen albuebeskyttere': 'No elbow pads', 'Ingen handsker': 'No gloves', 'Ansigt': 'Face', 'Tøj': 'Clothes', 'Mere': 'More', 'Svømning': 'Swimming', 'Start': 'Start', 'Ingen svømmebriller': 'No goggles', 'Runde': 'Round', 'Solbriller': 'Sunglasses', 'Hjerte': 'Heart',
+  'Ingen hat': 'No hat', 'Kasket': 'Cap', 'Krone': 'Crown', 'Kaninører': 'Bunny ears', 'Sløjfe': 'Bow', 'Ingen briller': 'No glasses', 'Svømmebriller': 'Swim goggles', 'Snorkel': 'Snorkel', 'Rumdragt': 'Space suit', 'Rumhjelm': 'Space helmet', 'Rumstøvler': 'Space boots', 'Sne': 'Snow', 'Skihop': 'Ski jump', 'Dansestudie': 'Dance studio', '▶ Vis dansen!': '▶ Show the dance!', '🎵 Sæt din dans sammen': '🎵 Put your dance together', 'Sjov': 'Fun', 'Kyllingedans': 'Chicken dance', 'Ned i gulvet': 'Down to the floor', 'Hurtigt ned': 'Quick drop', 'Håndstand-spin': 'Handstand spin', 'Op på hænder': 'Up on the hands', 'Bevægelser': 'Moves', 'Danse': 'Dances', '🎵 Vælg fire trin til din runde': '🎵 Pick four moves for your round', '👆 Tryk for at køre – og tryk igen ved kanten for at hoppe!': '👆 Tap to go – and tap again at the edge to jump!', 'Skidragt': 'Ski suit', 'Skihjelm': 'Ski helmet', 'Skibriller': 'Ski goggles', 'Skihandsker': 'Ski gloves', 'Skistøvler': 'Ski boots', 'Jetpack': 'Jetpack', 'Ingen jetpack': 'No jetpack', 'Rumrejse': 'Space trip', 'Rumrejse': 'Space trip', '👆 Tryk – så flyver du derhen. To hurtige tryk giver fart 🚀': '👆 Tap – and you fly there. Two quick taps give a boost 🚀', 'Skaterhjelm': 'Skate helmet', 'Knæbeskyttere': 'Knee pads', 'Albuebeskyttere': 'Elbow pads', 'Handsker': 'Gloves', 'Ingen knæbeskyttere': 'No knee pads', 'Ingen albuebeskyttere': 'No elbow pads', 'Ingen handsker': 'No gloves', 'Ansigt': 'Face', 'Tøj': 'Clothes', 'Mere': 'More', 'Svømning': 'Swimming', 'Start': 'Start', 'Ingen svømmebriller': 'No goggles', 'Runde': 'Round', 'Solbriller': 'Sunglasses', 'Hjerte': 'Heart',
   // (things, pets, backgrounds)
   'Ballon': 'Balloon', 'Bamse': 'Teddy bear', 'Tryllestav': 'Magic wand', 'Is': 'Ice cream', 'Blomst': 'Flower', 'Bold': 'Ball', 'Fodbold': 'Soccer ball', 'Hulahopring': 'Hula hoop',
   'Intet dyr': 'No pet', 'Kat': 'Cat', 'Hund': 'Dog', 'Kanin': 'Rabbit', 'Halsbånd': 'Collar', 'Madskål': 'Food bowl', 'Legebold': 'Play ball',
@@ -676,7 +707,7 @@ const EN = {
   'Ingen grænse': 'No limit', '⏱️ Hold knappen inde i 3 sekunder': '⏱️ Hold the button down for 3 seconds',
   'Gem i Mine figurer': 'Save in My figures', 'Ny MiniMig': 'New MiniMig', 'Dreng': 'Boy', 'Pige': 'Girl', 'Den figur, du har nu, bliver gemt i Mine figurer 🖼️.': 'The figure you have now is saved in My figures 🖼️.', 'Børn': 'Children', '🖼️ Gemte figurer': '🖼️ Saved figures', 'Børn og spillere – for voksne': 'Children and players – for grown-ups',
   'Dit billede': 'Your picture', 'Tryk og hold på billedet, og vælg': 'Press and hold the picture, and choose', 'Gem i Fotos': 'Save to Photos', 'eller': 'or', 'Del': 'Share', '💾 Gem billedet': '💾 Save the picture', 'Billedet gemmes i mappen Overførsler. Du kan også højreklikke på billedet og vælge': 'The picture is saved in your Downloads folder. You can also right-click the picture and choose', 'Gem billede som': 'Save image as',
-  'Sådan gør du': 'How it works', 'Musik til og fra': 'Music on and off', 'Skriv dit navn': 'Write your name', 'Navn på trøjen': 'Name on the top', 'Sig navnet': 'Say the name', 'Slet din egen stemme': 'Delete your own voice', 'Gem dansen': 'Save the dance', 'Start forfra': 'Start again', 'Navn på dansen': 'Name of the dance', 'Luk': 'Close', 'Slet': 'Delete', 'Mønterne på disken': 'The coins on the counter', 'Billedet af figuren': 'The picture of the figure', 'Min MiniMig': 'My MiniMig' };
+  'Sådan gør du': 'How it works', 'Musik til og fra': 'Music on and off', 'Skift beat': 'Change beat', 'Trommer': 'Drums', 'Skriv dit navn': 'Write your name', 'Navn på trøjen': 'Name on the top', 'Sig navnet': 'Say the name', 'Slet din egen stemme': 'Delete your own voice', 'Gem dansen': 'Save the dance', 'Start forfra': 'Start again', 'Navn på dansen': 'Name of the dance', 'Luk': 'Close', 'Slet': 'Delete', 'Mønterne på disken': 'The coins on the counter', 'Billedet af figuren': 'The picture of the figure', 'Min MiniMig': 'My MiniMig' };
 const tr = s => LANG === 'en' ? EN[String(s).replace(/­/g, '')] ?? s : s;
 document.documentElement.lang = LANG; if (LANG === 'en') document.title = 'MiniMig – build and play';
 // (the page's own texts and labels; a text's spaces round it are kept, as words sit beside the bold ones in a line)
@@ -731,11 +762,14 @@ var petPick = false; // (a pet tapped last under Ting: its colours can't be chan
 // button that starts the game once all of it is on)
 const MAIN = [['face', 'Ansigt', 'gruppe-ansigt', ['skin', 'hair', 'eyes', 'brows', 'nose', 'mouth', 'ears', 'glasses', 'pynt']], ['wear', 'Tøj', 'gruppe-toej', ['shirt', 'pants', 'dress', 'socks', 'shoe', 'hat']],
   ['gear', 'Udstyr', 'gruppe-udstyr', ['gear-skate', 'gear-snow', 'gear-sea', 'gear-space', 'gear-pk']], ['more', 'Mere', 'gruppe-mere', ['item', 'name', 'bg']]], mainOf = part => MAIN.find(m => m[3].includes(part))?.[0] || '', lastSub = {};
-var mainNow = '', dressSnap = null, dressWant = '';
+var mainNow = '', dressSnap = null, dressWant = '', foldNow = '';
+const FOLDS = [['moves', 'Bevægelser', 'gruppe-bevaegelse'], ['dance', 'Dans', 'gruppe-dans']];
+function showFold() { for (const [id] of FOLDS) { const el = document.getElementById(id); if (el) el.hidden = foldNow !== id; } for (const b of document.querySelectorAll('#mains [data-fold]')) b.classList.toggle('on', b.dataset.fold === foldNow); }
+function tapFold(id) { foldNow = foldNow === id ? '' : id; if (mainNow || (/^move-/.test(partNow) && boxOpen)) { mainNow = ''; boxOpen = false; showSwatches(); } showFold(); }
 // (the colour of a game's gear is the suits' colour - and the skateboard helmet's with it)
 function colourPart() { return partNow === 'gear-pk' ? 'shirt' : partNow.startsWith('gear-') ? 'suit' : partNow; } // (the football kit's colour is the shirt's)
 function applyTab(c) { apply(colourPart(), c); if (partNow.startsWith('gear-') && typeof GARMENTS !== 'undefined' && GARMENTS.hat.now === 'hat-skaterhjelm') apply('hat', c); }
-function tapMain(id) { if (mainNow === id) { mainNow = ''; boxOpen = false; showSwatches(); return; } mainNow = id; boxOpen = true; partNow = lastSub[id] || MAIN.find(m => m[0] === id)[3][0]; showSwatches(); lookFor(partNow); }
+function tapMain(id) { foldNow = ''; showFold(); if (mainNow === id) { mainNow = ''; boxOpen = false; showSwatches(); return; } mainNow = id; boxOpen = true; partNow = lastSub[id] || MAIN.find(m => m[0] === id)[3][0]; showSwatches(); lookFor(partNow); }
 function showSwatches() { const move = /^(move|game)-/.test(partNow); if (!move) slidersFrom(picked[colourPart()] || START[colourPart()]);
   { const mo = mainOf(partNow); if (mo && boxOpen) { mainNow = mo; lastSub[mo] = partNow; } else if (move && boxOpen) mainNow = ''; if (!partNow.startsWith('gear-')) { dressWant = ''; dressSnap = null; }
     const subs = document.getElementById('subs'); if (subs) { subs.hidden = !mainNow; for (const b of subs.children) b.hidden = mainOf(b.dataset.part) !== mainNow; for (const b of document.querySelectorAll('#mains [data-main]')) b.classList.toggle('on', b.dataset.main === mainNow); } }
@@ -825,8 +859,11 @@ for (const el of Object.values(S)) el.addEventListener('input', () => { paintTra
 // (the four main groups in one row, and under it the row of the tabs of the one chosen)
 { const parts = document.getElementById('parts'), mains = parts.appendChild(Object.assign(document.createElement('div'), { className: 'tabgroup', id: 'mains' })), subs = parts.appendChild(Object.assign(document.createElement('div'), { className: 'tabgroup', id: 'subs', hidden: true }));
   for (const [id, name, icon, list] of MAIN) { const m = iconButton(`ikoner/${icon}.png`, name); m.dataset.main = id; m.onclick = () => tapMain(id); mains.append(m);
-    for (const part of list) { const [, label, pic] = CHOICES.find(c => c[0] === part), b = iconButton(`ikoner/${pic}.png`, label); b.dataset.part = part; b.hidden = true; b.onclick = () => tapTab(part, () => lookFor(part)); subs.append(b); } } }
-document.getElementById('parts').append(document.getElementById('moves'), document.getElementById('games')); document.getElementById('parts').prepend(document.getElementById('saving'));
+    for (const part of list) { const [, label, pic] = CHOICES.find(c => c[0] === part), b = iconButton(`ikoner/${pic}.png`, label); b.dataset.part = part; b.hidden = true; b.onclick = () => tapTab(part, () => lookFor(part)); subs.append(b); } }
+  // (and two more beside them - the user, 15-11-2026: the movements, and the dances with Min dans and the dance games,
+  // each folded away under one button like the others; a tap shows its row, a tap again folds it away)
+  for (const [id, name, icon] of FOLDS) { const m = iconButton(`ikoner/${icon}.png`, name); m.dataset.fold = id; m.onclick = () => tapFold(id); mains.append(m); } }
+document.getElementById('parts').append(document.getElementById('moves'), document.getElementById('dance'), document.getElementById('games')); showFold(); document.getElementById('parts').prepend(document.getElementById('saving'));
 // (the grown-ups' buttons - the lilac ones - in a group of their own, last of all: furthest to the right - the user, 13-11-2026)
 { const g = Object.assign(document.createElement('div'), { className: 'tabgroup', id: 'grownups' }); for (const b of document.querySelectorAll('#saving .grown, #adultBtn')) g.append(b); document.getElementById('parts').append(g); }
 showSwatches();
@@ -1714,7 +1751,12 @@ function smoothUnder() {
 // Each a figur-<id>.json taken out of a Mixamo file (see LÆS-MIG), fetched the first time it is chosen
 const MOVES = { staa: [['staa', 'Stå'], ['staa-hofter', 'Hænder i siden']], vink: [['vink', 'Vink']],
   hop: [['hop', 'Glad hop'], ['hop-hoejt', 'Højt hop'], ['hop-lille', 'Lille løbehop'], ['loebehop', 'Langt løbehop']],
-  dans: [['dans', 'Hiphop'], ['dans-hiphop', 'Hiphop 2'], ['dans-fjollet', 'Fjollet'], ['dans-arme', 'Armdans'], ['dans-break', 'Breakdance'], ['dans-flair', 'Flair'], ['dans-flair2', 'Flair 2']],
+  dans: [['dans', 'Hiphop'], ['dans-hiphop', 'Hiphop 2'], ['dans-fjollet', 'Fjollet'], ['dans-arme', 'Armdans'], ['dans-break', 'Breakdance'], ['dans-flair', 'Flair'], ['dans-flair2', 'Flair 2'],
+    // (the breakers' own movements, fetched from Mixamo by the user, 15-11-2026, for Cypher - danced here and in Min dans too)
+    ['cy-top1', 'Uprock'], ['cy-top2', 'Uprock 2'], ['cy-ned2', 'Ned i gulvet'], ['cy-ned1', 'Hurtigt ned'], ['cy-fod1', 'Footwork'], ['cy-fod2', 'Footwork 2'], ['cy-fod3', 'Footwork 3'],
+    ['cy-power1', 'Flair 3'], ['cy-power2', 'Flair 4'], ['cy-power4', 'Håndstand-spin'], ['cy-power3', 'Op på hænder'], ['cy-freeze1', 'Freeze'], ['cy-freeze2', 'Freeze 2'], ['cy-freeze3', 'Freeze 3'],
+    // (and more dances for the dance studio - fetched from Mixamo by the user earlier, put in 15-11-2026)
+    ['ds-hiphop3', 'Hiphop 3'], ['ds-hiphop4', 'Hiphop 4'], ['ds-cancan', 'Cancan'], ['ds-twist', 'Twist'], ['ds-shuffle', 'Shuffle'], ['ds-kylling', 'Kyllingedans'], ['ds-hokey', 'Boogie-woogie']],
   loeb: [['loeb', 'Sjovt løb'], ['loeb-a', 'Løb stærkt'], ['loeb-b', 'Løb']],
   jubel: [['jubel', 'Jubel'], ['jubel-klap', 'Klap'], ['jubel-yes', 'Yes!']],
   kolboette: [['kolboette', 'Kolbøtte'], ['hop-over', 'Dyk og rul'], ['snubl', 'Snuble'], ['fald', 'Falder på numsen']],
@@ -1794,10 +1836,12 @@ const exists = async u => { try { return (await fetch(u, { method: 'HEAD' })).ok
 // the hairstyles: <name>.json (the hair cut out of a Meshy head by haar-ud.ps1, with that head's eye whites) and
 // <name>.jpg. Each is set on the figure's head so the eyes meet - as far apart and in the same place as the figure's
 // own eye whites - and then follows the head bone. A style is fetched the first time it is chosen.
+// (Bølger - the user, 15-11-2026: shoulder-length waves, a parting in the middle, bangs to the sides; made 5 % bigger, as
+// Meshy's head was smaller than the figure's and its skull showed through along the parting)
 // (Bob taken out 01-11-2026 - the user chose to go on without it; haar-bob.json/.jpg are kept, put back
 // ['haar-bob', 'Bob'] after Kort to have it again; Skaldet - no hair - taken out the same day, put back ['', 'Skaldet']
 // first to have it again)
-const HAIRS = [['haar-kort', 'Kort', { snug: .55, ears: true }], ['haar-kroeller', 'Krøller'], ['haar-strit', 'Strit', { ears: true }], ['haar-fletninger', 'Fletninger', { braids: true, ears: true }], ['haar-fletning', 'Fletning', { ears: true }]];
+const HAIRS = [['haar-kort', 'Kort', { snug: .55, ears: true }], ['haar-kroeller', 'Krøller'], ['haar-strit', 'Strit', { ears: true }], ['haar-fletninger', 'Fletninger', { braids: true, ears: true }], ['haar-fletning', 'Fletning', { ears: true }], ['haar-boelger', 'Bølger', { skull: .45, part: .12, hideEars: true, under: true, sweep: .5 }]];
 let hairNow = 'haar-kort', hairBase = null; const hairMeshes = {};
 // the figure's eye whites and head bone, measured once as it stands when loaded (in its T-pose, before it moves)
 function measureHead(fbx) {
@@ -1965,6 +2009,40 @@ function glassesParts(g, img, eyes, opts) {
   return lens.length; }
 // (hats and glasses are put on the same way: made on a bald head, set by the eyes, held by the head - with their own
 // colour list and part, and made a little bigger where they must sit over the hair)
+// (Bølger laid on the head - the user, 15-11-2026: the parting too wide, the hair floating over the head with a hollow
+// under it by the neck. wrap: the parting closed - the hair either side of it moved in over it - and the lock on the
+// lock left as Meshy made it (moved further in, it tore across - the user: as if cut with scissors); then every point of hair over the skull laid just outside it,
+// keeping wrap of its thickness there, and the hair below the head drawn in towards the neck, kept clear of the body)
+function wrapHair(W, n, opts, a, eyeY, eyes) {
+  const { pts } = hairBase.whole, mx = (eyes[0].x + eyes[1].x) / 2, ez = (eyes[0].z + eyes[1].z) / 2, c = new THREE.Vector3(mx, eyeY + .25 * a, ez - .95 * a), v = new THREE.Vector3(), p = new THREE.Vector3();
+  const NU = 48, NV = 24, R = new Float32Array(NU * NV), bin = d => { const u = Math.floor((Math.atan2(d.x, d.z) / Math.PI + 1) / 2 * NU) % NU, w = Math.min(NV - 1, Math.floor(Math.acos(Math.max(-1, Math.min(1, d.y))) / Math.PI * NV)); return w * NU + u; };
+  for (let j = 0; j < pts.length; j += 6) { const y = pts[j + 1]; if (y < eyeY - 1.1 * a || Math.abs(pts[j] - mx) > 1.3 * a) continue; v.set(pts[j], y, pts[j + 2]).sub(c); const r = v.length(), k = bin(v.normalize()); if (r > R[k]) R[k] = r; }
+  // (the ears too - they are parts of their own - so the hair goes out over them and hides them, the user 15-11-2026;
+  // laid on the skull alone, the ears stuck out through it. ear: the bins they reach)
+  const ear = new Uint8Array(NU * NV);
+  if (earData) for (const s of [-1, 1]) { const E = earData.sides[s]; if (!E) continue; for (let k = 0; k < E.idx.length; k++) { v.set(E.pos[k * 3], E.pos[k * 3 + 1], E.pos[k * 3 + 2]).applyMatrix4(earData.M).sub(c); const r = v.length() + .04 * a, b = bin(v.normalize()); ear[b] = 1; if (r > R[b]) R[b] = r; } }
+  for (let it = 0; it < 4; it++) for (let k = 0; k < R.length; k++) if (!R[k]) R[k] = Math.max(R[(k + 1) % R.length], R[(k + R.length - 1) % R.length]);
+  const S = R.map((_, k) => { const w = Math.floor(k / NU), u = k % NU; let s = 0, m = 0; for (let dw = -1; dw <= 1; dw++) for (let du = -1; du <= 1; du++) { const ww = w + dw; if (ww < 0 || ww >= NV) continue; s += R[ww * NU + (u + du + NU) % NU]; m++; } return s / m; });
+  const ease = t => { t = Math.min(1, Math.max(0, t)); return t * t * (3 - 2 * t); };
+  const q = new THREE.Vector3();
+  for (let i = 0; i < n; i++) { p.fromArray(W, i * 3); const dx = p.x - mx, front = ease((p.z - (ez - 1.2 * a)) / (.6 * a)), top = ease((p.y - (eyeY + .8 * a)) / (.4 * a));
+    // (the parting: the hair either side of it moved in over it - on top of the head only, fading out to the sides)
+    p.x -= Math.sign(dx) * opts.part * a * front * top * (1 - ease(Math.abs(dx) / (1.4 * a))); // (fading out wide: narrow, a stripe of skin opened beside the parting)
+    // (the lock swept further down over its half of the forehead - the user, 15-11-2026: on the figure's taller forehead
+    // it lay as a thin slant. Turned as one piece about the temple just over the brow, the turn fading out smoothly to
+    // the parting, the top and the back, so it is never torn across)
+    if (opts.sweep) { const px = mx + 1.0 * a, py = eyeY + .45 * a, rx = p.x - px, ry = p.y - py, far = Math.hypot(rx, ry);
+      const w = front * ease((dx + .15 * a) / (.45 * a)) * (1 - ease((far - 1.0 * a) / (.7 * a))) * ease((p.y - (eyeY + .2 * a)) / (.4 * a)), t = opts.sweep * w, cs = Math.cos(t), sn = Math.sin(t);
+      p.x = px + rx * cs - ry * sn; p.y = py + rx * sn + ry * cs; }
+    // (onto the skull: just outside it, wrap of the thickness over it kept; on top, hair a little inside it brought out
+    // to it. Below the eyes this fades away, and the hair below the head is drawn in a little towards the neck instead -
+    // gently, the two blended, as a hard change there stretched the hair into streaks)
+    v.copy(p).sub(c); const r = v.length(), d = v.clone().normalize(), skull = S[bin(d)] + .02 * a, onHead = ease((p.y - (eyeY - 1.2 * a)) / (.8 * a));
+    let r2 = r; if (r > skull) r2 = skull + (r - skull) * opts.skull; else if (r > skull - .3 * a && p.y > eyeY + (dx > 0 ? .15 : .6) * a || ear[bin(d)]) r2 = skull; // (on the lock's side down to just over the brow: its tip lay inside the forehead, a hole over the brow - the user)
+    q.copy(d).multiplyScalar(r2).add(c);
+    const hx = p.x - mx, hz = p.z - c.z, hr = Math.hypot(hx, hz), k = .12 * (1 - onHead); if (hr > 0) { p.x = mx + hx * (1 - k); p.z = c.z + hz * (1 - k); }
+    p.lerp(q, onHead);
+    W.set([p.x, p.y, p.z], i * 3); } }
 // (short hair closer to the head and clear of the ears - the user. snug: how much of the hair's thickness over the skull
 // is kept, each point drawn in towards the head's middle; ears: the hair over each ear lifted to just above it, so the
 // ear shows, the hair in front of it - by the cheek - left as it is)
@@ -2043,6 +2121,30 @@ function scalpCap(hair, g, W, outlines, a, eyeY) { if (!outlines.length) return;
   cg.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(SI, 4)); cg.setAttribute('skinWeight', new THREE.Float32BufferAttribute(SW, 4));
   // (a child of the hair, with no place of its own: shown and hidden with it, and placed as it is)
   const cap = new THREE.SkinnedMesh(cg, Array.isArray(hair.material) ? hair.material[0] : hair.material); cap.frustumCulled = false; hair.add(cap); cap.bind(hair.skeleton, hair.bindMatrix); }
+// (under Bølger's hair a thin layer of the head itself in the hair's own colour - the user, 15-11-2026: a stripe of skin
+// showed through a gap between two locks over the forehead. Only the head's own triangles close under the hair, above the
+// brows, laid just outside the skin, so a gap shows hair beneath and the open forehead stays as it is)
+function hairUnder(hair, W, a, eyeY, eyes) {
+  const { pts } = hairBase.whole, bgeo = hairBase.body.geometry, bsi = bgeo.attributes.skinIndex, bsw = bgeo.attributes.skinWeight, v = new THREE.Vector3(), nv = new THREE.Vector3();
+  // (which directions from the head's middle have hair, in small steps round it; narrow gaps between locks closed -
+  // grown by two steps and shrunk back - so the gap is filled and the hair's own edge stays where it is)
+  const mx = (eyes[0].x + eyes[1].x) / 2, ez = (eyes[0].z + eyes[1].z) / 2, c = new THREE.Vector3(mx, eyeY + .25 * a, ez - .95 * a), NU = 240, NV = 120;
+  const bin = (x, y, z) => { v.set(x, y, z).sub(c).normalize(); const u = Math.floor((Math.atan2(v.x, v.z) / Math.PI + 1) / 2 * NU) % NU, w = Math.min(NV - 1, Math.floor(Math.acos(Math.max(-1, Math.min(1, v.y))) / Math.PI * NV)); return w * NU + u; };
+  let on = new Uint8Array(NU * NV); for (let i = 0; i < W.length; i += 3) on[bin(W[i], W[i + 1], W[i + 2])] = 1;
+  const grow = (src, val) => { const out = new Uint8Array(src.length); for (let w = 0; w < NV; w++) for (let u = 0; u < NU; u++) { let hit = !val; for (let dw = -2; dw <= 2 && hit !== val; dw++) for (let du = -2; du <= 2; du++) { const ww = w + dw; if (ww < 0 || ww >= NV) continue; if (!!src[ww * NU + (u + du + NU) % NU] === val) { hit = val; break; } } out[w * NU + u] = hit ? 1 : 0; } return out; };
+  on = grow(grow(on, true), false);
+  // (its colour: a spot of the hair's picture of its middle brightness, as for the layer round the ears)
+  const T = hairTexs.find(t => t.texture === (Array.isArray(hair.material) ? hair.material[0] : hair.material).map); let U = [.5, .5];
+  if (T) { let best = Infinity; for (let p = 0, i = 0; p < T.w * T.h; p += 7, i = p * 4) { if (!T.mask[p]) continue; const b = Math.abs((.3 * T.src[i] + .59 * T.src[i + 1] + .11 * T.src[i + 2]) - T.mid); if (b < best) { best = b; U = [(p % T.w + .5) / T.w, 1 - (Math.floor(p / T.w) + .5) / T.h]; } } }
+  const P = [], N = [], SI = [], SW = [];
+  for (let j0 = 0; j0 < pts.length / 6; j0 += 3) { const js = [j0, j0 + 1, j0 + 2];
+    if (!js.every(j => pts[j * 6 + 1] > eyeY + (pts[j * 6] > mx ? .2 : .6) * a && Math.abs(pts[j * 6] - mx) < 1.25 * a && on[bin(pts[j * 6], pts[j * 6 + 1], pts[j * 6 + 2])])) continue;
+    for (const j of js) { v.set(pts[j * 6], pts[j * 6 + 1], pts[j * 6 + 2]); nv.copy(v).sub(c).normalize(); v.addScaledVector(nv, .012 * a).applyMatrix4(hairBase.whole.inv); P.push(v.x, v.y, v.z);
+      nv.transformDirection(hairBase.whole.inv); N.push(nv.x, nv.y, nv.z); for (let k = 0; k < 4; k++) { SI.push(bsi.getComponent(j, k)); SW.push(bsw.getComponent(j, k)); } } }
+  if (!P.length) return; const g = new THREE.BufferGeometry(), m = P.length / 3; g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(Array.from({ length: m }, () => U).flat(), 2));
+  g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(SI, 4)); g.setAttribute('skinWeight', new THREE.Float32BufferAttribute(SW, 4));
+  const under = new THREE.SkinnedMesh(g, Array.isArray(hair.material) ? hair.material[0] : hair.material); under.frustumCulled = false; hair.add(under); under.bind(hair.skeleton, hair.bindMatrix); }
 // (the hair's pieces still across an ear's middle left out - stretched over it from where their corners were drawn out)
 function hairOverEar(g, W, outlines) { if (!outlines.length) return; const idx = g.index.array, keep = [];
   // (tested at its middle and the middles of its sides too: a long piece from above the ear to below it, its corners
@@ -2084,6 +2186,11 @@ async function loadHair(name, list = hairTexs, colourPart = 'hair', extra = {}) 
   for (let i = 0; i < n; i++) { p.fromBufferAttribute(pos, i).applyMatrix4(place); W.set([p.x, p.y, p.z], i * 3);
     const k = Math.min(1, Math.max(0, (p.y - bottom) / (top - bottom))); weight[i] = k * k * (3 - 2 * k);
     if (!opts.braids && weight[i] < 1 && hairBase.surface) { const hit = inside(p, .12 * apart); if (hit) needs[p.x < 0 ? 0 : 1].push(hit.need / Math.max(.5, hit.way.z)); } }
+  // (Bølger laid on the head first - and then what of it comes inside the shoulders measured again, so each side is
+  // moved forward as one piece from where it now is)
+  // (skull, not wrap: the hats' own wrap - Kaninører's - came here too, and the ears went missing)
+  if (opts.skull) { wrapHair(W, n, opts, apart, eyeY, mine); needs[0].length = needs[1].length = 0;
+    for (let i = 0; i < n; i++) { if (weight[i] >= 1 || !hairBase.surface) continue; p.fromArray(W, i * 3); const hit = inside(p, .12 * apart); if (hit) needs[p.x < 0 ? 0 : 1].push(hit.need / Math.max(.5, hit.way.z)); } }
   // (only when a real part of it is inside - a few curl tips touching the shoulders are left as they are)
   for (const s of [0, 1]) { if (needs[s].length < .02 * n) continue; needs[s].sort((x, y) => x - y);
     shift[s].set(0, LIFT * apart, Math.min(.3 * apart, needs[s][Math.floor(needs[s].length * .9)])); }
@@ -2108,7 +2215,7 @@ async function loadHair(name, list = hairTexs, colourPart = 'hair', extra = {}) 
   if (opts.flat) list.at(-1).flat = opts.flat;
   // (cap: no lighter than that over the middle - the glasses' frames had white smears inside, by the glass)
   if (opts.cap) list.at(-1).cap = opts.cap;
-  body.parent.add(hair); hair.bind(body.skeleton, body.bindMatrix); scalpCap(hair, g, W, earLines, apart, eyeY); if (picked[colourPart]) recolourHair(picked[colourPart], list); return hair; }
+  body.parent.add(hair); hair.bind(body.skeleton, body.bindMatrix); scalpCap(hair, g, W, earLines, apart, eyeY); if (opts.under) hairUnder(hair, W, apart, eyeY, mine); if (picked[colourPart]) recolourHair(picked[colourPart], list); return hair; }
 var styleLists = () => ({ hair: [HAIRS, hairNow, setHair], eyes: [EYES, eyesNow, setEyes], brows: [BROWS, browsNow, setBrows], mouth: [MOUTHS, mouthNow, setMouth], pynt: [PYNT, pyntNow.map(k => 'pynt-' + k), setPynt], nose: [NOSES, noseNow, setNose], item: [ITEMS, itemNow, n => { petPick = false; setItem(n); showSwatches(); }, [PETS, petNow, n => { petPick = true; setPet(n); showSwatches(); }, 'dyr', petNow ? PET_TOYS_LIST() : null]], bg: [BGS, bgNow, setBg], ears: [EARS, earsNow, setEars, [EARRINGS, earringsNow, setEarrings, 'oerering']],
   ...Object.fromEntries(Object.entries(GARMENTS).map(([part, G]) => [part, [G.items, G.now, n => setGarment(part, n)]])),
   // (Udstyr - the user, 11-11-2026: suits and gear in one tab. The suits above, the goggles and snorkel in a row under
@@ -2128,7 +2235,15 @@ const hairLoads = {};
 async function setHair(name) {
   hairNow = name; renderStyles();
   if (name && !hairMeshes[name]) { hairMeshes[name] = await (hairLoads[name] ??= loadHair(name).catch(() => null)); if (!hairMeshes[name]) { delete hairLoads[name]; toast(NO_NET); } }
-  for (const [n, m] of Object.entries(hairMeshes)) if (m) m.visible = n === hairNow; hatHair(); regoggle(); }
+  for (const [n, m] of Object.entries(hairMeshes)) if (m) m.visible = n === hairNow; earsUnderHair(); hoodBraids(); hatHair(); regoggle(); }
+// (hair that falls over the ears - Bølger, the user 15-11-2026: the ears hidden on both sides - hides the ears' own
+// shapes: their top rim peeped out through it)
+// (the hoodie's rim: the short one with braids, the whole one otherwise)
+const HOOD_BRAIDS = .6;
+const braidsOn = () => !!HAIRS.find(h => h[0] === hairNow)?.[2]?.braids;
+function hoodBraids() { const braids = braidsOn();
+  for (const g of Object.values(GARMENTS)) for (const m of Object.values(g.meshes)) m?.traverse?.(o => { if (o.name?.endsWith('-kant-flet')) o.visible = braids; else if (o.name?.endsWith('-kant')) o.visible = !braids; }); }
+function earsUnderHair() { const hide = !!HAIRS.find(h => h[0] === hairNow)?.[2]?.hideEars; if (typeof earData !== 'undefined' && earData) for (const s of [-1, 1]) { const P = earData.sides[s]?.part; if (P) P.visible = !hide; } }
 // (a crown set on what is under it - the hair, or the bald head - its lowest ring sunk into it by sink eyes' distances:
 // one height for all, it hung in the air over the bald head and the braids and sank into the bob)
 function restHat(hat, hair, sink) {
@@ -2301,7 +2416,7 @@ const GARMENTS = {
     ['sko-hoej', 'Højhælede', { made: true, top: .03, out: .0055, heel: true }],
     // (space boots - the user, 13-11-2026: the suit's feet looked like socks. Thick, up over the ankles, a dark sole and a
     // band round the top; in the shoes' colour)
-    ['sko-rum', 'Rumstøvler', { made: true, top: .17, out: .03, boot: true, stripe: [.008, .036], game: 'space' }], ['sko-ski', 'Skistøvler', { made: true, top: .15, out: .026, boot: true, stripe: [.008, .03], game: 'snow' }]], texs: [] },
+    ['sko-rum', 'Rumstøvler', { made: true, top: .17, out: .03, boot: true, stripe: [.008, .036], game: 'space' }], ['sko-ski', 'Skistøvler', { made: true, top: .13, out: .015, rim: .006, boot: true, stripe: [.008, .03], game: 'snow' }]], texs: [] },
   // (hats were made on a bald head: on top of hair they are raised - lift, in eyes' distances - or, a cap, made wider)
   hat: { items: [['', 'Ingen hat'], ['hat-kasket', 'Kasket', { grow: 1.12, lift: .1, cap: true }], ['hat-krone', 'Krone', { grow: 1.05, rest: .12 }], ['hat-kanin', 'Kaninører', { grow: 1.12, lift: .3, wrap: .03, ears: .45, thin: .35, scalp: true, flat: .3 }],
     ['hat-sloejfe', 'Sløjfe', { grow: 1.05, lift: .35, move: .02, size: .75 }],
@@ -2758,7 +2873,7 @@ function bootSoles(cloth, opts) { const { pts, H } = hairBase.whole, K = clothMa
     for (let i = 0; i < near.length; i += 2) { const b = Math.floor((Math.atan2(near[i + 1] - cz, near[i] - cx) / (2 * Math.PI) + 1) * NB) % NB; R[b] = Math.max(R[b], Math.hypot(near[i] - cx, near[i + 1] - cz)); }
     for (let it = 0; it < NB; it++) for (let b = 0; b < NB; b++) if (!R[b]) R[b] = R[(b + 1) % NB] || R[(b + NB - 1) % NB];
     for (let it = 0; it < 3; it++) { const w = R.slice(); for (let b = 0; b < NB; b++) R[b] = Math.max(w[b], (w[(b + NB - 1) % NB] + 2 * w[b] + w[(b + 1) % NB]) / 4); }
-    const P = [new THREE.Vector3(cx, topY, cz)], ix = [], ring = (inset, y) => { for (let b = 0; b < NB; b++) { const a = (b + .5) / NB * 2 * Math.PI, r = R[b] + opts.out * H + .014 * H - inset; P.push(new THREE.Vector3(cx + Math.cos(a) * r, y, cz + Math.sin(a) * r)); } };
+    const P = [new THREE.Vector3(cx, topY, cz)], ix = [], ring = (inset, y) => { for (let b = 0; b < NB; b++) { const a = (b + .5) / NB * 2 * Math.PI, r = R[b] + opts.out * H + (opts.rim ?? .014) * H - inset; P.push(new THREE.Vector3(cx + Math.cos(a) * r, y, cz + Math.sin(a) * r)); } };
     ring(bev, topY); ring(0, topY - bev); ring(0, botY + bev); ring(bev, botY); P.push(new THREE.Vector3(cx, botY, cz));
     for (let b = 0; b < NB; b++) { const b2 = (b + 1) % NB; ix.push(0, 1 + b2, 1 + b); for (let r = 0; r < 3; r++) { const p0 = 1 + r * NB + b, p1 = 1 + r * NB + b2; ix.push(p0, p1, p0 + NB, p1, p1 + NB, p0 + NB); } ix.push(P.length - 1, 1 + 3 * NB + b, 1 + 3 * NB + b2); }
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P.flatMap(v => v.toArray()), 3)); g.setIndex(ix); g.computeVertexNormals();
@@ -3018,7 +3133,9 @@ function makeCloth(name, part, opts) {
   cloth.position.copy(body.position); cloth.quaternion.copy(body.quaternion); cloth.scale.copy(body.scale);
   body.parent.add(cloth); cloth.bind(body.skeleton, body.bindMatrix); if (picked[part]) recolourHair(picked[part], G.texs); if (G.texs === gearTexs && picked.suit) recolourHair(picked.suit, gearTexs);
   if (socks) { cloth.userData.sock = opts; paintSocks(cloth); if (opts.heel) { cloth.material.roughness = .28; cloth.material.metalness = .05; } if (opts.boot) { cloth.material.roughness = .5; bootSoles(cloth, opts); } }
-  if (opts.hood) hoodRim(cloth, list, wp, dir, edges[1].f, K, H, inv);
+  // (and a shorter one, for braids: they come down over the shoulders just where the rim's ends turn in to the neck, and
+  // went through them - the user, 15-11-2026. Which of the two shows is set by the hair - see hoodBraids)
+  if (opts.hood) { hoodRim(cloth, list, wp, dir, edges[1].f, K, H, inv); hoodRim(cloth, list, wp, dir, edges[1].f, K, H, inv, HOOD_A0 + HOOD_BRAIDS, '-kant-flet'); }
   if (opts.relief && !opts.hood && !opts.swim) neckBand(cloth, list, wp, dir, edges[1].f, K, H, inv, opts.trim ? .55 : 1);
   // (the body under it hidden, all but near its edges)
   const covered = new Uint8Array(pts.length / 6); for (let j = 0; j < covered.length; j++) covered[j] = !((pants || socks || pts[j * 6 + 1] < swimArm) && armPt[j]) && edges.every(e => e.f(P3(j)) < -e.bare) ? 1 : 0;
@@ -3100,13 +3217,13 @@ const HOOD_A0 = 1.75, hoodGap = (b, H) => { const t = Math.min(1, Math.max(0, (b
 // (the hood's opening: a thick rolled edge round the back of the neck and forward over the shoulders, a little way out
 // from the neck - between it and the neck the hood's inside shows, darker. The collar round the neck stays as it was.
 // The user's pictures, 11-11-2026. A tube of the same cloth, following the bones of the cloth under it)
-function hoodRim(cloth, list, wp, dir, neck, K, H, inv) {
+function hoodRim(cloth, list, wp, dir, neck, K, H, inv, A0 = HOOD_A0, tag = '-kant') {
   // (behind the shoulders only: further forward it stood up over them, seen from the front)
   // (gap: how far from the neck - wider, so more of the hood's inside shows, the user said 11-11-2026)
   // (A0: where it ends, round from the front - as far out as the hood is wide up there, narrowed 11-11-2026)
   // (and at its two ends turning in over the shoulders to the neck, round the dark inside, so it goes all the way from
   // one side of the neck to the other - the user, 11-11-2026. hoodGap: how far out from the neck, round from the front)
-  const A0 = HOOD_A0, NB = 26, bins = Array.from({ length: NB }, () => ({ p: [0, 0, 0], n: [0, 0, 0], w: {}, c: 0 }));
+  const NB = 26, bins = Array.from({ length: NB }, () => ({ p: [0, 0, 0], n: [0, 0, 0], w: {}, c: 0 }));
   list.forEach((c, i) => { let a = Math.atan2(c.p[0] - K.mid, c.p[2] - K.nz); if (a < 0) a += 2 * Math.PI; if (a < A0 || a > 2 * Math.PI - A0) return;
     const d = -neck(c.p), gap = hoodGap(Math.min(a, 2 * Math.PI - a), H); if (Math.abs(d - gap) > Math.min(.007 * H, gap * .6) || Math.hypot(c.p[0] - K.mid, c.p[2] - K.nz) > K.nr + .09 * H) return;
     const B = bins[Math.min(NB - 1, Math.floor((a - A0) / (2 * Math.PI - 2 * A0) * NB))];
@@ -3131,7 +3248,7 @@ function hoodRim(cloth, list, wp, dir, neck, K, H, inv) {
   // (its place on the cloth's relief: a smooth spot, above the neck at the front - it shares the cloth's look)
   g.setAttribute('uv1', new THREE.BufferAttribute(new Float32Array(m * 2).map((_, k) => k % 2 ? .999 : .25), 2));
   g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(si, 4)); g.setAttribute('skinWeight', new THREE.Float32BufferAttribute(sw, 4));
-  const rim = new THREE.SkinnedMesh(g, cloth.material); rim.castShadow = true; rim.frustumCulled = false; rim.name = cloth.name + '-kant';
+  const rim = new THREE.SkinnedMesh(g, cloth.material); rim.castShadow = true; rim.frustumCulled = false; rim.name = cloth.name + tag; rim.visible = (tag === '-kant-flet') === braidsOn();
   cloth.add(rim); rim.bind(cloth.skeleton, cloth.bindMatrix); }
 // (a T-shirt's or football shirt's neck: a round band of the cloth all the way round the neck's edge, so the neck is
 // finished, not cut - drawn into the relief from above it went in jags. The football shirt's as dark as its trim.
@@ -4012,7 +4129,7 @@ function buildEar(s, o) { const { a, mx, ey, ez, inv, M } = earData, E = earData
   g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(si, 4)); g.setAttribute('skinWeight', new THREE.Float32BufferAttribute(sw, 4));
   if (E.part) { E.part.geometry.dispose(); E.part.geometry = g; return; }
   const m = body.material.clone(); m.vertexColors = true;
-  const sm = new THREE.SkinnedMesh(g, m); sm.castShadow = true; sm.frustumCulled = false; sm.position.copy(body.position); sm.quaternion.copy(body.quaternion); sm.scale.copy(body.scale); body.parent.add(sm); sm.bind(body.skeleton, body.bindMatrix); E.part = sm; }
+  const sm = new THREE.SkinnedMesh(g, m); sm.castShadow = true; sm.frustumCulled = false; sm.position.copy(body.position); sm.quaternion.copy(body.quaternion); sm.scale.copy(body.scale); body.parent.add(sm); sm.bind(body.skeleton, body.bindMatrix); E.part = sm; earsUnderHair(); }
 function earLight(E, geo) { const A = geo.attributes.position, N = geo.attributes.normal, sum = new Float32Array(E.groups * 3), p = [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()], e = new THREE.Vector3(), f = new THREE.Vector3();
   for (const c of E.tris) { for (let i = 0; i < 3; i++) p[i].fromBufferAttribute(A, c + i); e.subVectors(p[1], p[0]); f.subVectors(p[2], p[0]); e.cross(f); for (let i = 0; i < 3; i++) { const g = E.group.get(c + i) * 3; sum[g] += e.x; sum[g + 1] += e.y; sum[g + 2] += e.z; } }
   const v = new THREE.Vector3(), o = new THREE.Vector3();
@@ -4185,7 +4302,7 @@ function petTick(dt) { if (!pet) { if (bowl) bowl.visible = false; if (ball) bal
   const running = runMove || ['side', 'back', 'front', 'skate', 'snow'].includes(mode), floorY = mode === 'sea' ? petAt.y - .45 : 0; let tx = petAt.x + ox, tz = petAt.z + oz; const J = petJob;
   if (J.kind === 'eat') { tx = toyBowl.x + .1; tz = toyBowl.z - .3; face = Math.atan2(toyBowl.x - tx, toyBowl.z - tz); }
   else if (J.kind === 'ball') { if (J.flying > 0) { J.flying -= dt; const u = 1 - Math.max(0, J.flying) / .55; ball.position.set(J.from.x + (J.bx - J.from.x) * u, .11 + Math.sin(u * Math.PI) * .45, J.from.z + (J.bz - J.from.z) * u); ball.rotation.x += dt * 12; tx = J.bx; tz = J.bz; } else if (J.t === 0) { tx = J.bx; tz = J.bz; if (Math.hypot(g.position.x - tx, g.position.z - tz) < .3) { J.t = 1; sfx('ding'); } } else { tx = toyRest.x; tz = toyRest.z - .3; const fx = Math.sin(pet.face), fz = Math.cos(pet.face); ball.position.set(g.position.x + fx * .36, .11, g.position.z + fz * .36); if (Math.hypot(g.position.x - tx, g.position.z - tz) < .1) { J.kind = ''; ball.position.set(toyRest.x, .11, toyRest.z); } } }
-  g.visible = holder.visible && mode !== 'sea' && mode !== 'space' && mode !== 'skate' && mode !== 'snow' && mode !== 'skihop' && mode !== 'pk' && !(mode === 'hide' && !il.rig.visible); // (not in the sea - the user, 04-11-2026)
+  g.visible = holder.visible && mode !== 'sea' && mode !== 'space' && mode !== 'skate' && mode !== 'snow' && mode !== 'skihop' && mode !== 'cypher' && mode !== 'studio' && mode !== 'pk' && !(mode === 'hide' && !il.rig.visible); // (not in the sea - the user, 04-11-2026)
   if (pet.snap) { g.position.set(tx, floorY, tz); pet.snap = false; } const x0 = g.position.x, z0 = g.position.z, k = 1 - Math.exp(-dt * (running ? 9 : J.kind === 'ball' ? (J.t ? 2.6 : 5) : 3.2)); g.position.x += (tx - x0) * k; g.position.z += (tz - z0) * k; pet.y = (pet.y ?? floorY) + (floorY - (pet.y ?? floorY)) * k;
   const vx = g.position.x - x0, vz = g.position.z - z0, speed = dt ? Math.hypot(vx, vz) / dt : 0, moving = running || speed > .35, t = performance.now() / 1000;
   const faceTo = !running && speed > .35 ? Math.atan2(vx, vz) : face ?? pet.face; let d = faceTo - pet.face; d = Math.atan2(Math.sin(d), Math.cos(d)); pet.face += d * Math.min(1, dt * 7); g.rotation.y = pet.face;
@@ -4419,7 +4536,7 @@ const lifts = {}, LIFT_JOINTS = [['HeadTop_End', .03], ['Head', .13], ['Neck', .
   ['LeftArm', .05], ['RightArm', .05], ['LeftForeArm', .045], ['RightForeArm', .045], ['LeftHand', .04], ['RightHand', .04], ['LeftUpLeg', .08], ['RightUpLeg', .08],
   ['LeftLeg', .06], ['RightLeg', .06], ['LeftFoot', .05], ['RightFoot', .05], ['LeftToeBase', .03], ['RightToeBase', .03]], lv = new THREE.Vector3();
 // (measured against the figure standing, whose feet are on the floor however thick the joints are counted)
-const underFloor = () => Math.max(...LIFT_JOINTS.map(([j, r]) => bone(j) ? r - holder.worldToLocal(bone(j).getWorldPosition(lv)).y : -9));
+const underFloor = () => Math.max(...LIFT_JOINTS.map(([j, r]) => bone(j) ? r - (glb.parent || holder).worldToLocal(bone(j).getWorldPosition(lv)).y : -9));
 function liftCurve(id) { const clip = glbActions[id].getClip(), n = 24, lift = []; if (clip.duration < .05) return null;
   for (let k = 0; k <= n; k++) { sample(id, clip.duration * k / n); lift.push(Math.max(0, underFloor() - kick.floor)); }
   if (Math.max(...lift) < .005) return null;
@@ -4542,9 +4659,13 @@ const MODES = {
   // (Straffespark: from behind the figure, the goal ahead - see pkTick)
   pk: { x: 0, face: Math.PI, cheer: 0, cam: w => [0, 2.3, w ? 4.6 : 6.4, 0, .9, -6] },
   // (Skihop: the hill seen from the side - the camera follows the jumper, see sjTick)
-  skihop: { x: 0, face: Math.PI / 2, cheer: Math.PI / 2, cam: w => [0, 3, w ? 13 : 17, 0, 1, 0] } };
+  skihop: { x: 0, face: Math.PI / 2, cheer: Math.PI / 2, cam: w => [0, 3, w ? 13 : 17, 0, 1, 0] },
+  // (Dansestudie: the camera is set by dsTick - the room, then the stage)
+  studio: { x: 0, face: 0, cheer: 0, cam: w => [0, 1.9, w ? 6.6 : 8.4, 0, .45, -1.5] },
+  // (Cypher: the ring from in front, a little above - see cyTick)
+  cypher: { x: 0, face: 0, cheer: 0, cam: w => [0, 2.5, w ? 6.8 : 8.8, 0, 1.05, -.4] } };
 // (the games with a world of their own instead of the background picture)
-const OWN_WORLD = ['island', 'sea', 'hide', 'pk', 'space', 'skihop'];
+const OWN_WORLD = ['island', 'sea', 'hide', 'pk', 'space', 'skihop', 'cypher', 'studio'];
 // (the games that show nothing of the background chosen for the figure: those, and the skateboard game - the user,
 // 11-11-2026: a background changed showed in the skateboard game too, which made no sense)
 const NO_BG = [...OWN_WORLD, 'skate', 'snow', 'side', 'back', 'front'];
@@ -4587,16 +4708,16 @@ function startGame(mode = game.mode) { if (game.on || !glb) return; if (!game.ag
   if (bgNow === 'bg-sol' && !NO_BG.includes(mode)) setBg('bg-fodboldbane');
   // (five balls made once and used again)
   // (a ball chosen under Ting - Bold or Fodbold - is the game's ball, not one in the hand as well)
-  if (onBoard(mode)) skateStart(mode === 'snow'); else if (mode === 'island') islandStart(); else if (mode === 'sea') seaStart(); else if (mode === 'space') spaceStart(); else if (mode === 'hide') hideStart(); else if (mode === 'pk') pkStart(); else if (mode === 'skihop') sjStart(); else {
+  if (onBoard(mode)) skateStart(mode === 'snow'); else if (mode === 'island') islandStart(); else if (mode === 'sea') seaStart(); else if (mode === 'space') spaceStart(); else if (mode === 'hide') hideStart(); else if (mode === 'pk') pkStart(); else if (mode === 'skihop') sjStart(); else if (mode === 'cypher') cyStart(); else if (mode === 'studio') dsStart(); else {
     useGameBall(BALL_ITEMS.includes(itemNow) ? itemNow : ''); hopWorldStart(mode);
     game.bigPool ??= [goldBall(), goldBall()]; Object.assign(game, { dive: false, sinceBig: 0 });
     const run = levelNow().run; Promise.all([run, GAME.jump, GAME.trip, GAME.cheer, GAME.dive].map(loadMove)).then(() => { if (game.on) runAnim(run); }); }
-  hintEl.textContent = tr(onBoard(mode) ? '👈 Tryk i siden for at svinge 👉' : mode === 'island' ? '👆 Tryk hvor du vil gå hen' : mode === 'space' ? '👆 Tryk – så flyver du derhen. To hurtige tryk giver fart 🚀' : mode === 'sea' ? '👆 Tryk eller træk – så svømmer du derhen' : mode === 'hide' ? '🔍 Hvor er jeg? Tryk på busken' : mode === 'skihop' ? '👆 Tryk for at køre – og tryk igen ved kanten for at hoppe!' : mode === 'pk' ? '👆 Tryk i målet, hvor bolden skal hen' : '👆 Tryk for at hoppe');
-  hud.hidden = false; hintEl.hidden = false; try { showLvl(); } catch (e) {} document.querySelector('.top').hidden = true; document.getElementById('stage').classList.add('playing'); showStars(); showRecord();
+  hintEl.textContent = tr(onBoard(mode) ? '👈 Tryk i siden for at svinge 👉' : mode === 'island' ? '👆 Tryk hvor du vil gå hen' : mode === 'space' ? '👆 Tryk – så flyver du derhen. To hurtige tryk giver fart 🚀' : mode === 'sea' ? '👆 Tryk eller træk – så svømmer du derhen' : mode === 'hide' ? '🔍 Hvor er jeg? Tryk på busken' : mode === 'skihop' ? '👆 Tryk for at køre – og tryk igen ved kanten for at hoppe!' : mode === 'cypher' ? '🎵 Vælg fire trin til din runde' : mode === 'studio' ? '🎵 Sæt din dans sammen' : mode === 'pk' ? '👆 Tryk i målet, hvor bolden skal hen' : '👆 Tryk for at hoppe');
+  hud.hidden = false; hintEl.hidden = mode === 'cypher' || mode === 'studio'; try { showLvl(); } catch (e) {} document.querySelector('.top').hidden = true; document.getElementById('stage').classList.add('playing'); showStars(); showRecord();
   if (MODES[mode].from) game.hopWay = mode; // (the way last chosen in Hop over bolden)
   document.querySelectorAll('[data-game]').forEach(b => b.classList.toggle('on', b.dataset.game === mode || b.dataset.game === 'hop' && !!MODES[mode].from)); prepScene(); }
 // (again: only stopped to start once more - at another level or in another way - the figure's own setting not put back)
-function stopGame(again) { if (!game.on) return; game.on = false; for (const b of [...gamePool(), ...(game.bigPool || [])]) b.group.visible = false; game.dive = false; game.balls = []; confetti.length = 0; unprepScene(); skateStop(); hopWorldStop(); hideStop(); islandStop(); seaStop(); spaceStop(); pkStop(); sjStop();
+function stopGame(again) { if (!game.on) return; game.on = false; for (const b of [...gamePool(), ...(game.bigPool || [])]) b.group.visible = false; game.dive = false; game.balls = []; confetti.length = 0; unprepScene(); skateStop(); hopWorldStop(); hideStop(); islandStop(); seaStop(); spaceStop(); pkStop(); sjStop(); cyStop(); dsStop();
   // (the sound shut down when nothing plays: on an iPad an open sound channel could go on sounding after the game)
   if (!again) { try { game.audio?.suspend(); } catch (e) {} setItem(game.held ?? itemNow); game.held = undefined; }
   if (again) { game.again = true; return; } holder.position.x = 0; wearBack(game.wore); try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) {}
@@ -4634,6 +4755,8 @@ function gameTick(dt) { confettiTick(dt); if (!game.on || !glb) return; const r 
   if (game.mode === 'hide') { hideTick(dt); return; }
   if (game.mode === 'pk') { pkTick(dt); return; }
   if (game.mode === 'skihop') { sjTick(dt); return; }
+  if (game.mode === 'cypher') { cyTick(dt); return; }
+  if (game.mode === 'studio') { dsTick(dt); return; }
   // (the jump: up and down in a smooth arc over the ball, the run again when it lands)
   // (the fifth star mostly comes in the air: the cheer then waits for the landing - before, the landing put the run back
   // in the middle of the cheer, the figure running on the spot facing out, no balls, as if waiting for a tap)
@@ -5691,61 +5814,273 @@ function pkAbeSaved(dt, b) { const m = pk.abe, kp = pk.keeper; pk.t += dt; if (p
 // the jump (no tap: a little hop off the end, so nothing is ever lost). It flies leaning out over its skis, held in a V,
 // lands on the hill and glides out on the flat; the length in metres shows, and gives one to five stars. Then up again.
 // Five levels: faster in-run, and the tap must be nearer the edge. The gear is the snowboard's (gearGame).
-const SJ = { x0: -13, g: 6.5, levels: { 'niveau-meget-let': [7, 2.6], 'niveau-let': [7.6, 2], 'niveau-mellem': [8.2, 1.5], 'niveau-svaer': [8.8, 1.15], 'niveau-meget-svaer': [9.4, .85] } };
-const sj = { world: null, rig: null, phase: '', x: 0, y: 0, v: 0, vx: 0, vy: 0, tap: null, t: 0, q: 0, stopT: 0, tuck: 0, fly: 0 };
-// (the hill's height along it: the in-run curving down to a level edge; a drop; the landing hill, steep and then out flat)
-const sjHill = x => x < 0 ? 2.2 + .045 * Math.max(x, SJ.x0 - .4) ** 2 : x < 4 ? 1.4 - .06 * x * x : x < 34 ? .44 - .5 * (x - 4) : x < 44 ? -14.56 - .5 * (x - 34) + .025 * (x - 34) ** 2 : -17.06;
+const SJ = { x0: -17, xg: -15.9, xp: -14.8, xk: -12, z0: -9, z1: 3.4, g: 6.5, levels: { 'niveau-meget-let': [7, 2.6], 'niveau-let': [7.6, 2], 'niveau-mellem': [8.2, 1.5], 'niveau-svaer': [8.8, 1.15], 'niveau-meget-svaer': [9.4, .85] } };
+// (the top: a level plateau to start from, rounded over a brow into the in-run - the user, 15-11-2026: the jumper starts
+// on the flat and pushes itself out over the edge)
+SJ.c = .09 * -SJ.xk / (2 * (SJ.xk - SJ.xp)); SJ.top = 2.2 + .045 * SJ.xk ** 2 + SJ.c * (SJ.xk - SJ.xp) ** 2;
+const sj = { world: null, rig: null, phase: '', x: 0, y: 0, v: 0, vx: 0, vy: 0, tap: null, t: 0, q: 0, stopT: 0, tuck: 0, fly: 0, run: 0, push: 0, gateA: 0, landW: 0, arm: 0, sit: 0, vee: 0, skiRot: 0 };
+// (the hill's height along it: the plateau, the brow, the in-run curving down to a level edge; a drop; the landing hill, steep and then out flat)
+const sjHill = x => x < 0 ? (x >= SJ.xk ? 2.2 + .045 * x * x : x > SJ.xp ? SJ.top - SJ.c * (x - SJ.xp) ** 2 : SJ.top) : x < 4 ? 1.4 - .06 * x * x : x < 34 ? .44 - .5 * (x - 4) : x < 44 ? -14.56 - .5 * (x - 34) + .025 * (x - 34) ** 2 : -17.06;
 const sjSlope = x => (sjHill(x + .04) - sjHill(x - .04)) / .08;
-function sjBuild() { if (sj.world) return; const w = sj.world = new THREE.Group(), P = [], C = [], z0 = -9, z1 = 3.4, top = [.97, .98, 1], wall = [.8, .87, .96];
-  const quad = (a, b, c, d, col) => { for (const q of [a, b, c, a, c, d]) { P.push(...q); C.push(...col); } };
-  const run = (xa, xb) => { for (let x = xa; x < xb - 1e-6; x += .5) { const x2 = Math.min(xb, x + .5), ya = sjHill(xa < 0 ? Math.min(x, -1e-4) : x), yb = sjHill(xa < 0 ? Math.min(x2, -1e-4) : x2);
-      quad([x, ya, z1], [x2, yb, z1], [x2, yb, z0], [x, ya, z0], top); quad([x, -26, z1], [x2, -26, z1], [x2, yb, z1], [x, ya, z1], wall); } };
-  run(SJ.x0 - 4, 0); run(0, 62); quad([0, sjHill(0), z1], [0, sjHill(0), z0], [0, sjHill(-1e-4), z0], [0, sjHill(-1e-4), z1], wall);
-  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(C, 3)); g.computeVertexNormals();
-  const hill = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .95, side: THREE.DoubleSide })); hill.receiveShadow = true; w.add(hill);
-  // (lines across the landing hill every ten metres shown, a red one far down; the in-run's two blue tracks; a start bar)
+// (the snow beside the groomed hill lies in soft waves and drifts - the user, 15-11-2026: the snow was one flat white
+// sheet; level by the hill's edge, rising and falling further out)
+const sjBump = (x, z) => { const d = z < SJ.z0 ? SJ.z0 - z : z > SJ.z1 ? z - SJ.z1 : 0; if (!d) return 0; const e = Math.min(1, d / 5);
+  return e * e * (3 - 2 * e) * (.7 * Math.sin(x * .45 + 1.3) * Math.sin(z * .38) + .42 * Math.sin(x * .21 - z * .5 + 2) + .2 * Math.sin(x * 1.1 + z * .9) + .3); };
+const sjGround = (x, z) => sjHill(x) + sjBump(x, z);
+function sjBuild() { if (sj.world) return; const w = sj.world = new THREE.Group(), { z0, z1 } = SJ, xa0 = SJ.x0 - 6, top = [.97, .98, 1], wall = [.8, .87, .96], hx = (x, neg) => sjHill(neg ? Math.min(x, -1e-4) : x);
+  // (the groomed hill itself, cut through on the near side; its snow with the grooming machine's fine lines and a little sparkle)
+  { const P = [], C = [], U = [], quad = (a, b, c, d, col) => { for (const q of [a, b, c, a, c, d]) { P.push(...q); C.push(...col); U.push(q[0] * .25, q[2] * .25); } };
+    const run = (xa, xb) => { for (let x = xa; x < xb - 1e-6; x += .5) { const x2 = Math.min(xb, x + .5), ya = hx(x, xa < 0), yb = hx(x2, xa < 0); quad([x, ya, z1], [x2, yb, z1], [x2, yb, z0], [x, ya, z0], top); quad([x, -26, z1], [x2, -26, z1], [x2, yb, z1], [x, ya, z1], wall); } };
+    run(xa0, 0); run(0, 92); quad([0, sjHill(0), z1], [0, sjHill(0), z0], [0, sjHill(-1e-4), z0], [0, sjHill(-1e-4), z1], wall);
+    const cv = document.createElement('canvas'); cv.width = cv.height = 256; const c = cv.getContext('2d'); c.fillStyle = '#FFFFFF'; c.fillRect(0, 0, 256, 256); c.fillStyle = 'rgba(150,185,232,.15)'; for (let y = 0; y < 256; y += 16) c.fillRect(0, y, 256, 5);
+    for (let i = 0; i < 500; i++) { c.fillStyle = `rgba(${Math.random() < .5 ? '165,195,235' : '255,255,255'},${(Math.random() * .3).toFixed(3)})`; c.beginPath(); c.arc(Math.random() * 256, Math.random() * 256, 1 + Math.random() * 3, 0, 7); c.fill(); }
+    const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.anisotropy = 4;
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(C, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(U, 2)); g.computeVertexNormals();
+    const hill = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ vertexColors: true, map: tex, roughness: .95, side: THREE.DoubleSide })); hill.receiveShadow = true; w.add(hill); }
+  // (the snow out to both sides, in waves, bluish in the hollows: behind the hill always; on the near side only while the
+  // camera is round at the front or behind - seen from the side the hill is a cut-through slice - faded in and out)
+  const side = (za, zb) => { const P = [], C = [], I = [], col = b => { const t = Math.max(0, Math.min(1, (b + .3) / 1.1)); C.push(.74 + .24 * t, .84 + .145 * t, .97 + .03 * t); };
+    const grid = (xa, xb, neg) => { const nx = Math.round(xb - xa), nz = Math.round((zb - za) / 1.5), o = P.length / 3;
+      for (let i = 0; i <= nx; i++) for (let j = 0; j <= nz; j++) { const x = xa + (xb - xa) * i / nx, z = za + (zb - za) * j / nz, b = sjBump(x, z); P.push(x, hx(x, neg) + b, z); col(b); }
+      for (let i = 0; i < nx; i++) for (let j = 0; j < nz; j++) { const a = o + i * (nz + 1) + j, b = a + nz + 1; I.push(a, a + 1, b + 1, a, b + 1, b); } };
+    grid(xa0, 0, true); grid(0, 92, false);
+    { const nz = Math.round((zb - za) / 1.5), o = P.length / 3; for (let j = 0; j <= nz; j++) { const z = za + (zb - za) * j / nz, b = sjBump(0, z); P.push(0, sjHill(0) + b, z, 0, sjHill(-1e-4) + b, z); C.push(...wall, ...wall); } for (let j = 0; j < nz; j++) { const a = o + j * 2; I.push(a, a + 1, a + 3, a, a + 3, a + 2); } }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(C, 3)); g.setIndex(I); g.computeVertexNormals(); return g; };
+  { const far = new THREE.Mesh(side(-46, z0), new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .95, side: THREE.DoubleSide })); far.receiveShadow = true; w.add(far);
+    sj.sides = new THREE.Mesh(side(z1, 34), new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .95, side: THREE.DoubleSide, transparent: true, opacity: 0 })); sj.sides.receiveShadow = true; sj.sides.visible = false; w.add(sj.sides); }
+  // (lines across the landing hill every ten metres shown, a red one far down; the in-run's two blue tracks)
   const bar = (x, col, wide = z1 - z0, zc = (z0 + z1) / 2, thick = .12) => { const m = new THREE.Mesh(new THREE.BoxGeometry(thick, .03, wide), skMat(col, .7)); m.position.set(x, sjHill(x) + .02, zc); m.rotation.z = Math.atan(sjSlope(x)); w.add(m); };
   for (const [x, col] of [[10, '#4F86D9'], [15, '#4F86D9'], [20, '#4F86D9'], [25, '#E8384F'], [30, '#4F86D9']]) bar(x, col);
-  for (let x = SJ.x0; x < -.3; x += .5) for (const z of [-.16, .16]) bar(x + .25, '#7FA8E6', .09, z, .52);
-  const gate = new THREE.Mesh(new THREE.BoxGeometry(.08, .08, 1.6), skMat('#E8384F', .5)); gate.position.set(SJ.x0 - .55, sjHill(SJ.x0) + .75, 0); w.add(gate); for (const z of [-.8, .8]) { const post = new THREE.Mesh(new THREE.BoxGeometry(.08, .8, .08), skMat('#8A5A2E', .8)); post.position.set(SJ.x0 - .55, sjHill(SJ.x0) + .38, z); w.add(post); }
-  // (firs behind the hill, and flags by the lines)
-  for (const [x, z, h] of [[-9, -5.5, 2.6], [-2, -7, 3.2], [5, -5, 2.4], [11, -7.2, 3.4], [17, -5.2, 2.6], [23, -7.5, 3.6], [29, -5, 2.8], [36, -7, 3.2], [43, -5.5, 2.6], [50, -7.4, 3.4], [56, -5.2, 2.8]]) { const t = new THREE.Group(); t.position.set(x, sjHill(x), z); w.add(t); propInto(t, 'skate-gran.glb', h, 0, []); }
+  for (let x = SJ.x0 - 1; x < -.3; x += .5) for (const z of [-.16, .16]) bar(x + .25, '#7FA8E6', .09, z, .52);
+  // (the start gate across the tracks in front of the jumper: a red bar on two posts, swinging up when the jumper sets off)
+  { const y = SJ.top; for (const z of [-.85, .85]) { const post = new THREE.Mesh(new THREE.BoxGeometry(.09, .9, .09), skMat('#8A5A2E', .8)); post.position.set(SJ.xg, y + .45, z); post.castShadow = true; w.add(post); }
+    sj.gate = new THREE.Group(); sj.gate.position.set(SJ.xg, y + .8, -.85); const bom = new THREE.Mesh(new THREE.BoxGeometry(.09, .09, 1.75), skMat('#E8384F', .5)); bom.position.z = .85; bom.castShadow = true; sj.gate.add(bom); w.add(sj.gate); }
+  // (round about - the user, 15-11-2026: more to look at, as by the skateboard road: firs big and small over the slopes,
+  // cabins, lamps and benches by the flat at the bottom, rocks in the snow, a hut by the start; flags by the lines.
+  // The things on the near side are shown with the near snow)
+  const put = (url, x, z, size, turn = 0, to = w) => { const t = new THREE.Group(); t.position.set(x, sjHill(x < 0 ? Math.min(x, -1e-4) : x) + sjBump(x, z) - .04, z); to.add(t); propInto(t, url, size, turn, []); };
+  sj.near = new THREE.Group(); sj.near.visible = false; w.add(sj.near); let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  for (const [x, z, h] of [[-9, -5.5, 2.6], [-2, -7, 3.2], [5, -5, 2.4], [11, -7.2, 3.4], [17, -5.2, 2.6], [23, -7.5, 3.6], [29, -5, 2.8], [36, -7, 3.2]]) put('skate-gran.glb', x, z, h);
+  for (let i = 0; i < 46; i++) { const x = -21 + i * 2.3 + rnd() * 1.6, z = -11 - rnd() * 31, h = 1.8 + rnd() * 2.6; if (x > 38 && x < 62 && z > -27) continue; put('skate-gran.glb', x, z, h, rnd() * 6); }
+  for (let i = 0; i < 24; i++) { const x = -18 + i * 4.3 + rnd() * 2, z = 7.5 + rnd() * 24, h = 1.8 + rnd() * 2.6; if (x > 40 && x < 60 && z < 16) continue; put('skate-gran.glb', x, z, h, rnd() * 6, sj.near); }
+  // (winter's own things - the user, 15-11-2026: a start hut the jumper sets off from, not an ordinary house; log cabins
+  // with snow on the roof, a judges' tower by the landing hill and snowmen - real models made for it)
+  for (const [x, z, s, r] of [[47, -15, 3.6, .3], [55.5, -20, 4.1, -.5], [41.5, -23, 3.4, 1]]) put('sne-hytte.glb', x, z, s, SJ_TURN.hytte + r);
+  put('sne-hytte.glb', 50, 11, 3.8, SJ_TURN.hytte + Math.PI - .4, sj.near); put('sne-hytte.glb', 43, 13.5, 3.3, SJ_TURN.hytte + Math.PI + .5, sj.near);
+  put('sne-starthus.glb', SJ.x0 - 1.55, 0, 2.5, SJ_TURN.start); put('sne-dommertaarn.glb', 13, z0 - 2.6, 4.6, SJ_TURN.taarn);
+  for (const [x, z, h, r] of [[SJ.x0 - .6, -3.2, 1.25, .5], [44.5, -11.5, 1.5, .2], [52, -12.5, 1.2, -.3]]) put('sne-snemand.glb', x, z, h, SJ_TURN.mand + r); put('sne-snemand.glb', 47, 8.5, 1.4, SJ_TURN.mand + Math.PI, sj.near);
+  for (const x of [40, 46, 52, 58]) { put('skate-lygte.glb', x, z0 + .5, 2.7, Math.PI); put('skate-lygte.glb', x + 3, z1 + .7, 2.7, 0, sj.near); }
+  for (const x of [49, 55]) { put('skate-baenk.glb', x, z0 + .2, .8, -Math.PI / 2); put('skate-baenk.glb', x - 3, z1 + 1.2, .8, Math.PI / 2, sj.near); }
+  for (let i = 0; i < 9; i++) put('oe-sten.glb', -12 + i * 8.5 + rnd() * 3, -10.5 - rnd() * 12, .5 + rnd() * .9, rnd() * 6); for (let i = 0; i < 6; i++) put('oe-sten.glb', -8 + i * 11 + rnd() * 3, 6 + rnd() * 10, .5 + rnd() * .9, rnd() * 6, sj.near);
   for (const x of [10, 15, 20, 25, 30]) { const f = new THREE.Group(); f.position.set(x, sjHill(x), z1 - .3); w.add(f); const pole = new THREE.Mesh(new THREE.CylinderGeometry(.025, .025, 1, 8), skMat('#8A8FA3', .5)); pole.position.y = .5; const flag = new THREE.Mesh(new THREE.BoxGeometry(.34, .2, .02), skMat(x === 25 ? '#E8384F' : '#FFC233', .6)); flag.position.set(.18, .88, 0); f.add(pole, flag); }
-  // (the skis, a pair under the feet; the poles, one for each hand)
-  sj.skis = new THREE.Group(); sj.ski = [-1, 1].map(q => { const k = new THREE.Group(); k.position.z = q * .14; sj.skis.add(k); propInto(k, 'udstyr-ski.glb', 1.75, SJ_SKI_TURN, [], 'w'); return k; }); w.add(sj.skis);
-  sj.poles = [0, 1].map(() => { const k = new THREE.Group(); w.add(k); propInto(k, 'udstyr-skistav.glb', 1.05, 0, []); return k; });
+  // (the skis, one under each foot - long and narrow, the user, 15-11-2026: they looked like snowboards; the upturned tip in front and the
+  // flat end behind - they were the wrong way round; and no poles - the user, 15-11-2026: a ski jumper has none)
+  sj.ski = [0, 1].map(() => { const k = new THREE.Group(); k.rotation.order = 'ZYX'; const inner = new THREE.Group(); inner.scale.set(SJ_SKI_LONG / 1.75, .75, SJ_SKI_NARROW); k.add(inner); propInto(inner, 'udstyr-ski.glb', 1.75, SJ_SKI_TURN, [], 'w'); w.add(k); return k; });
   sj.rig = new THREE.Group(); }
-const SJ_SKI_TURN = 0;
-function sjReset() { sj.camX = undefined; Object.assign(sj, { phase: 'ready', x: SJ.x0, y: sjHill(SJ.x0), v: 0, vx: 0, vy: 0, tap: null, t: 0, q: 0, stopT: 0 }); if (glbActions.staa) runAnim('staa'); hintEl.textContent = tr('👆 Tryk for at køre – og tryk igen ved kanten for at hoppe!'); hintEl.hidden = false; game.hint = 5; }
+const SJ_TURN = { hytte: 0, start: Math.PI / 2, taarn: 0, mand: 0 }, SJ_SKI_TURN = Math.PI, SJ_SKI_LONG = 2.5, SJ_SKI_NARROW = .5;
+function sjReset() { sj.camX = undefined; sj.turn = 0; sj.sideA = 0; Object.assign(sj, { phase: 'ready', x: SJ.x0, y: sjHill(SJ.x0), v: 0, vx: 0, vy: 0, tap: null, t: 0, q: 0, stopT: 0, push: 0 }); if (glbActions.staa) runAnim('staa'); hintEl.textContent = tr('👆 Tryk for at køre – og tryk igen ved kanten for at hoppe!'); hintEl.hidden = false; game.hint = 5; }
 function sjStart() { sjBuild(); skWorldBuild(); sj.world.add(sk.hills); sk.hills.position.set(20, -14, 34); for (const h of sk.hills.children.slice(1)) { h.userData.green ??= h.material.color.clone(); h.material.color.set('#EEF4FC'); } scene.add(sj.world); holder.add(sj.rig); sj.rig.add(glb); sj.rig.rotation.set(0, 0, 0); game.rotY = Math.PI / 2;
-  floor.visible = false; disc.visible = false; for (const el of [bgNear, bgFar, bgNear2]) el.hidden = true; stage.classList.add('street'); sj.tuck = 0; sj.fly = 0; sjReset(); Promise.all(['staa', 'jubel'].map(loadMove)).then(() => { if (game.on && game.mode === 'skihop' && sj.phase === 'ready') runAnim('staa'); }); }
+  floor.visible = false; disc.visible = false; for (const el of [bgNear, bgFar, bgNear2]) el.hidden = true; stage.classList.add('street'); Object.assign(sj, { tuck: 0, fly: 0, run: 0, gateA: 0, landW: 0, arm: 0, sit: 0, vee: 0, skiRot: 0 }); sjReset(); Promise.all(['staa', 'jubel'].map(loadMove)).then(() => { if (game.on && game.mode === 'skihop' && sj.phase === 'ready') runAnim('staa'); }); }
 function sjStop() { if (!sj.world?.parent) return; scene.remove(sj.world); sk.world.add(sk.hills); sk.hills.position.set(0, 0, 0); for (const h of sk.hills.children.slice(1)) if (h.userData.green) h.material.color.copy(h.userData.green); holder.add(glb); holder.remove(sj.rig); stage.classList.remove('street'); floor.visible = true; sj.phase = ''; setBg(bgNow); }
-function sjTap() { if (sj.phase === 'ready') { sj.phase = 'inrun'; sj.v = 1.2; game.hint = 0; sfx('swish'); } else if (sj.phase === 'inrun' && sj.tap === null && sj.x > -6.5) sj.tap = sj.x; }
+function sjTap() { if (sj.phase === 'ready') { sj.phase = 'inrun'; sj.v = 0; sj.push = 0; game.hint = 0; sfx('swish'); } else if (sj.phase === 'inrun' && sj.tap === null && sj.x > -6.5) sj.tap = sj.x; }
 function sjTick(dt) { dt = Math.min(dt, .05); const [v0, win] = SJ.levels[game.level] || SJ.levels['niveau-let'];
   if (sj.phase === 'ready') { sj.t += dt; if (sj.t > 7) sjTap(); }
-  else if (sj.phase === 'inrun') { const sl = sjSlope(Math.min(sj.x, -.05)); sj.v = Math.min(v0, sj.v + (2 + 8 * Math.max(0, -sl)) * dt); sj.x += sj.v * dt / Math.hypot(1, sl); sj.y = sjHill(Math.min(-1e-4, sj.x));
+  // (the start: the gate swings up, the jumper sinks into the crouch and glides along the plateau and over the brow)
+  else if (sj.phase === 'inrun') { sj.push += dt; const sl = sjSlope(Math.min(sj.x, -.05)); if (sj.push > .35) sj.v = Math.min(sj.x < SJ.xp ? 2.3 : v0, sj.v + ((sj.push < 1 ? 5 : 2) + 8 * Math.max(0, -sl)) * dt); sj.x += sj.v * dt / Math.hypot(1, sl); sj.y = sjHill(Math.min(-1e-4, sj.x));
     // (off the edge: how good the take-off was by how near the edge the tap came)
     if (sj.x >= 0) { sj.q = sj.tap === null ? .08 : Math.max(.12, 1 - Math.abs(sj.tap + .35) / (win * 2.2)); sj.vx = v0 * (.9 + .16 * sj.q); sj.vy = 1.5 + 4 * sj.q; sj.x = 0; sj.phase = 'air'; sfx('swish'); } }
   else if (sj.phase === 'air') { sj.vy -= SJ.g * dt; sj.x += sj.vx * dt; sj.y += sj.vy * dt;
     if (sj.y <= sjHill(sj.x)) { sj.y = sjHill(sj.x); sj.phase = 'land'; sj.t = 0; sj.v = sj.vx; const m = Math.round(sj.x * 2), n = Math.max(1, Math.min(5, 1 + Math.round(sj.q * 4))); addStars(n); sfx('ding'); if (n > 2) sfx('ding', .14); if (n > 4) sfx('ding', .28); hintEl.textContent = `${m} m  ${'⭐'.repeat(n)}`; hintEl.hidden = false; game.hint = 3.2; } }
   else if (sj.phase === 'land') { sj.t += dt; const sl = sjSlope(sj.x); sj.v = Math.max(0, sj.v + (-sl * 5 - 2.6 - (sj.x > 42 ? 7 : 0)) * dt); sj.x = Math.min(58, sj.x + sj.v * dt / Math.hypot(1, sl)); sj.y = sjHill(sj.x);
     if (sj.v < .25 || sj.x >= 58) { if (!sj.stopT) { sj.stopT = sj.t; if (glbActions.jubel) runAnim('jubel'); } if (sj.t - sj.stopT > 2.4) sjReset(); } }
-  // (the pose: crouched in the in-run, stretched out and leaning forward in the air, a little bent after landing)
-  const air = sj.phase === 'air', ground = Math.atan(sjSlope(sj.phase === 'inrun' || sj.phase === 'ready' ? Math.min(sj.x, -.05) : Math.max(sj.x, .05))), k = Math.min(1, dt * 7);
-  sj.tuck += ((sj.phase === 'inrun' ? 1 : sj.phase === 'land' && !sj.stopT ? .45 : 0) - sj.tuck) * k; sj.fly += ((air ? 1 : 0) - sj.fly) * k;
-  sj.rig.position.set(sj.x, sj.y, 0); sj.rig.rotation.z += ((air ? -.95 : sj.phase === 'ready' || sj.stopT ? 0 : ground) - sj.rig.rotation.z) * k; glb.rotation.y = game.rotY = Math.PI / 2;
+  // (the pose - upright on the plateau; once it has set off, the ski jumper's crouch after the user's picture, 15-11-2026:
+  // the shins leaning forward, the knees bent square, the thighs back, the body lying forward along the hill over the
+  // thighs, the arms straight back along the body and the head up; stretched out forward in the air; knees bent and the
+  // skis in a small V in the landing)
+  const air = sj.phase === 'air', inrun = sj.phase === 'inrun', ground = Math.atan(sjSlope(inrun || sj.phase === 'ready' ? Math.min(sj.x, -.05) : Math.max(sj.x, .05))), k = Math.min(1, dt * 7);
+  const over = inrun ? Math.max(0, Math.min(1, (sj.x - SJ.xp + .6) / (SJ.xk - SJ.xp + .6))) : 0; sj.run += ((inrun ? over * over * (3 - 2 * over) : 0) - sj.run) * k;
+  sj.tuck += ((sj.phase === 'land' && !sj.stopT ? .45 : 0) - sj.tuck) * k; { const a = inrun ? Math.min(1, sj.push / .7) : 0; sj.sit = (sj.sit || 0) + (a * a * (3 - 2 * a) - (sj.sit || 0)) * k; } sj.vee = SJ_V * sj.fly + SJ_VL * sj.landW; sj.bow = (sj.bow || 0) + ((sj.phase === 'land' && !sj.stopT ? .45 : 0) - (sj.bow || 0)) * k; sj.fly += ((air ? 1 : 0) - sj.fly) * k; sj.landW += ((sj.phase === 'land' && !sj.stopT ? 1 : 0) - sj.landW) * k;
+  sj.gateA += ((sj.phase === 'ready' ? 0 : 1) - sj.gateA) * Math.min(1, dt * 6); sj.gate.rotation.x = -1.3 * sj.gateA;
+  sj.rig.position.set(sj.x, sj.y, 0); sj.rig.rotation.z += ((air ? -.95 : sj.phase === 'ready' || sj.stopT ? 0 : inrun ? ground - SJ_SIT[0] * sj.sit : ground) - sj.rig.rotation.z) * k; glb.rotation.y = game.rotY = Math.PI / 2;
+  sj.skiRot += ((air ? .12 : ground) - sj.skiRot) * k;
   glb.updateMatrixWorld(true); glb.getWorldQuaternion(skAxes.q); const { fwd, right, up, q } = skAxes; fwd.set(0, 0, 1).applyQuaternion(q); right.set(-1, 0, 0).applyQuaternion(q); up.set(0, 1, 0).applyQuaternion(q);
-  if (!sj.stopT) { const W = sj.tuck; if (W > .01) { for (const n of ['LeftUpLeg', 'RightUpLeg']) turnBone(n, right, 1.15 * W); glb.updateMatrixWorld(true); for (const n of ['LeftLeg', 'RightLeg']) turnBone(n, right, -1.9 * W); glb.updateMatrixWorld(true); for (const n of ['LeftFoot', 'RightFoot']) turnBone(n, right, .75 * W); turnBone('Spine', right, SJ_LEAN * W); }
-    const A = Math.max(W * .9, sj.fly * .25); if (A > .01) for (const n of ['LeftArm', 'RightArm']) turnBone(n, right, SJ_ARMS * A); glb.updateMatrixWorld(true);
+  // (the arms back along the body)
+  sj.arm += (SJ_ARMS * Math.max(sj.tuck * .9, sj.fly * .25) + SJ_SIT[3] * sj.sit - sj.arm) * Math.min(1, dt * 12);
+  if (!sj.stopT) { const W = sj.tuck; if (W > .01) { for (const n of ['LeftUpLeg', 'RightUpLeg']) turnBone(n, right, 1.15 * W); glb.updateMatrixWorld(true); for (const n of ['LeftLeg', 'RightLeg']) turnBone(n, right, -1.9 * W); glb.updateMatrixWorld(true); for (const n of ['LeftFoot', 'RightFoot']) turnBone(n, right, .75 * W); if (sj.bow > .01) turnBone('Spine', right, SJ_LEAN * sj.bow); }
+    // (the crouch: thigh, shin and foot turned so the foot ends as it began, flat; the body's lean is the rig's)
+    if (sj.sit > .01) { const S = sj.sit, u = SJ_SIT[0] + SJ_SIT[1], l = -SJ_SIT[1] - SJ_SIT[2]; for (const n of ['LeftUpLeg', 'RightUpLeg']) turnBone(n, right, u * S); glb.updateMatrixWorld(true); for (const n of ['LeftLeg', 'RightLeg']) turnBone(n, right, l * S); glb.updateMatrixWorld(true); for (const n of ['LeftFoot', 'RightFoot']) turnBone(n, right, -(u + l) * S); for (const n of ['Neck', 'Head']) turnBone(n, right, SJ_SIT[4] * S); }
+    // (the legs apart in the landing; the feet kept flat on the skis as the body leans over them, and turned out with them in the air's V)
+    ['Left', 'Right'].forEach((s, i) => { const sp = (i ? -1 : 1) * SJ_SPREAD * sj.landW, tilt = SJ_FOOT * (sj.skiRot - sj.rig.rotation.z), yaw = (i ? -1 : 1) * SJ_V * sj.fly;
+      if (Math.abs(sp) > .005) { turnBone(s + 'UpLeg', fwd, sp); glb.updateMatrixWorld(true); turnBone(s + 'Foot', fwd, -sp); } if (Math.abs(tilt) > .01) turnBone(s + 'Foot', right, tilt); });
+    if (Math.abs(sj.arm) > .01) for (const n of ['LeftArm', 'RightArm']) turnBone(n, right, sj.arm); glb.updateMatrixWorld(true);
     // (the feet kept down on the skis as the legs bend)
-    const lo = Math.min(...['LeftFoot', 'RightFoot', 'LeftToeBase', 'RightToeBase'].map(n => sj.rig.worldToLocal(bone(n).getWorldPosition(new THREE.Vector3())).y)); glb.position.y += .09 + bootLift() * .5 - lo; }
+    // (measured square to the skis, not along the leaning body: in the in-run the feet were down in the snow)
+    const sn = -Math.sin(sj.skiRot), cs = Math.cos(sj.skiRot), lo = Math.min(...['LeftFoot', 'RightFoot', 'LeftToeBase', 'RightToeBase'].map(n => { const v = bone(n).getWorldPosition(new THREE.Vector3()); return (v.x - sj.x) * sn + (v.y - sj.y) * cs; })), up2 = .09 + bootLift() * .5 - lo;
+    // (and along the skis: in the crouch the body leans far over and the folded legs carried the feet a good way ahead of where the jumper is)
+    const on = -['LeftFoot', 'RightFoot'].reduce((a, n) => { const v = bone(n).getWorldPosition(new THREE.Vector3()); return a + ((v.x - sj.x) * cs - (v.y - sj.y) * sn) / 2; }, 0);
+    sj.rig.position.x += sn * up2 + cs * on; sj.rig.position.y += cs * up2 - sn * on; sj.rig.updateMatrixWorld(true); }
+  // (the feet straight on the skis at all times - the user, 15-11-2026: they stood out to the side. Each foot is turned,
+  // flat on its ski, till it points along it - in the stance, the landing and the cheer too, where the toes turn out)
+  ['Left', 'Right'].forEach((s, i) => { glb.updateMatrixWorld(true); const f = bone(s + 'Foot'), t = bone(s + 'ToeBase'); if (!f || !t) return; const d = t.getWorldPosition(new THREE.Vector3()).sub(f.getWorldPosition(new THREE.Vector3())), c = Math.cos(sj.skiRot), n = Math.sin(sj.skiRot),
+    turn = (i ? -1 : 1) * sj.vee - Math.atan2(-d.z, d.x * c + d.y * n); if (Math.abs(turn) > .005) turnBone(s + 'Foot', SJ_Y.set(-n, c, 0), turn); });
   glb.updateMatrixWorld(true);
-  // (the skis under the feet: along the hill on the ground, nearly level and spread in a V in the air; the poles in the hands, trailing back)
-  sj.skis.position.set(sj.x, sj.y + .03, 0); sj.skis.rotation.z += ((air ? .12 : sj.phase === 'ready' || sj.stopT ? 0 : ground) - sj.skis.rotation.z) * k; sj.ski.forEach((s, i) => { s.rotation.y = (i ? -1 : 1) * .2 * sj.fly; });
-  ['LeftHand', 'RightHand'].forEach((n, i) => { const h = bone(n); if (!h) return; const at = h.getWorldPosition(new THREE.Vector3()), th = -1.05 + .25 * sj.fly - .5 * sj.tuck, len = 1.02; sj.poles[i].rotation.z = th; sj.poles[i].position.set(at.x + Math.sin(th) * len, at.y - Math.cos(th) * len, at.z); });
   // (the camera along with the jumper, a little ahead)
-  const cz = wideCam() ? 15 : 22, ahead = air ? 1.6 : .9; sj.camX = (sj.camX ?? sj.x) + (sj.x + ahead - (sj.camX ?? sj.x)) * Math.min(1, dt * 6); camera.position.set(sj.camX, sj.y + 2.6, cz); controls.target.set(sj.camX, sj.y + .2, 0); camera.lookAt(controls.target); }
-const SJ_LEAN = .85, SJ_ARMS = -1.1;
+  // (after the take-off it swings round to the front, so the jump, the landing and the cheer are seen coming towards
+  // one - the user, 14-11-2026; not quite straight on, so the hill and its lines still show - and back at the next start)
+  // (from behind in the flight, by itself - the user, 15-11-2026: no button to choose with, the game shows it once one has
+  // taken off: the camera nearer, higher and never down in the in-run, looking ahead down the hill; round to the front
+  // for the cheer)
+  const flying = air || sj.phase === 'land', want = flying ? (sj.stopT ? 1 : -1) : 0; sj.turn += (want - sj.turn) * Math.min(1, dt * 2.4); sj.sideA = (sj.sideA || 0) + ((flying ? 1 : 0) - (sj.sideA || 0)) * Math.min(1, dt * 5);
+  const m = Math.abs(sj.turn), e = Math.sign(sj.turn) * m * m * (3 - 2 * m), F = Math.max(0, e), B = Math.max(0, -e), a = SJ_FRONT * e; sj.sides.visible = sj.sideA > .01; sj.sides.material.opacity = sj.sideA; sj.near.visible = sj.sideA > .5;
+  const cz = (wideCam() ? 15 : 22) * (1 - .45 * B), ahead = (air ? 1.6 : .9) * (1 - F - B); sj.camX = (sj.camX ?? sj.x) + (sj.x + ahead - (sj.camX ?? sj.x)) * Math.min(1, dt * 6);
+  const px = sj.camX + Math.sin(a) * cz; camera.position.set(px, Math.max(sj.y + 2.6 - .6 * F + 1.4 * B, m > .01 ? sjHill(px) + 1.6 : -99), Math.cos(a) * cz); controls.target.set(sj.camX + 2.5 * B, sj.y + .2 + .5 * F - .6 * B, 0); camera.lookAt(controls.target); }
+// (the skis are put in place last of all, just before the picture is drawn: the balance and other
+// touches to the body come after the game's own tick, so in the cheer the hands were not where the tick saw them -
+// the user, 15-11-2026, again: the poles hung beside the hands)
+function sjLate() { if (!game.on || game.mode !== 'skihop' || !sj.world?.parent || !glb) return; glb.updateWorldMatrix(true, true);
+  // (each ski under its own foot, wherever the foot is - the user, 15-11-2026: the feet are to stand fast on the skis all
+  // through the jump and the landing: along the hill on the ground, nearly level and spread in a V in the air)
+  ['Left', 'Right'].forEach((s, i) => { const f = bone(s + 'Foot'), t = bone(s + 'ToeBase'); if (!f || !t) return; const a = f.getWorldPosition(new THREE.Vector3()), b = t.getWorldPosition(new THREE.Vector3()), mx = (a.x + b.x) / 2;
+    sj.ski[i].position.set(mx, b.y - bootLift() - .035 + Math.tan(sj.skiRot) * (mx - b.x), (a.z + b.z) / 2); sj.ski[i].rotation.set(0, (i ? -1 : 1) * sj.vee, sj.skiRot); }); }
+const SJ_Y = new THREE.Vector3(0, 1, 0), SJ_LEAN = .85, SJ_ARMS = -1.1, SJ_FRONT = 1.36, SJ_FOOT = 1, SJ_SPREAD = .09, SJ_V = .2, SJ_VL = .1,
+  // (the crouch: the body's lean forward from square to the hill, the thighs' lean back, the shins' lean forward, the arms, the head up)
+  SJ_SIT = [1.4, .8, .75, -.2, .45];
+// ---- Cypher (the user, 15-11-2026: the dances made into a game of their own, after the real cypher): a street corner in
+// the evening, a ring of onlookers, one dancer in the middle at a time and the others cheering. A round is built of the
+// four parts a breaker's round has - toprock, footwork, a power move, a freeze - one chosen for each; the figure dances
+// them in that order to the beat, a star for each and one more for a round not danced just before; then one of the
+// onlookers takes its turn in the ring while the figure claps, and the next round is chosen. Nobody loses.
+// The movements: Mixamo's breakdance ones, fetched by the user (figur-cy-*.json), and a few of the dances from before ----
+const CY = { cats: [['Toprock', ['cy-top1', 'cy-top2', 'cy-ned2', 'cy-ned1', 'dans']], ['Footwork', ['cy-fod1', 'cy-fod2', 'cy-fod3', 'dans-break']], ['Powermove', ['cy-power1', 'cy-power2', 'cy-power4', 'cy-power3', 'dans-flair2']], ['Freeze', ['cy-freeze1', 'cy-freeze2', 'cy-freeze3']]],
+  crowd: [['dyr-kat', .62, -1.15], ['dyr-hund', .66, -.5], ['dyr-kanin', .7, .5], ['dyr-and', .5, 1.15]], R: 3.1, side: [-1.9, .9] };
+const cy = { world: null, rig: null, phase: '', k: 0, picks: [], t: 0, crowd: [], guest: 0, last: '', beat: 0, round: 0 }, cyPickEl = document.getElementById('cyPick');
+const cyLabel = id => Object.values(MOVES).flat().find(m => m[0] === id)?.[1] || id;
+// (an onlooker: one of the animals, walking on the spot - its steps look like dancing - turned to face the ring)
+async function cyAnimal(kind, height) { const { inner, bones, mesh, clips } = await readGlb(kind + '.glb', kind + '.jpg'), clip = clips[0]; clip.tracks = clip.tracks.filter(t => !t.name.endsWith('.scale'));
+  const hips = clip.tracks.find(t => t.name === 'Hips.position'); if (hips) for (let i = 0; i < hips.values.length; i += 3) { hips.values[i] = hips.values[0]; hips.values[i + 2] = hips.values[2]; }
+  const group = new THREE.Group(), turn = new THREE.Group(); turn.add(inner); group.add(turn); group.updateMatrixWorld(true);
+  const a = bones.find(b => b.name === 'head'), b = bones.find(b => b.name === 'Hips'); if (a && b && kind !== 'dyr-and') { const p = a.getWorldPosition(new THREE.Vector3()), q = b.getWorldPosition(new THREE.Vector3()); if (Math.hypot(p.x - q.x, p.z - q.z) > .02) turn.rotation.y = -Math.atan2(p.x - q.x, p.z - q.z); group.updateMatrixWorld(true); }
+  const box = new THREE.Box3().setFromObject(mesh, true), k = height / (box.max.y - box.min.y); turn.scale.setScalar(k); turn.position.y = -box.min.y * k;
+  const mixer = new THREE.AnimationMixer(inner), walk = mixer.clipAction(clip); walk.play(); return { group, mixer, walk }; }
+function cyBuild() { if (cy.world) return; const w = cy.world = new THREE.Group();
+  // (the ground: asphalt with a chalk ring and stars drawn on it; a sheet of cardboard in the middle to dance on)
+  { const cv = document.createElement('canvas'); cv.width = cv.height = 1024; const c = cv.getContext('2d'); c.fillStyle = '#5A5E74'; c.fillRect(0, 0, 1024, 1024);
+    for (let i = 0; i < 2600; i++) { c.fillStyle = `rgba(${i % 2 ? '255,255,255' : '20,20,40'},${.04 + Math.random() * .07})`; c.fillRect(Math.random() * 1024, Math.random() * 1024, 2 + Math.random() * 3, 2 + Math.random() * 3); }
+    const u = 1024 / 24; c.lineCap = 'round'; c.strokeStyle = '#FFE98A'; c.lineWidth = 9; c.setLineDash([26, 16]); c.beginPath(); c.arc(512, 512, 2.45 * u, 0, 7); c.stroke(); c.setLineDash([]);
+    [['#FF7EBB', -3.6, 2.2], ['#7FE0D0', 3.5, 2.6], ['#FFC233', -4.4, -1], ['#9B8CFF', 4.3, -.6]].forEach(([col, x, z]) => { c.fillStyle = col; c.beginPath(); for (let i = 0; i < 10; i++) { const r = (i % 2 ? .22 : .5) * u, a = i * Math.PI / 5 - Math.PI / 2; c.lineTo(512 + x * u + Math.cos(a) * r, 512 + z * u + Math.sin(a) * r); } c.fill(); });
+    const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; const g = new THREE.Mesh(new THREE.CircleGeometry(12, 64), new THREE.MeshStandardMaterial({ map: t, roughness: .95 })); g.rotation.x = -Math.PI / 2; g.receiveShadow = true; w.add(g);
+    const far = new THREE.Mesh(new THREE.CircleGeometry(60, 48), skMat('#4A4E63', .95)); far.rotation.x = -Math.PI / 2; far.position.y = -.01; w.add(far);
+    const mat = new THREE.Mesh(new THREE.BoxGeometry(3, .03, 2.3), skMat('#C79A62', .9)); mat.position.y = .015; mat.receiveShadow = true; w.add(mat); }
+  // (round about: the graffiti wall behind, houses behind that, the music, the hoop, the crates, lamps and a bench)
+  const put = (url, x, z, size, turn = 0) => { const t = new THREE.Group(); t.position.set(x, 0, z); w.add(t); propInto(t, url, size, turn, []); return t; };
+  put('cy-mur.glb', 0, -5.4, 2.7, CY_TURN.mur); put('cy-mur.glb', -7.6, -4.2, 2.7, CY_TURN.mur + .5); put('cy-mur.glb', 7.6, -4.2, 2.7, CY_TURN.mur - .5);
+  put('cy-bygning.glb', -6.4, -10.5, 5.2, CY_TURN.hus + .15); put('cy-bygning.glb', 6.6, -11, 5.8, CY_TURN.hus - .2); put('cy-bygning.glb', 0, -16, 6.6, CY_TURN.hus);
+  put('cy-boombox.glb', -2.5, -2.9, .85, CY_TURN.boom + .45); put('cy-hoejttaler.glb', 3.3, -3.5, 1.9, CY_TURN.lyd - .4); put('cy-hoejttaler.glb', -4.6, -3.6, 1.9, CY_TURN.lyd + .55);
+  put('cy-basket.glb', 6.3, -2.2, 3.4, CY_TURN.kurv - .7); put('cy-kasser.glb', -5.4, -.6, 1.05, CY_TURN.kasser + .8);
+  put('skate-lygte.glb', -6.6, -2.4, 3, .6); put('skate-lygte.glb', 5, -4.4, 3, -.5); put('skate-baenk.glb', 5.1, .4, .8, -1.1);
+  // (the onlookers in half a ring behind the dancer, facing in)
+  cy.crowd = CY.crowd.map(([kind, h, a]) => { const g = new THREE.Group(), home = new THREE.Vector3(Math.sin(a) * CY.R, 0, -Math.cos(a) * CY.R + .2), c = { g, home, m: null, face: Math.atan2(-home.x, -home.z), spin: 0 }; g.position.copy(home); g.rotation.y = c.face; w.add(g);
+    cyAnimal(kind, h).then(m => { c.m = m; g.add(m.group); }).catch(() => {}); return c; });
+  cy.rig = new THREE.Group(); }
+const CY_TURN = { mur: 0, hus: 0, boom: 0, lyd: 0, kurv: 0, kasser: 0 };
+function cyStart() { cyBuild(); scene.add(cy.world); holder.add(cy.rig); cy.rig.add(glb); cy.rig.position.set(0, 0, 0); game.rotY = 0;
+  floor.visible = false; disc.visible = false; for (const el of [bgNear, bgFar, bgNear2]) el.hidden = true; stage.classList.add('cypher'); controls.maxDistance = 40; Object.assign(cy, { round: 0, last: '', beat: 0 });
+  for (const id of [...CY.cats.flatMap(c => c[1]), GAME.cheer, 'jubel-klap']) loadMove(id); loadMove('staa').then(() => { if (game.on && game.mode === 'cypher' && cy.phase === 'pick') runAnim('staa'); }); cyPick(); }
+function cyStop() { cyPickEl.hidden = true; if (!cy.world?.parent) return; scene.remove(cy.world); holder.add(glb); holder.remove(cy.rig); stage.classList.remove('cypher'); floor.visible = true; cy.phase = ''; setBg(bgNow); }
+// (choosing the round: the four parts one after the other, two or three big pictures to choose from for each)
+function cyPick() { cy.phase = 'pick'; cy.k = 0; cy.picks = []; if (glbActions.staa) runAnim('staa'); hintEl.hidden = true; game.hint = 0; cyShowPick(); }
+function cyShowPick() { const [name, list] = CY.cats[cy.k], title = document.getElementById('cyTitle'), opts = document.getElementById('cyOpts'); cyPickEl.hidden = false;
+  title.innerHTML = `<span class="cy-dots">${CY.cats.map((_, i) => `<span class="${i < cy.k ? 'on' : i === cy.k ? 'now' : ''}"></span>`).join('')}</span><span>${name}</span>`; opts.innerHTML = '';
+  for (const id of list) { const b = iconButton(`ikoner/valg-${id}.png`, cyLabel(id)); b.onclick = () => { soundOut()?.resume(); sfx('ding'); cy.picks.push(id); if (++cy.k >= CY.cats.length) { cyPickEl.hidden = true; cy.phase = 'dance'; cy.k = -1; cyNext(); } else { if (glbActions[id]) runAnim(id); cyShowPick(); } }; opts.append(b); } }
+// (the round danced: each part its time - a short one done over until it has had a good two seconds, a long one cut)
+function cyNext() { if (++cy.k >= cy.picks.length) { const key = cy.picks.join(); cy.phase = 'cheer'; cy.t = 2.4; runAnim(GAME.cheer); sfx('ding'); sfx('ding', .14); if (key !== cy.last) addStars(1); cy.last = key; hintEl.textContent = '👏👏👏'; hintEl.hidden = false; game.hint = 2.4; return; }
+  const id = cy.picks[cy.k], a = glbActions[id]; if (!a) return cyNext(); runAnim(id); const d = a.getClip().duration; cy.t = d > 6 ? 5 : d * Math.max(1, Math.ceil(2.6 / d)); addStars(1); sfx('swish');
+  hintEl.textContent = `${cy.k + 1}/4 · ${CY.cats[cy.k][0]}`; hintEl.hidden = false; game.hint = cy.t; }
+function cyTick(dt) { dt = Math.min(dt, .05); cy.beat += dt * 112 / 60 * Math.PI; const lively = cy.phase === 'dance' || cy.phase === 'cheer' ? 1 : .35, guest = cy.phase === 'guest' ? cy.crowd[cy.guest] : null;
+  // (the onlookers step and bob to the beat - higher while someone dances; the one whose turn it is hops into the ring and spins)
+  cy.crowd.forEach((c, i) => { c.m?.mixer.update(dt * (c === guest ? 1.6 : .6 + .6 * lively)); const to = c === guest ? cyV.set(0, 0, .2) : c.home; c.g.position.x += (to.x - c.g.position.x) * Math.min(1, dt * 4); c.g.position.z += (to.z - c.g.position.z) * Math.min(1, dt * 4);
+    c.g.position.y = Math.abs(Math.sin(cy.beat + i * .8)) * (c === guest ? .28 : .05 + .11 * lively); c.spin = c === guest ? c.spin + dt * 5 : 0; c.g.rotation.y = c === guest ? c.spin : c.g.rotation.y + (c.face - c.g.rotation.y) * Math.min(1, dt * 6); });
+  // (the figure: in the middle - aside, turned towards the ring and clapping, while an onlooker has its turn)
+  { const tx = guest ? CY.side[0] : 0, tz = guest ? CY.side[1] : 0, p = cy.rig.position; p.x += (tx - p.x) * Math.min(1, dt * 4); p.z += (tz - p.z) * Math.min(1, dt * 4); game.rotY = guest ? .9 : 0; }
+  if (cy.phase === 'pick') return; cy.t -= dt; if (cy.t > 0) return;
+  if (cy.phase === 'dance') cyNext();
+  else if (cy.phase === 'cheer') { cy.phase = 'guest'; cy.guest = cy.round++ % cy.crowd.length; cy.t = 3.6; if (glbActions['jubel-klap']) runAnim('jubel-klap'); sfx('boing'); }
+  else if (cy.phase === 'guest') cyPick(); }
+const cyV = new THREE.Vector3();
+// ---- Dansestudie (the user, 15-11-2026: a dance studio where a dance is put together from many kinds of dances, and
+// shown): a practice room with a mirror wall, barres, a piano - the child taps dances from the styles into the row (the
+// same row as Min dans, kept with the player) and sees each on the figure in front of the mirror; ▶ takes the figure on
+// to a stage with curtains, coloured lights, a mirror ball and the animals watching, where it dances the row through,
+// a star for each dance and two more for a show of three styles or more; then back to the room.
+// More styles - ballet, latin, jazz, disco - go into DS.styles as their movements come from Mixamo ----
+const DS = { styles: [['Hiphop', '🎤', ['dans', 'dans-hiphop', 'ds-hiphop3', 'ds-hiphop4', 'cy-top1', 'cy-top2']], ['Show', '🎩', ['ds-cancan', 'ds-twist', 'ds-shuffle', 'dans-arme']],
+  ['Sjov', '🤪', ['dans-fjollet', 'ds-kylling', 'ds-hokey']], ['Break', '🌀', ['cy-fod2', 'dans-flair', 'cy-power1', 'cy-power4', 'cy-freeze1', 'cy-freeze2', 'cy-freeze3']]],
+  X: 40, crowd: [['dyr-kat', .62, -2.1], ['dyr-hund', .66, -.75], ['dyr-kanin', .7, .7], ['dyr-and', .5, 2.0]], spots: ['#FF6FB1', '#FFD23F', '#35D6C4', '#9B6BFF'] };
+const ds = { world: null, rig: null, phase: '', style: 0, k: -1, t: 0, crowd: [], spots: [], ball: null, mirror: null, beat: 0 }, dsPickEl = document.getElementById('dsPick');
+const DS_TURN = { barre: 0, gardin: 0, rig: 0, klaver: 0, baenk: 0 };
+// (a mirror: the room drawn once more from behind the glass into a picture, and that picture laid on the glass where each
+// point of it is seen from the camera; what stands behind the glass is hidden while it is drawn)
+function dsMirror(w, h, hide) { const rt = new THREE.WebGLRenderTarget(768, 512), texM = new THREE.Matrix4(), cam = new THREE.PerspectiveCamera();
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.ShaderMaterial({ uniforms: { tDiffuse: { value: rt.texture }, textureMatrix: { value: texM } },
+    vertexShader: 'uniform mat4 textureMatrix; varying vec4 vUv; void main() { vUv = textureMatrix * vec4(position, 1.0); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+    fragmentShader: 'uniform sampler2D tDiffuse; varying vec4 vUv; void main() { vec4 c = texture2DProj(tDiffuse, vUv); gl_FragColor = vec4(c.rgb * vec3(.88, .91, .95), 1.0);\n#include <tonemapping_fragment>\n#include <colorspace_fragment>\n}' }));
+  const n = new THREE.Vector3(), p = new THREE.Vector3(), cp = new THREE.Vector3(), v = new THREE.Vector3(), tg = new THREE.Vector3(), q = new THREE.Quaternion(), cq = new THREE.Quaternion(), col = new THREE.Color();
+  mesh.userData.update = () => { mesh.updateMatrixWorld(true); n.set(0, 0, 1).applyQuaternion(mesh.getWorldQuaternion(q)); mesh.getWorldPosition(p); camera.getWorldPosition(cp); camera.getWorldQuaternion(cq); v.subVectors(p, cp); if (v.dot(n) > 0) return;
+    v.reflect(n).negate().add(p); tg.set(0, 0, -1).applyQuaternion(cq).add(cp); tg.subVectors(p, tg).reflect(n).negate().add(p); cam.position.copy(v); cam.up.set(0, 1, 0).applyQuaternion(cq).reflect(n); cam.lookAt(tg);
+    cam.near = camera.near; cam.far = camera.far; cam.updateMatrixWorld(true); cam.projectionMatrix.copy(camera.projectionMatrix); cam.projectionMatrixInverse.copy(camera.projectionMatrixInverse);
+    texM.set(.5, 0, 0, .5, 0, .5, 0, .5, 0, 0, .5, .5, 0, 0, 0, 1).multiply(cam.projectionMatrix).multiply(cam.matrixWorldInverse).multiply(mesh.matrixWorld);
+    const was = hide.map(o => o.visible), old = renderer.getRenderTarget(), a = renderer.getClearAlpha(); renderer.getClearColor(col); hide.forEach(o => { o.visible = false; }); mesh.visible = false;
+    renderer.setRenderTarget(rt); renderer.setClearColor('#F1E4F4', 1); renderer.clear(); renderer.render(scene, cam); renderer.setRenderTarget(old); renderer.setClearColor(col, a); mesh.visible = true; hide.forEach((o, i) => { o.visible = was[i]; }); };
+  return mesh; }
+function dsBuild() { if (ds.world) return; const w = ds.world = new THREE.Group(), X = DS.X, box = (sx, sy, sz, col, x, y, z, r = .9) => { const m = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), skMat(col, r)); m.position.set(x, y, z); m.receiveShadow = true; w.add(m); return m; };
+  const paint = (W, H, draw) => { const cv = document.createElement('canvas'); cv.width = W; cv.height = H; draw(cv.getContext('2d')); const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t; };
+  const put = (url, x, y, z, size, turn = 0, by = 'h') => { const t = new THREE.Group(); t.position.set(x, y, z); w.add(t); propInto(t, url, size, turn, [], by); return t; };
+  // (the practice room: a floor of planks, walls in soft colours, a window with the sky, the mirror all along the back wall)
+  { const planks = paint(1024, 1024, c => { for (let i = 0; i < 16; i++) { c.fillStyle = `hsl(${30 + (i * 7) % 9}, ${52 + (i * 5) % 12}%, ${62 + (i * 11) % 9}%)`; c.fillRect(0, i * 64, 1024, 64); c.fillStyle = 'rgba(90,50,20,.35)'; c.fillRect(0, i * 64, 1024, 3); for (let k = 0; k < 3; k++) c.fillRect(((i * 211 + k * 380) % 1024), i * 64, 3, 64); } });
+    planks.wrapS = planks.wrapT = THREE.RepeatWrapping; planks.repeat.set(2, 2.6); const f = new THREE.Mesh(new THREE.PlaneGeometry(14, 18), new THREE.MeshStandardMaterial({ map: planks, roughness: .55 })); f.rotation.x = -Math.PI / 2; f.position.set(0, 0, 4.3); f.receiveShadow = true; w.add(f);
+    const back = box(14, 4.4, .2, '#F6D9E6', 0, 2.2, -4.8), skirt = box(14, .16, .06, '#FFFFFF', 0, .08, -4.67); box(.2, 4.4, 18, '#E9DDF8', -7.1, 2.2, 4.3); box(.2, 4.4, 18, '#E9DDF8', 7.1, 2.2, 4.3); box(14, 4.4, .2, '#FCEFD8', 0, 2.2, 13.4);
+    const frame = box(9.5, 2.75, .08, '#C98B4A', 0, 1.62, -4.66, .5); ds.mirror = dsMirror(9.2, 2.45, [back, skirt, frame]); ds.mirror.position.set(0, 1.62, -4.61); w.add(ds.mirror);
+    const win = new THREE.Mesh(new THREE.PlaneGeometry(3, 2), new THREE.MeshBasicMaterial({ map: paint(384, 256, c => { const g = c.createLinearGradient(0, 0, 0, 256); g.addColorStop(0, '#6EC8FF'); g.addColorStop(1, '#D8F2FF'); c.fillStyle = g; c.fillRect(0, 0, 384, 256); c.fillStyle = '#fff'; for (const [x, y, r] of [[90, 80, 26], [120, 70, 32], [150, 84, 24], [270, 150, 22], [296, 142, 28]]) { c.beginPath(); c.arc(x, y, r, 0, 7); c.fill(); } c.fillStyle = '#7CCB6B'; c.beginPath(); c.arc(192, 420, 220, 0, 7); c.fill(); c.strokeStyle = '#fff'; c.lineWidth = 16; c.strokeRect(8, 8, 368, 240); c.beginPath(); c.moveTo(192, 0); c.lineTo(192, 256); c.moveTo(0, 128); c.lineTo(384, 128); c.stroke(); }) }));
+    win.position.set(-6.98, 2.25, -.6); win.rotation.y = Math.PI / 2; w.add(win);
+    const poster = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 2), new THREE.MeshBasicMaterial({ map: paint(192, 256, c => { c.fillStyle = '#7A4DFF'; c.fillRect(0, 0, 192, 256); c.fillStyle = '#FFD23F'; c.beginPath(); for (let i = 0; i < 10; i++) { const r = i % 2 ? 26 : 62, a = i * Math.PI / 5 - Math.PI / 2; c.lineTo(96 + Math.cos(a) * r, 110 + Math.sin(a) * r); } c.fill(); c.fillStyle = '#FF6FB1'; for (const [x, y] of [[40, 210], [96, 222], [152, 210]]) { c.beginPath(); c.arc(x, y, 14, 0, 7); c.fill(); } }) }));
+    poster.position.set(6.98, 2.2, -1.6); poster.rotation.y = -Math.PI / 2; w.add(poster); }
+  put('ds-barre.glb', -5.2, 0, -1.2, 3.2, DS_TURN.barre + Math.PI / 2, 'w'); put('ds-klaver.glb', 5.2, 0, -3.3, 1.55, DS_TURN.klaver - .5); put('ds-plante.glb', -6.1, 0, -3.9, 1.5); put('ds-plante.glb', 6.2, 0, 1.4, 1.3, 2);
+  put('ds-baenk.glb', -6.2, 0, 2.2, .8, DS_TURN.baenk + Math.PI / 2); put('cy-hoejttaler.glb', 6.1, 0, -.9, 1.5, -Math.PI / 2 + .3);
+  // (the stage, a good way off to the side: dark boards, red curtains, the lights on their bar and the mirror ball)
+  { box(13, .5, 8, '#5B3A28', X, -.25, -.4, .6); box(13, .9, .3, '#2A1A22', X, -.7, 3.75); box(60, .1, 30, '#15101F', X, -1.2, 6);
+    const folds = paint(512, 64, c => { for (let i = 0; i < 16; i++) { const g = c.createLinearGradient(i * 32, 0, i * 32 + 32, 0); g.addColorStop(0, '#7E1524'); g.addColorStop(.5, '#D12B41'); g.addColorStop(1, '#7E1524'); c.fillStyle = g; c.fillRect(i * 32, 0, 32, 64); } });
+    const bc = new THREE.Mesh(new THREE.PlaneGeometry(15, 7), new THREE.MeshStandardMaterial({ map: folds, roughness: .9 })); bc.position.set(X, 3.2, -4.2); w.add(bc); box(15, 1.1, .3, '#B91F36', X, 5.9, 2.6);
+    put('ds-gardin.glb', X - 4.5, 0, 1.4, 5.2, DS_TURN.gardin); const r = put('ds-gardin.glb', X + 4.5, 0, 1.4, 5.2, DS_TURN.gardin); r.scale.x = -1;
+    put('ds-lysrig.glb', X, 3.45, .6, 6.4, DS_TURN.rig, 'w'); ds.ball = put('ds-diskokugle.glb', X, 2.75, -1.4, 1.3);
+    // (the coloured lights: four cones of light from the bar down on to the boards, sweeping)
+    ds.spots = DS.spots.map((col, i) => { const piv = new THREE.Group(), cone = new THREE.Mesh(new THREE.ConeGeometry(1.2, 3.8, 28, 1, true), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: .13, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending }));
+      cone.position.y = -1.9; piv.add(cone); piv.position.set(X - 2.4 + i * 1.6, 3.8, .5); w.add(piv); const pool = new THREE.Mesh(new THREE.CircleGeometry(1.2, 28), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: .32, depthWrite: false, blending: THREE.AdditiveBlending })); pool.rotation.x = -Math.PI / 2; pool.position.y = .012; w.add(pool); return { piv, pool, i }; }); }
+  // (the animals watching from the floor in front of the stage, their backs to the camera)
+  ds.crowd = DS.crowd.map(([kind, h, x]) => { const g = new THREE.Group(); g.position.set(X + x, -.8, 5.1); g.rotation.y = Math.PI; g.scale.setScalar(1.5); w.add(g); const c = { g, m: null }; cyAnimal(kind, h).then(m => { c.m = m; g.add(m.group); }).catch(() => {}); return c; });
+  ds.rig = new THREE.Group(); }
+function dsStart() { dsBuild(); scene.add(ds.world); holder.add(ds.rig); ds.rig.add(glb); ds.rig.position.set(0, 0, 0); game.rotY = 0; floor.visible = false; disc.visible = false; for (const el of [bgNear, bgFar, bgNear2]) el.hidden = true; controls.maxDistance = 60;
+  for (const id of [...mdList(), GAME.cheer]) loadMove(id); loadMove('staa').then(() => { if (game.on && game.mode === 'studio' && ds.phase === 'room') runAnim('staa'); }); dsRoom(); }
+function dsStop() { dsPickEl.hidden = true; stage.classList.remove('dsroom', 'dsshow'); if (!ds.world?.parent) return; scene.remove(ds.world); holder.add(glb); holder.remove(ds.rig); floor.visible = true; ds.phase = ''; setBg(bgNow); }
+// (in the room: the row, the styles and the dances of the style chosen; a dance tapped goes into the row and is shown)
+function dsRoom() { ds.phase = 'room'; ds.rig.position.set(0, 0, 0); stage.classList.add('dsroom'); stage.classList.remove('dsshow'); if (glbActions.staa) runAnim('staa'); hintEl.hidden = true; game.hint = 0; dsShowPick(); }
+function dsShowPick() { const list = mdList(), row = document.getElementById('dsRow'), tabs = document.getElementById('dsStyles'), opts = document.getElementById('dsOpts'), go = document.getElementById('dsGo'); dsPickEl.hidden = false; row.innerHTML = ''; tabs.innerHTML = ''; opts.innerHTML = '';
+  for (let i = 0; i < MD_MAX; i++) { const id = list[i], b = document.createElement('button'); if (id) { b.className = 'full'; b.innerHTML = `<img src="ikoner/valg-${id}.png" alt=""><span class="x">✕</span>`; b.setAttribute('aria-label', tr('Tag ud')); b.onclick = () => { list.splice(i, 1); savePlayers(); dsShowPick(); }; } else { b.textContent = i + 1; b.disabled = true; } row.append(b); }
+  DS.styles.forEach(([name, emo], i) => { const b = document.createElement('button'); b.innerHTML = `<span class="emo">${emo}</span><span>${tr(name)}</span>`; b.classList.toggle('on', i === ds.style); b.onclick = () => { ds.style = i; sfx('swish'); dsShowPick(); }; tabs.append(b); });
+  for (const id of DS.styles[ds.style][2]) { const b = iconButton(`ikoner/valg-${id}.png`, cyLabel(id)); b.onclick = async () => { soundOut()?.resume(); if (list.length >= MD_MAX) { toast('Der er plads til 5 – tryk ✕ for at tage en ud'); return; } list.push(id); savePlayers(); sfx('ding'); dsShowPick(); const a = await loadMove(id); if (a && game.on && game.mode === 'studio' && ds.phase === 'room') runAnim(id); }; opts.append(b); }
+  go.disabled = !list.length; go.textContent = tr('▶ Vis dansen!'); }
+document.getElementById('dsGo').onclick = async () => { const list = mdList(); if (!list.length || ds.phase !== 'room') return; soundOut()?.resume(); dsPickEl.hidden = true; ds.phase = 'wait'; const got = await Promise.all(list.map(loadMove)); if (!game.on || game.mode !== 'studio') return; if (!got.some(Boolean)) return dsRoom();
+  ds.phase = 'show'; ds.rig.position.set(DS.X, 0, -.3); stage.classList.add('dsshow'); stage.classList.remove('dsroom'); ds.k = -1; sfx('ding'); dsNext(); };
+const dsStyleOf = id => DS.styles.findIndex(s => s[2].includes(id));
+function dsNext() { const list = mdList(); if (++ds.k >= list.length) { ds.phase = 'bow'; ds.t = 3; runAnim(GAME.cheer); celebrate(); sfx('ding'); sfx('ding', .14); sfx('ding', .28); if (new Set(list.map(dsStyleOf)).size >= 3) addStars(2); hintEl.textContent = '👏👏👏'; hintEl.hidden = false; game.hint = 3; return; }
+  const id = list[ds.k], a = glbActions[id]; if (!a) return dsNext(); runAnim(id); const d = a.getClip().duration; ds.t = d > 7 ? 6 : d * Math.max(1, Math.ceil(2.6 / d)); addStars(1); sfx('swish'); hintEl.textContent = `${ds.k + 1}/${list.length} · ${tr(cyLabel(id))}`; hintEl.hidden = false; game.hint = ds.t; }
+function dsTick(dt) { dt = Math.min(dt, .05); ds.beat += dt * 112 / 60 * Math.PI; const show = ds.phase === 'show' || ds.phase === 'bow', X = DS.X, wide = wideCam();
+  // (the camera: in the room the figure a little up in the picture, the choices under it; at the stage from among the onlookers)
+  if (show) { camera.position.set(X, 1.3, wide ? 8.2 : 10.2); controls.target.set(X, 1.3, -.3); } else { camera.position.set(2.9, 2.1, wide ? 7.6 : 9.6); controls.target.set(-.5, .1, -1.5); } camera.lookAt(controls.target); game.rotY = 0; // (from a little to one side: straight on, the figure hid itself in the mirror)
+  if (show) { ds.crowd.forEach((c, i) => { c.m?.mixer.update(dt); c.g.position.y = -.8 + Math.abs(Math.sin(ds.beat + i)) * (ds.phase === 'bow' ? .3 : .12); }); if (ds.ball) ds.ball.rotation.y += dt * 1.2;
+    for (const s of ds.spots) { const a = Math.sin(ds.beat * .25 + s.i * 1.7) * .45, b = Math.cos(ds.beat * .19 + s.i * 2.3) * .3; s.piv.rotation.set(b, 0, a); s.pool.position.set(s.piv.position.x + Math.sin(a) * 3.8, .012, s.piv.position.z - Math.sin(b) * 3.8); } }
+  if (ds.phase === 'room' || ds.phase === 'wait') return; ds.t -= dt; if (ds.t > 0) return; if (ds.phase === 'show') dsNext(); else dsRoom(); }
+// (the mirror's picture, drawn last of all before the picture itself - only in the room)
+function dsLate() { if (!game.on || game.mode !== 'studio' || !ds.world?.parent || !ds.mirror) return; if (ds.phase === 'room' || ds.phase === 'wait') ds.mirror.userData.update(); }
 function pkStart() { pkBuild(); pkAbeLoad(); scene.add(pk.world); holder.add(pk.rig); pk.rig.add(glb); pk.rig.position.set(0, 0, 0); game.rotY = Math.PI;
   floor.visible = false; disc.visible = false; for (const el of [bgNear, bgFar, bgNear2]) el.hidden = true; stage.classList.add('pitch'); controls.maxDistance = 40;
   if (!pk.ball) { pk.ball = makeItem('fodbold'); pk.ball.group.scale.setScalar(kick.r / .158); scene.remove(pk.ball.group); }
@@ -5831,7 +6166,7 @@ function pkTick(dt) { const t = performance.now() / 1000, L = pkLevel(), kp = pk
   if (pk.phase === 'kick' || pk.phase === 'fly' || (pk.phase === 'after' && pk.saved && pk.t < 1)) { const a = glbActions[pkKick()], k = kicks[pkKick()]; if (a?.isRunning() && k) { const after = a.time - k.contact; kickArms(a.time + .4, k.contact + .4, k.side); const w = Math.max(0, Math.min(1, 1 - (after - 1) / .4)); lookAtBall(b, .85 * w);
     // (head up once it has kicked, to follow the ball - it is seen from behind, so it takes a clear lift - the user, 04-11-2026)
     const lift = Math.min(1, Math.max(0, after) / .25) * w; if (lift > 0) { glb.getWorldQuaternion(kaQ); turnBone('Head', new THREE.Vector3(1, 0, 0).applyQuaternion(kaQ), -.55 * lift); turnBone('Spine2', new THREE.Vector3(1, 0, 0).applyQuaternion(kaQ), -.12 * lift); } } } }
-const GAME_NAMES = [['hop', 'Hop over bolden'], ['skate', 'Skateboard'], ['snow', 'Snowboard'], ['island', 'Skattejagt'], ['sea', 'Svømmeverden'], ['space', 'Rumrejse'], ['hide', 'Gemmeleg'], ['pk', 'Straffespark'], ['skihop', 'Skihop']];
+const GAME_NAMES = [['hop', 'Hop over bolden'], ['skate', 'Skateboard'], ['snow', 'Snowboard'], ['island', 'Skattejagt'], ['sea', 'Svømmeverden'], ['space', 'Rumrejse'], ['hide', 'Gemmeleg'], ['pk', 'Straffespark'], ['skihop', 'Skihop'], ['cypher', 'Cypher'], ['studio', 'Dansestudie']];
 // (with two players or more: their pictures on top, the one shown marked - tapping another shows that child's stars)
 let starShown = null;
 function showStarSheet(id = starShown || players.now) { starShown = id; const p = players.list.find(q => q.id === id) || playerNow(), s = p.score, have = krOf(s), many = players.list.length > 1;
@@ -5890,7 +6225,7 @@ document.getElementById('kidList').addEventListener('click', e => { const b = e.
 showPlayer();
 function showRecord() { const el = document.getElementById('record'); el.textContent = '🏆 ' + bestNow(); el.classList.toggle('beaten', !!game.record); document.getElementById('hudKr').textContent = `💰 ${krOf(score)}`; }
 document.getElementById('stage').addEventListener('pointerdown', e => { if (!game.on || e.target.closest('button')) return; e.preventDefault();
-  if (onBoard(game.mode)) { const r = e.currentTarget.getBoundingClientRect(); steer(e.clientX < r.left + r.width / 2 ? -1 : 1); } else if (game.mode === 'island') islandTap(e); else if (game.mode === 'sea') { sea.held = true; seaTap(e); } else if (game.mode === 'space') { sp.held = true; spaceTap(e, true); } else if (game.mode === 'hide') hideTap(e); else if (game.mode === 'pk') pkTap(e); else if (game.mode === 'skihop') sjTap(); else jump(); });
+  if (onBoard(game.mode)) { const r = e.currentTarget.getBoundingClientRect(); steer(e.clientX < r.left + r.width / 2 ? -1 : 1); } else if (game.mode === 'island') islandTap(e); else if (game.mode === 'sea') { sea.held = true; seaTap(e); } else if (game.mode === 'space') { sp.held = true; spaceTap(e, true); } else if (game.mode === 'hide') hideTap(e); else if (game.mode === 'pk') pkTap(e); else if (game.mode === 'skihop') sjTap(); else if (game.mode === 'cypher' || game.mode === 'studio') {} else jump(); });
 // (under the sea a finger held down and moved leads the figure along)
 document.getElementById('stage').addEventListener('pointermove', e => { if (game.on && game.mode === 'sea' && sea.held) seaTap(e); if (game.on && game.mode === 'space' && sp.held) spaceTap(e); });
 for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) document.getElementById('stage').addEventListener(ev, () => { sea.held = false; sp.held = false; });
@@ -5936,8 +6271,10 @@ function confettiTick(dt) { if (!confetti.length && !confCv.dataset.drawn) retur
 // (C, Am, F, G) - exactly as long as the dance, the beats counted on the dance's own clock: it loops with the dance and
 // keeps in step with it. Each dance a number of beats that gives it a fitting speed, and a beat of its own: hip hop, pop
 // or breakbeat. Not while a game runs; the 🎵 on the figure's picture turns it off and on (remembered)
-const DANCE_BEATS = { dans: 20, 'dans-hiphop': 12, 'dans-fjollet': 8, 'dans-arme': 16, 'dans-break': 4, 'dans-flair': 3, 'dans-flair2': 4 };
-const DANCE_STYLE = { dans: 'hiphop', 'dans-hiphop': 'hiphop', 'dans-fjollet': 'pop', 'dans-arme': 'pop', 'dans-break': 'break', 'dans-flair': 'pop', 'dans-flair2': 'hiphop' };
+const DANCE_BEATS = { dans: 20, 'dans-hiphop': 12, 'dans-fjollet': 8, 'dans-arme': 16, 'dans-break': 4, 'dans-flair': 3, 'dans-flair2': 4,
+  'cy-top1': 4, 'cy-top2': 10, 'cy-ned2': 8, 'cy-ned1': 2, 'cy-power2': 4, 'cy-fod1': 18, 'cy-fod2': 7, 'cy-fod3': 7, 'cy-power1': 2, 'cy-power4': 1, 'cy-power3': 6, 'cy-freeze1': 12, 'cy-freeze2': 8, 'cy-freeze3': 12,
+  'ds-hiphop3': 12, 'ds-hiphop4': 36, 'ds-cancan': 7, 'ds-twist': 18, 'ds-shuffle': 14, 'ds-kylling': 9, 'ds-hokey': 22 };
+const DANCE_STYLE = { dans: 'hiphop', 'dans-hiphop': 'hiphop', 'dans-fjollet': 'pop', 'dans-arme': 'pop', 'dans-break': 'break', 'dans-flair': 'pop', 'dans-flair2': 'hiphop', ...Object.fromEntries(['top1', 'top2', 'ned2', 'ned1', 'power2', 'fod1', 'fod2', 'fod3', 'power1', 'power4', 'power3', 'freeze1', 'freeze2', 'freeze3'].map(n => ['cy-' + n, 'break'])) };
 // (sixteen steps a bar: k the kick drum, s the snare - a clap - h the hi-hat)
 const BEATS = { hiphop: { k: '1000000100100000', s: '0000100000001000', h: '1010101010101011' }, pop: { k: '1000100010001000', s: '0000100000001000', h: '0010001000100010' },
   break: { k: '1000000000100100', s: '0000100101001000', h: '1111111111111111' } };
@@ -5993,14 +6330,18 @@ addEventListener('pagehide', tlSave); tlCheck();
 document.addEventListener('visibilitychange', () => { try { if (document.hidden) game.audio?.suspend(); else if (musicPlaying()) game.audio?.resume(); } catch (e) {} });
 function musicPlaying() { return musicOn && ((isDance(anim) && sound.dance) || (game.on && sound.game) || (md.on && sound.dance)); }
 function musicTick() { musicBtn.hidden = !(isDance(anim) && sound.dance) && !(game.on && sound.game) && !(md.on && sound.dance); musicBtn.textContent = musicOn ? '🎵' : '🔇';
+  beatBtn.hidden = musicBtn.hidden || !musicOn; if (beatBtn.textContent !== BEAT_SETS[beatNow][0]) beatBtn.textContent = BEAT_SETS[beatNow][0];
   // (the music's volume shut at once when no music should play - on a computer the notes already on their way went on
   // a moment after the dance stopped, the user said 03-11-2026 - and opened again when it should)
   const gate = musicPlaying(); if (music.out && gate !== music.gate) { music.gate = gate; const c = music.out.context; music.out.gain.cancelScheduledValues(c.currentTime); music.out.gain.setTargetAtTime(gate ? .4 : 0, c.currentTime, gate ? .01 : .02); }
   // (the games - and Min dans, its movements of all lengths - a steady beat of their own, 112 to the minute, by the
   // sound's own clock)
-  if (game.on || md.on) { const ctx = game.audio; if (!musicOn || !(game.on ? sound.game : sound.dance) || !ctx || ctx.state !== 'running') { music.at = 0; return; } const stepT = 60 / 112 / 4;
+  // (in Cypher and Dansestudie a dance running has the music on its own clock, as when the figure dances by itself - the
+  // beat follows the steps; between the dances the steady beat)
+  const onDance = game.on && (game.mode === 'cypher' || game.mode === 'studio') && isDance(anim) && glbActions[anim]?.isRunning();
+  if ((game.on && !onDance) || md.on) { const ctx = game.audio; if (!musicOn || !(game.on ? sound.game : sound.dance) || !ctx || ctx.state !== 'running') { music.at = 0; return; } const stepT = 60 / 112 / 4;
     if (!music.at || music.at < ctx.currentTime - .2) { music.at = ctx.currentTime + .05; music.n = 0; }
-    while (music.at < ctx.currentTime + .12) { playStep(ctx, music.at, music.n % 64, stepT, BEATS.pop, music.n); music.at += stepT; music.n++; } return; }
+    while (music.at < ctx.currentTime + .12) { playStep(ctx, music.at, music.n % 64, stepT, game.on && game.mode === 'cypher' ? BEATS.break : BEATS.pop, music.n); music.at += stepT; music.n++; } return; }
   music.at = 0;
   const a = glbActions[anim], ctx = game.audio; if (!musicPlaying() || !a?.isRunning() || !ctx || ctx.state !== 'running') { music.id = null; return; }
   const dur = a.getClip().duration, steps = (DANCE_BEATS[anim] || 8) * 4, stepT = dur / steps, now = a.time;
@@ -6016,7 +6357,7 @@ function hiss(ctx, t, len, from, vol) { if (!music.noise) { const b = music.nois
   g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0008, t + len); s.connect(f).connect(g).connect(musicOut(ctx)); s.start(t); s.stop(t + len + .02); }
 // (k: the step in the tune - its chords; n: the steps counted since it began, for the keyboard, which comes in now and
 // then: chords on the off-beats every second bar, a little run up the chord every fourth - the user, 03-11-2026)
-function playStep(ctx, t, k, stepT, B, n = k) { const s = k % 16, chord = CHORDS[Math.floor(k / 16) % 4], bar = Math.floor(n / 16);
+function playStep(ctx, t, k, stepT, B, n = k) { if (beatNow === 1) return discoStep(ctx, t, k, stepT, n); if (beatNow === 2) return drumStep(ctx, t, k, stepT, n); const s = k % 16, chord = CHORDS[Math.floor(k / 16) % 4], bar = Math.floor(n / 16);
   if (B.k[s] === '1') tone(ctx, t, 150, .16, 'sine', .7, 45);
   if (B.s[s] === '1') { hiss(ctx, t, .14, 1200, .28); tone(ctx, t, 190, .08, 'triangle', .1); }
   if (B.h[s] === '1') hiss(ctx, t, .035, 7000, .08);
@@ -6035,6 +6376,34 @@ function sfx(kind, later = 0) { const ctx = game.audio; if (!sound.sfx || !ctx |
   o.type = 'sine'; lfo.frequency.value = wf; wob.gain.value = wa; lfo.connect(wob).connect(o.frequency);
   o.frequency.setValueAtTime(from, t); o.frequency.exponentialRampToValueAtTime(to, t + len);
   g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0008, t + len); o.connect(g).connect(ctx.destination); for (const x of [o, lfo]) { x.start(t); x.stop(t + len + .02); } }
+// ---- three beats to choose from (the user, 15-11-2026: one beat all the time grew tiresome). The button by the 🎵 shows
+// the beat playing; tapped, the next one comes in at once. All three keep to the same clock, so they follow the dance as
+// before. Remembered on the device. 🎤 the hip hop, pop or breakbeat from before; 🪩 disco: a kick on every beat, the hi-hat
+// between, a bass jumping an octave and other chords; 🥁 drums: congas, a shaker, claves and a marimba playing now and then
+const BEAT_SETS = [['🎤', 'Hiphop'], ['🪩', 'Disco'], ['🥁', 'Trommer']], beatBtn = document.getElementById('beatBtn');
+let beatNow = (() => { try { return Math.min(2, Math.max(0, +localStorage.getItem('minimig3d.beat') || 0)); } catch (e) { return 0; } })();
+beatBtn.onclick = () => { beatNow = (beatNow + 1) % BEAT_SETS.length; try { localStorage.setItem('minimig3d.beat', String(beatNow)); } catch (e) {} beatBtn.textContent = BEAT_SETS[beatNow][0]; beatBtn.setAttribute('aria-label', tr('Skift beat') + ': ' + tr(BEAT_SETS[beatNow][1])); soundOut()?.resume(); };
+// (a sound through a soft filter: the disco bass)
+function pluck(ctx, t, f, len, vol, type, cut) { const o = ctx.createOscillator(), lp = ctx.createBiquadFilter(), g = ctx.createGain(); o.type = type; o.frequency.value = f; lp.type = 'lowpass'; lp.frequency.setValueAtTime(cut * 2, t); lp.frequency.exponentialRampToValueAtTime(cut / 2, t + len);
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0008, t + len); o.connect(lp).connect(g).connect(musicOut(ctx)); o.start(t); o.stop(t + len + .02); }
+// (a marimba: the note and a quiet one two octaves up, both dying away fast)
+function marimba(ctx, t, f, len, vol) { tone(ctx, t, f, len, 'sine', vol); tone(ctx, t, f * 4, len * .3, 'sine', vol * .25); }
+const DISCO_CHORDS = [[45, 48, 52], [41, 45, 48], [48, 52, 55], [43, 47, 50]], DISCO_TUNE = '1011010110110101', DISCO_LINE = [0, 1, 2, 1, 0, 2, 1, 2];
+function discoStep(ctx, t, k, stepT, n) { const s = k % 16, chord = DISCO_CHORDS[Math.floor(k / 16) % 4], bar = Math.floor(n / 16);
+  if (s % 4 === 0) tone(ctx, t, 140, .18, 'sine', .7, 50);
+  if (s === 4 || s === 12) { hiss(ctx, t, .16, 1500, .22); hiss(ctx, t + .012, .1, 2600, .12); }
+  if (s % 4 === 2) hiss(ctx, t, .11, 6500, .1); else if (s % 2) hiss(ctx, t, .03, 8000, .035);
+  if (s % 2 === 0) pluck(ctx, t, hz(chord[0] - (s % 4 ? 12 : 24)), stepT * 1.5, .2, 'sawtooth', 600);
+  if (s === 6 || s === 14) for (const m of chord) keys(ctx, t, hz(m + 12), stepT * 1.2, .04);
+  if (bar % 4 >= 2 && s % 2 === 0 && DISCO_TUNE[s] === '1') tone(ctx, t, hz(chord[DISCO_LINE[s / 2]] + 24), stepT * 1.8, 'sine', .07); }
+const DRUM = { lo: '1000001000100000', hi: '0010100100001010', cl: '1001001000101000' }, PENTA = [60, 62, 64, 67, 69, 72], MARIMBA = [[0, 2, 4, 2, 5, 4, 2, 1], [4, 3, 2, 0, 2, 3, 4, 5]];
+function drumStep(ctx, t, k, stepT, n) { const s = k % 16, chord = CHORDS[Math.floor(k / 16) % 4], bar = Math.floor(n / 16);
+  if (DRUM.lo[s] === '1') tone(ctx, t, 120, .3, 'sine', .55, 75);
+  if (DRUM.hi[s] === '1') tone(ctx, t, 300, .14, 'sine', .32, 220);
+  if (DRUM.cl[s] === '1') tone(ctx, t, 1500, .05, 'triangle', .12);
+  hiss(ctx, t, .04, 5000, s % 2 ? .025 : .05);
+  if (s === 0 || s === 8) tone(ctx, t, hz(chord[0] - 12), stepT * 4, 'triangle', .2);
+  if (bar % 2 === 1 && s % 2 === 0) marimba(ctx, t, hz(PENTA[MARIMBA[(bar >> 1) % 2][s / 2]]), .35, .14); }
 musicBtn.onclick = () => { musicOn = !musicOn; try { localStorage.setItem('minimig3d.musik', musicOn ? 'til' : 'fra'); } catch (e) {} if (musicOn) soundOut()?.resume(); };
 // (once the figure is in, the hint goes into the i in the corner - on a touch screen and on a computer alike)
 const infoBtn = document.getElementById('infoBtn'), infoPop = document.getElementById('infoPop'); let infoTimer = 0;
@@ -6093,6 +6462,6 @@ addEventListener('resize', resize); resize(); new ResizeObserver(resize).observe
 renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElapsedTime();
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
-  try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
+  try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
 </body>
 </html>
