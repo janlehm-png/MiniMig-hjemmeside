@@ -1839,7 +1839,7 @@ const exists = async u => { try { return (await fetch(u, { method: 'HEAD' })).ok
 // (Bob taken out 01-11-2026 - the user chose to go on without it; haar-bob.json/.jpg are kept, put back
 // ['haar-bob', 'Bob'] after Kort to have it again; Skaldet - no hair - taken out the same day, put back ['', 'Skaldet']
 // first to have it again)
-const HAIRS = [['haar-kort', 'Kort', { snug: .55, ears: true }], ['haar-kroeller', 'Krøller'], ['haar-strit', 'Strit', { ears: true }], ['haar-fletninger', 'Fletninger', { braids: true, ears: true }], ['haar-fletning', 'Fletning', { ears: true }], ['haar-boelger', 'Bølger', { wrap: .45, part: .12, hideEars: true, under: true, sweep: .5 }]];
+const HAIRS = [['haar-kort', 'Kort', { snug: .55, ears: true }], ['haar-kroeller', 'Krøller'], ['haar-strit', 'Strit', { ears: true }], ['haar-fletninger', 'Fletninger', { braids: true, ears: true }], ['haar-fletning', 'Fletning', { ears: true }], ['haar-boelger', 'Bølger', { skull: .45, part: .12, hideEars: true, under: true, sweep: .5 }]];
 let hairNow = 'haar-kort', hairBase = null; const hairMeshes = {};
 // the figure's eye whites and head bone, measured once as it stands when loaded (in its T-pose, before it moves)
 function measureHead(fbx) {
@@ -2036,7 +2036,7 @@ function wrapHair(W, n, opts, a, eyeY, eyes) {
     // to it. Below the eyes this fades away, and the hair below the head is drawn in a little towards the neck instead -
     // gently, the two blended, as a hard change there stretched the hair into streaks)
     v.copy(p).sub(c); const r = v.length(), d = v.clone().normalize(), skull = S[bin(d)] + .02 * a, onHead = ease((p.y - (eyeY - 1.2 * a)) / (.8 * a));
-    let r2 = r; if (r > skull) r2 = skull + (r - skull) * opts.wrap; else if (r > skull - .3 * a && p.y > eyeY + (dx > 0 ? .15 : .6) * a || ear[bin(d)]) r2 = skull; // (on the lock's side down to just over the brow: its tip lay inside the forehead, a hole over the brow - the user)
+    let r2 = r; if (r > skull) r2 = skull + (r - skull) * opts.skull; else if (r > skull - .3 * a && p.y > eyeY + (dx > 0 ? .15 : .6) * a || ear[bin(d)]) r2 = skull; // (on the lock's side down to just over the brow: its tip lay inside the forehead, a hole over the brow - the user)
     q.copy(d).multiplyScalar(r2).add(c);
     const hx = p.x - mx, hz = p.z - c.z, hr = Math.hypot(hx, hz), k = .12 * (1 - onHead); if (hr > 0) { p.x = mx + hx * (1 - k); p.z = c.z + hz * (1 - k); }
     p.lerp(q, onHead);
@@ -2186,7 +2186,8 @@ async function loadHair(name, list = hairTexs, colourPart = 'hair', extra = {}) 
     if (!opts.braids && weight[i] < 1 && hairBase.surface) { const hit = inside(p, .12 * apart); if (hit) needs[p.x < 0 ? 0 : 1].push(hit.need / Math.max(.5, hit.way.z)); } }
   // (Bølger laid on the head first - and then what of it comes inside the shoulders measured again, so each side is
   // moved forward as one piece from where it now is)
-  if (opts.wrap) { wrapHair(W, n, opts, apart, eyeY, mine); needs[0].length = needs[1].length = 0;
+  // (skull, not wrap: the hats' own wrap - Kaninører's - came here too, and the ears went missing)
+  if (opts.skull) { wrapHair(W, n, opts, apart, eyeY, mine); needs[0].length = needs[1].length = 0;
     for (let i = 0; i < n; i++) { if (weight[i] >= 1 || !hairBase.surface) continue; p.fromArray(W, i * 3); const hit = inside(p, .12 * apart); if (hit) needs[p.x < 0 ? 0 : 1].push(hit.need / Math.max(.5, hit.way.z)); } }
   // (only when a real part of it is inside - a few curl tips touching the shoulders are left as they are)
   for (const s of [0, 1]) { if (needs[s].length < .02 * n) continue; needs[s].sort((x, y) => x - y);
@@ -6453,6 +6454,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.12.0 (b7646f8)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.12.0 (a01ee18)</div>
 </body>
 </html>
