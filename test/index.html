@@ -264,6 +264,14 @@
   .hide-cover span { font-size: 64px; text-shadow: 0 3px 10px rgba(0, 0, 0, .25); }
   /* (Straffespark: a summer sky over the pitch) */
   .stage.pitch, .stage.street { background: linear-gradient(#6EC8FF, #BDE7FF 60%, #E6F6FF); }
+  .stage.cypher { background: linear-gradient(#3B2A6E, #C2557A 55%, #FFB067); }
+  .cy-pick { position: absolute; left: 50%; bottom: max(14px, env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 3; background: rgba(255, 255, 255, .93); border-radius: 22px; padding: 10px 14px 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; box-shadow: 0 6px 24px rgba(40, 20, 80, .35); max-width: calc(100% - 24px); box-sizing: border-box; }
+  .cy-pick[hidden] { display: none; }
+  .cy-title { font: 800 1.15rem/1.2 system-ui, sans-serif; color: #3A2E5C; display: flex; gap: 10px; align-items: center; }
+  .cy-dots span { display: inline-block; width: 14px; height: 14px; border-radius: 50%; background: #D9D2EE; margin: 0 2px; } .cy-dots span.on { background: #2FB872; } .cy-dots span.now { background: #FFC233; }
+  .cy-opts { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .cy-opts button { width: 98px; padding: 6px 4px 8px; border-radius: 16px; border: 3px solid #E4DDF6; background: #fff; font: 700 .85rem/1.15 system-ui, sans-serif; color: #3A2E5C; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; }
+  .cy-opts button img { width: 64px; height: 64px; object-fit: contain; pointer-events: none; }
   .quest { position: absolute; top: 64px; left: 50%; transform: translateX(-50%); display: flex; gap: 4px; align-items: center; padding: 4px 12px; border-radius: 999px; background: rgba(255, 255, 255, .85); box-shadow: 0 2px 10px rgba(58, 46, 92, .18); font-size: 26px; line-height: 1.2; pointer-events: none; z-index: 2; }
   .quest[hidden] { display: none; }
   .quest .q-shell { opacity: .3; filter: grayscale(1); transition: opacity .3s, transform .3s; }
@@ -372,6 +380,8 @@
 <!-- (the levels - and in Hop over bolden the three ways to play - chosen without leaving the game: the user, 11-11-2026) -->
 <div class="lvl-pop" id="lvlPop" hidden></div>
 <div class="tap-hint" id="tapHint" hidden>👆 Tryk for at hoppe</div>
+<!-- (Cypher: the round's four parts chosen one at a time - the user, 15-11-2026) -->
+<div class="cy-pick" id="cyPick" hidden><div class="cy-title" id="cyTitle"></div><div class="cy-opts" id="cyOpts"></div></div>
 <!-- (Straffespark: which foot kicks, chosen by the child - the user, 12-11-2026: the left button the left foot) -->
 <div class="pk-feet" id="pkFeet" hidden><button data-foot="0" aria-label="Venstre fod"><span>🦶</span></button><button data-foot="1" aria-label="Højre fod"><span>🦶</span></button></div>
 <!-- (who is playing, always in sight: the child's picture and name - tapped: Mine figurer, where the children are) -->
@@ -409,13 +419,17 @@
     <button data-anim="staa" class="on"><img src="ikoner/stilling-staa.png" alt=""><span>Stå</span></button>
     <button data-anim="vink"><img src="ikoner/stilling-vink.png" alt=""><span>Vink</span></button>
     <button data-anim="hop"><img src="ikoner/stilling-hop.png" alt=""><span>Hop</span></button>
-    <button data-anim="dans"><img src="ikoner/stilling-dans.png" alt=""><span>Dans</span></button>
     <button data-anim="loeb"><img src="ikoner/stilling-loeb.png" alt=""><span>Løb</span></button>
     <button data-anim="jubel"><img src="ikoner/stilling-jubel.png" alt=""><span>Jubel</span></button>
     <button data-anim="kolboette"><img src="ikoner/stilling-kolboette.png" alt=""><span>Kolbøtte</span></button>
     <button data-anim="spark"><img src="ikoner/stilling-spark.png" alt=""><span>Spark</span></button>
     <button id="spin"><img src="ikoner/stilling-drej.png" alt=""><span>Drej rundt</span></button>
+  </div>
+  <!-- (the dances in a group of their own - the user, 15-11-2026: the dances, Min dans and the dance games together under one tab) -->
+  <div class="tabgroup" id="dance">
+    <button data-anim="dans"><img src="ikoner/stilling-dans.png" alt=""><span>Danse</span></button>
     <button id="myDanceTab"><img src="ikoner/stilling-mindans.png" alt=""><span>Min dans</span></button>
+    <button data-game="cypher"><img src="ikoner/spil-cypher.png" alt=""><span>Cypher</span></button>
   </div>
   <!-- the games, after the movements (the first: Hop over bolden, 03-11-2026) -->
   <div class="tabgroup" id="games">
@@ -645,7 +659,7 @@ const EN = {
   'Undertrøje': 'Tank top', 'T-shirt': 'T-shirt', 'Hættetrøje': 'Hoodie', 'Fodboldtrøje': 'Soccer jersey', 'Undershorts': 'Underwear', 'Trusser': 'Briefs', 'Lange bukser': 'Long pants', 'Shorts': 'Shorts', 'Cowboyshorts': 'Denim shorts', 'Fodboldbukser': 'Soccer shorts',
   'Ingen kjole': 'No dress', 'Ingen dragt': 'No suit', 'Badedragt': 'Swimsuit', 'Badebukser': 'Swim trunks', 'Sommerkjole': 'Summer dress', 'Prinsessekjole': 'Princess dress', 'Havfruekjole': 'Mermaid dress', 'Ingen strømper': 'No socks', 'Ankelstrømper': 'Ankle socks', 'Almindelige strømper': 'Regular socks', 'Fodboldstrømper': 'Soccer socks', 'Knæstrømper': 'Knee socks',
   'Bare fødder': 'Bare feet', 'Sneakers': 'Sneakers', 'Fodboldstøvler': 'Soccer cleats', 'Gummistøvler': 'Rain boots', 'Balletsko': 'Ballet shoes', 'Højhælede': 'High heels',
-  'Ingen hat': 'No hat', 'Kasket': 'Cap', 'Krone': 'Crown', 'Kaninører': 'Bunny ears', 'Sløjfe': 'Bow', 'Ingen briller': 'No glasses', 'Svømmebriller': 'Swim goggles', 'Snorkel': 'Snorkel', 'Rumdragt': 'Space suit', 'Rumhjelm': 'Space helmet', 'Rumstøvler': 'Space boots', 'Sne': 'Snow', 'Skihop': 'Ski jump', '👆 Tryk for at køre – og tryk igen ved kanten for at hoppe!': '👆 Tap to go – and tap again at the edge to jump!', 'Skidragt': 'Ski suit', 'Skihjelm': 'Ski helmet', 'Skibriller': 'Ski goggles', 'Skihandsker': 'Ski gloves', 'Skistøvler': 'Ski boots', 'Jetpack': 'Jetpack', 'Ingen jetpack': 'No jetpack', 'Rumrejse': 'Space trip', 'Rumrejse': 'Space trip', '👆 Tryk – så flyver du derhen. To hurtige tryk giver fart 🚀': '👆 Tap – and you fly there. Two quick taps give a boost 🚀', 'Skaterhjelm': 'Skate helmet', 'Knæbeskyttere': 'Knee pads', 'Albuebeskyttere': 'Elbow pads', 'Handsker': 'Gloves', 'Ingen knæbeskyttere': 'No knee pads', 'Ingen albuebeskyttere': 'No elbow pads', 'Ingen handsker': 'No gloves', 'Ansigt': 'Face', 'Tøj': 'Clothes', 'Mere': 'More', 'Svømning': 'Swimming', 'Start': 'Start', 'Ingen svømmebriller': 'No goggles', 'Runde': 'Round', 'Solbriller': 'Sunglasses', 'Hjerte': 'Heart',
+  'Ingen hat': 'No hat', 'Kasket': 'Cap', 'Krone': 'Crown', 'Kaninører': 'Bunny ears', 'Sløjfe': 'Bow', 'Ingen briller': 'No glasses', 'Svømmebriller': 'Swim goggles', 'Snorkel': 'Snorkel', 'Rumdragt': 'Space suit', 'Rumhjelm': 'Space helmet', 'Rumstøvler': 'Space boots', 'Sne': 'Snow', 'Skihop': 'Ski jump', 'Bevægelser': 'Moves', 'Danse': 'Dances', '🎵 Vælg fire trin til din runde': '🎵 Pick four moves for your round', '👆 Tryk for at køre – og tryk igen ved kanten for at hoppe!': '👆 Tap to go – and tap again at the edge to jump!', 'Skidragt': 'Ski suit', 'Skihjelm': 'Ski helmet', 'Skibriller': 'Ski goggles', 'Skihandsker': 'Ski gloves', 'Skistøvler': 'Ski boots', 'Jetpack': 'Jetpack', 'Ingen jetpack': 'No jetpack', 'Rumrejse': 'Space trip', 'Rumrejse': 'Space trip', '👆 Tryk – så flyver du derhen. To hurtige tryk giver fart 🚀': '👆 Tap – and you fly there. Two quick taps give a boost 🚀', 'Skaterhjelm': 'Skate helmet', 'Knæbeskyttere': 'Knee pads', 'Albuebeskyttere': 'Elbow pads', 'Handsker': 'Gloves', 'Ingen knæbeskyttere': 'No knee pads', 'Ingen albuebeskyttere': 'No elbow pads', 'Ingen handsker': 'No gloves', 'Ansigt': 'Face', 'Tøj': 'Clothes', 'Mere': 'More', 'Svømning': 'Swimming', 'Start': 'Start', 'Ingen svømmebriller': 'No goggles', 'Runde': 'Round', 'Solbriller': 'Sunglasses', 'Hjerte': 'Heart',
   // (things, pets, backgrounds)
   'Ballon': 'Balloon', 'Bamse': 'Teddy bear', 'Tryllestav': 'Magic wand', 'Is': 'Ice cream', 'Blomst': 'Flower', 'Bold': 'Ball', 'Fodbold': 'Soccer ball', 'Hulahopring': 'Hula hoop',
   'Intet dyr': 'No pet', 'Kat': 'Cat', 'Hund': 'Dog', 'Kanin': 'Rabbit', 'Halsbånd': 'Collar', 'Madskål': 'Food bowl', 'Legebold': 'Play ball',
@@ -730,11 +744,14 @@ var petPick = false; // (a pet tapped last under Ting: its colours can't be chan
 // button that starts the game once all of it is on)
 const MAIN = [['face', 'Ansigt', 'gruppe-ansigt', ['skin', 'hair', 'eyes', 'brows', 'nose', 'mouth', 'ears', 'glasses', 'pynt']], ['wear', 'Tøj', 'gruppe-toej', ['shirt', 'pants', 'dress', 'socks', 'shoe', 'hat']],
   ['gear', 'Udstyr', 'gruppe-udstyr', ['gear-skate', 'gear-snow', 'gear-sea', 'gear-space', 'gear-pk']], ['more', 'Mere', 'gruppe-mere', ['item', 'name', 'bg']]], mainOf = part => MAIN.find(m => m[3].includes(part))?.[0] || '', lastSub = {};
-var mainNow = '', dressSnap = null, dressWant = '';
+var mainNow = '', dressSnap = null, dressWant = '', foldNow = '';
+const FOLDS = [['moves', 'Bevægelser', 'gruppe-bevaegelse'], ['dance', 'Dans', 'gruppe-dans']];
+function showFold() { for (const [id] of FOLDS) { const el = document.getElementById(id); if (el) el.hidden = foldNow !== id; } for (const b of document.querySelectorAll('#mains [data-fold]')) b.classList.toggle('on', b.dataset.fold === foldNow); }
+function tapFold(id) { foldNow = foldNow === id ? '' : id; if (mainNow || (/^move-/.test(partNow) && boxOpen)) { mainNow = ''; boxOpen = false; showSwatches(); } showFold(); }
 // (the colour of a game's gear is the suits' colour - and the skateboard helmet's with it)
 function colourPart() { return partNow === 'gear-pk' ? 'shirt' : partNow.startsWith('gear-') ? 'suit' : partNow; } // (the football kit's colour is the shirt's)
 function applyTab(c) { apply(colourPart(), c); if (partNow.startsWith('gear-') && typeof GARMENTS !== 'undefined' && GARMENTS.hat.now === 'hat-skaterhjelm') apply('hat', c); }
-function tapMain(id) { if (mainNow === id) { mainNow = ''; boxOpen = false; showSwatches(); return; } mainNow = id; boxOpen = true; partNow = lastSub[id] || MAIN.find(m => m[0] === id)[3][0]; showSwatches(); lookFor(partNow); }
+function tapMain(id) { foldNow = ''; showFold(); if (mainNow === id) { mainNow = ''; boxOpen = false; showSwatches(); return; } mainNow = id; boxOpen = true; partNow = lastSub[id] || MAIN.find(m => m[0] === id)[3][0]; showSwatches(); lookFor(partNow); }
 function showSwatches() { const move = /^(move|game)-/.test(partNow); if (!move) slidersFrom(picked[colourPart()] || START[colourPart()]);
   { const mo = mainOf(partNow); if (mo && boxOpen) { mainNow = mo; lastSub[mo] = partNow; } else if (move && boxOpen) mainNow = ''; if (!partNow.startsWith('gear-')) { dressWant = ''; dressSnap = null; }
     const subs = document.getElementById('subs'); if (subs) { subs.hidden = !mainNow; for (const b of subs.children) b.hidden = mainOf(b.dataset.part) !== mainNow; for (const b of document.querySelectorAll('#mains [data-main]')) b.classList.toggle('on', b.dataset.main === mainNow); } }
@@ -824,8 +841,11 @@ for (const el of Object.values(S)) el.addEventListener('input', () => { paintTra
 // (the four main groups in one row, and under it the row of the tabs of the one chosen)
 { const parts = document.getElementById('parts'), mains = parts.appendChild(Object.assign(document.createElement('div'), { className: 'tabgroup', id: 'mains' })), subs = parts.appendChild(Object.assign(document.createElement('div'), { className: 'tabgroup', id: 'subs', hidden: true }));
   for (const [id, name, icon, list] of MAIN) { const m = iconButton(`ikoner/${icon}.png`, name); m.dataset.main = id; m.onclick = () => tapMain(id); mains.append(m);
-    for (const part of list) { const [, label, pic] = CHOICES.find(c => c[0] === part), b = iconButton(`ikoner/${pic}.png`, label); b.dataset.part = part; b.hidden = true; b.onclick = () => tapTab(part, () => lookFor(part)); subs.append(b); } } }
-document.getElementById('parts').append(document.getElementById('moves'), document.getElementById('games')); document.getElementById('parts').prepend(document.getElementById('saving'));
+    for (const part of list) { const [, label, pic] = CHOICES.find(c => c[0] === part), b = iconButton(`ikoner/${pic}.png`, label); b.dataset.part = part; b.hidden = true; b.onclick = () => tapTab(part, () => lookFor(part)); subs.append(b); } }
+  // (and two more beside them - the user, 15-11-2026: the movements, and the dances with Min dans and the dance games,
+  // each folded away under one button like the others; a tap shows its row, a tap again folds it away)
+  for (const [id, name, icon] of FOLDS) { const m = iconButton(`ikoner/${icon}.png`, name); m.dataset.fold = id; m.onclick = () => tapFold(id); mains.append(m); } }
+document.getElementById('parts').append(document.getElementById('moves'), document.getElementById('dance'), document.getElementById('games')); showFold(); document.getElementById('parts').prepend(document.getElementById('saving'));
 // (the grown-ups' buttons - the lilac ones - in a group of their own, last of all: furthest to the right - the user, 13-11-2026)
 { const g = Object.assign(document.createElement('div'), { className: 'tabgroup', id: 'grownups' }); for (const b of document.querySelectorAll('#saving .grown, #adultBtn')) g.append(b); document.getElementById('parts').append(g); }
 showSwatches();
@@ -4184,7 +4204,7 @@ function petTick(dt) { if (!pet) { if (bowl) bowl.visible = false; if (ball) bal
   const running = runMove || ['side', 'back', 'front', 'skate', 'snow'].includes(mode), floorY = mode === 'sea' ? petAt.y - .45 : 0; let tx = petAt.x + ox, tz = petAt.z + oz; const J = petJob;
   if (J.kind === 'eat') { tx = toyBowl.x + .1; tz = toyBowl.z - .3; face = Math.atan2(toyBowl.x - tx, toyBowl.z - tz); }
   else if (J.kind === 'ball') { if (J.flying > 0) { J.flying -= dt; const u = 1 - Math.max(0, J.flying) / .55; ball.position.set(J.from.x + (J.bx - J.from.x) * u, .11 + Math.sin(u * Math.PI) * .45, J.from.z + (J.bz - J.from.z) * u); ball.rotation.x += dt * 12; tx = J.bx; tz = J.bz; } else if (J.t === 0) { tx = J.bx; tz = J.bz; if (Math.hypot(g.position.x - tx, g.position.z - tz) < .3) { J.t = 1; sfx('ding'); } } else { tx = toyRest.x; tz = toyRest.z - .3; const fx = Math.sin(pet.face), fz = Math.cos(pet.face); ball.position.set(g.position.x + fx * .36, .11, g.position.z + fz * .36); if (Math.hypot(g.position.x - tx, g.position.z - tz) < .1) { J.kind = ''; ball.position.set(toyRest.x, .11, toyRest.z); } } }
-  g.visible = holder.visible && mode !== 'sea' && mode !== 'space' && mode !== 'skate' && mode !== 'snow' && mode !== 'skihop' && mode !== 'pk' && !(mode === 'hide' && !il.rig.visible); // (not in the sea - the user, 04-11-2026)
+  g.visible = holder.visible && mode !== 'sea' && mode !== 'space' && mode !== 'skate' && mode !== 'snow' && mode !== 'skihop' && mode !== 'cypher' && mode !== 'pk' && !(mode === 'hide' && !il.rig.visible); // (not in the sea - the user, 04-11-2026)
   if (pet.snap) { g.position.set(tx, floorY, tz); pet.snap = false; } const x0 = g.position.x, z0 = g.position.z, k = 1 - Math.exp(-dt * (running ? 9 : J.kind === 'ball' ? (J.t ? 2.6 : 5) : 3.2)); g.position.x += (tx - x0) * k; g.position.z += (tz - z0) * k; pet.y = (pet.y ?? floorY) + (floorY - (pet.y ?? floorY)) * k;
   const vx = g.position.x - x0, vz = g.position.z - z0, speed = dt ? Math.hypot(vx, vz) / dt : 0, moving = running || speed > .35, t = performance.now() / 1000;
   const faceTo = !running && speed > .35 ? Math.atan2(vx, vz) : face ?? pet.face; let d = faceTo - pet.face; d = Math.atan2(Math.sin(d), Math.cos(d)); pet.face += d * Math.min(1, dt * 7); g.rotation.y = pet.face;
@@ -4541,9 +4561,11 @@ const MODES = {
   // (Straffespark: from behind the figure, the goal ahead - see pkTick)
   pk: { x: 0, face: Math.PI, cheer: 0, cam: w => [0, 2.3, w ? 4.6 : 6.4, 0, .9, -6] },
   // (Skihop: the hill seen from the side - the camera follows the jumper, see sjTick)
-  skihop: { x: 0, face: Math.PI / 2, cheer: Math.PI / 2, cam: w => [0, 3, w ? 13 : 17, 0, 1, 0] } };
+  skihop: { x: 0, face: Math.PI / 2, cheer: Math.PI / 2, cam: w => [0, 3, w ? 13 : 17, 0, 1, 0] },
+  // (Cypher: the ring from in front, a little above - see cyTick)
+  cypher: { x: 0, face: 0, cheer: 0, cam: w => [0, 2.5, w ? 6.8 : 8.8, 0, 1.05, -.4] } };
 // (the games with a world of their own instead of the background picture)
-const OWN_WORLD = ['island', 'sea', 'hide', 'pk', 'space', 'skihop'];
+const OWN_WORLD = ['island', 'sea', 'hide', 'pk', 'space', 'skihop', 'cypher'];
 // (the games that show nothing of the background chosen for the figure: those, and the skateboard game - the user,
 // 11-11-2026: a background changed showed in the skateboard game too, which made no sense)
 const NO_BG = [...OWN_WORLD, 'skate', 'snow', 'side', 'back', 'front'];
@@ -4586,16 +4608,16 @@ function startGame(mode = game.mode) { if (game.on || !glb) return; if (!game.ag
   if (bgNow === 'bg-sol' && !NO_BG.includes(mode)) setBg('bg-fodboldbane');
   // (five balls made once and used again)
   // (a ball chosen under Ting - Bold or Fodbold - is the game's ball, not one in the hand as well)
-  if (onBoard(mode)) skateStart(mode === 'snow'); else if (mode === 'island') islandStart(); else if (mode === 'sea') seaStart(); else if (mode === 'space') spaceStart(); else if (mode === 'hide') hideStart(); else if (mode === 'pk') pkStart(); else if (mode === 'skihop') sjStart(); else {
+  if (onBoard(mode)) skateStart(mode === 'snow'); else if (mode === 'island') islandStart(); else if (mode === 'sea') seaStart(); else if (mode === 'space') spaceStart(); else if (mode === 'hide') hideStart(); else if (mode === 'pk') pkStart(); else if (mode === 'skihop') sjStart(); else if (mode === 'cypher') cyStart(); else {
     useGameBall(BALL_ITEMS.includes(itemNow) ? itemNow : ''); hopWorldStart(mode);
     game.bigPool ??= [goldBall(), goldBall()]; Object.assign(game, { dive: false, sinceBig: 0 });
     const run = levelNow().run; Promise.all([run, GAME.jump, GAME.trip, GAME.cheer, GAME.dive].map(loadMove)).then(() => { if (game.on) runAnim(run); }); }
-  hintEl.textContent = tr(onBoard(mode) ? '👈 Tryk i siden for at svinge 👉' : mode === 'island' ? '👆 Tryk hvor du vil gå hen' : mode === 'space' ? '👆 Tryk – så flyver du derhen. To hurtige tryk giver fart 🚀' : mode === 'sea' ? '👆 Tryk eller træk – så svømmer du derhen' : mode === 'hide' ? '🔍 Hvor er jeg? Tryk på busken' : mode === 'skihop' ? '👆 Tryk for at køre – og tryk igen ved kanten for at hoppe!' : mode === 'pk' ? '👆 Tryk i målet, hvor bolden skal hen' : '👆 Tryk for at hoppe');
-  hud.hidden = false; hintEl.hidden = false; try { showLvl(); } catch (e) {} document.querySelector('.top').hidden = true; document.getElementById('stage').classList.add('playing'); showStars(); showRecord();
+  hintEl.textContent = tr(onBoard(mode) ? '👈 Tryk i siden for at svinge 👉' : mode === 'island' ? '👆 Tryk hvor du vil gå hen' : mode === 'space' ? '👆 Tryk – så flyver du derhen. To hurtige tryk giver fart 🚀' : mode === 'sea' ? '👆 Tryk eller træk – så svømmer du derhen' : mode === 'hide' ? '🔍 Hvor er jeg? Tryk på busken' : mode === 'skihop' ? '👆 Tryk for at køre – og tryk igen ved kanten for at hoppe!' : mode === 'cypher' ? '🎵 Vælg fire trin til din runde' : mode === 'pk' ? '👆 Tryk i målet, hvor bolden skal hen' : '👆 Tryk for at hoppe');
+  hud.hidden = false; hintEl.hidden = mode === 'cypher'; try { showLvl(); } catch (e) {} document.querySelector('.top').hidden = true; document.getElementById('stage').classList.add('playing'); showStars(); showRecord();
   if (MODES[mode].from) game.hopWay = mode; // (the way last chosen in Hop over bolden)
   document.querySelectorAll('[data-game]').forEach(b => b.classList.toggle('on', b.dataset.game === mode || b.dataset.game === 'hop' && !!MODES[mode].from)); prepScene(); }
 // (again: only stopped to start once more - at another level or in another way - the figure's own setting not put back)
-function stopGame(again) { if (!game.on) return; game.on = false; for (const b of [...gamePool(), ...(game.bigPool || [])]) b.group.visible = false; game.dive = false; game.balls = []; confetti.length = 0; unprepScene(); skateStop(); hopWorldStop(); hideStop(); islandStop(); seaStop(); spaceStop(); pkStop(); sjStop();
+function stopGame(again) { if (!game.on) return; game.on = false; for (const b of [...gamePool(), ...(game.bigPool || [])]) b.group.visible = false; game.dive = false; game.balls = []; confetti.length = 0; unprepScene(); skateStop(); hopWorldStop(); hideStop(); islandStop(); seaStop(); spaceStop(); pkStop(); sjStop(); cyStop();
   // (the sound shut down when nothing plays: on an iPad an open sound channel could go on sounding after the game)
   if (!again) { try { game.audio?.suspend(); } catch (e) {} setItem(game.held ?? itemNow); game.held = undefined; }
   if (again) { game.again = true; return; } holder.position.x = 0; wearBack(game.wore); try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) {}
@@ -4633,6 +4655,7 @@ function gameTick(dt) { confettiTick(dt); if (!game.on || !glb) return; const r 
   if (game.mode === 'hide') { hideTick(dt); return; }
   if (game.mode === 'pk') { pkTick(dt); return; }
   if (game.mode === 'skihop') { sjTick(dt); return; }
+  if (game.mode === 'cypher') { cyTick(dt); return; }
   // (the jump: up and down in a smooth arc over the ball, the run again when it lands)
   // (the fifth star mostly comes in the air: the cheer then waits for the landing - before, the landing put the run back
   // in the middle of the cheer, the figure running on the spot facing out, no balls, as if waiting for a tap)
@@ -5821,6 +5844,68 @@ function sjLate() { if (!game.on || game.mode !== 'skihop' || !sj.world?.parent 
 const SJ_Y = new THREE.Vector3(0, 1, 0), SJ_LEAN = .85, SJ_ARMS = -1.1, SJ_FRONT = 1.36, SJ_FOOT = 1, SJ_SPREAD = .09, SJ_V = .2, SJ_VL = .1,
   // (the crouch: the body's lean forward from square to the hill, the thighs' lean back, the shins' lean forward, the arms, the head up)
   SJ_SIT = [1.4, .8, .75, -.2, .45];
+// ---- Cypher (the user, 15-11-2026: the dances made into a game of their own, after the real cypher): a street corner in
+// the evening, a ring of onlookers, one dancer in the middle at a time and the others cheering. A round is built of the
+// four parts a breaker's round has - toprock, footwork, a power move, a freeze - one chosen for each; the figure dances
+// them in that order to the beat, a star for each and one more for a round not danced just before; then one of the
+// onlookers takes its turn in the ring while the figure claps, and the next round is chosen. Nobody loses.
+// The movements are the ones there are now - more of each kind go into CY.cats as they come from Mixamo ----
+const CY = { cats: [['Toprock', ['dans', 'dans-hiphop', 'dans-arme']], ['Footwork', ['dans-break', 'dans-fjollet']], ['Powermove', ['dans-flair', 'dans-flair2']], ['Freeze', ['staa-hofter', 'jubel-yes']]],
+  crowd: [['dyr-kat', .62, -1.15], ['dyr-hund', .66, -.5], ['dyr-kanin', .7, .5], ['dyr-and', .5, 1.15]], R: 3.1, side: [-1.9, .9] };
+const cy = { world: null, rig: null, phase: '', k: 0, picks: [], t: 0, crowd: [], guest: 0, last: '', beat: 0, round: 0 }, cyPickEl = document.getElementById('cyPick');
+const cyLabel = id => Object.values(MOVES).flat().find(m => m[0] === id)?.[1] || id;
+// (an onlooker: one of the animals, walking on the spot - its steps look like dancing - turned to face the ring)
+async function cyAnimal(kind, height) { const { inner, bones, mesh, clips } = await readGlb(kind + '.glb', kind + '.jpg'), clip = clips[0]; clip.tracks = clip.tracks.filter(t => !t.name.endsWith('.scale'));
+  const hips = clip.tracks.find(t => t.name === 'Hips.position'); if (hips) for (let i = 0; i < hips.values.length; i += 3) { hips.values[i] = hips.values[0]; hips.values[i + 2] = hips.values[2]; }
+  const group = new THREE.Group(), turn = new THREE.Group(); turn.add(inner); group.add(turn); group.updateMatrixWorld(true);
+  const a = bones.find(b => b.name === 'head'), b = bones.find(b => b.name === 'Hips'); if (a && b && kind !== 'dyr-and') { const p = a.getWorldPosition(new THREE.Vector3()), q = b.getWorldPosition(new THREE.Vector3()); if (Math.hypot(p.x - q.x, p.z - q.z) > .02) turn.rotation.y = -Math.atan2(p.x - q.x, p.z - q.z); group.updateMatrixWorld(true); }
+  const box = new THREE.Box3().setFromObject(mesh, true), k = height / (box.max.y - box.min.y); turn.scale.setScalar(k); turn.position.y = -box.min.y * k;
+  const mixer = new THREE.AnimationMixer(inner), walk = mixer.clipAction(clip); walk.play(); return { group, mixer, walk }; }
+function cyBuild() { if (cy.world) return; const w = cy.world = new THREE.Group();
+  // (the ground: asphalt with a chalk ring and stars drawn on it; a sheet of cardboard in the middle to dance on)
+  { const cv = document.createElement('canvas'); cv.width = cv.height = 1024; const c = cv.getContext('2d'); c.fillStyle = '#5A5E74'; c.fillRect(0, 0, 1024, 1024);
+    for (let i = 0; i < 2600; i++) { c.fillStyle = `rgba(${i % 2 ? '255,255,255' : '20,20,40'},${.04 + Math.random() * .07})`; c.fillRect(Math.random() * 1024, Math.random() * 1024, 2 + Math.random() * 3, 2 + Math.random() * 3); }
+    const u = 1024 / 24; c.lineCap = 'round'; c.strokeStyle = '#FFE98A'; c.lineWidth = 9; c.setLineDash([26, 16]); c.beginPath(); c.arc(512, 512, 2.45 * u, 0, 7); c.stroke(); c.setLineDash([]);
+    [['#FF7EBB', -3.6, 2.2], ['#7FE0D0', 3.5, 2.6], ['#FFC233', -4.4, -1], ['#9B8CFF', 4.3, -.6]].forEach(([col, x, z]) => { c.fillStyle = col; c.beginPath(); for (let i = 0; i < 10; i++) { const r = (i % 2 ? .22 : .5) * u, a = i * Math.PI / 5 - Math.PI / 2; c.lineTo(512 + x * u + Math.cos(a) * r, 512 + z * u + Math.sin(a) * r); } c.fill(); });
+    const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; const g = new THREE.Mesh(new THREE.CircleGeometry(12, 64), new THREE.MeshStandardMaterial({ map: t, roughness: .95 })); g.rotation.x = -Math.PI / 2; g.receiveShadow = true; w.add(g);
+    const far = new THREE.Mesh(new THREE.CircleGeometry(60, 48), skMat('#4A4E63', .95)); far.rotation.x = -Math.PI / 2; far.position.y = -.01; w.add(far);
+    const mat = new THREE.Mesh(new THREE.BoxGeometry(3, .03, 2.3), skMat('#C79A62', .9)); mat.position.y = .015; mat.receiveShadow = true; w.add(mat); }
+  // (round about: the graffiti wall behind, houses behind that, the music, the hoop, the crates, lamps and a bench)
+  const put = (url, x, z, size, turn = 0) => { const t = new THREE.Group(); t.position.set(x, 0, z); w.add(t); propInto(t, url, size, turn, []); return t; };
+  put('cy-mur.glb', 0, -5.4, 2.7, CY_TURN.mur); put('cy-mur.glb', -7.6, -4.2, 2.7, CY_TURN.mur + .5); put('cy-mur.glb', 7.6, -4.2, 2.7, CY_TURN.mur - .5);
+  put('cy-bygning.glb', -6.4, -10.5, 5.2, CY_TURN.hus + .15); put('cy-bygning.glb', 6.6, -11, 5.8, CY_TURN.hus - .2); put('cy-bygning.glb', 0, -16, 6.6, CY_TURN.hus);
+  put('cy-boombox.glb', -2.5, -2.9, .85, CY_TURN.boom + .45); put('cy-hoejttaler.glb', 3.3, -3.5, 1.9, CY_TURN.lyd - .4); put('cy-hoejttaler.glb', -4.6, -3.6, 1.9, CY_TURN.lyd + .55);
+  put('cy-basket.glb', 6.3, -2.2, 3.4, CY_TURN.kurv - .7); put('cy-kasser.glb', -5.4, -.6, 1.05, CY_TURN.kasser + .8);
+  put('skate-lygte.glb', -6.6, -2.4, 3, .6); put('skate-lygte.glb', 5, -4.4, 3, -.5); put('skate-baenk.glb', 5.1, .4, .8, -1.1);
+  // (the onlookers in half a ring behind the dancer, facing in)
+  cy.crowd = CY.crowd.map(([kind, h, a]) => { const g = new THREE.Group(), home = new THREE.Vector3(Math.sin(a) * CY.R, 0, -Math.cos(a) * CY.R + .2), c = { g, home, m: null, face: Math.atan2(-home.x, -home.z), spin: 0 }; g.position.copy(home); g.rotation.y = c.face; w.add(g);
+    cyAnimal(kind, h).then(m => { c.m = m; g.add(m.group); }).catch(() => {}); return c; });
+  cy.rig = new THREE.Group(); }
+const CY_TURN = { mur: 0, hus: 0, boom: 0, lyd: 0, kurv: 0, kasser: 0 };
+function cyStart() { cyBuild(); scene.add(cy.world); holder.add(cy.rig); cy.rig.add(glb); cy.rig.position.set(0, 0, 0); game.rotY = 0;
+  floor.visible = false; disc.visible = false; for (const el of [bgNear, bgFar, bgNear2]) el.hidden = true; stage.classList.add('cypher'); controls.maxDistance = 40; Object.assign(cy, { round: 0, last: '', beat: 0 });
+  for (const id of [...CY.cats.flatMap(c => c[1]), GAME.cheer, 'jubel-klap']) loadMove(id); loadMove('staa').then(() => { if (game.on && game.mode === 'cypher' && cy.phase === 'pick') runAnim('staa'); }); cyPick(); }
+function cyStop() { cyPickEl.hidden = true; if (!cy.world?.parent) return; scene.remove(cy.world); holder.add(glb); holder.remove(cy.rig); stage.classList.remove('cypher'); floor.visible = true; cy.phase = ''; setBg(bgNow); }
+// (choosing the round: the four parts one after the other, two or three big pictures to choose from for each)
+function cyPick() { cy.phase = 'pick'; cy.k = 0; cy.picks = []; if (glbActions.staa) runAnim('staa'); hintEl.hidden = true; game.hint = 0; cyShowPick(); }
+function cyShowPick() { const [name, list] = CY.cats[cy.k], title = document.getElementById('cyTitle'), opts = document.getElementById('cyOpts'); cyPickEl.hidden = false;
+  title.innerHTML = `<span class="cy-dots">${CY.cats.map((_, i) => `<span class="${i < cy.k ? 'on' : i === cy.k ? 'now' : ''}"></span>`).join('')}</span><span>${name}</span>`; opts.innerHTML = '';
+  for (const id of list) { const b = iconButton(`ikoner/valg-${id}.png`, cyLabel(id)); b.onclick = () => { soundOut()?.resume(); sfx('ding'); cy.picks.push(id); if (++cy.k >= CY.cats.length) { cyPickEl.hidden = true; cy.phase = 'dance'; cy.k = -1; cyNext(); } else { if (glbActions[id]) runAnim(id); cyShowPick(); } }; opts.append(b); } }
+// (the round danced: each part its time - a short one done over until it has had a good two seconds, a long one cut)
+function cyNext() { if (++cy.k >= cy.picks.length) { const key = cy.picks.join(); cy.phase = 'cheer'; cy.t = 2.4; runAnim(GAME.cheer); sfx('ding'); sfx('ding', .14); if (key !== cy.last) addStars(1); cy.last = key; hintEl.textContent = '👏👏👏'; hintEl.hidden = false; game.hint = 2.4; return; }
+  const id = cy.picks[cy.k], a = glbActions[id]; if (!a) return cyNext(); runAnim(id); const d = a.getClip().duration; cy.t = d > 6 ? 5 : d * Math.max(1, Math.ceil(2.6 / d)); addStars(1); sfx('swish');
+  hintEl.textContent = `${cy.k + 1}/4 · ${CY.cats[cy.k][0]}`; hintEl.hidden = false; game.hint = cy.t; }
+function cyTick(dt) { dt = Math.min(dt, .05); cy.beat += dt * 112 / 60 * Math.PI; const lively = cy.phase === 'dance' || cy.phase === 'cheer' ? 1 : .35, guest = cy.phase === 'guest' ? cy.crowd[cy.guest] : null;
+  // (the onlookers step and bob to the beat - higher while someone dances; the one whose turn it is hops into the ring and spins)
+  cy.crowd.forEach((c, i) => { c.m?.mixer.update(dt * (c === guest ? 1.6 : .6 + .6 * lively)); const to = c === guest ? cyV.set(0, 0, .2) : c.home; c.g.position.x += (to.x - c.g.position.x) * Math.min(1, dt * 4); c.g.position.z += (to.z - c.g.position.z) * Math.min(1, dt * 4);
+    c.g.position.y = Math.abs(Math.sin(cy.beat + i * .8)) * (c === guest ? .28 : .05 + .11 * lively); c.spin = c === guest ? c.spin + dt * 5 : 0; c.g.rotation.y = c === guest ? c.spin : c.g.rotation.y + (c.face - c.g.rotation.y) * Math.min(1, dt * 6); });
+  // (the figure: in the middle - aside, turned towards the ring and clapping, while an onlooker has its turn)
+  { const tx = guest ? CY.side[0] : 0, tz = guest ? CY.side[1] : 0, p = cy.rig.position; p.x += (tx - p.x) * Math.min(1, dt * 4); p.z += (tz - p.z) * Math.min(1, dt * 4); game.rotY = guest ? .9 : 0; }
+  if (cy.phase === 'pick') return; cy.t -= dt; if (cy.t > 0) return;
+  if (cy.phase === 'dance') cyNext();
+  else if (cy.phase === 'cheer') { cy.phase = 'guest'; cy.guest = cy.round++ % cy.crowd.length; cy.t = 3.6; if (glbActions['jubel-klap']) runAnim('jubel-klap'); sfx('boing'); }
+  else if (cy.phase === 'guest') cyPick(); }
+const cyV = new THREE.Vector3();
 function pkStart() { pkBuild(); pkAbeLoad(); scene.add(pk.world); holder.add(pk.rig); pk.rig.add(glb); pk.rig.position.set(0, 0, 0); game.rotY = Math.PI;
   floor.visible = false; disc.visible = false; for (const el of [bgNear, bgFar, bgNear2]) el.hidden = true; stage.classList.add('pitch'); controls.maxDistance = 40;
   if (!pk.ball) { pk.ball = makeItem('fodbold'); pk.ball.group.scale.setScalar(kick.r / .158); scene.remove(pk.ball.group); }
@@ -5906,7 +5991,7 @@ function pkTick(dt) { const t = performance.now() / 1000, L = pkLevel(), kp = pk
   if (pk.phase === 'kick' || pk.phase === 'fly' || (pk.phase === 'after' && pk.saved && pk.t < 1)) { const a = glbActions[pkKick()], k = kicks[pkKick()]; if (a?.isRunning() && k) { const after = a.time - k.contact; kickArms(a.time + .4, k.contact + .4, k.side); const w = Math.max(0, Math.min(1, 1 - (after - 1) / .4)); lookAtBall(b, .85 * w);
     // (head up once it has kicked, to follow the ball - it is seen from behind, so it takes a clear lift - the user, 04-11-2026)
     const lift = Math.min(1, Math.max(0, after) / .25) * w; if (lift > 0) { glb.getWorldQuaternion(kaQ); turnBone('Head', new THREE.Vector3(1, 0, 0).applyQuaternion(kaQ), -.55 * lift); turnBone('Spine2', new THREE.Vector3(1, 0, 0).applyQuaternion(kaQ), -.12 * lift); } } } }
-const GAME_NAMES = [['hop', 'Hop over bolden'], ['skate', 'Skateboard'], ['snow', 'Snowboard'], ['island', 'Skattejagt'], ['sea', 'Svømmeverden'], ['space', 'Rumrejse'], ['hide', 'Gemmeleg'], ['pk', 'Straffespark'], ['skihop', 'Skihop']];
+const GAME_NAMES = [['hop', 'Hop over bolden'], ['skate', 'Skateboard'], ['snow', 'Snowboard'], ['island', 'Skattejagt'], ['sea', 'Svømmeverden'], ['space', 'Rumrejse'], ['hide', 'Gemmeleg'], ['pk', 'Straffespark'], ['skihop', 'Skihop'], ['cypher', 'Cypher']];
 // (with two players or more: their pictures on top, the one shown marked - tapping another shows that child's stars)
 let starShown = null;
 function showStarSheet(id = starShown || players.now) { starShown = id; const p = players.list.find(q => q.id === id) || playerNow(), s = p.score, have = krOf(s), many = players.list.length > 1;
@@ -5965,7 +6050,7 @@ document.getElementById('kidList').addEventListener('click', e => { const b = e.
 showPlayer();
 function showRecord() { const el = document.getElementById('record'); el.textContent = '🏆 ' + bestNow(); el.classList.toggle('beaten', !!game.record); document.getElementById('hudKr').textContent = `💰 ${krOf(score)}`; }
 document.getElementById('stage').addEventListener('pointerdown', e => { if (!game.on || e.target.closest('button')) return; e.preventDefault();
-  if (onBoard(game.mode)) { const r = e.currentTarget.getBoundingClientRect(); steer(e.clientX < r.left + r.width / 2 ? -1 : 1); } else if (game.mode === 'island') islandTap(e); else if (game.mode === 'sea') { sea.held = true; seaTap(e); } else if (game.mode === 'space') { sp.held = true; spaceTap(e, true); } else if (game.mode === 'hide') hideTap(e); else if (game.mode === 'pk') pkTap(e); else if (game.mode === 'skihop') sjTap(); else jump(); });
+  if (onBoard(game.mode)) { const r = e.currentTarget.getBoundingClientRect(); steer(e.clientX < r.left + r.width / 2 ? -1 : 1); } else if (game.mode === 'island') islandTap(e); else if (game.mode === 'sea') { sea.held = true; seaTap(e); } else if (game.mode === 'space') { sp.held = true; spaceTap(e, true); } else if (game.mode === 'hide') hideTap(e); else if (game.mode === 'pk') pkTap(e); else if (game.mode === 'skihop') sjTap(); else if (game.mode === 'cypher') {} else jump(); });
 // (under the sea a finger held down and moved leads the figure along)
 document.getElementById('stage').addEventListener('pointermove', e => { if (game.on && game.mode === 'sea' && sea.held) seaTap(e); if (game.on && game.mode === 'space' && sp.held) spaceTap(e); });
 for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) document.getElementById('stage').addEventListener(ev, () => { sea.held = false; sp.held = false; });
@@ -6075,7 +6160,7 @@ function musicTick() { musicBtn.hidden = !(isDance(anim) && sound.dance) && !(ga
   // sound's own clock)
   if (game.on || md.on) { const ctx = game.audio; if (!musicOn || !(game.on ? sound.game : sound.dance) || !ctx || ctx.state !== 'running') { music.at = 0; return; } const stepT = 60 / 112 / 4;
     if (!music.at || music.at < ctx.currentTime - .2) { music.at = ctx.currentTime + .05; music.n = 0; }
-    while (music.at < ctx.currentTime + .12) { playStep(ctx, music.at, music.n % 64, stepT, BEATS.pop, music.n); music.at += stepT; music.n++; } return; }
+    while (music.at < ctx.currentTime + .12) { playStep(ctx, music.at, music.n % 64, stepT, game.on && game.mode === 'cypher' ? BEATS.break : BEATS.pop, music.n); music.at += stepT; music.n++; } return; }
   music.at = 0;
   const a = glbActions[anim], ctx = game.audio; if (!musicPlaying() || !a?.isRunning() || !ctx || ctx.state !== 'running') { music.id = null; return; }
   const dur = a.getClip().duration, steps = (DANCE_BEATS[anim] || 8) * 4, stepT = dur / steps, now = a.time;
@@ -6169,6 +6254,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.12.0 (9ad9639)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.12.0 (41fcdf3)</div>
 </body>
 </html>
