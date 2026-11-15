@@ -441,8 +441,9 @@
   </div>
   <!-- (the dances in a group of their own - the user, 15-11-2026: the dances, Min dans and the dance games together under one tab) -->
   <div class="tabgroup" id="dance">
-    <button data-anim="dans"><img src="ikoner/stilling-dans.png" alt=""><span>Danse</span></button>
-    <button id="myDanceTab"><img src="ikoner/stilling-mindans.png" alt=""><span>Min dans</span></button>
+    <!-- (Danse and Min dans hidden - the user, 15-11-2026: all of it is in Cypher and Dansestudie; kept, so they can come back) -->
+    <button data-anim="dans" hidden><img src="ikoner/stilling-dans.png" alt=""><span>Danse</span></button>
+    <button id="myDanceTab" hidden><img src="ikoner/stilling-mindans.png" alt=""><span>Min dans</span></button>
     <button data-game="cypher"><img src="ikoner/spil-cypher.png" alt=""><span>Cypher</span></button>
     <button data-game="studio"><img src="ikoner/spil-dansestudie.png" alt=""><span>Danse&shy;studie</span></button>
   </div>
@@ -6003,7 +6004,7 @@ const cyV = new THREE.Vector3();
 // a star for each dance and two more for a show of three styles or more; then back to the room.
 // More styles - ballet, latin, jazz, disco - go into DS.styles as their movements come from Mixamo ----
 const DS = { styles: [['Hiphop', '🎤', ['dans', 'dans-hiphop', 'ds-hiphop3', 'ds-hiphop4', 'cy-top1', 'cy-top2']], ['Show', '🎩', ['ds-cancan', 'ds-twist', 'ds-shuffle', 'dans-arme']],
-  ['Sjov', '🤪', ['dans-fjollet', 'ds-kylling', 'ds-hokey']], ['Break', '🌀', ['cy-fod2', 'cy-power1', 'cy-power4', 'cy-freeze1', 'cy-freeze2', 'cy-freeze3']]],
+  ['Sjov', '🤪', ['dans-fjollet', 'ds-kylling', 'ds-hokey']], ['Break', '🌀', ['cy-fod2', 'dans-flair', 'cy-power1', 'cy-power4', 'cy-freeze1', 'cy-freeze2', 'cy-freeze3']]],
   X: 40, crowd: [['dyr-kat', .62, -2.1], ['dyr-hund', .66, -.75], ['dyr-kanin', .7, .7], ['dyr-and', .5, 2.0]], spots: ['#FF6FB1', '#FFD23F', '#35D6C4', '#9B6BFF'] };
 const ds = { world: null, rig: null, phase: '', style: 0, k: -1, t: 0, crowd: [], spots: [], ball: null, mirror: null, beat: 0 }, dsPickEl = document.getElementById('dsPick');
 const DS_TURN = { barre: 0, gardin: 0, rig: 0, klaver: 0, baenk: 0 };
@@ -6452,6 +6453,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.12.0 (ad96cbd)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.12.0 (b7646f8)</div>
 </body>
 </html>
