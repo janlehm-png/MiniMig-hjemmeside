@@ -110,6 +110,9 @@
   .music-btn { position: absolute; top: 10px; left: 10px; z-index: 2; width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--line); background: var(--tile);
     font-size: 19px; line-height: 1; padding: 0; cursor: pointer; box-shadow: 0 2px 8px rgba(58, 46, 92, .15); }
   .music-btn[hidden] { display: none; }
+  .beat-btn { left: 56px; } /* (the beat chosen - tapped, the next of three) */
+  /* (on a phone the choices in Cypher and Dansestudie cover the bottom corner: the music buttons go under the stars) */
+  @media (max-width: 600px) { .stage.playing.cypher .music-btn, .stage.playing.dsroom .music-btn, .stage.playing.dsshow .music-btn { top: 56px; bottom: auto; } }
   .stage.playing .music-btn { top: auto; bottom: 10px; } /* (the stars sit top left in the game) */
   .info-btn[hidden], .info-pop[hidden], .stage.playing .info-btn, .stage.playing .info-pop { display: none; }
   /* (on a computer the mouse shows it can zoom the figure - the wheel - and grabs it while turning it) */
@@ -401,7 +404,7 @@
 <!-- Gemmeleg: on the harder levels the picture is covered while the figure hides -->
 <div class="hide-cover" id="hideCover" hidden>🙈<span id="hideCount"></span></div>
 <!-- (the dances' music on and off - only while a dance runs) -->
-<button class="music-btn" id="musicBtn" aria-label="Musik til og fra" hidden>🎵</button>
+<button class="music-btn" id="musicBtn" aria-label="Musik til og fra" hidden>🎵</button><button class="music-btn beat-btn" id="beatBtn" aria-label="Skift beat" hidden>🎤</button>
 <!-- (Skihop: the jump seen from the front or from behind - the child's choice, remembered) -->
 <canvas id="confetti"></canvas>
 </div>
@@ -661,7 +664,7 @@ const EN = {
   'Stå': 'Stand', 'Vink': 'Wave', 'Hop': 'Jump', 'Dans': 'Dance', 'Løb': 'Run', 'Jubel': 'Cheer', 'Kolbøtte': 'Roll', 'Spark': 'Kick', 'Drej rundt': 'Spin', 'Min dans': 'My dance',
   'Hop over bolden': 'Jump the ball', 'Skateboard': 'Skate­board', 'Skattejagt': 'Treasure hunt', 'Svømmeverden': 'Swim world', 'Gemmeleg': 'Hide and seek', 'Straffespark': 'Penalty kick',
   // (hair, face)
-  'Kort': 'Short', 'Krøller': 'Curls', 'Strit': 'Spiky', 'Fletninger': 'Braids', 'Fletning': 'Braid',
+  'Kort': 'Short', 'Krøller': 'Curls', 'Bølger': 'Waves', 'Strit': 'Spiky', 'Fletninger': 'Braids', 'Fletning': 'Braid',
   'Naturlige': 'Natural', 'Tynde': 'Thin', 'Tykke': 'Thick', 'Høje': 'High', 'Sure': 'Angry', 'Triste': 'Sad', 'Ingen': 'None', 'Glade': 'Happy', 'Blink': 'Wink', 'Vipper': 'Lashes', 'Stjerner': 'Stars', 'Hjerter': 'Hearts',
   'Smil': 'Smile', 'Grin': 'Grin', 'Tunge': 'Tongue', 'Åh': 'Oh', 'Kys': 'Kiss', 'Trist': 'Sad',
   'Røde kinder': 'Rosy cheeks', 'Fregner': 'Freckles', 'Stjerne': 'Star', 'Glimmer': 'Glitter', 'Regnbue': 'Rainbow', 'Plaster': 'Bandage', 'Skønhedsplet': 'Beauty mark',
@@ -701,7 +704,7 @@ const EN = {
   'Ingen grænse': 'No limit', '⏱️ Hold knappen inde i 3 sekunder': '⏱️ Hold the button down for 3 seconds',
   'Gem i Mine figurer': 'Save in My figures', 'Ny MiniMig': 'New MiniMig', 'Dreng': 'Boy', 'Pige': 'Girl', 'Den figur, du har nu, bliver gemt i Mine figurer 🖼️.': 'The figure you have now is saved in My figures 🖼️.', 'Børn': 'Children', '🖼️ Gemte figurer': '🖼️ Saved figures', 'Børn og spillere – for voksne': 'Children and players – for grown-ups',
   'Dit billede': 'Your picture', 'Tryk og hold på billedet, og vælg': 'Press and hold the picture, and choose', 'Gem i Fotos': 'Save to Photos', 'eller': 'or', 'Del': 'Share', '💾 Gem billedet': '💾 Save the picture', 'Billedet gemmes i mappen Overførsler. Du kan også højreklikke på billedet og vælge': 'The picture is saved in your Downloads folder. You can also right-click the picture and choose', 'Gem billede som': 'Save image as',
-  'Sådan gør du': 'How it works', 'Musik til og fra': 'Music on and off', 'Skriv dit navn': 'Write your name', 'Navn på trøjen': 'Name on the top', 'Sig navnet': 'Say the name', 'Slet din egen stemme': 'Delete your own voice', 'Gem dansen': 'Save the dance', 'Start forfra': 'Start again', 'Navn på dansen': 'Name of the dance', 'Luk': 'Close', 'Slet': 'Delete', 'Mønterne på disken': 'The coins on the counter', 'Billedet af figuren': 'The picture of the figure', 'Min MiniMig': 'My MiniMig' };
+  'Sådan gør du': 'How it works', 'Musik til og fra': 'Music on and off', 'Skift beat': 'Change beat', 'Trommer': 'Drums', 'Skriv dit navn': 'Write your name', 'Navn på trøjen': 'Name on the top', 'Sig navnet': 'Say the name', 'Slet din egen stemme': 'Delete your own voice', 'Gem dansen': 'Save the dance', 'Start forfra': 'Start again', 'Navn på dansen': 'Name of the dance', 'Luk': 'Close', 'Slet': 'Delete', 'Mønterne på disken': 'The coins on the counter', 'Billedet af figuren': 'The picture of the figure', 'Min MiniMig': 'My MiniMig' };
 const tr = s => LANG === 'en' ? EN[String(s).replace(/­/g, '')] ?? s : s;
 document.documentElement.lang = LANG; if (LANG === 'en') document.title = 'MiniMig – build and play';
 // (the page's own texts and labels; a text's spaces round it are kept, as words sit beside the bold ones in a line)
@@ -1830,10 +1833,12 @@ const exists = async u => { try { return (await fetch(u, { method: 'HEAD' })).ok
 // the hairstyles: <name>.json (the hair cut out of a Meshy head by haar-ud.ps1, with that head's eye whites) and
 // <name>.jpg. Each is set on the figure's head so the eyes meet - as far apart and in the same place as the figure's
 // own eye whites - and then follows the head bone. A style is fetched the first time it is chosen.
+// (Bølger - the user, 15-11-2026: shoulder-length waves, a parting in the middle, bangs to the sides; made 5 % bigger, as
+// Meshy's head was smaller than the figure's and its skull showed through along the parting)
 // (Bob taken out 01-11-2026 - the user chose to go on without it; haar-bob.json/.jpg are kept, put back
 // ['haar-bob', 'Bob'] after Kort to have it again; Skaldet - no hair - taken out the same day, put back ['', 'Skaldet']
 // first to have it again)
-const HAIRS = [['haar-kort', 'Kort', { snug: .55, ears: true }], ['haar-kroeller', 'Krøller'], ['haar-strit', 'Strit', { ears: true }], ['haar-fletninger', 'Fletninger', { braids: true, ears: true }], ['haar-fletning', 'Fletning', { ears: true }]];
+const HAIRS = [['haar-kort', 'Kort', { snug: .55, ears: true }], ['haar-kroeller', 'Krøller'], ['haar-strit', 'Strit', { ears: true }], ['haar-fletninger', 'Fletninger', { braids: true, ears: true }], ['haar-fletning', 'Fletning', { ears: true }], ['haar-boelger', 'Bølger', { grow: 1.05 }]];
 let hairNow = 'haar-kort', hairBase = null; const hairMeshes = {};
 // the figure's eye whites and head bone, measured once as it stands when loaded (in its T-pose, before it moves)
 function measureHead(fbx) {
@@ -5864,142 +5869,142 @@ function sjLate() { if (!game.on || game.mode !== 'skihop' || !sj.world?.parent 
 const SJ_Y = new THREE.Vector3(0, 1, 0), SJ_LEAN = .85, SJ_ARMS = -1.1, SJ_FRONT = 1.36, SJ_FOOT = 1, SJ_SPREAD = .09, SJ_V = .2, SJ_VL = .1,
   // (the crouch: the body's lean forward from square to the hill, the thighs' lean back, the shins' lean forward, the arms, the head up)
   SJ_SIT = [1.4, .8, .75, -.2, .45];
-// ---- Cypher (the user, 15-11-2026: the dances made into a game of their own, after the real cypher): a street corner in
-// the evening, a ring of onlookers, one dancer in the middle at a time and the others cheering. A round is built of the
-// four parts a breaker's round has - toprock, footwork, a power move, a freeze - one chosen for each; the figure dances
-// them in that order to the beat, a star for each and one more for a round not danced just before; then one of the
-// onlookers takes its turn in the ring while the figure claps, and the next round is chosen. Nobody loses.
-// The movements: Mixamo's breakdance ones, fetched by the user (figur-cy-*.json), and a few of the dances from before ----
-const CY = { cats: [['Toprock', ['cy-top1', 'cy-top2', 'cy-ned2', 'cy-ned1', 'dans']], ['Footwork', ['cy-fod1', 'cy-fod2', 'cy-fod3', 'dans-break']], ['Powermove', ['cy-power1', 'cy-power2', 'cy-power4', 'cy-power3', 'dans-flair2']], ['Freeze', ['cy-freeze1', 'cy-freeze2', 'cy-freeze3']]],
-  crowd: [['dyr-kat', .62, -1.15], ['dyr-hund', .66, -.5], ['dyr-kanin', .7, .5], ['dyr-and', .5, 1.15]], R: 3.1, side: [-1.9, .9] };
-const cy = { world: null, rig: null, phase: '', k: 0, picks: [], t: 0, crowd: [], guest: 0, last: '', beat: 0, round: 0 }, cyPickEl = document.getElementById('cyPick');
-const cyLabel = id => Object.values(MOVES).flat().find(m => m[0] === id)?.[1] || id;
-// (an onlooker: one of the animals, walking on the spot - its steps look like dancing - turned to face the ring)
-async function cyAnimal(kind, height) { const { inner, bones, mesh, clips } = await readGlb(kind + '.glb', kind + '.jpg'), clip = clips[0]; clip.tracks = clip.tracks.filter(t => !t.name.endsWith('.scale'));
-  const hips = clip.tracks.find(t => t.name === 'Hips.position'); if (hips) for (let i = 0; i < hips.values.length; i += 3) { hips.values[i] = hips.values[0]; hips.values[i + 2] = hips.values[2]; }
-  const group = new THREE.Group(), turn = new THREE.Group(); turn.add(inner); group.add(turn); group.updateMatrixWorld(true);
-  const a = bones.find(b => b.name === 'head'), b = bones.find(b => b.name === 'Hips'); if (a && b && kind !== 'dyr-and') { const p = a.getWorldPosition(new THREE.Vector3()), q = b.getWorldPosition(new THREE.Vector3()); if (Math.hypot(p.x - q.x, p.z - q.z) > .02) turn.rotation.y = -Math.atan2(p.x - q.x, p.z - q.z); group.updateMatrixWorld(true); }
-  const box = new THREE.Box3().setFromObject(mesh, true), k = height / (box.max.y - box.min.y); turn.scale.setScalar(k); turn.position.y = -box.min.y * k;
-  const mixer = new THREE.AnimationMixer(inner), walk = mixer.clipAction(clip); walk.play(); return { group, mixer, walk }; }
-function cyBuild() { if (cy.world) return; const w = cy.world = new THREE.Group();
-  // (the ground: asphalt with a chalk ring and stars drawn on it; a sheet of cardboard in the middle to dance on)
-  { const cv = document.createElement('canvas'); cv.width = cv.height = 1024; const c = cv.getContext('2d'); c.fillStyle = '#5A5E74'; c.fillRect(0, 0, 1024, 1024);
-    for (let i = 0; i < 2600; i++) { c.fillStyle = `rgba(${i % 2 ? '255,255,255' : '20,20,40'},${.04 + Math.random() * .07})`; c.fillRect(Math.random() * 1024, Math.random() * 1024, 2 + Math.random() * 3, 2 + Math.random() * 3); }
-    const u = 1024 / 24; c.lineCap = 'round'; c.strokeStyle = '#FFE98A'; c.lineWidth = 9; c.setLineDash([26, 16]); c.beginPath(); c.arc(512, 512, 2.45 * u, 0, 7); c.stroke(); c.setLineDash([]);
-    [['#FF7EBB', -3.6, 2.2], ['#7FE0D0', 3.5, 2.6], ['#FFC233', -4.4, -1], ['#9B8CFF', 4.3, -.6]].forEach(([col, x, z]) => { c.fillStyle = col; c.beginPath(); for (let i = 0; i < 10; i++) { const r = (i % 2 ? .22 : .5) * u, a = i * Math.PI / 5 - Math.PI / 2; c.lineTo(512 + x * u + Math.cos(a) * r, 512 + z * u + Math.sin(a) * r); } c.fill(); });
-    const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; const g = new THREE.Mesh(new THREE.CircleGeometry(12, 64), new THREE.MeshStandardMaterial({ map: t, roughness: .95 })); g.rotation.x = -Math.PI / 2; g.receiveShadow = true; w.add(g);
-    const far = new THREE.Mesh(new THREE.CircleGeometry(60, 48), skMat('#4A4E63', .95)); far.rotation.x = -Math.PI / 2; far.position.y = -.01; w.add(far);
-    const mat = new THREE.Mesh(new THREE.BoxGeometry(3, .03, 2.3), skMat('#C79A62', .9)); mat.position.y = .015; mat.receiveShadow = true; w.add(mat); }
-  // (round about: the graffiti wall behind, houses behind that, the music, the hoop, the crates, lamps and a bench)
-  const put = (url, x, z, size, turn = 0) => { const t = new THREE.Group(); t.position.set(x, 0, z); w.add(t); propInto(t, url, size, turn, []); return t; };
-  put('cy-mur.glb', 0, -5.4, 2.7, CY_TURN.mur); put('cy-mur.glb', -7.6, -4.2, 2.7, CY_TURN.mur + .5); put('cy-mur.glb', 7.6, -4.2, 2.7, CY_TURN.mur - .5);
-  put('cy-bygning.glb', -6.4, -10.5, 5.2, CY_TURN.hus + .15); put('cy-bygning.glb', 6.6, -11, 5.8, CY_TURN.hus - .2); put('cy-bygning.glb', 0, -16, 6.6, CY_TURN.hus);
-  put('cy-boombox.glb', -2.5, -2.9, .85, CY_TURN.boom + .45); put('cy-hoejttaler.glb', 3.3, -3.5, 1.9, CY_TURN.lyd - .4); put('cy-hoejttaler.glb', -4.6, -3.6, 1.9, CY_TURN.lyd + .55);
-  put('cy-basket.glb', 6.3, -2.2, 3.4, CY_TURN.kurv - .7); put('cy-kasser.glb', -5.4, -.6, 1.05, CY_TURN.kasser + .8);
-  put('skate-lygte.glb', -6.6, -2.4, 3, .6); put('skate-lygte.glb', 5, -4.4, 3, -.5); put('skate-baenk.glb', 5.1, .4, .8, -1.1);
-  // (the onlookers in half a ring behind the dancer, facing in)
-  cy.crowd = CY.crowd.map(([kind, h, a]) => { const g = new THREE.Group(), home = new THREE.Vector3(Math.sin(a) * CY.R, 0, -Math.cos(a) * CY.R + .2), c = { g, home, m: null, face: Math.atan2(-home.x, -home.z), spin: 0 }; g.position.copy(home); g.rotation.y = c.face; w.add(g);
-    cyAnimal(kind, h).then(m => { c.m = m; g.add(m.group); }).catch(() => {}); return c; });
-  cy.rig = new THREE.Group(); }
-const CY_TURN = { mur: 0, hus: 0, boom: 0, lyd: 0, kurv: 0, kasser: 0 };
-function cyStart() { cyBuild(); scene.add(cy.world); holder.add(cy.rig); cy.rig.add(glb); cy.rig.position.set(0, 0, 0); game.rotY = 0;
-  floor.visible = false; disc.visible = false; for (const el of [bgNear, bgFar, bgNear2]) el.hidden = true; stage.classList.add('cypher'); controls.maxDistance = 40; Object.assign(cy, { round: 0, last: '', beat: 0 });
-  for (const id of [...CY.cats.flatMap(c => c[1]), GAME.cheer, 'jubel-klap']) loadMove(id); loadMove('staa').then(() => { if (game.on && game.mode === 'cypher' && cy.phase === 'pick') runAnim('staa'); }); cyPick(); }
-function cyStop() { cyPickEl.hidden = true; if (!cy.world?.parent) return; scene.remove(cy.world); holder.add(glb); holder.remove(cy.rig); stage.classList.remove('cypher'); floor.visible = true; cy.phase = ''; setBg(bgNow); }
-// (choosing the round: the four parts one after the other, two or three big pictures to choose from for each)
-function cyPick() { cy.phase = 'pick'; cy.k = 0; cy.picks = []; if (glbActions.staa) runAnim('staa'); hintEl.hidden = true; game.hint = 0; cyShowPick(); }
-function cyShowPick() { const [name, list] = CY.cats[cy.k], title = document.getElementById('cyTitle'), opts = document.getElementById('cyOpts'); cyPickEl.hidden = false;
-  title.innerHTML = `<span class="cy-dots">${CY.cats.map((_, i) => `<span class="${i < cy.k ? 'on' : i === cy.k ? 'now' : ''}"></span>`).join('')}</span><span>${name}</span>`; opts.innerHTML = '';
-  for (const id of list) { const b = iconButton(`ikoner/valg-${id}.png`, cyLabel(id)); b.onclick = () => { soundOut()?.resume(); sfx('ding'); cy.picks.push(id); if (++cy.k >= CY.cats.length) { cyPickEl.hidden = true; cy.phase = 'dance'; cy.k = -1; cyNext(); } else { if (glbActions[id]) runAnim(id); cyShowPick(); } }; opts.append(b); } }
-// (the round danced: each part its time - a short one done over until it has had a good two seconds, a long one cut)
-function cyNext() { if (++cy.k >= cy.picks.length) { const key = cy.picks.join(); cy.phase = 'cheer'; cy.t = 2.4; runAnim(GAME.cheer); sfx('ding'); sfx('ding', .14); if (key !== cy.last) addStars(1); cy.last = key; hintEl.textContent = '👏👏👏'; hintEl.hidden = false; game.hint = 2.4; return; }
-  const id = cy.picks[cy.k], a = glbActions[id]; if (!a) return cyNext(); runAnim(id); const d = a.getClip().duration; cy.t = d > 6 ? 5 : d * Math.max(1, Math.ceil(2.6 / d)); addStars(1); sfx('swish');
-  hintEl.textContent = `${cy.k + 1}/4 · ${CY.cats[cy.k][0]}`; hintEl.hidden = false; game.hint = cy.t; }
-function cyTick(dt) { dt = Math.min(dt, .05); cy.beat += dt * 112 / 60 * Math.PI; const lively = cy.phase === 'dance' || cy.phase === 'cheer' ? 1 : .35, guest = cy.phase === 'guest' ? cy.crowd[cy.guest] : null;
-  // (the onlookers step and bob to the beat - higher while someone dances; the one whose turn it is hops into the ring and spins)
-  cy.crowd.forEach((c, i) => { c.m?.mixer.update(dt * (c === guest ? 1.6 : .6 + .6 * lively)); const to = c === guest ? cyV.set(0, 0, .2) : c.home; c.g.position.x += (to.x - c.g.position.x) * Math.min(1, dt * 4); c.g.position.z += (to.z - c.g.position.z) * Math.min(1, dt * 4);
-    c.g.position.y = Math.abs(Math.sin(cy.beat + i * .8)) * (c === guest ? .28 : .05 + .11 * lively); c.spin = c === guest ? c.spin + dt * 5 : 0; c.g.rotation.y = c === guest ? c.spin : c.g.rotation.y + (c.face - c.g.rotation.y) * Math.min(1, dt * 6); });
-  // (the figure: in the middle - aside, turned towards the ring and clapping, while an onlooker has its turn)
-  { const tx = guest ? CY.side[0] : 0, tz = guest ? CY.side[1] : 0, p = cy.rig.position; p.x += (tx - p.x) * Math.min(1, dt * 4); p.z += (tz - p.z) * Math.min(1, dt * 4); game.rotY = guest ? .9 : 0; }
-  if (cy.phase === 'pick') return; cy.t -= dt; if (cy.t > 0) return;
-  if (cy.phase === 'dance') cyNext();
-  else if (cy.phase === 'cheer') { cy.phase = 'guest'; cy.guest = cy.round++ % cy.crowd.length; cy.t = 3.6; if (glbActions['jubel-klap']) runAnim('jubel-klap'); sfx('boing'); }
-  else if (cy.phase === 'guest') cyPick(); }
-const cyV = new THREE.Vector3();
-// ---- Dansestudie (the user, 15-11-2026: a dance studio where a dance is put together from many kinds of dances, and
-// shown): a practice room with a mirror wall, barres, a piano - the child taps dances from the styles into the row (the
-// same row as Min dans, kept with the player) and sees each on the figure in front of the mirror; ▶ takes the figure on
-// to a stage with curtains, coloured lights, a mirror ball and the animals watching, where it dances the row through,
-// a star for each dance and two more for a show of three styles or more; then back to the room.
-// More styles - ballet, latin, jazz, disco - go into DS.styles as their movements come from Mixamo ----
-const DS = { styles: [['Hiphop', '🎤', ['dans', 'dans-hiphop', 'ds-hiphop3', 'ds-hiphop4', 'cy-top1', 'cy-top2']], ['Show', '🎩', ['ds-cancan', 'ds-twist', 'ds-shuffle', 'dans-arme']],
-  ['Sjov', '🤪', ['dans-fjollet', 'ds-kylling', 'ds-hokey']], ['Break', '🌀', ['cy-fod2', 'cy-power1', 'cy-power4', 'cy-freeze1', 'cy-freeze2', 'cy-freeze3']]],
-  X: 40, crowd: [['dyr-kat', .62, -2.1], ['dyr-hund', .66, -.75], ['dyr-kanin', .7, .7], ['dyr-and', .5, 2.0]], spots: ['#FF6FB1', '#FFD23F', '#35D6C4', '#9B6BFF'] };
-const ds = { world: null, rig: null, phase: '', style: 0, k: -1, t: 0, crowd: [], spots: [], ball: null, mirror: null, beat: 0 }, dsPickEl = document.getElementById('dsPick');
-const DS_TURN = { barre: 0, gardin: 0, rig: 0, klaver: 0, baenk: 0 };
-// (a mirror: the room drawn once more from behind the glass into a picture, and that picture laid on the glass where each
-// point of it is seen from the camera; what stands behind the glass is hidden while it is drawn)
-function dsMirror(w, h, hide) { const rt = new THREE.WebGLRenderTarget(768, 512), texM = new THREE.Matrix4(), cam = new THREE.PerspectiveCamera();
-  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.ShaderMaterial({ uniforms: { tDiffuse: { value: rt.texture }, textureMatrix: { value: texM } },
-    vertexShader: 'uniform mat4 textureMatrix; varying vec4 vUv; void main() { vUv = textureMatrix * vec4(position, 1.0); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
-    fragmentShader: 'uniform sampler2D tDiffuse; varying vec4 vUv; void main() { vec4 c = texture2DProj(tDiffuse, vUv); gl_FragColor = vec4(c.rgb * vec3(.88, .91, .95), 1.0);\n#include <tonemapping_fragment>\n#include <colorspace_fragment>\n}' }));
-  const n = new THREE.Vector3(), p = new THREE.Vector3(), cp = new THREE.Vector3(), v = new THREE.Vector3(), tg = new THREE.Vector3(), q = new THREE.Quaternion(), cq = new THREE.Quaternion(), col = new THREE.Color();
-  mesh.userData.update = () => { mesh.updateMatrixWorld(true); n.set(0, 0, 1).applyQuaternion(mesh.getWorldQuaternion(q)); mesh.getWorldPosition(p); camera.getWorldPosition(cp); camera.getWorldQuaternion(cq); v.subVectors(p, cp); if (v.dot(n) > 0) return;
-    v.reflect(n).negate().add(p); tg.set(0, 0, -1).applyQuaternion(cq).add(cp); tg.subVectors(p, tg).reflect(n).negate().add(p); cam.position.copy(v); cam.up.set(0, 1, 0).applyQuaternion(cq).reflect(n); cam.lookAt(tg);
-    cam.near = camera.near; cam.far = camera.far; cam.updateMatrixWorld(true); cam.projectionMatrix.copy(camera.projectionMatrix); cam.projectionMatrixInverse.copy(camera.projectionMatrixInverse);
-    texM.set(.5, 0, 0, .5, 0, .5, 0, .5, 0, 0, .5, .5, 0, 0, 0, 1).multiply(cam.projectionMatrix).multiply(cam.matrixWorldInverse).multiply(mesh.matrixWorld);
-    const was = hide.map(o => o.visible), old = renderer.getRenderTarget(), a = renderer.getClearAlpha(); renderer.getClearColor(col); hide.forEach(o => { o.visible = false; }); mesh.visible = false;
-    renderer.setRenderTarget(rt); renderer.setClearColor('#F1E4F4', 1); renderer.clear(); renderer.render(scene, cam); renderer.setRenderTarget(old); renderer.setClearColor(col, a); mesh.visible = true; hide.forEach((o, i) => { o.visible = was[i]; }); };
-  return mesh; }
-function dsBuild() { if (ds.world) return; const w = ds.world = new THREE.Group(), X = DS.X, box = (sx, sy, sz, col, x, y, z, r = .9) => { const m = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), skMat(col, r)); m.position.set(x, y, z); m.receiveShadow = true; w.add(m); return m; };
-  const paint = (W, H, draw) => { const cv = document.createElement('canvas'); cv.width = W; cv.height = H; draw(cv.getContext('2d')); const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t; };
-  const put = (url, x, y, z, size, turn = 0, by = 'h') => { const t = new THREE.Group(); t.position.set(x, y, z); w.add(t); propInto(t, url, size, turn, [], by); return t; };
-  // (the practice room: a floor of planks, walls in soft colours, a window with the sky, the mirror all along the back wall)
-  { const planks = paint(1024, 1024, c => { for (let i = 0; i < 16; i++) { c.fillStyle = `hsl(${30 + (i * 7) % 9}, ${52 + (i * 5) % 12}%, ${62 + (i * 11) % 9}%)`; c.fillRect(0, i * 64, 1024, 64); c.fillStyle = 'rgba(90,50,20,.35)'; c.fillRect(0, i * 64, 1024, 3); for (let k = 0; k < 3; k++) c.fillRect(((i * 211 + k * 380) % 1024), i * 64, 3, 64); } });
-    planks.wrapS = planks.wrapT = THREE.RepeatWrapping; planks.repeat.set(2, 2.6); const f = new THREE.Mesh(new THREE.PlaneGeometry(14, 18), new THREE.MeshStandardMaterial({ map: planks, roughness: .55 })); f.rotation.x = -Math.PI / 2; f.position.set(0, 0, 4.3); f.receiveShadow = true; w.add(f);
-    const back = box(14, 4.4, .2, '#F6D9E6', 0, 2.2, -4.8), skirt = box(14, .16, .06, '#FFFFFF', 0, .08, -4.67); box(.2, 4.4, 18, '#E9DDF8', -7.1, 2.2, 4.3); box(.2, 4.4, 18, '#E9DDF8', 7.1, 2.2, 4.3); box(14, 4.4, .2, '#FCEFD8', 0, 2.2, 13.4);
-    const frame = box(9.5, 2.75, .08, '#C98B4A', 0, 1.62, -4.66, .5); ds.mirror = dsMirror(9.2, 2.45, [back, skirt, frame]); ds.mirror.position.set(0, 1.62, -4.61); w.add(ds.mirror);
-    const win = new THREE.Mesh(new THREE.PlaneGeometry(3, 2), new THREE.MeshBasicMaterial({ map: paint(384, 256, c => { const g = c.createLinearGradient(0, 0, 0, 256); g.addColorStop(0, '#6EC8FF'); g.addColorStop(1, '#D8F2FF'); c.fillStyle = g; c.fillRect(0, 0, 384, 256); c.fillStyle = '#fff'; for (const [x, y, r] of [[90, 80, 26], [120, 70, 32], [150, 84, 24], [270, 150, 22], [296, 142, 28]]) { c.beginPath(); c.arc(x, y, r, 0, 7); c.fill(); } c.fillStyle = '#7CCB6B'; c.beginPath(); c.arc(192, 420, 220, 0, 7); c.fill(); c.strokeStyle = '#fff'; c.lineWidth = 16; c.strokeRect(8, 8, 368, 240); c.beginPath(); c.moveTo(192, 0); c.lineTo(192, 256); c.moveTo(0, 128); c.lineTo(384, 128); c.stroke(); }) }));
-    win.position.set(-6.98, 2.25, -.6); win.rotation.y = Math.PI / 2; w.add(win);
-    const poster = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 2), new THREE.MeshBasicMaterial({ map: paint(192, 256, c => { c.fillStyle = '#7A4DFF'; c.fillRect(0, 0, 192, 256); c.fillStyle = '#FFD23F'; c.beginPath(); for (let i = 0; i < 10; i++) { const r = i % 2 ? 26 : 62, a = i * Math.PI / 5 - Math.PI / 2; c.lineTo(96 + Math.cos(a) * r, 110 + Math.sin(a) * r); } c.fill(); c.fillStyle = '#FF6FB1'; for (const [x, y] of [[40, 210], [96, 222], [152, 210]]) { c.beginPath(); c.arc(x, y, 14, 0, 7); c.fill(); } }) }));
-    poster.position.set(6.98, 2.2, -1.6); poster.rotation.y = -Math.PI / 2; w.add(poster); }
-  put('ds-barre.glb', -5.2, 0, -1.2, 3.2, DS_TURN.barre + Math.PI / 2, 'w'); put('ds-klaver.glb', 5.2, 0, -3.3, 1.55, DS_TURN.klaver - .5); put('ds-plante.glb', -6.1, 0, -3.9, 1.5); put('ds-plante.glb', 6.2, 0, 1.4, 1.3, 2);
-  put('ds-baenk.glb', -6.2, 0, 2.2, .8, DS_TURN.baenk + Math.PI / 2); put('cy-hoejttaler.glb', 6.1, 0, -.9, 1.5, -Math.PI / 2 + .3);
-  // (the stage, a good way off to the side: dark boards, red curtains, the lights on their bar and the mirror ball)
-  { box(13, .5, 8, '#5B3A28', X, -.25, -.4, .6); box(13, .9, .3, '#2A1A22', X, -.7, 3.75); box(60, .1, 30, '#15101F', X, -1.2, 6);
-    const folds = paint(512, 64, c => { for (let i = 0; i < 16; i++) { const g = c.createLinearGradient(i * 32, 0, i * 32 + 32, 0); g.addColorStop(0, '#7E1524'); g.addColorStop(.5, '#D12B41'); g.addColorStop(1, '#7E1524'); c.fillStyle = g; c.fillRect(i * 32, 0, 32, 64); } });
-    const bc = new THREE.Mesh(new THREE.PlaneGeometry(15, 7), new THREE.MeshStandardMaterial({ map: folds, roughness: .9 })); bc.position.set(X, 3.2, -4.2); w.add(bc); box(15, 1.1, .3, '#B91F36', X, 5.9, 2.6);
-    put('ds-gardin.glb', X - 4.5, 0, 1.4, 5.2, DS_TURN.gardin); const r = put('ds-gardin.glb', X + 4.5, 0, 1.4, 5.2, DS_TURN.gardin); r.scale.x = -1;
-    put('ds-lysrig.glb', X, 3.45, .6, 6.4, DS_TURN.rig, 'w'); ds.ball = put('ds-diskokugle.glb', X, 2.75, -1.4, 1.3);
-    // (the coloured lights: four cones of light from the bar down on to the boards, sweeping)
-    ds.spots = DS.spots.map((col, i) => { const piv = new THREE.Group(), cone = new THREE.Mesh(new THREE.ConeGeometry(1.2, 3.8, 28, 1, true), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: .13, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending }));
-      cone.position.y = -1.9; piv.add(cone); piv.position.set(X - 2.4 + i * 1.6, 3.8, .5); w.add(piv); const pool = new THREE.Mesh(new THREE.CircleGeometry(1.2, 28), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: .32, depthWrite: false, blending: THREE.AdditiveBlending })); pool.rotation.x = -Math.PI / 2; pool.position.y = .012; w.add(pool); return { piv, pool, i }; }); }
-  // (the animals watching from the floor in front of the stage, their backs to the camera)
-  ds.crowd = DS.crowd.map(([kind, h, x]) => { const g = new THREE.Group(); g.position.set(X + x, -.8, 5.1); g.rotation.y = Math.PI; g.scale.setScalar(1.5); w.add(g); const c = { g, m: null }; cyAnimal(kind, h).then(m => { c.m = m; g.add(m.group); }).catch(() => {}); return c; });
-  ds.rig = new THREE.Group(); }
-function dsStart() { dsBuild(); scene.add(ds.world); holder.add(ds.rig); ds.rig.add(glb); ds.rig.position.set(0, 0, 0); game.rotY = 0; floor.visible = false; disc.visible = false; for (const el of [bgNear, bgFar, bgNear2]) el.hidden = true; controls.maxDistance = 60;
-  for (const id of [...mdList(), GAME.cheer]) loadMove(id); loadMove('staa').then(() => { if (game.on && game.mode === 'studio' && ds.phase === 'room') runAnim('staa'); }); dsRoom(); }
-function dsStop() { dsPickEl.hidden = true; stage.classList.remove('dsroom', 'dsshow'); if (!ds.world?.parent) return; scene.remove(ds.world); holder.add(glb); holder.remove(ds.rig); floor.visible = true; ds.phase = ''; setBg(bgNow); }
-// (in the room: the row, the styles and the dances of the style chosen; a dance tapped goes into the row and is shown)
-function dsRoom() { ds.phase = 'room'; ds.rig.position.set(0, 0, 0); stage.classList.add('dsroom'); stage.classList.remove('dsshow'); if (glbActions.staa) runAnim('staa'); hintEl.hidden = true; game.hint = 0; dsShowPick(); }
-function dsShowPick() { const list = mdList(), row = document.getElementById('dsRow'), tabs = document.getElementById('dsStyles'), opts = document.getElementById('dsOpts'), go = document.getElementById('dsGo'); dsPickEl.hidden = false; row.innerHTML = ''; tabs.innerHTML = ''; opts.innerHTML = '';
-  for (let i = 0; i < MD_MAX; i++) { const id = list[i], b = document.createElement('button'); if (id) { b.className = 'full'; b.innerHTML = `<img src="ikoner/valg-${id}.png" alt=""><span class="x">✕</span>`; b.setAttribute('aria-label', tr('Tag ud')); b.onclick = () => { list.splice(i, 1); savePlayers(); dsShowPick(); }; } else { b.textContent = i + 1; b.disabled = true; } row.append(b); }
-  DS.styles.forEach(([name, emo], i) => { const b = document.createElement('button'); b.innerHTML = `<span class="emo">${emo}</span><span>${tr(name)}</span>`; b.classList.toggle('on', i === ds.style); b.onclick = () => { ds.style = i; sfx('swish'); dsShowPick(); }; tabs.append(b); });
-  for (const id of DS.styles[ds.style][2]) { const b = iconButton(`ikoner/valg-${id}.png`, cyLabel(id)); b.onclick = async () => { soundOut()?.resume(); if (list.length >= MD_MAX) { toast('Der er plads til 5 – tryk ✕ for at tage en ud'); return; } list.push(id); savePlayers(); sfx('ding'); dsShowPick(); const a = await loadMove(id); if (a && game.on && game.mode === 'studio' && ds.phase === 'room') runAnim(id); }; opts.append(b); }
-  go.disabled = !list.length; go.textContent = tr('▶ Vis dansen!'); }
-document.getElementById('dsGo').onclick = async () => { const list = mdList(); if (!list.length || ds.phase !== 'room') return; soundOut()?.resume(); dsPickEl.hidden = true; ds.phase = 'wait'; const got = await Promise.all(list.map(loadMove)); if (!game.on || game.mode !== 'studio') return; if (!got.some(Boolean)) return dsRoom();
-  ds.phase = 'show'; ds.rig.position.set(DS.X, 0, -.3); stage.classList.add('dsshow'); stage.classList.remove('dsroom'); ds.k = -1; sfx('ding'); dsNext(); };
-const dsStyleOf = id => DS.styles.findIndex(s => s[2].includes(id));
-function dsNext() { const list = mdList(); if (++ds.k >= list.length) { ds.phase = 'bow'; ds.t = 3; runAnim(GAME.cheer); celebrate(); sfx('ding'); sfx('ding', .14); sfx('ding', .28); if (new Set(list.map(dsStyleOf)).size >= 3) addStars(2); hintEl.textContent = '👏👏👏'; hintEl.hidden = false; game.hint = 3; return; }
-  const id = list[ds.k], a = glbActions[id]; if (!a) return dsNext(); runAnim(id); const d = a.getClip().duration; ds.t = d > 7 ? 6 : d * Math.max(1, Math.ceil(2.6 / d)); addStars(1); sfx('swish'); hintEl.textContent = `${ds.k + 1}/${list.length} · ${tr(cyLabel(id))}`; hintEl.hidden = false; game.hint = ds.t; }
-function dsTick(dt) { dt = Math.min(dt, .05); ds.beat += dt * 112 / 60 * Math.PI; const show = ds.phase === 'show' || ds.phase === 'bow', X = DS.X, wide = wideCam();
-  // (the camera: in the room the figure a little up in the picture, the choices under it; at the stage from among the onlookers)
-  if (show) { camera.position.set(X, 1.3, wide ? 8.2 : 10.2); controls.target.set(X, 1.3, -.3); } else { camera.position.set(2.9, 2.1, wide ? 7.6 : 9.6); controls.target.set(-.5, .1, -1.5); } // (from a little to one side: straight on, the figure hid itself in the mirror) camera.lookAt(controls.target); game.rotY = 0;
-  if (show) { ds.crowd.forEach((c, i) => { c.m?.mixer.update(dt); c.g.position.y = -.8 + Math.abs(Math.sin(ds.beat + i)) * (ds.phase === 'bow' ? .3 : .12); }); if (ds.ball) ds.ball.rotation.y += dt * 1.2;
-    for (const s of ds.spots) { const a = Math.sin(ds.beat * .25 + s.i * 1.7) * .45, b = Math.cos(ds.beat * .19 + s.i * 2.3) * .3; s.piv.rotation.set(b, 0, a); s.pool.position.set(s.piv.position.x + Math.sin(a) * 3.8, .012, s.piv.position.z - Math.sin(b) * 3.8); } }
-  if (ds.phase === 'room' || ds.phase === 'wait') return; ds.t -= dt; if (ds.t > 0) return; if (ds.phase === 'show') dsNext(); else dsRoom(); }
-// (the mirror's picture, drawn last of all before the picture itself - only in the room)
-function dsLate() { if (!game.on || game.mode !== 'studio' || !ds.world?.parent || !ds.mirror) return; if (ds.phase === 'room' || ds.phase === 'wait') ds.mirror.userData.update(); }
+// ---- Cypher (the user, 15-11-2026: the dances made into a game of their own, after the real cypher): a street corner in
+// the evening, a ring of onlookers, one dancer in the middle at a time and the others cheering. A round is built of the
+// four parts a breaker's round has - toprock, footwork, a power move, a freeze - one chosen for each; the figure dances
+// them in that order to the beat, a star for each and one more for a round not danced just before; then one of the
+// onlookers takes its turn in the ring while the figure claps, and the next round is chosen. Nobody loses.
+// The movements: Mixamo's breakdance ones, fetched by the user (figur-cy-*.json), and a few of the dances from before ----
+const CY = { cats: [['Toprock', ['cy-top1', 'cy-top2', 'cy-ned2', 'cy-ned1', 'dans']], ['Footwork', ['cy-fod1', 'cy-fod2', 'cy-fod3', 'dans-break']], ['Powermove', ['cy-power1', 'cy-power2', 'cy-power4', 'cy-power3', 'dans-flair2']], ['Freeze', ['cy-freeze1', 'cy-freeze2', 'cy-freeze3']]],
+  crowd: [['dyr-kat', .62, -1.15], ['dyr-hund', .66, -.5], ['dyr-kanin', .7, .5], ['dyr-and', .5, 1.15]], R: 3.1, side: [-1.9, .9] };
+const cy = { world: null, rig: null, phase: '', k: 0, picks: [], t: 0, crowd: [], guest: 0, last: '', beat: 0, round: 0 }, cyPickEl = document.getElementById('cyPick');
+const cyLabel = id => Object.values(MOVES).flat().find(m => m[0] === id)?.[1] || id;
+// (an onlooker: one of the animals, walking on the spot - its steps look like dancing - turned to face the ring)
+async function cyAnimal(kind, height) { const { inner, bones, mesh, clips } = await readGlb(kind + '.glb', kind + '.jpg'), clip = clips[0]; clip.tracks = clip.tracks.filter(t => !t.name.endsWith('.scale'));
+  const hips = clip.tracks.find(t => t.name === 'Hips.position'); if (hips) for (let i = 0; i < hips.values.length; i += 3) { hips.values[i] = hips.values[0]; hips.values[i + 2] = hips.values[2]; }
+  const group = new THREE.Group(), turn = new THREE.Group(); turn.add(inner); group.add(turn); group.updateMatrixWorld(true);
+  const a = bones.find(b => b.name === 'head'), b = bones.find(b => b.name === 'Hips'); if (a && b && kind !== 'dyr-and') { const p = a.getWorldPosition(new THREE.Vector3()), q = b.getWorldPosition(new THREE.Vector3()); if (Math.hypot(p.x - q.x, p.z - q.z) > .02) turn.rotation.y = -Math.atan2(p.x - q.x, p.z - q.z); group.updateMatrixWorld(true); }
+  const box = new THREE.Box3().setFromObject(mesh, true), k = height / (box.max.y - box.min.y); turn.scale.setScalar(k); turn.position.y = -box.min.y * k;
+  const mixer = new THREE.AnimationMixer(inner), walk = mixer.clipAction(clip); walk.play(); return { group, mixer, walk }; }
+function cyBuild() { if (cy.world) return; const w = cy.world = new THREE.Group();
+  // (the ground: asphalt with a chalk ring and stars drawn on it; a sheet of cardboard in the middle to dance on)
+  { const cv = document.createElement('canvas'); cv.width = cv.height = 1024; const c = cv.getContext('2d'); c.fillStyle = '#5A5E74'; c.fillRect(0, 0, 1024, 1024);
+    for (let i = 0; i < 2600; i++) { c.fillStyle = `rgba(${i % 2 ? '255,255,255' : '20,20,40'},${.04 + Math.random() * .07})`; c.fillRect(Math.random() * 1024, Math.random() * 1024, 2 + Math.random() * 3, 2 + Math.random() * 3); }
+    const u = 1024 / 24; c.lineCap = 'round'; c.strokeStyle = '#FFE98A'; c.lineWidth = 9; c.setLineDash([26, 16]); c.beginPath(); c.arc(512, 512, 2.45 * u, 0, 7); c.stroke(); c.setLineDash([]);
+    [['#FF7EBB', -3.6, 2.2], ['#7FE0D0', 3.5, 2.6], ['#FFC233', -4.4, -1], ['#9B8CFF', 4.3, -.6]].forEach(([col, x, z]) => { c.fillStyle = col; c.beginPath(); for (let i = 0; i < 10; i++) { const r = (i % 2 ? .22 : .5) * u, a = i * Math.PI / 5 - Math.PI / 2; c.lineTo(512 + x * u + Math.cos(a) * r, 512 + z * u + Math.sin(a) * r); } c.fill(); });
+    const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; const g = new THREE.Mesh(new THREE.CircleGeometry(12, 64), new THREE.MeshStandardMaterial({ map: t, roughness: .95 })); g.rotation.x = -Math.PI / 2; g.receiveShadow = true; w.add(g);
+    const far = new THREE.Mesh(new THREE.CircleGeometry(60, 48), skMat('#4A4E63', .95)); far.rotation.x = -Math.PI / 2; far.position.y = -.01; w.add(far);
+    const mat = new THREE.Mesh(new THREE.BoxGeometry(3, .03, 2.3), skMat('#C79A62', .9)); mat.position.y = .015; mat.receiveShadow = true; w.add(mat); }
+  // (round about: the graffiti wall behind, houses behind that, the music, the hoop, the crates, lamps and a bench)
+  const put = (url, x, z, size, turn = 0) => { const t = new THREE.Group(); t.position.set(x, 0, z); w.add(t); propInto(t, url, size, turn, []); return t; };
+  put('cy-mur.glb', 0, -5.4, 2.7, CY_TURN.mur); put('cy-mur.glb', -7.6, -4.2, 2.7, CY_TURN.mur + .5); put('cy-mur.glb', 7.6, -4.2, 2.7, CY_TURN.mur - .5);
+  put('cy-bygning.glb', -6.4, -10.5, 5.2, CY_TURN.hus + .15); put('cy-bygning.glb', 6.6, -11, 5.8, CY_TURN.hus - .2); put('cy-bygning.glb', 0, -16, 6.6, CY_TURN.hus);
+  put('cy-boombox.glb', -2.5, -2.9, .85, CY_TURN.boom + .45); put('cy-hoejttaler.glb', 3.3, -3.5, 1.9, CY_TURN.lyd - .4); put('cy-hoejttaler.glb', -4.6, -3.6, 1.9, CY_TURN.lyd + .55);
+  put('cy-basket.glb', 6.3, -2.2, 3.4, CY_TURN.kurv - .7); put('cy-kasser.glb', -5.4, -.6, 1.05, CY_TURN.kasser + .8);
+  put('skate-lygte.glb', -6.6, -2.4, 3, .6); put('skate-lygte.glb', 5, -4.4, 3, -.5); put('skate-baenk.glb', 5.1, .4, .8, -1.1);
+  // (the onlookers in half a ring behind the dancer, facing in)
+  cy.crowd = CY.crowd.map(([kind, h, a]) => { const g = new THREE.Group(), home = new THREE.Vector3(Math.sin(a) * CY.R, 0, -Math.cos(a) * CY.R + .2), c = { g, home, m: null, face: Math.atan2(-home.x, -home.z), spin: 0 }; g.position.copy(home); g.rotation.y = c.face; w.add(g);
+    cyAnimal(kind, h).then(m => { c.m = m; g.add(m.group); }).catch(() => {}); return c; });
+  cy.rig = new THREE.Group(); }
+const CY_TURN = { mur: 0, hus: 0, boom: 0, lyd: 0, kurv: 0, kasser: 0 };
+function cyStart() { cyBuild(); scene.add(cy.world); holder.add(cy.rig); cy.rig.add(glb); cy.rig.position.set(0, 0, 0); game.rotY = 0;
+  floor.visible = false; disc.visible = false; for (const el of [bgNear, bgFar, bgNear2]) el.hidden = true; stage.classList.add('cypher'); controls.maxDistance = 40; Object.assign(cy, { round: 0, last: '', beat: 0 });
+  for (const id of [...CY.cats.flatMap(c => c[1]), GAME.cheer, 'jubel-klap']) loadMove(id); loadMove('staa').then(() => { if (game.on && game.mode === 'cypher' && cy.phase === 'pick') runAnim('staa'); }); cyPick(); }
+function cyStop() { cyPickEl.hidden = true; if (!cy.world?.parent) return; scene.remove(cy.world); holder.add(glb); holder.remove(cy.rig); stage.classList.remove('cypher'); floor.visible = true; cy.phase = ''; setBg(bgNow); }
+// (choosing the round: the four parts one after the other, two or three big pictures to choose from for each)
+function cyPick() { cy.phase = 'pick'; cy.k = 0; cy.picks = []; if (glbActions.staa) runAnim('staa'); hintEl.hidden = true; game.hint = 0; cyShowPick(); }
+function cyShowPick() { const [name, list] = CY.cats[cy.k], title = document.getElementById('cyTitle'), opts = document.getElementById('cyOpts'); cyPickEl.hidden = false;
+  title.innerHTML = `<span class="cy-dots">${CY.cats.map((_, i) => `<span class="${i < cy.k ? 'on' : i === cy.k ? 'now' : ''}"></span>`).join('')}</span><span>${name}</span>`; opts.innerHTML = '';
+  for (const id of list) { const b = iconButton(`ikoner/valg-${id}.png`, cyLabel(id)); b.onclick = () => { soundOut()?.resume(); sfx('ding'); cy.picks.push(id); if (++cy.k >= CY.cats.length) { cyPickEl.hidden = true; cy.phase = 'dance'; cy.k = -1; cyNext(); } else { if (glbActions[id]) runAnim(id); cyShowPick(); } }; opts.append(b); } }
+// (the round danced: each part its time - a short one done over until it has had a good two seconds, a long one cut)
+function cyNext() { if (++cy.k >= cy.picks.length) { const key = cy.picks.join(); cy.phase = 'cheer'; cy.t = 2.4; runAnim(GAME.cheer); sfx('ding'); sfx('ding', .14); if (key !== cy.last) addStars(1); cy.last = key; hintEl.textContent = '👏👏👏'; hintEl.hidden = false; game.hint = 2.4; return; }
+  const id = cy.picks[cy.k], a = glbActions[id]; if (!a) return cyNext(); runAnim(id); const d = a.getClip().duration; cy.t = d > 6 ? 5 : d * Math.max(1, Math.ceil(2.6 / d)); addStars(1); sfx('swish');
+  hintEl.textContent = `${cy.k + 1}/4 · ${CY.cats[cy.k][0]}`; hintEl.hidden = false; game.hint = cy.t; }
+function cyTick(dt) { dt = Math.min(dt, .05); cy.beat += dt * 112 / 60 * Math.PI; const lively = cy.phase === 'dance' || cy.phase === 'cheer' ? 1 : .35, guest = cy.phase === 'guest' ? cy.crowd[cy.guest] : null;
+  // (the onlookers step and bob to the beat - higher while someone dances; the one whose turn it is hops into the ring and spins)
+  cy.crowd.forEach((c, i) => { c.m?.mixer.update(dt * (c === guest ? 1.6 : .6 + .6 * lively)); const to = c === guest ? cyV.set(0, 0, .2) : c.home; c.g.position.x += (to.x - c.g.position.x) * Math.min(1, dt * 4); c.g.position.z += (to.z - c.g.position.z) * Math.min(1, dt * 4);
+    c.g.position.y = Math.abs(Math.sin(cy.beat + i * .8)) * (c === guest ? .28 : .05 + .11 * lively); c.spin = c === guest ? c.spin + dt * 5 : 0; c.g.rotation.y = c === guest ? c.spin : c.g.rotation.y + (c.face - c.g.rotation.y) * Math.min(1, dt * 6); });
+  // (the figure: in the middle - aside, turned towards the ring and clapping, while an onlooker has its turn)
+  { const tx = guest ? CY.side[0] : 0, tz = guest ? CY.side[1] : 0, p = cy.rig.position; p.x += (tx - p.x) * Math.min(1, dt * 4); p.z += (tz - p.z) * Math.min(1, dt * 4); game.rotY = guest ? .9 : 0; }
+  if (cy.phase === 'pick') return; cy.t -= dt; if (cy.t > 0) return;
+  if (cy.phase === 'dance') cyNext();
+  else if (cy.phase === 'cheer') { cy.phase = 'guest'; cy.guest = cy.round++ % cy.crowd.length; cy.t = 3.6; if (glbActions['jubel-klap']) runAnim('jubel-klap'); sfx('boing'); }
+  else if (cy.phase === 'guest') cyPick(); }
+const cyV = new THREE.Vector3();
+// ---- Dansestudie (the user, 15-11-2026: a dance studio where a dance is put together from many kinds of dances, and
+// shown): a practice room with a mirror wall, barres, a piano - the child taps dances from the styles into the row (the
+// same row as Min dans, kept with the player) and sees each on the figure in front of the mirror; ▶ takes the figure on
+// to a stage with curtains, coloured lights, a mirror ball and the animals watching, where it dances the row through,
+// a star for each dance and two more for a show of three styles or more; then back to the room.
+// More styles - ballet, latin, jazz, disco - go into DS.styles as their movements come from Mixamo ----
+const DS = { styles: [['Hiphop', '🎤', ['dans', 'dans-hiphop', 'ds-hiphop3', 'ds-hiphop4', 'cy-top1', 'cy-top2']], ['Show', '🎩', ['ds-cancan', 'ds-twist', 'ds-shuffle', 'dans-arme']],
+  ['Sjov', '🤪', ['dans-fjollet', 'ds-kylling', 'ds-hokey']], ['Break', '🌀', ['cy-fod2', 'cy-power1', 'cy-power4', 'cy-freeze1', 'cy-freeze2', 'cy-freeze3']]],
+  X: 40, crowd: [['dyr-kat', .62, -2.1], ['dyr-hund', .66, -.75], ['dyr-kanin', .7, .7], ['dyr-and', .5, 2.0]], spots: ['#FF6FB1', '#FFD23F', '#35D6C4', '#9B6BFF'] };
+const ds = { world: null, rig: null, phase: '', style: 0, k: -1, t: 0, crowd: [], spots: [], ball: null, mirror: null, beat: 0 }, dsPickEl = document.getElementById('dsPick');
+const DS_TURN = { barre: 0, gardin: 0, rig: 0, klaver: 0, baenk: 0 };
+// (a mirror: the room drawn once more from behind the glass into a picture, and that picture laid on the glass where each
+// point of it is seen from the camera; what stands behind the glass is hidden while it is drawn)
+function dsMirror(w, h, hide) { const rt = new THREE.WebGLRenderTarget(768, 512), texM = new THREE.Matrix4(), cam = new THREE.PerspectiveCamera();
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.ShaderMaterial({ uniforms: { tDiffuse: { value: rt.texture }, textureMatrix: { value: texM } },
+    vertexShader: 'uniform mat4 textureMatrix; varying vec4 vUv; void main() { vUv = textureMatrix * vec4(position, 1.0); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+    fragmentShader: 'uniform sampler2D tDiffuse; varying vec4 vUv; void main() { vec4 c = texture2DProj(tDiffuse, vUv); gl_FragColor = vec4(c.rgb * vec3(.88, .91, .95), 1.0);\n#include <tonemapping_fragment>\n#include <colorspace_fragment>\n}' }));
+  const n = new THREE.Vector3(), p = new THREE.Vector3(), cp = new THREE.Vector3(), v = new THREE.Vector3(), tg = new THREE.Vector3(), q = new THREE.Quaternion(), cq = new THREE.Quaternion(), col = new THREE.Color();
+  mesh.userData.update = () => { mesh.updateMatrixWorld(true); n.set(0, 0, 1).applyQuaternion(mesh.getWorldQuaternion(q)); mesh.getWorldPosition(p); camera.getWorldPosition(cp); camera.getWorldQuaternion(cq); v.subVectors(p, cp); if (v.dot(n) > 0) return;
+    v.reflect(n).negate().add(p); tg.set(0, 0, -1).applyQuaternion(cq).add(cp); tg.subVectors(p, tg).reflect(n).negate().add(p); cam.position.copy(v); cam.up.set(0, 1, 0).applyQuaternion(cq).reflect(n); cam.lookAt(tg);
+    cam.near = camera.near; cam.far = camera.far; cam.updateMatrixWorld(true); cam.projectionMatrix.copy(camera.projectionMatrix); cam.projectionMatrixInverse.copy(camera.projectionMatrixInverse);
+    texM.set(.5, 0, 0, .5, 0, .5, 0, .5, 0, 0, .5, .5, 0, 0, 0, 1).multiply(cam.projectionMatrix).multiply(cam.matrixWorldInverse).multiply(mesh.matrixWorld);
+    const was = hide.map(o => o.visible), old = renderer.getRenderTarget(), a = renderer.getClearAlpha(); renderer.getClearColor(col); hide.forEach(o => { o.visible = false; }); mesh.visible = false;
+    renderer.setRenderTarget(rt); renderer.setClearColor('#F1E4F4', 1); renderer.clear(); renderer.render(scene, cam); renderer.setRenderTarget(old); renderer.setClearColor(col, a); mesh.visible = true; hide.forEach((o, i) => { o.visible = was[i]; }); };
+  return mesh; }
+function dsBuild() { if (ds.world) return; const w = ds.world = new THREE.Group(), X = DS.X, box = (sx, sy, sz, col, x, y, z, r = .9) => { const m = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), skMat(col, r)); m.position.set(x, y, z); m.receiveShadow = true; w.add(m); return m; };
+  const paint = (W, H, draw) => { const cv = document.createElement('canvas'); cv.width = W; cv.height = H; draw(cv.getContext('2d')); const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t; };
+  const put = (url, x, y, z, size, turn = 0, by = 'h') => { const t = new THREE.Group(); t.position.set(x, y, z); w.add(t); propInto(t, url, size, turn, [], by); return t; };
+  // (the practice room: a floor of planks, walls in soft colours, a window with the sky, the mirror all along the back wall)
+  { const planks = paint(1024, 1024, c => { for (let i = 0; i < 16; i++) { c.fillStyle = `hsl(${30 + (i * 7) % 9}, ${52 + (i * 5) % 12}%, ${62 + (i * 11) % 9}%)`; c.fillRect(0, i * 64, 1024, 64); c.fillStyle = 'rgba(90,50,20,.35)'; c.fillRect(0, i * 64, 1024, 3); for (let k = 0; k < 3; k++) c.fillRect(((i * 211 + k * 380) % 1024), i * 64, 3, 64); } });
+    planks.wrapS = planks.wrapT = THREE.RepeatWrapping; planks.repeat.set(2, 2.6); const f = new THREE.Mesh(new THREE.PlaneGeometry(14, 18), new THREE.MeshStandardMaterial({ map: planks, roughness: .55 })); f.rotation.x = -Math.PI / 2; f.position.set(0, 0, 4.3); f.receiveShadow = true; w.add(f);
+    const back = box(14, 4.4, .2, '#F6D9E6', 0, 2.2, -4.8), skirt = box(14, .16, .06, '#FFFFFF', 0, .08, -4.67); box(.2, 4.4, 18, '#E9DDF8', -7.1, 2.2, 4.3); box(.2, 4.4, 18, '#E9DDF8', 7.1, 2.2, 4.3); box(14, 4.4, .2, '#FCEFD8', 0, 2.2, 13.4);
+    const frame = box(9.5, 2.75, .08, '#C98B4A', 0, 1.62, -4.66, .5); ds.mirror = dsMirror(9.2, 2.45, [back, skirt, frame]); ds.mirror.position.set(0, 1.62, -4.61); w.add(ds.mirror);
+    const win = new THREE.Mesh(new THREE.PlaneGeometry(3, 2), new THREE.MeshBasicMaterial({ map: paint(384, 256, c => { const g = c.createLinearGradient(0, 0, 0, 256); g.addColorStop(0, '#6EC8FF'); g.addColorStop(1, '#D8F2FF'); c.fillStyle = g; c.fillRect(0, 0, 384, 256); c.fillStyle = '#fff'; for (const [x, y, r] of [[90, 80, 26], [120, 70, 32], [150, 84, 24], [270, 150, 22], [296, 142, 28]]) { c.beginPath(); c.arc(x, y, r, 0, 7); c.fill(); } c.fillStyle = '#7CCB6B'; c.beginPath(); c.arc(192, 420, 220, 0, 7); c.fill(); c.strokeStyle = '#fff'; c.lineWidth = 16; c.strokeRect(8, 8, 368, 240); c.beginPath(); c.moveTo(192, 0); c.lineTo(192, 256); c.moveTo(0, 128); c.lineTo(384, 128); c.stroke(); }) }));
+    win.position.set(-6.98, 2.25, -.6); win.rotation.y = Math.PI / 2; w.add(win);
+    const poster = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 2), new THREE.MeshBasicMaterial({ map: paint(192, 256, c => { c.fillStyle = '#7A4DFF'; c.fillRect(0, 0, 192, 256); c.fillStyle = '#FFD23F'; c.beginPath(); for (let i = 0; i < 10; i++) { const r = i % 2 ? 26 : 62, a = i * Math.PI / 5 - Math.PI / 2; c.lineTo(96 + Math.cos(a) * r, 110 + Math.sin(a) * r); } c.fill(); c.fillStyle = '#FF6FB1'; for (const [x, y] of [[40, 210], [96, 222], [152, 210]]) { c.beginPath(); c.arc(x, y, 14, 0, 7); c.fill(); } }) }));
+    poster.position.set(6.98, 2.2, -1.6); poster.rotation.y = -Math.PI / 2; w.add(poster); }
+  put('ds-barre.glb', -5.2, 0, -1.2, 3.2, DS_TURN.barre + Math.PI / 2, 'w'); put('ds-klaver.glb', 5.2, 0, -3.3, 1.55, DS_TURN.klaver - .5); put('ds-plante.glb', -6.1, 0, -3.9, 1.5); put('ds-plante.glb', 6.2, 0, 1.4, 1.3, 2);
+  put('ds-baenk.glb', -6.2, 0, 2.2, .8, DS_TURN.baenk + Math.PI / 2); put('cy-hoejttaler.glb', 6.1, 0, -.9, 1.5, -Math.PI / 2 + .3);
+  // (the stage, a good way off to the side: dark boards, red curtains, the lights on their bar and the mirror ball)
+  { box(13, .5, 8, '#5B3A28', X, -.25, -.4, .6); box(13, .9, .3, '#2A1A22', X, -.7, 3.75); box(60, .1, 30, '#15101F', X, -1.2, 6);
+    const folds = paint(512, 64, c => { for (let i = 0; i < 16; i++) { const g = c.createLinearGradient(i * 32, 0, i * 32 + 32, 0); g.addColorStop(0, '#7E1524'); g.addColorStop(.5, '#D12B41'); g.addColorStop(1, '#7E1524'); c.fillStyle = g; c.fillRect(i * 32, 0, 32, 64); } });
+    const bc = new THREE.Mesh(new THREE.PlaneGeometry(15, 7), new THREE.MeshStandardMaterial({ map: folds, roughness: .9 })); bc.position.set(X, 3.2, -4.2); w.add(bc); box(15, 1.1, .3, '#B91F36', X, 5.9, 2.6);
+    put('ds-gardin.glb', X - 4.5, 0, 1.4, 5.2, DS_TURN.gardin); const r = put('ds-gardin.glb', X + 4.5, 0, 1.4, 5.2, DS_TURN.gardin); r.scale.x = -1;
+    put('ds-lysrig.glb', X, 3.45, .6, 6.4, DS_TURN.rig, 'w'); ds.ball = put('ds-diskokugle.glb', X, 2.75, -1.4, 1.3);
+    // (the coloured lights: four cones of light from the bar down on to the boards, sweeping)
+    ds.spots = DS.spots.map((col, i) => { const piv = new THREE.Group(), cone = new THREE.Mesh(new THREE.ConeGeometry(1.2, 3.8, 28, 1, true), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: .13, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending }));
+      cone.position.y = -1.9; piv.add(cone); piv.position.set(X - 2.4 + i * 1.6, 3.8, .5); w.add(piv); const pool = new THREE.Mesh(new THREE.CircleGeometry(1.2, 28), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: .32, depthWrite: false, blending: THREE.AdditiveBlending })); pool.rotation.x = -Math.PI / 2; pool.position.y = .012; w.add(pool); return { piv, pool, i }; }); }
+  // (the animals watching from the floor in front of the stage, their backs to the camera)
+  ds.crowd = DS.crowd.map(([kind, h, x]) => { const g = new THREE.Group(); g.position.set(X + x, -.8, 5.1); g.rotation.y = Math.PI; g.scale.setScalar(1.5); w.add(g); const c = { g, m: null }; cyAnimal(kind, h).then(m => { c.m = m; g.add(m.group); }).catch(() => {}); return c; });
+  ds.rig = new THREE.Group(); }
+function dsStart() { dsBuild(); scene.add(ds.world); holder.add(ds.rig); ds.rig.add(glb); ds.rig.position.set(0, 0, 0); game.rotY = 0; floor.visible = false; disc.visible = false; for (const el of [bgNear, bgFar, bgNear2]) el.hidden = true; controls.maxDistance = 60;
+  for (const id of [...mdList(), GAME.cheer]) loadMove(id); loadMove('staa').then(() => { if (game.on && game.mode === 'studio' && ds.phase === 'room') runAnim('staa'); }); dsRoom(); }
+function dsStop() { dsPickEl.hidden = true; stage.classList.remove('dsroom', 'dsshow'); if (!ds.world?.parent) return; scene.remove(ds.world); holder.add(glb); holder.remove(ds.rig); floor.visible = true; ds.phase = ''; setBg(bgNow); }
+// (in the room: the row, the styles and the dances of the style chosen; a dance tapped goes into the row and is shown)
+function dsRoom() { ds.phase = 'room'; ds.rig.position.set(0, 0, 0); stage.classList.add('dsroom'); stage.classList.remove('dsshow'); if (glbActions.staa) runAnim('staa'); hintEl.hidden = true; game.hint = 0; dsShowPick(); }
+function dsShowPick() { const list = mdList(), row = document.getElementById('dsRow'), tabs = document.getElementById('dsStyles'), opts = document.getElementById('dsOpts'), go = document.getElementById('dsGo'); dsPickEl.hidden = false; row.innerHTML = ''; tabs.innerHTML = ''; opts.innerHTML = '';
+  for (let i = 0; i < MD_MAX; i++) { const id = list[i], b = document.createElement('button'); if (id) { b.className = 'full'; b.innerHTML = `<img src="ikoner/valg-${id}.png" alt=""><span class="x">✕</span>`; b.setAttribute('aria-label', tr('Tag ud')); b.onclick = () => { list.splice(i, 1); savePlayers(); dsShowPick(); }; } else { b.textContent = i + 1; b.disabled = true; } row.append(b); }
+  DS.styles.forEach(([name, emo], i) => { const b = document.createElement('button'); b.innerHTML = `<span class="emo">${emo}</span><span>${tr(name)}</span>`; b.classList.toggle('on', i === ds.style); b.onclick = () => { ds.style = i; sfx('swish'); dsShowPick(); }; tabs.append(b); });
+  for (const id of DS.styles[ds.style][2]) { const b = iconButton(`ikoner/valg-${id}.png`, cyLabel(id)); b.onclick = async () => { soundOut()?.resume(); if (list.length >= MD_MAX) { toast('Der er plads til 5 – tryk ✕ for at tage en ud'); return; } list.push(id); savePlayers(); sfx('ding'); dsShowPick(); const a = await loadMove(id); if (a && game.on && game.mode === 'studio' && ds.phase === 'room') runAnim(id); }; opts.append(b); }
+  go.disabled = !list.length; go.textContent = tr('▶ Vis dansen!'); }
+document.getElementById('dsGo').onclick = async () => { const list = mdList(); if (!list.length || ds.phase !== 'room') return; soundOut()?.resume(); dsPickEl.hidden = true; ds.phase = 'wait'; const got = await Promise.all(list.map(loadMove)); if (!game.on || game.mode !== 'studio') return; if (!got.some(Boolean)) return dsRoom();
+  ds.phase = 'show'; ds.rig.position.set(DS.X, 0, -.3); stage.classList.add('dsshow'); stage.classList.remove('dsroom'); ds.k = -1; sfx('ding'); dsNext(); };
+const dsStyleOf = id => DS.styles.findIndex(s => s[2].includes(id));
+function dsNext() { const list = mdList(); if (++ds.k >= list.length) { ds.phase = 'bow'; ds.t = 3; runAnim(GAME.cheer); celebrate(); sfx('ding'); sfx('ding', .14); sfx('ding', .28); if (new Set(list.map(dsStyleOf)).size >= 3) addStars(2); hintEl.textContent = '👏👏👏'; hintEl.hidden = false; game.hint = 3; return; }
+  const id = list[ds.k], a = glbActions[id]; if (!a) return dsNext(); runAnim(id); const d = a.getClip().duration; ds.t = d > 7 ? 6 : d * Math.max(1, Math.ceil(2.6 / d)); addStars(1); sfx('swish'); hintEl.textContent = `${ds.k + 1}/${list.length} · ${tr(cyLabel(id))}`; hintEl.hidden = false; game.hint = ds.t; }
+function dsTick(dt) { dt = Math.min(dt, .05); ds.beat += dt * 112 / 60 * Math.PI; const show = ds.phase === 'show' || ds.phase === 'bow', X = DS.X, wide = wideCam();
+  // (the camera: in the room the figure a little up in the picture, the choices under it; at the stage from among the onlookers)
+  if (show) { camera.position.set(X, 1.3, wide ? 8.2 : 10.2); controls.target.set(X, 1.3, -.3); } else { camera.position.set(2.9, 2.1, wide ? 7.6 : 9.6); controls.target.set(-.5, .1, -1.5); } // (from a little to one side: straight on, the figure hid itself in the mirror) camera.lookAt(controls.target); game.rotY = 0;
+  if (show) { ds.crowd.forEach((c, i) => { c.m?.mixer.update(dt); c.g.position.y = -.8 + Math.abs(Math.sin(ds.beat + i)) * (ds.phase === 'bow' ? .3 : .12); }); if (ds.ball) ds.ball.rotation.y += dt * 1.2;
+    for (const s of ds.spots) { const a = Math.sin(ds.beat * .25 + s.i * 1.7) * .45, b = Math.cos(ds.beat * .19 + s.i * 2.3) * .3; s.piv.rotation.set(b, 0, a); s.pool.position.set(s.piv.position.x + Math.sin(a) * 3.8, .012, s.piv.position.z - Math.sin(b) * 3.8); } }
+  if (ds.phase === 'room' || ds.phase === 'wait') return; ds.t -= dt; if (ds.t > 0) return; if (ds.phase === 'show') dsNext(); else dsRoom(); }
+// (the mirror's picture, drawn last of all before the picture itself - only in the room)
+function dsLate() { if (!game.on || game.mode !== 'studio' || !ds.world?.parent || !ds.mirror) return; if (ds.phase === 'room' || ds.phase === 'wait') ds.mirror.userData.update(); }
 function pkStart() { pkBuild(); pkAbeLoad(); scene.add(pk.world); holder.add(pk.rig); pk.rig.add(glb); pk.rig.position.set(0, 0, 0); game.rotY = Math.PI;
   floor.visible = false; disc.visible = false; for (const el of [bgNear, bgFar, bgNear2]) el.hidden = true; stage.classList.add('pitch'); controls.maxDistance = 40;
   if (!pk.ball) { pk.ball = makeItem('fodbold'); pk.ball.group.scale.setScalar(kick.r / .158); scene.remove(pk.ball.group); }
@@ -6249,12 +6254,16 @@ addEventListener('pagehide', tlSave); tlCheck();
 document.addEventListener('visibilitychange', () => { try { if (document.hidden) game.audio?.suspend(); else if (musicPlaying()) game.audio?.resume(); } catch (e) {} });
 function musicPlaying() { return musicOn && ((isDance(anim) && sound.dance) || (game.on && sound.game) || (md.on && sound.dance)); }
 function musicTick() { musicBtn.hidden = !(isDance(anim) && sound.dance) && !(game.on && sound.game) && !(md.on && sound.dance); musicBtn.textContent = musicOn ? '🎵' : '🔇';
+  beatBtn.hidden = musicBtn.hidden || !musicOn; if (beatBtn.textContent !== BEAT_SETS[beatNow][0]) beatBtn.textContent = BEAT_SETS[beatNow][0];
   // (the music's volume shut at once when no music should play - on a computer the notes already on their way went on
   // a moment after the dance stopped, the user said 03-11-2026 - and opened again when it should)
   const gate = musicPlaying(); if (music.out && gate !== music.gate) { music.gate = gate; const c = music.out.context; music.out.gain.cancelScheduledValues(c.currentTime); music.out.gain.setTargetAtTime(gate ? .4 : 0, c.currentTime, gate ? .01 : .02); }
   // (the games - and Min dans, its movements of all lengths - a steady beat of their own, 112 to the minute, by the
   // sound's own clock)
-  if (game.on || md.on) { const ctx = game.audio; if (!musicOn || !(game.on ? sound.game : sound.dance) || !ctx || ctx.state !== 'running') { music.at = 0; return; } const stepT = 60 / 112 / 4;
+  // (in Cypher and Dansestudie a dance running has the music on its own clock, as when the figure dances by itself - the
+  // beat follows the steps; between the dances the steady beat)
+  const onDance = game.on && (game.mode === 'cypher' || game.mode === 'studio') && isDance(anim) && glbActions[anim]?.isRunning();
+  if ((game.on && !onDance) || md.on) { const ctx = game.audio; if (!musicOn || !(game.on ? sound.game : sound.dance) || !ctx || ctx.state !== 'running') { music.at = 0; return; } const stepT = 60 / 112 / 4;
     if (!music.at || music.at < ctx.currentTime - .2) { music.at = ctx.currentTime + .05; music.n = 0; }
     while (music.at < ctx.currentTime + .12) { playStep(ctx, music.at, music.n % 64, stepT, game.on && game.mode === 'cypher' ? BEATS.break : BEATS.pop, music.n); music.at += stepT; music.n++; } return; }
   music.at = 0;
@@ -6272,7 +6281,7 @@ function hiss(ctx, t, len, from, vol) { if (!music.noise) { const b = music.nois
   g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0008, t + len); s.connect(f).connect(g).connect(musicOut(ctx)); s.start(t); s.stop(t + len + .02); }
 // (k: the step in the tune - its chords; n: the steps counted since it began, for the keyboard, which comes in now and
 // then: chords on the off-beats every second bar, a little run up the chord every fourth - the user, 03-11-2026)
-function playStep(ctx, t, k, stepT, B, n = k) { const s = k % 16, chord = CHORDS[Math.floor(k / 16) % 4], bar = Math.floor(n / 16);
+function playStep(ctx, t, k, stepT, B, n = k) { if (beatNow === 1) return discoStep(ctx, t, k, stepT, n); if (beatNow === 2) return drumStep(ctx, t, k, stepT, n); const s = k % 16, chord = CHORDS[Math.floor(k / 16) % 4], bar = Math.floor(n / 16);
   if (B.k[s] === '1') tone(ctx, t, 150, .16, 'sine', .7, 45);
   if (B.s[s] === '1') { hiss(ctx, t, .14, 1200, .28); tone(ctx, t, 190, .08, 'triangle', .1); }
   if (B.h[s] === '1') hiss(ctx, t, .035, 7000, .08);
@@ -6291,6 +6300,34 @@ function sfx(kind, later = 0) { const ctx = game.audio; if (!sound.sfx || !ctx |
   o.type = 'sine'; lfo.frequency.value = wf; wob.gain.value = wa; lfo.connect(wob).connect(o.frequency);
   o.frequency.setValueAtTime(from, t); o.frequency.exponentialRampToValueAtTime(to, t + len);
   g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0008, t + len); o.connect(g).connect(ctx.destination); for (const x of [o, lfo]) { x.start(t); x.stop(t + len + .02); } }
+// ---- three beats to choose from (the user, 15-11-2026: one beat all the time grew tiresome). The button by the 🎵 shows
+// the beat playing; tapped, the next one comes in at once. All three keep to the same clock, so they follow the dance as
+// before. Remembered on the device. 🎤 the hip hop, pop or breakbeat from before; 🪩 disco: a kick on every beat, the hi-hat
+// between, a bass jumping an octave and other chords; 🥁 drums: congas, a shaker, claves and a marimba playing now and then
+const BEAT_SETS = [['🎤', 'Hiphop'], ['🪩', 'Disco'], ['🥁', 'Trommer']], beatBtn = document.getElementById('beatBtn');
+let beatNow = (() => { try { return Math.min(2, Math.max(0, +localStorage.getItem('minimig-test.beat') || 0)); } catch (e) { return 0; } })();
+beatBtn.onclick = () => { beatNow = (beatNow + 1) % BEAT_SETS.length; try { localStorage.setItem('minimig-test.beat', String(beatNow)); } catch (e) {} beatBtn.textContent = BEAT_SETS[beatNow][0]; beatBtn.setAttribute('aria-label', tr('Skift beat') + ': ' + tr(BEAT_SETS[beatNow][1])); soundOut()?.resume(); };
+// (a sound through a soft filter: the disco bass)
+function pluck(ctx, t, f, len, vol, type, cut) { const o = ctx.createOscillator(), lp = ctx.createBiquadFilter(), g = ctx.createGain(); o.type = type; o.frequency.value = f; lp.type = 'lowpass'; lp.frequency.setValueAtTime(cut * 2, t); lp.frequency.exponentialRampToValueAtTime(cut / 2, t + len);
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0008, t + len); o.connect(lp).connect(g).connect(musicOut(ctx)); o.start(t); o.stop(t + len + .02); }
+// (a marimba: the note and a quiet one two octaves up, both dying away fast)
+function marimba(ctx, t, f, len, vol) { tone(ctx, t, f, len, 'sine', vol); tone(ctx, t, f * 4, len * .3, 'sine', vol * .25); }
+const DISCO_CHORDS = [[45, 48, 52], [41, 45, 48], [48, 52, 55], [43, 47, 50]], DISCO_TUNE = '1011010110110101', DISCO_LINE = [0, 1, 2, 1, 0, 2, 1, 2];
+function discoStep(ctx, t, k, stepT, n) { const s = k % 16, chord = DISCO_CHORDS[Math.floor(k / 16) % 4], bar = Math.floor(n / 16);
+  if (s % 4 === 0) tone(ctx, t, 140, .18, 'sine', .7, 50);
+  if (s === 4 || s === 12) { hiss(ctx, t, .16, 1500, .22); hiss(ctx, t + .012, .1, 2600, .12); }
+  if (s % 4 === 2) hiss(ctx, t, .11, 6500, .1); else if (s % 2) hiss(ctx, t, .03, 8000, .035);
+  if (s % 2 === 0) pluck(ctx, t, hz(chord[0] - (s % 4 ? 12 : 24)), stepT * 1.5, .2, 'sawtooth', 600);
+  if (s === 6 || s === 14) for (const m of chord) keys(ctx, t, hz(m + 12), stepT * 1.2, .04);
+  if (bar % 4 >= 2 && s % 2 === 0 && DISCO_TUNE[s] === '1') tone(ctx, t, hz(chord[DISCO_LINE[s / 2]] + 24), stepT * 1.8, 'sine', .07); }
+const DRUM = { lo: '1000001000100000', hi: '0010100100001010', cl: '1001001000101000' }, PENTA = [60, 62, 64, 67, 69, 72], MARIMBA = [[0, 2, 4, 2, 5, 4, 2, 1], [4, 3, 2, 0, 2, 3, 4, 5]];
+function drumStep(ctx, t, k, stepT, n) { const s = k % 16, chord = CHORDS[Math.floor(k / 16) % 4], bar = Math.floor(n / 16);
+  if (DRUM.lo[s] === '1') tone(ctx, t, 120, .3, 'sine', .55, 75);
+  if (DRUM.hi[s] === '1') tone(ctx, t, 300, .14, 'sine', .32, 220);
+  if (DRUM.cl[s] === '1') tone(ctx, t, 1500, .05, 'triangle', .12);
+  hiss(ctx, t, .04, 5000, s % 2 ? .025 : .05);
+  if (s === 0 || s === 8) tone(ctx, t, hz(chord[0] - 12), stepT * 4, 'triangle', .2);
+  if (bar % 2 === 1 && s % 2 === 0) marimba(ctx, t, hz(PENTA[MARIMBA[(bar >> 1) % 2][s / 2]]), .35, .14); }
 musicBtn.onclick = () => { musicOn = !musicOn; try { localStorage.setItem('minimig-test.musik', musicOn ? 'til' : 'fra'); } catch (e) {} if (musicOn) soundOut()?.resume(); };
 // (once the figure is in, the hint goes into the i in the corner - on a touch screen and on a computer alike)
 const infoBtn = document.getElementById('infoBtn'), infoPop = document.getElementById('infoPop'); let infoTimer = 0;
@@ -6350,6 +6387,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.12.0 (f051034)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.12.0 (f99b4ca)</div>
 </body>
 </html>
