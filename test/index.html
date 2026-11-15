@@ -1838,7 +1838,7 @@ const exists = async u => { try { return (await fetch(u, { method: 'HEAD' })).ok
 // (Bob taken out 01-11-2026 - the user chose to go on without it; haar-bob.json/.jpg are kept, put back
 // ['haar-bob', 'Bob'] after Kort to have it again; Skaldet - no hair - taken out the same day, put back ['', 'Skaldet']
 // first to have it again)
-const HAIRS = [['haar-kort', 'Kort', { snug: .55, ears: true }], ['haar-kroeller', 'Krøller'], ['haar-strit', 'Strit', { ears: true }], ['haar-fletninger', 'Fletninger', { braids: true, ears: true }], ['haar-fletning', 'Fletning', { ears: true }], ['haar-boelger', 'Bølger', { grow: 1.05 }]];
+const HAIRS = [['haar-kort', 'Kort', { snug: .55, ears: true }], ['haar-kroeller', 'Krøller'], ['haar-strit', 'Strit', { ears: true }], ['haar-fletninger', 'Fletninger', { braids: true, ears: true }], ['haar-fletning', 'Fletning', { ears: true }], ['haar-boelger', 'Bølger', { wrap: .45, part: .12, hideEars: true, under: true, sweep: .5 }]];
 let hairNow = 'haar-kort', hairBase = null; const hairMeshes = {};
 // the figure's eye whites and head bone, measured once as it stands when loaded (in its T-pose, before it moves)
 function measureHead(fbx) {
@@ -2006,6 +2006,40 @@ function glassesParts(g, img, eyes, opts) {
   return lens.length; }
 // (hats and glasses are put on the same way: made on a bald head, set by the eyes, held by the head - with their own
 // colour list and part, and made a little bigger where they must sit over the hair)
+// (Bølger laid on the head - the user, 15-11-2026: the parting too wide, the hair floating over the head with a hollow
+// under it by the neck. wrap: the parting closed - the hair either side of it moved in over it - and the lock on the
+// lock left as Meshy made it (moved further in, it tore across - the user: as if cut with scissors); then every point of hair over the skull laid just outside it,
+// keeping wrap of its thickness there, and the hair below the head drawn in towards the neck, kept clear of the body)
+function wrapHair(W, n, opts, a, eyeY, eyes) {
+  const { pts } = hairBase.whole, mx = (eyes[0].x + eyes[1].x) / 2, ez = (eyes[0].z + eyes[1].z) / 2, c = new THREE.Vector3(mx, eyeY + .25 * a, ez - .95 * a), v = new THREE.Vector3(), p = new THREE.Vector3();
+  const NU = 48, NV = 24, R = new Float32Array(NU * NV), bin = d => { const u = Math.floor((Math.atan2(d.x, d.z) / Math.PI + 1) / 2 * NU) % NU, w = Math.min(NV - 1, Math.floor(Math.acos(Math.max(-1, Math.min(1, d.y))) / Math.PI * NV)); return w * NU + u; };
+  for (let j = 0; j < pts.length; j += 6) { const y = pts[j + 1]; if (y < eyeY - 1.1 * a || Math.abs(pts[j] - mx) > 1.3 * a) continue; v.set(pts[j], y, pts[j + 2]).sub(c); const r = v.length(), k = bin(v.normalize()); if (r > R[k]) R[k] = r; }
+  // (the ears too - they are parts of their own - so the hair goes out over them and hides them, the user 15-11-2026;
+  // laid on the skull alone, the ears stuck out through it. ear: the bins they reach)
+  const ear = new Uint8Array(NU * NV);
+  if (earData) for (const s of [-1, 1]) { const E = earData.sides[s]; if (!E) continue; for (let k = 0; k < E.idx.length; k++) { v.set(E.pos[k * 3], E.pos[k * 3 + 1], E.pos[k * 3 + 2]).applyMatrix4(earData.M).sub(c); const r = v.length() + .04 * a, b = bin(v.normalize()); ear[b] = 1; if (r > R[b]) R[b] = r; } }
+  for (let it = 0; it < 4; it++) for (let k = 0; k < R.length; k++) if (!R[k]) R[k] = Math.max(R[(k + 1) % R.length], R[(k + R.length - 1) % R.length]);
+  const S = R.map((_, k) => { const w = Math.floor(k / NU), u = k % NU; let s = 0, m = 0; for (let dw = -1; dw <= 1; dw++) for (let du = -1; du <= 1; du++) { const ww = w + dw; if (ww < 0 || ww >= NV) continue; s += R[ww * NU + (u + du + NU) % NU]; m++; } return s / m; });
+  const ease = t => { t = Math.min(1, Math.max(0, t)); return t * t * (3 - 2 * t); };
+  const q = new THREE.Vector3();
+  for (let i = 0; i < n; i++) { p.fromArray(W, i * 3); const dx = p.x - mx, front = ease((p.z - (ez - 1.2 * a)) / (.6 * a)), top = ease((p.y - (eyeY + .8 * a)) / (.4 * a));
+    // (the parting: the hair either side of it moved in over it - on top of the head only, fading out to the sides)
+    p.x -= Math.sign(dx) * opts.part * a * front * top * (1 - ease(Math.abs(dx) / (1.4 * a))); // (fading out wide: narrow, a stripe of skin opened beside the parting)
+    // (the lock swept further down over its half of the forehead - the user, 15-11-2026: on the figure's taller forehead
+    // it lay as a thin slant. Turned as one piece about the temple just over the brow, the turn fading out smoothly to
+    // the parting, the top and the back, so it is never torn across)
+    if (opts.sweep) { const px = mx + 1.0 * a, py = eyeY + .45 * a, rx = p.x - px, ry = p.y - py, far = Math.hypot(rx, ry);
+      const w = front * ease((dx + .15 * a) / (.45 * a)) * (1 - ease((far - 1.0 * a) / (.7 * a))) * ease((p.y - (eyeY + .2 * a)) / (.4 * a)), t = opts.sweep * w, cs = Math.cos(t), sn = Math.sin(t);
+      p.x = px + rx * cs - ry * sn; p.y = py + rx * sn + ry * cs; }
+    // (onto the skull: just outside it, wrap of the thickness over it kept; on top, hair a little inside it brought out
+    // to it. Below the eyes this fades away, and the hair below the head is drawn in a little towards the neck instead -
+    // gently, the two blended, as a hard change there stretched the hair into streaks)
+    v.copy(p).sub(c); const r = v.length(), d = v.clone().normalize(), skull = S[bin(d)] + .02 * a, onHead = ease((p.y - (eyeY - 1.2 * a)) / (.8 * a));
+    let r2 = r; if (r > skull) r2 = skull + (r - skull) * opts.wrap; else if (r > skull - .3 * a && p.y > eyeY + (dx > 0 ? .15 : .6) * a || ear[bin(d)]) r2 = skull; // (on the lock's side down to just over the brow: its tip lay inside the forehead, a hole over the brow - the user)
+    q.copy(d).multiplyScalar(r2).add(c);
+    const hx = p.x - mx, hz = p.z - c.z, hr = Math.hypot(hx, hz), k = .12 * (1 - onHead); if (hr > 0) { p.x = mx + hx * (1 - k); p.z = c.z + hz * (1 - k); }
+    p.lerp(q, onHead);
+    W.set([p.x, p.y, p.z], i * 3); } }
 // (short hair closer to the head and clear of the ears - the user. snug: how much of the hair's thickness over the skull
 // is kept, each point drawn in towards the head's middle; ears: the hair over each ear lifted to just above it, so the
 // ear shows, the hair in front of it - by the cheek - left as it is)
@@ -2084,6 +2118,30 @@ function scalpCap(hair, g, W, outlines, a, eyeY) { if (!outlines.length) return;
   cg.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(SI, 4)); cg.setAttribute('skinWeight', new THREE.Float32BufferAttribute(SW, 4));
   // (a child of the hair, with no place of its own: shown and hidden with it, and placed as it is)
   const cap = new THREE.SkinnedMesh(cg, Array.isArray(hair.material) ? hair.material[0] : hair.material); cap.frustumCulled = false; hair.add(cap); cap.bind(hair.skeleton, hair.bindMatrix); }
+// (under Bølger's hair a thin layer of the head itself in the hair's own colour - the user, 15-11-2026: a stripe of skin
+// showed through a gap between two locks over the forehead. Only the head's own triangles close under the hair, above the
+// brows, laid just outside the skin, so a gap shows hair beneath and the open forehead stays as it is)
+function hairUnder(hair, W, a, eyeY, eyes) {
+  const { pts } = hairBase.whole, bgeo = hairBase.body.geometry, bsi = bgeo.attributes.skinIndex, bsw = bgeo.attributes.skinWeight, v = new THREE.Vector3(), nv = new THREE.Vector3();
+  // (which directions from the head's middle have hair, in small steps round it; narrow gaps between locks closed -
+  // grown by two steps and shrunk back - so the gap is filled and the hair's own edge stays where it is)
+  const mx = (eyes[0].x + eyes[1].x) / 2, ez = (eyes[0].z + eyes[1].z) / 2, c = new THREE.Vector3(mx, eyeY + .25 * a, ez - .95 * a), NU = 240, NV = 120;
+  const bin = (x, y, z) => { v.set(x, y, z).sub(c).normalize(); const u = Math.floor((Math.atan2(v.x, v.z) / Math.PI + 1) / 2 * NU) % NU, w = Math.min(NV - 1, Math.floor(Math.acos(Math.max(-1, Math.min(1, v.y))) / Math.PI * NV)); return w * NU + u; };
+  let on = new Uint8Array(NU * NV); for (let i = 0; i < W.length; i += 3) on[bin(W[i], W[i + 1], W[i + 2])] = 1;
+  const grow = (src, val) => { const out = new Uint8Array(src.length); for (let w = 0; w < NV; w++) for (let u = 0; u < NU; u++) { let hit = !val; for (let dw = -2; dw <= 2 && hit !== val; dw++) for (let du = -2; du <= 2; du++) { const ww = w + dw; if (ww < 0 || ww >= NV) continue; if (!!src[ww * NU + (u + du + NU) % NU] === val) { hit = val; break; } } out[w * NU + u] = hit ? 1 : 0; } return out; };
+  on = grow(grow(on, true), false);
+  // (its colour: a spot of the hair's picture of its middle brightness, as for the layer round the ears)
+  const T = hairTexs.find(t => t.texture === (Array.isArray(hair.material) ? hair.material[0] : hair.material).map); let U = [.5, .5];
+  if (T) { let best = Infinity; for (let p = 0, i = 0; p < T.w * T.h; p += 7, i = p * 4) { if (!T.mask[p]) continue; const b = Math.abs((.3 * T.src[i] + .59 * T.src[i + 1] + .11 * T.src[i + 2]) - T.mid); if (b < best) { best = b; U = [(p % T.w + .5) / T.w, 1 - (Math.floor(p / T.w) + .5) / T.h]; } } }
+  const P = [], N = [], SI = [], SW = [];
+  for (let j0 = 0; j0 < pts.length / 6; j0 += 3) { const js = [j0, j0 + 1, j0 + 2];
+    if (!js.every(j => pts[j * 6 + 1] > eyeY + (pts[j * 6] > mx ? .2 : .6) * a && Math.abs(pts[j * 6] - mx) < 1.25 * a && on[bin(pts[j * 6], pts[j * 6 + 1], pts[j * 6 + 2])])) continue;
+    for (const j of js) { v.set(pts[j * 6], pts[j * 6 + 1], pts[j * 6 + 2]); nv.copy(v).sub(c).normalize(); v.addScaledVector(nv, .012 * a).applyMatrix4(hairBase.whole.inv); P.push(v.x, v.y, v.z);
+      nv.transformDirection(hairBase.whole.inv); N.push(nv.x, nv.y, nv.z); for (let k = 0; k < 4; k++) { SI.push(bsi.getComponent(j, k)); SW.push(bsw.getComponent(j, k)); } } }
+  if (!P.length) return; const g = new THREE.BufferGeometry(), m = P.length / 3; g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(Array.from({ length: m }, () => U).flat(), 2));
+  g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(SI, 4)); g.setAttribute('skinWeight', new THREE.Float32BufferAttribute(SW, 4));
+  const under = new THREE.SkinnedMesh(g, Array.isArray(hair.material) ? hair.material[0] : hair.material); under.frustumCulled = false; hair.add(under); under.bind(hair.skeleton, hair.bindMatrix); }
 // (the hair's pieces still across an ear's middle left out - stretched over it from where their corners were drawn out)
 function hairOverEar(g, W, outlines) { if (!outlines.length) return; const idx = g.index.array, keep = [];
   // (tested at its middle and the middles of its sides too: a long piece from above the ear to below it, its corners
@@ -2125,6 +2183,10 @@ async function loadHair(name, list = hairTexs, colourPart = 'hair', extra = {}) 
   for (let i = 0; i < n; i++) { p.fromBufferAttribute(pos, i).applyMatrix4(place); W.set([p.x, p.y, p.z], i * 3);
     const k = Math.min(1, Math.max(0, (p.y - bottom) / (top - bottom))); weight[i] = k * k * (3 - 2 * k);
     if (!opts.braids && weight[i] < 1 && hairBase.surface) { const hit = inside(p, .12 * apart); if (hit) needs[p.x < 0 ? 0 : 1].push(hit.need / Math.max(.5, hit.way.z)); } }
+  // (Bølger laid on the head first - and then what of it comes inside the shoulders measured again, so each side is
+  // moved forward as one piece from where it now is)
+  if (opts.wrap) { wrapHair(W, n, opts, apart, eyeY, mine); needs[0].length = needs[1].length = 0;
+    for (let i = 0; i < n; i++) { if (weight[i] >= 1 || !hairBase.surface) continue; p.fromArray(W, i * 3); const hit = inside(p, .12 * apart); if (hit) needs[p.x < 0 ? 0 : 1].push(hit.need / Math.max(.5, hit.way.z)); } }
   // (only when a real part of it is inside - a few curl tips touching the shoulders are left as they are)
   for (const s of [0, 1]) { if (needs[s].length < .02 * n) continue; needs[s].sort((x, y) => x - y);
     shift[s].set(0, LIFT * apart, Math.min(.3 * apart, needs[s][Math.floor(needs[s].length * .9)])); }
@@ -2149,7 +2211,7 @@ async function loadHair(name, list = hairTexs, colourPart = 'hair', extra = {}) 
   if (opts.flat) list.at(-1).flat = opts.flat;
   // (cap: no lighter than that over the middle - the glasses' frames had white smears inside, by the glass)
   if (opts.cap) list.at(-1).cap = opts.cap;
-  body.parent.add(hair); hair.bind(body.skeleton, body.bindMatrix); scalpCap(hair, g, W, earLines, apart, eyeY); if (picked[colourPart]) recolourHair(picked[colourPart], list); return hair; }
+  body.parent.add(hair); hair.bind(body.skeleton, body.bindMatrix); scalpCap(hair, g, W, earLines, apart, eyeY); if (opts.under) hairUnder(hair, W, apart, eyeY, mine); if (picked[colourPart]) recolourHair(picked[colourPart], list); return hair; }
 var styleLists = () => ({ hair: [HAIRS, hairNow, setHair], eyes: [EYES, eyesNow, setEyes], brows: [BROWS, browsNow, setBrows], mouth: [MOUTHS, mouthNow, setMouth], pynt: [PYNT, pyntNow.map(k => 'pynt-' + k), setPynt], nose: [NOSES, noseNow, setNose], item: [ITEMS, itemNow, n => { petPick = false; setItem(n); showSwatches(); }, [PETS, petNow, n => { petPick = true; setPet(n); showSwatches(); }, 'dyr', petNow ? PET_TOYS_LIST() : null]], bg: [BGS, bgNow, setBg], ears: [EARS, earsNow, setEars, [EARRINGS, earringsNow, setEarrings, 'oerering']],
   ...Object.fromEntries(Object.entries(GARMENTS).map(([part, G]) => [part, [G.items, G.now, n => setGarment(part, n)]])),
   // (Udstyr - the user, 11-11-2026: suits and gear in one tab. The suits above, the goggles and snorkel in a row under
@@ -2169,7 +2231,10 @@ const hairLoads = {};
 async function setHair(name) {
   hairNow = name; renderStyles();
   if (name && !hairMeshes[name]) { hairMeshes[name] = await (hairLoads[name] ??= loadHair(name).catch(() => null)); if (!hairMeshes[name]) { delete hairLoads[name]; toast(NO_NET); } }
-  for (const [n, m] of Object.entries(hairMeshes)) if (m) m.visible = n === hairNow; hatHair(); regoggle(); }
+  for (const [n, m] of Object.entries(hairMeshes)) if (m) m.visible = n === hairNow; earsUnderHair(); hatHair(); regoggle(); }
+// (hair that falls over the ears - Bølger, the user 15-11-2026: the ears hidden on both sides - hides the ears' own
+// shapes: their top rim peeped out through it)
+function earsUnderHair() { const hide = !!HAIRS.find(h => h[0] === hairNow)?.[2]?.hideEars; if (typeof earData !== 'undefined' && earData) for (const s of [-1, 1]) { const P = earData.sides[s]?.part; if (P) P.visible = !hide; } }
 // (a crown set on what is under it - the hair, or the bald head - its lowest ring sunk into it by sink eyes' distances:
 // one height for all, it hung in the air over the bald head and the braids and sank into the bob)
 function restHat(hat, hair, sink) {
@@ -4053,7 +4118,7 @@ function buildEar(s, o) { const { a, mx, ey, ez, inv, M } = earData, E = earData
   g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(si, 4)); g.setAttribute('skinWeight', new THREE.Float32BufferAttribute(sw, 4));
   if (E.part) { E.part.geometry.dispose(); E.part.geometry = g; return; }
   const m = body.material.clone(); m.vertexColors = true;
-  const sm = new THREE.SkinnedMesh(g, m); sm.castShadow = true; sm.frustumCulled = false; sm.position.copy(body.position); sm.quaternion.copy(body.quaternion); sm.scale.copy(body.scale); body.parent.add(sm); sm.bind(body.skeleton, body.bindMatrix); E.part = sm; }
+  const sm = new THREE.SkinnedMesh(g, m); sm.castShadow = true; sm.frustumCulled = false; sm.position.copy(body.position); sm.quaternion.copy(body.quaternion); sm.scale.copy(body.scale); body.parent.add(sm); sm.bind(body.skeleton, body.bindMatrix); E.part = sm; earsUnderHair(); }
 function earLight(E, geo) { const A = geo.attributes.position, N = geo.attributes.normal, sum = new Float32Array(E.groups * 3), p = [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()], e = new THREE.Vector3(), f = new THREE.Vector3();
   for (const c of E.tris) { for (let i = 0; i < 3; i++) p[i].fromBufferAttribute(A, c + i); e.subVectors(p[1], p[0]); f.subVectors(p[2], p[0]); e.cross(f); for (let i = 0; i < 3; i++) { const g = E.group.get(c + i) * 3; sum[g] += e.x; sum[g + 1] += e.y; sum[g + 2] += e.z; } }
   const v = new THREE.Vector3(), o = new THREE.Vector3();
@@ -6387,6 +6452,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.12.0 (f99b4ca)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.12.0 (ad96cbd)</div>
 </body>
 </html>
