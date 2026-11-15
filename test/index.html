@@ -2233,9 +2233,14 @@ const hairLoads = {};
 async function setHair(name) {
   hairNow = name; renderStyles();
   if (name && !hairMeshes[name]) { hairMeshes[name] = await (hairLoads[name] ??= loadHair(name).catch(() => null)); if (!hairMeshes[name]) { delete hairLoads[name]; toast(NO_NET); } }
-  for (const [n, m] of Object.entries(hairMeshes)) if (m) m.visible = n === hairNow; earsUnderHair(); hatHair(); regoggle(); }
+  for (const [n, m] of Object.entries(hairMeshes)) if (m) m.visible = n === hairNow; earsUnderHair(); hoodBraids(); hatHair(); regoggle(); }
 // (hair that falls over the ears - Bølger, the user 15-11-2026: the ears hidden on both sides - hides the ears' own
 // shapes: their top rim peeped out through it)
+// (the hoodie's rim: the short one with braids, the whole one otherwise)
+const HOOD_BRAIDS = .6;
+const braidsOn = () => !!HAIRS.find(h => h[0] === hairNow)?.[2]?.braids;
+function hoodBraids() { const braids = braidsOn();
+  for (const g of Object.values(GARMENTS)) for (const m of Object.values(g.meshes)) m?.traverse?.(o => { if (o.name?.endsWith('-kant-flet')) o.visible = braids; else if (o.name?.endsWith('-kant')) o.visible = !braids; }); }
 function earsUnderHair() { const hide = !!HAIRS.find(h => h[0] === hairNow)?.[2]?.hideEars; if (typeof earData !== 'undefined' && earData) for (const s of [-1, 1]) { const P = earData.sides[s]?.part; if (P) P.visible = !hide; } }
 // (a crown set on what is under it - the hair, or the bald head - its lowest ring sunk into it by sink eyes' distances:
 // one height for all, it hung in the air over the bald head and the braids and sank into the bob)
@@ -3126,7 +3131,9 @@ function makeCloth(name, part, opts) {
   cloth.position.copy(body.position); cloth.quaternion.copy(body.quaternion); cloth.scale.copy(body.scale);
   body.parent.add(cloth); cloth.bind(body.skeleton, body.bindMatrix); if (picked[part]) recolourHair(picked[part], G.texs); if (G.texs === gearTexs && picked.suit) recolourHair(picked.suit, gearTexs);
   if (socks) { cloth.userData.sock = opts; paintSocks(cloth); if (opts.heel) { cloth.material.roughness = .28; cloth.material.metalness = .05; } if (opts.boot) { cloth.material.roughness = .5; bootSoles(cloth, opts); } }
-  if (opts.hood) hoodRim(cloth, list, wp, dir, edges[1].f, K, H, inv);
+  // (and a shorter one, for braids: they come down over the shoulders just where the rim's ends turn in to the neck, and
+  // went through them - the user, 15-11-2026. Which of the two shows is set by the hair - see hoodBraids)
+  if (opts.hood) { hoodRim(cloth, list, wp, dir, edges[1].f, K, H, inv); hoodRim(cloth, list, wp, dir, edges[1].f, K, H, inv, HOOD_A0 + HOOD_BRAIDS, '-kant-flet'); }
   if (opts.relief && !opts.hood && !opts.swim) neckBand(cloth, list, wp, dir, edges[1].f, K, H, inv, opts.trim ? .55 : 1);
   // (the body under it hidden, all but near its edges)
   const covered = new Uint8Array(pts.length / 6); for (let j = 0; j < covered.length; j++) covered[j] = !((pants || socks || pts[j * 6 + 1] < swimArm) && armPt[j]) && edges.every(e => e.f(P3(j)) < -e.bare) ? 1 : 0;
@@ -3208,13 +3215,13 @@ const HOOD_A0 = 1.75, hoodGap = (b, H) => { const t = Math.min(1, Math.max(0, (b
 // (the hood's opening: a thick rolled edge round the back of the neck and forward over the shoulders, a little way out
 // from the neck - between it and the neck the hood's inside shows, darker. The collar round the neck stays as it was.
 // The user's pictures, 11-11-2026. A tube of the same cloth, following the bones of the cloth under it)
-function hoodRim(cloth, list, wp, dir, neck, K, H, inv) {
+function hoodRim(cloth, list, wp, dir, neck, K, H, inv, A0 = HOOD_A0, tag = '-kant') {
   // (behind the shoulders only: further forward it stood up over them, seen from the front)
   // (gap: how far from the neck - wider, so more of the hood's inside shows, the user said 11-11-2026)
   // (A0: where it ends, round from the front - as far out as the hood is wide up there, narrowed 11-11-2026)
   // (and at its two ends turning in over the shoulders to the neck, round the dark inside, so it goes all the way from
   // one side of the neck to the other - the user, 11-11-2026. hoodGap: how far out from the neck, round from the front)
-  const A0 = HOOD_A0, NB = 26, bins = Array.from({ length: NB }, () => ({ p: [0, 0, 0], n: [0, 0, 0], w: {}, c: 0 }));
+  const NB = 26, bins = Array.from({ length: NB }, () => ({ p: [0, 0, 0], n: [0, 0, 0], w: {}, c: 0 }));
   list.forEach((c, i) => { let a = Math.atan2(c.p[0] - K.mid, c.p[2] - K.nz); if (a < 0) a += 2 * Math.PI; if (a < A0 || a > 2 * Math.PI - A0) return;
     const d = -neck(c.p), gap = hoodGap(Math.min(a, 2 * Math.PI - a), H); if (Math.abs(d - gap) > Math.min(.007 * H, gap * .6) || Math.hypot(c.p[0] - K.mid, c.p[2] - K.nz) > K.nr + .09 * H) return;
     const B = bins[Math.min(NB - 1, Math.floor((a - A0) / (2 * Math.PI - 2 * A0) * NB))];
@@ -3239,7 +3246,7 @@ function hoodRim(cloth, list, wp, dir, neck, K, H, inv) {
   // (its place on the cloth's relief: a smooth spot, above the neck at the front - it shares the cloth's look)
   g.setAttribute('uv1', new THREE.BufferAttribute(new Float32Array(m * 2).map((_, k) => k % 2 ? .999 : .25), 2));
   g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(si, 4)); g.setAttribute('skinWeight', new THREE.Float32BufferAttribute(sw, 4));
-  const rim = new THREE.SkinnedMesh(g, cloth.material); rim.castShadow = true; rim.frustumCulled = false; rim.name = cloth.name + '-kant';
+  const rim = new THREE.SkinnedMesh(g, cloth.material); rim.castShadow = true; rim.frustumCulled = false; rim.name = cloth.name + tag; rim.visible = (tag === '-kant-flet') === braidsOn();
   cloth.add(rim); rim.bind(cloth.skeleton, cloth.bindMatrix); }
 // (a T-shirt's or football shirt's neck: a round band of the cloth all the way round the neck's edge, so the neck is
 // finished, not cut - drawn into the relief from above it went in jags. The football shirt's as dark as its trim.
@@ -6454,6 +6461,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.12.0 (a01ee18)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.12.0 (841d5f8)</div>
 </body>
 </html>
