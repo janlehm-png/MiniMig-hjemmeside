@@ -110,9 +110,6 @@
   .music-btn { position: absolute; top: 10px; left: 10px; z-index: 2; width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--line); background: var(--tile);
     font-size: 19px; line-height: 1; padding: 0; cursor: pointer; box-shadow: 0 2px 8px rgba(58, 46, 92, .15); }
   .music-btn[hidden] { display: none; }
-  .cam-btn { position: absolute; bottom: 10px; left: 62px; z-index: 2; width: 52px; height: 52px; border-radius: 50%; border: 2px solid var(--line); background: var(--tile); font-size: 26px; line-height: 1; padding: 0; cursor: pointer; box-shadow: 0 2px 8px rgba(58, 46, 92, .15); }
-  .cam-btn.back { border-color: var(--accent, #7B5CD6); box-shadow: 0 0 0 3px rgba(123, 92, 214, .35); }
-  .cam-btn[hidden] { display: none; }
   .stage.playing .music-btn { top: auto; bottom: 10px; } /* (the stars sit top left in the game) */
   .info-btn[hidden], .info-pop[hidden], .stage.playing .info-btn, .stage.playing .info-pop { display: none; }
   /* (on a computer the mouse shows it can zoom the figure - the wheel - and grabs it while turning it) */
@@ -385,7 +382,6 @@
 <!-- (the dances' music on and off - only while a dance runs) -->
 <button class="music-btn" id="musicBtn" aria-label="Musik til og fra" hidden>🎵</button>
 <!-- (Skihop: the jump seen from the front or from behind - the child's choice, remembered) -->
-<button class="cam-btn" id="sjCam" aria-label="Se hoppet forfra eller bagfra" hidden>🎥</button>
 <canvas id="confetti"></canvas>
 </div>
 <div class="panel">
@@ -2304,7 +2300,7 @@ const GARMENTS = {
     ['sko-hoej', 'Højhælede', { made: true, top: .03, out: .0055, heel: true }],
     // (space boots - the user, 13-11-2026: the suit's feet looked like socks. Thick, up over the ankles, a dark sole and a
     // band round the top; in the shoes' colour)
-    ['sko-rum', 'Rumstøvler', { made: true, top: .17, out: .03, boot: true, stripe: [.008, .036], game: 'space' }], ['sko-ski', 'Skistøvler', { made: true, top: .15, out: .026, boot: true, stripe: [.008, .03], game: 'snow' }]], texs: [] },
+    ['sko-rum', 'Rumstøvler', { made: true, top: .17, out: .03, boot: true, stripe: [.008, .036], game: 'space' }], ['sko-ski', 'Skistøvler', { made: true, top: .13, out: .015, rim: .006, boot: true, stripe: [.008, .03], game: 'snow' }]], texs: [] },
   // (hats were made on a bald head: on top of hair they are raised - lift, in eyes' distances - or, a cap, made wider)
   hat: { items: [['', 'Ingen hat'], ['hat-kasket', 'Kasket', { grow: 1.12, lift: .1, cap: true }], ['hat-krone', 'Krone', { grow: 1.05, rest: .12 }], ['hat-kanin', 'Kaninører', { grow: 1.12, lift: .3, wrap: .03, ears: .45, thin: .35, scalp: true, flat: .3 }],
     ['hat-sloejfe', 'Sløjfe', { grow: 1.05, lift: .35, move: .02, size: .75 }],
@@ -2761,7 +2757,7 @@ function bootSoles(cloth, opts) { const { pts, H } = hairBase.whole, K = clothMa
     for (let i = 0; i < near.length; i += 2) { const b = Math.floor((Math.atan2(near[i + 1] - cz, near[i] - cx) / (2 * Math.PI) + 1) * NB) % NB; R[b] = Math.max(R[b], Math.hypot(near[i] - cx, near[i + 1] - cz)); }
     for (let it = 0; it < NB; it++) for (let b = 0; b < NB; b++) if (!R[b]) R[b] = R[(b + 1) % NB] || R[(b + NB - 1) % NB];
     for (let it = 0; it < 3; it++) { const w = R.slice(); for (let b = 0; b < NB; b++) R[b] = Math.max(w[b], (w[(b + NB - 1) % NB] + 2 * w[b] + w[(b + 1) % NB]) / 4); }
-    const P = [new THREE.Vector3(cx, topY, cz)], ix = [], ring = (inset, y) => { for (let b = 0; b < NB; b++) { const a = (b + .5) / NB * 2 * Math.PI, r = R[b] + opts.out * H + .014 * H - inset; P.push(new THREE.Vector3(cx + Math.cos(a) * r, y, cz + Math.sin(a) * r)); } };
+    const P = [new THREE.Vector3(cx, topY, cz)], ix = [], ring = (inset, y) => { for (let b = 0; b < NB; b++) { const a = (b + .5) / NB * 2 * Math.PI, r = R[b] + opts.out * H + (opts.rim ?? .014) * H - inset; P.push(new THREE.Vector3(cx + Math.cos(a) * r, y, cz + Math.sin(a) * r)); } };
     ring(bev, topY); ring(0, topY - bev); ring(0, botY + bev); ring(bev, botY); P.push(new THREE.Vector3(cx, botY, cz));
     for (let b = 0; b < NB; b++) { const b2 = (b + 1) % NB; ix.push(0, 1 + b2, 1 + b); for (let r = 0; r < 3; r++) { const p0 = 1 + r * NB + b, p1 = 1 + r * NB + b2; ix.push(p0, p1, p0 + NB, p1, p1 + NB, p0 + NB); } ix.push(P.length - 1, 1 + 3 * NB + b, 1 + 3 * NB + b2); }
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P.flatMap(v => v.toArray()), 3)); g.setIndex(ix); g.computeVertexNormals();
@@ -5698,7 +5694,7 @@ const SJ = { x0: -17, xg: -15.9, xp: -14.8, xk: -12, z0: -9, z1: 3.4, g: 6.5, le
 // (the top: a level plateau to start from, rounded over a brow into the in-run - the user, 15-11-2026: the jumper starts
 // on the flat and pushes itself out over the edge)
 SJ.c = .09 * -SJ.xk / (2 * (SJ.xk - SJ.xp)); SJ.top = 2.2 + .045 * SJ.xk ** 2 + SJ.c * (SJ.xk - SJ.xp) ** 2;
-const sj = { world: null, rig: null, phase: '', x: 0, y: 0, v: 0, vx: 0, vy: 0, tap: null, t: 0, q: 0, stopT: 0, tuck: 0, fly: 0, run: 0, push: 0, gateA: 0, landW: 0, arm: 0, poleTh: -.35, skiRot: 0 };
+const sj = { world: null, rig: null, phase: '', x: 0, y: 0, v: 0, vx: 0, vy: 0, tap: null, t: 0, q: 0, stopT: 0, tuck: 0, fly: 0, run: 0, push: 0, gateA: 0, landW: 0, arm: 0, sit: 0, vee: 0, skiRot: 0 };
 // (the hill's height along it: the plateau, the brow, the in-run curving down to a level edge; a drop; the landing hill, steep and then out flat)
 const sjHill = x => x < 0 ? (x >= SJ.xk ? 2.2 + .045 * x * x : x > SJ.xp ? SJ.top - SJ.c * (x - SJ.xp) ** 2 : SJ.top) : x < 4 ? 1.4 - .06 * x * x : x < 34 ? .44 - .5 * (x - 4) : x < 44 ? -14.56 - .5 * (x - 34) + .025 * (x - 34) ** 2 : -17.06;
 const sjSlope = x => (sjHill(x + .04) - sjHill(x - .04)) / .08;
@@ -5743,25 +5739,29 @@ function sjBuild() { if (sj.world) return; const w = sj.world = new THREE.Group(
   for (const [x, z, h] of [[-9, -5.5, 2.6], [-2, -7, 3.2], [5, -5, 2.4], [11, -7.2, 3.4], [17, -5.2, 2.6], [23, -7.5, 3.6], [29, -5, 2.8], [36, -7, 3.2]]) put('skate-gran.glb', x, z, h);
   for (let i = 0; i < 46; i++) { const x = -21 + i * 2.3 + rnd() * 1.6, z = -11 - rnd() * 31, h = 1.8 + rnd() * 2.6; if (x > 38 && x < 62 && z > -27) continue; put('skate-gran.glb', x, z, h, rnd() * 6); }
   for (let i = 0; i < 24; i++) { const x = -18 + i * 4.3 + rnd() * 2, z = 7.5 + rnd() * 24, h = 1.8 + rnd() * 2.6; if (x > 40 && x < 60 && z < 16) continue; put('skate-gran.glb', x, z, h, rnd() * 6, sj.near); }
-  for (const [x, z, s, r] of [[47, -15, 4.4, .3], [55.5, -20, 5, -.5], [41.5, -23, 4.2, 1], [-20.6, -5.6, 3.2, 0]]) put('skate-hus.glb', x, z, s, r);
-  put('skate-hus.glb', 50, 11, 4.6, Math.PI - .4, sj.near); put('skate-hus.glb', 43, 13.5, 4, Math.PI + .5, sj.near);
+  // (winter's own things - the user, 15-11-2026: a start hut the jumper sets off from, not an ordinary house; log cabins
+  // with snow on the roof, a judges' tower by the landing hill and snowmen - real models made for it)
+  for (const [x, z, s, r] of [[47, -15, 3.6, .3], [55.5, -20, 4.1, -.5], [41.5, -23, 3.4, 1]]) put('sne-hytte.glb', x, z, s, SJ_TURN.hytte + r);
+  put('sne-hytte.glb', 50, 11, 3.8, SJ_TURN.hytte + Math.PI - .4, sj.near); put('sne-hytte.glb', 43, 13.5, 3.3, SJ_TURN.hytte + Math.PI + .5, sj.near);
+  put('sne-starthus.glb', SJ.x0 - 1.55, 0, 2.5, SJ_TURN.start); put('sne-dommertaarn.glb', 13, z0 - 2.6, 4.6, SJ_TURN.taarn);
+  for (const [x, z, h, r] of [[SJ.x0 - .6, -3.2, 1.25, .5], [44.5, -11.5, 1.5, .2], [52, -12.5, 1.2, -.3]]) put('sne-snemand.glb', x, z, h, SJ_TURN.mand + r); put('sne-snemand.glb', 47, 8.5, 1.4, SJ_TURN.mand + Math.PI, sj.near);
   for (const x of [40, 46, 52, 58]) { put('skate-lygte.glb', x, z0 + .5, 2.7, Math.PI); put('skate-lygte.glb', x + 3, z1 + .7, 2.7, 0, sj.near); }
   for (const x of [49, 55]) { put('skate-baenk.glb', x, z0 + .2, .8, -Math.PI / 2); put('skate-baenk.glb', x - 3, z1 + 1.2, .8, Math.PI / 2, sj.near); }
   for (let i = 0; i < 9; i++) put('oe-sten.glb', -12 + i * 8.5 + rnd() * 3, -10.5 - rnd() * 12, .5 + rnd() * .9, rnd() * 6); for (let i = 0; i < 6; i++) put('oe-sten.glb', -8 + i * 11 + rnd() * 3, 6 + rnd() * 10, .5 + rnd() * .9, rnd() * 6, sj.near);
   for (const x of [10, 15, 20, 25, 30]) { const f = new THREE.Group(); f.position.set(x, sjHill(x), z1 - .3); w.add(f); const pole = new THREE.Mesh(new THREE.CylinderGeometry(.025, .025, 1, 8), skMat('#8A8FA3', .5)); pole.position.y = .5; const flag = new THREE.Mesh(new THREE.BoxGeometry(.34, .2, .02), skMat(x === 25 ? '#E8384F' : '#FFC233', .6)); flag.position.set(.18, .88, 0); f.add(pole, flag); }
-  // (the skis, one under each foot - long and narrow, the user, 15-11-2026: they looked like snowboards; the poles, one for each hand)
+  // (the skis, one under each foot - long and narrow, the user, 15-11-2026: they looked like snowboards; the upturned tip in front and the
+  // flat end behind - they were the wrong way round; and no poles - the user, 15-11-2026: a ski jumper has none)
   sj.ski = [0, 1].map(() => { const k = new THREE.Group(); k.rotation.order = 'ZYX'; const inner = new THREE.Group(); inner.scale.set(SJ_SKI_LONG / 1.75, .75, SJ_SKI_NARROW); k.add(inner); propInto(inner, 'udstyr-ski.glb', 1.75, SJ_SKI_TURN, [], 'w'); w.add(k); return k; });
-  sj.poles = [0, 1].map(() => { const k = new THREE.Group(); w.add(k); propInto(k, 'udstyr-skistav.glb', 1.05, 0, []); return k; });
   sj.rig = new THREE.Group(); }
-const SJ_SKI_TURN = 0, SJ_SKI_LONG = 2.5, SJ_SKI_NARROW = .5;
+const SJ_TURN = { hytte: 0, start: Math.PI / 2, taarn: 0, mand: 0 }, SJ_SKI_TURN = Math.PI, SJ_SKI_LONG = 2.5, SJ_SKI_NARROW = .5;
 function sjReset() { sj.camX = undefined; sj.turn = 0; sj.sideA = 0; Object.assign(sj, { phase: 'ready', x: SJ.x0, y: sjHill(SJ.x0), v: 0, vx: 0, vy: 0, tap: null, t: 0, q: 0, stopT: 0, push: 0 }); if (glbActions.staa) runAnim('staa'); hintEl.textContent = tr('👆 Tryk for at køre – og tryk igen ved kanten for at hoppe!'); hintEl.hidden = false; game.hint = 5; }
 function sjStart() { sjBuild(); skWorldBuild(); sj.world.add(sk.hills); sk.hills.position.set(20, -14, 34); for (const h of sk.hills.children.slice(1)) { h.userData.green ??= h.material.color.clone(); h.material.color.set('#EEF4FC'); } scene.add(sj.world); holder.add(sj.rig); sj.rig.add(glb); sj.rig.rotation.set(0, 0, 0); game.rotY = Math.PI / 2;
-  floor.visible = false; disc.visible = false; for (const el of [bgNear, bgFar, bgNear2]) el.hidden = true; stage.classList.add('street'); Object.assign(sj, { tuck: 0, fly: 0, run: 0, gateA: 0, landW: 0, arm: 0, poleTh: -.35, skiRot: 0 }); sjCamBtn.hidden = false; sjCamBtn.classList.toggle('back', !!sj.back); sjReset(); Promise.all(['staa', 'jubel'].map(loadMove)).then(() => { if (game.on && game.mode === 'skihop' && sj.phase === 'ready') runAnim('staa'); }); }
-function sjStop() { if (!sj.world?.parent) return; scene.remove(sj.world); sk.world.add(sk.hills); sk.hills.position.set(0, 0, 0); for (const h of sk.hills.children.slice(1)) if (h.userData.green) h.material.color.copy(h.userData.green); holder.add(glb); holder.remove(sj.rig); stage.classList.remove('street'); floor.visible = true; sj.phase = ''; sjCamBtn.hidden = true; setBg(bgNow); }
+  floor.visible = false; disc.visible = false; for (const el of [bgNear, bgFar, bgNear2]) el.hidden = true; stage.classList.add('street'); Object.assign(sj, { tuck: 0, fly: 0, run: 0, gateA: 0, landW: 0, arm: 0, sit: 0, vee: 0, skiRot: 0 }); sjReset(); Promise.all(['staa', 'jubel'].map(loadMove)).then(() => { if (game.on && game.mode === 'skihop' && sj.phase === 'ready') runAnim('staa'); }); }
+function sjStop() { if (!sj.world?.parent) return; scene.remove(sj.world); sk.world.add(sk.hills); sk.hills.position.set(0, 0, 0); for (const h of sk.hills.children.slice(1)) if (h.userData.green) h.material.color.copy(h.userData.green); holder.add(glb); holder.remove(sj.rig); stage.classList.remove('street'); floor.visible = true; sj.phase = ''; setBg(bgNow); }
 function sjTap() { if (sj.phase === 'ready') { sj.phase = 'inrun'; sj.v = 0; sj.push = 0; game.hint = 0; sfx('swish'); } else if (sj.phase === 'inrun' && sj.tap === null && sj.x > -6.5) sj.tap = sj.x; }
 function sjTick(dt) { dt = Math.min(dt, .05); const [v0, win] = SJ.levels[game.level] || SJ.levels['niveau-let'];
   if (sj.phase === 'ready') { sj.t += dt; if (sj.t > 7) sjTap(); }
-  // (the start: the gate swings up, the poles are planted and the jumper pushes itself along the plateau and over the brow)
+  // (the start: the gate swings up, the jumper sinks into the crouch and glides along the plateau and over the brow)
   else if (sj.phase === 'inrun') { sj.push += dt; const sl = sjSlope(Math.min(sj.x, -.05)); if (sj.push > .35) sj.v = Math.min(sj.x < SJ.xp ? 2.3 : v0, sj.v + ((sj.push < 1 ? 5 : 2) + 8 * Math.max(0, -sl)) * dt); sj.x += sj.v * dt / Math.hypot(1, sl); sj.y = sjHill(Math.min(-1e-4, sj.x));
     // (off the edge: how good the take-off was by how near the edge the tap came)
     if (sj.x >= 0) { sj.q = sj.tap === null ? .08 : Math.max(.12, 1 - Math.abs(sj.tap + .35) / (win * 2.2)); sj.vx = v0 * (.9 + .16 * sj.q); sj.vy = 1.5 + 4 * sj.q; sj.x = 0; sj.phase = 'air'; sfx('swish'); } }
@@ -5769,55 +5769,58 @@ function sjTick(dt) { dt = Math.min(dt, .05); const [v0, win] = SJ.levels[game.l
     if (sj.y <= sjHill(sj.x)) { sj.y = sjHill(sj.x); sj.phase = 'land'; sj.t = 0; sj.v = sj.vx; const m = Math.round(sj.x * 2), n = Math.max(1, Math.min(5, 1 + Math.round(sj.q * 4))); addStars(n); sfx('ding'); if (n > 2) sfx('ding', .14); if (n > 4) sfx('ding', .28); hintEl.textContent = `${m} m  ${'⭐'.repeat(n)}`; hintEl.hidden = false; game.hint = 3.2; } }
   else if (sj.phase === 'land') { sj.t += dt; const sl = sjSlope(sj.x); sj.v = Math.max(0, sj.v + (-sl * 5 - 2.6 - (sj.x > 42 ? 7 : 0)) * dt); sj.x = Math.min(58, sj.x + sj.v * dt / Math.hypot(1, sl)); sj.y = sjHill(sj.x);
     if (sj.v < .25 || sj.x >= 58) { if (!sj.stopT) { sj.stopT = sj.t; if (glbActions.jubel) runAnim('jubel'); } if (sj.t - sj.stopT > 2.4) sjReset(); } }
-  // (the pose - the user, 15-11-2026: upright on the plateau; in the in-run much as in the flight, the body straight and
-  // leaning forward over the skis, the knees only a little bent, the arms back, not sitting with the bottom out; stretched
-  // out forward in the air; knees bent and the skis apart in the landing)
+  // (the pose - upright on the plateau; once it has set off, the ski jumper's crouch after the user's picture, 15-11-2026:
+  // the shins leaning forward, the knees bent square, the thighs back, the body lying forward along the hill over the
+  // thighs, the arms straight back along the body and the head up; stretched out forward in the air; knees bent and the
+  // skis in a small V in the landing)
   const air = sj.phase === 'air', inrun = sj.phase === 'inrun', ground = Math.atan(sjSlope(inrun || sj.phase === 'ready' ? Math.min(sj.x, -.05) : Math.max(sj.x, .05))), k = Math.min(1, dt * 7);
   const over = inrun ? Math.max(0, Math.min(1, (sj.x - SJ.xp + .6) / (SJ.xk - SJ.xp + .6))) : 0; sj.run += ((inrun ? over * over * (3 - 2 * over) : 0) - sj.run) * k;
-  sj.tuck += ((inrun ? SJ_TUCK * sj.run : sj.phase === 'land' && !sj.stopT ? .45 : 0) - sj.tuck) * k; sj.fly += ((air ? 1 : 0) - sj.fly) * k; sj.landW += ((sj.phase === 'land' && !sj.stopT ? 1 : 0) - sj.landW) * k;
+  sj.tuck += ((sj.phase === 'land' && !sj.stopT ? .45 : 0) - sj.tuck) * k; { const a = inrun ? Math.min(1, sj.push / .7) : 0; sj.sit = (sj.sit || 0) + (a * a * (3 - 2 * a) - (sj.sit || 0)) * k; } sj.vee = SJ_V * sj.fly + SJ_VL * sj.landW; sj.bow = (sj.bow || 0) + ((sj.phase === 'land' && !sj.stopT ? .45 : 0) - (sj.bow || 0)) * k; sj.fly += ((air ? 1 : 0) - sj.fly) * k; sj.landW += ((sj.phase === 'land' && !sj.stopT ? 1 : 0) - sj.landW) * k;
   sj.gateA += ((sj.phase === 'ready' ? 0 : 1) - sj.gateA) * Math.min(1, dt * 6); sj.gate.rotation.x = -1.3 * sj.gateA;
-  sj.rig.position.set(sj.x, sj.y, 0); sj.rig.rotation.z += ((air ? -.95 : sj.phase === 'ready' || sj.stopT ? 0 : inrun ? Math.max(SJ_RUN_MAX, ground - SJ_RUN_LEAN * (.25 + .75 * sj.run)) : ground) - sj.rig.rotation.z) * k; glb.rotation.y = game.rotY = Math.PI / 2;
+  sj.rig.position.set(sj.x, sj.y, 0); sj.rig.rotation.z += ((air ? -.95 : sj.phase === 'ready' || sj.stopT ? 0 : inrun ? ground - SJ_SIT[0] * sj.sit : ground) - sj.rig.rotation.z) * k; glb.rotation.y = game.rotY = Math.PI / 2;
   sj.skiRot += ((air ? .12 : ground) - sj.skiRot) * k;
   glb.updateMatrixWorld(true); glb.getWorldQuaternion(skAxes.q); const { fwd, right, up, q } = skAxes; fwd.set(0, 0, 1).applyQuaternion(q); right.set(-1, 0, 0).applyQuaternion(q); up.set(0, 1, 0).applyQuaternion(q);
-  // (the arms: reaching forward to plant the poles, pushing back, then back along the body)
-  const swing = inrun ? (sj.push < .35 ? .5 * sj.push / .35 : sj.push < .9 ? .5 - 1.45 * (sj.push - .35) / .55 : -.95 * Math.max(0, 1 - (sj.push - .9) / .5)) : 0;
-  sj.arm += (swing + SJ_ARMS * Math.max(sj.tuck * .9, sj.fly * .25, sj.run * .3) - sj.arm) * Math.min(1, dt * 12);
-  if (!sj.stopT) { const W = sj.tuck; if (W > .01) { for (const n of ['LeftUpLeg', 'RightUpLeg']) turnBone(n, right, 1.15 * W); glb.updateMatrixWorld(true); for (const n of ['LeftLeg', 'RightLeg']) turnBone(n, right, -1.9 * W); glb.updateMatrixWorld(true); for (const n of ['LeftFoot', 'RightFoot']) turnBone(n, right, .75 * W); turnBone('Spine', right, SJ_LEAN * W); }
+  // (the arms back along the body)
+  sj.arm += (SJ_ARMS * Math.max(sj.tuck * .9, sj.fly * .25) + SJ_SIT[3] * sj.sit - sj.arm) * Math.min(1, dt * 12);
+  if (!sj.stopT) { const W = sj.tuck; if (W > .01) { for (const n of ['LeftUpLeg', 'RightUpLeg']) turnBone(n, right, 1.15 * W); glb.updateMatrixWorld(true); for (const n of ['LeftLeg', 'RightLeg']) turnBone(n, right, -1.9 * W); glb.updateMatrixWorld(true); for (const n of ['LeftFoot', 'RightFoot']) turnBone(n, right, .75 * W); if (sj.bow > .01) turnBone('Spine', right, SJ_LEAN * sj.bow); }
+    // (the crouch: thigh, shin and foot turned so the foot ends as it began, flat; the body's lean is the rig's)
+    if (sj.sit > .01) { const S = sj.sit, u = SJ_SIT[0] + SJ_SIT[1], l = -SJ_SIT[1] - SJ_SIT[2]; for (const n of ['LeftUpLeg', 'RightUpLeg']) turnBone(n, right, u * S); glb.updateMatrixWorld(true); for (const n of ['LeftLeg', 'RightLeg']) turnBone(n, right, l * S); glb.updateMatrixWorld(true); for (const n of ['LeftFoot', 'RightFoot']) turnBone(n, right, -(u + l) * S); for (const n of ['Neck', 'Head']) turnBone(n, right, SJ_SIT[4] * S); }
     // (the legs apart in the landing; the feet kept flat on the skis as the body leans over them, and turned out with them in the air's V)
     ['Left', 'Right'].forEach((s, i) => { const sp = (i ? -1 : 1) * SJ_SPREAD * sj.landW, tilt = SJ_FOOT * (sj.skiRot - sj.rig.rotation.z), yaw = (i ? -1 : 1) * SJ_V * sj.fly;
-      if (Math.abs(sp) > .005) { turnBone(s + 'UpLeg', fwd, sp); glb.updateMatrixWorld(true); turnBone(s + 'Foot', fwd, -sp); } if (Math.abs(tilt) > .01) turnBone(s + 'Foot', right, tilt); if (Math.abs(yaw) > .01) turnBone(s + 'Foot', up, yaw); });
+      if (Math.abs(sp) > .005) { turnBone(s + 'UpLeg', fwd, sp); glb.updateMatrixWorld(true); turnBone(s + 'Foot', fwd, -sp); } if (Math.abs(tilt) > .01) turnBone(s + 'Foot', right, tilt); });
     if (Math.abs(sj.arm) > .01) for (const n of ['LeftArm', 'RightArm']) turnBone(n, right, sj.arm); glb.updateMatrixWorld(true);
     // (the feet kept down on the skis as the legs bend)
-    const lo = Math.min(...['LeftFoot', 'RightFoot', 'LeftToeBase', 'RightToeBase'].map(n => sj.rig.worldToLocal(bone(n).getWorldPosition(new THREE.Vector3())).y)); glb.position.y += .09 + bootLift() * .5 - lo; }
+    // (measured square to the skis, not along the leaning body: in the in-run the feet were down in the snow)
+    const sn = -Math.sin(sj.skiRot), cs = Math.cos(sj.skiRot), lo = Math.min(...['LeftFoot', 'RightFoot', 'LeftToeBase', 'RightToeBase'].map(n => { const v = bone(n).getWorldPosition(new THREE.Vector3()); return (v.x - sj.x) * sn + (v.y - sj.y) * cs; })), up2 = .09 + bootLift() * .5 - lo;
+    // (and along the skis: in the crouch the body leans far over and the folded legs carried the feet a good way ahead of where the jumper is)
+    const on = -['LeftFoot', 'RightFoot'].reduce((a, n) => { const v = bone(n).getWorldPosition(new THREE.Vector3()); return a + ((v.x - sj.x) * cs - (v.y - sj.y) * sn) / 2; }, 0);
+    sj.rig.position.x += sn * up2 + cs * on; sj.rig.position.y += cs * up2 - sn * on; sj.rig.updateMatrixWorld(true); }
+  // (the feet straight on the skis at all times - the user, 15-11-2026: they stood out to the side. Each foot is turned,
+  // flat on its ski, till it points along it - in the stance, the landing and the cheer too, where the toes turn out)
+  ['Left', 'Right'].forEach((s, i) => { glb.updateMatrixWorld(true); const f = bone(s + 'Foot'), t = bone(s + 'ToeBase'); if (!f || !t) return; const d = t.getWorldPosition(new THREE.Vector3()).sub(f.getWorldPosition(new THREE.Vector3())), c = Math.cos(sj.skiRot), n = Math.sin(sj.skiRot),
+    turn = (i ? -1 : 1) * sj.vee - Math.atan2(-d.z, d.x * c + d.y * n); if (Math.abs(turn) > .005) turnBone(s + 'Foot', SJ_Y.set(-n, c, 0), turn); });
   glb.updateMatrixWorld(true);
-  { const want = sj.stopT ? -2 : sj.phase === 'ready' ? -.35 : inrun ? (sj.push < .35 ? -.35 + .3 * sj.push / .35 : sj.push < .9 ? -.05 - 1.2 * (sj.push - .35) / .55 : -1.2) : air ? -.8 : -1.05; sj.poleTh += (want - sj.poleTh) * Math.min(1, dt * 10); }
   // (the camera along with the jumper, a little ahead)
   // (after the take-off it swings round to the front, so the jump, the landing and the cheer are seen coming towards
   // one - the user, 14-11-2026; not quite straight on, so the hill and its lines still show - and back at the next start)
-  // (or from behind, chosen with the camera button - the user, 15-11-2026: to follow the flight out over the hill; the
-  // camera then nearer, higher and never down in the in-run, looking ahead down the hill; round to the front for the cheer)
-  const flying = air || sj.phase === 'land', want = flying ? (sj.back && !sj.stopT ? -1 : 1) : 0; sj.turn += (want - sj.turn) * Math.min(1, dt * 2.4); sj.sideA = (sj.sideA || 0) + ((flying ? 1 : 0) - (sj.sideA || 0)) * Math.min(1, dt * 5);
+  // (from behind in the flight, by itself - the user, 15-11-2026: no button to choose with, the game shows it once one has
+  // taken off: the camera nearer, higher and never down in the in-run, looking ahead down the hill; round to the front
+  // for the cheer)
+  const flying = air || sj.phase === 'land', want = flying ? (sj.stopT ? 1 : -1) : 0; sj.turn += (want - sj.turn) * Math.min(1, dt * 2.4); sj.sideA = (sj.sideA || 0) + ((flying ? 1 : 0) - (sj.sideA || 0)) * Math.min(1, dt * 5);
   const m = Math.abs(sj.turn), e = Math.sign(sj.turn) * m * m * (3 - 2 * m), F = Math.max(0, e), B = Math.max(0, -e), a = SJ_FRONT * e; sj.sides.visible = sj.sideA > .01; sj.sides.material.opacity = sj.sideA; sj.near.visible = sj.sideA > .5;
   const cz = (wideCam() ? 15 : 22) * (1 - .45 * B), ahead = (air ? 1.6 : .9) * (1 - F - B); sj.camX = (sj.camX ?? sj.x) + (sj.x + ahead - (sj.camX ?? sj.x)) * Math.min(1, dt * 6);
   const px = sj.camX + Math.sin(a) * cz; camera.position.set(px, Math.max(sj.y + 2.6 - .6 * F + 1.4 * B, m > .01 ? sjHill(px) + 1.6 : -99), Math.cos(a) * cz); controls.target.set(sj.camX + 2.5 * B, sj.y + .2 + .5 * F - .6 * B, 0); camera.lookAt(controls.target); }
-// (the skis and the poles are put in place last of all, just before the picture is drawn: the balance and other
+// (the skis are put in place last of all, just before the picture is drawn: the balance and other
 // touches to the body come after the game's own tick, so in the cheer the hands were not where the tick saw them -
 // the user, 15-11-2026, again: the poles hung beside the hands)
 function sjLate() { if (!game.on || game.mode !== 'skihop' || !sj.world?.parent || !glb) return; glb.updateWorldMatrix(true, true);
   // (each ski under its own foot, wherever the foot is - the user, 15-11-2026: the feet are to stand fast on the skis all
   // through the jump and the landing: along the hill on the ground, nearly level and spread in a V in the air)
   ['Left', 'Right'].forEach((s, i) => { const f = bone(s + 'Foot'), t = bone(s + 'ToeBase'); if (!f || !t) return; const a = f.getWorldPosition(new THREE.Vector3()), b = t.getWorldPosition(new THREE.Vector3()), mx = (a.x + b.x) / 2;
-    sj.ski[i].position.set(mx, sj.y + .03 + Math.tan(sj.skiRot) * (mx - sj.x), (a.z + b.z) / 2); sj.ski[i].rotation.set(0, (i ? -1 : 1) * SJ_V * sj.fly, sj.skiRot); });
-  // (the poles: the fist round the handle a little in from its end, out from the wrist along the forearm - the user,
-  // 14-11-2026 and again: the handles were not in the hands. Planted beside the feet at the start, pushed back in the
-  // push-off, trailing in the in-run and the flight, held up pointing back and up in the cheer)
-  // (the grip is where the fingers close on the palm: the middle of the middle finger's joints and the palm)
-  ['LeftHand', 'RightHand'].forEach((n, i) => { const h = bone(n), m = [1, 2, 3].map(j => bone(n + 'Middle' + j)); if (!h) return; const at = h.getWorldPosition(new THREE.Vector3()), th = sj.poleTh, len = 1.02 - SJ_HOLD;
-    if (m.every(Boolean)) { const [a, b, c] = m.map(o => o.getWorldPosition(new THREE.Vector3())); at.add(a).multiplyScalar(.5).add(a).add(b).add(c).multiplyScalar(.25); }
-    sj.poles[i].rotation.z = th; sj.poles[i].position.set(at.x + Math.sin(th) * len, at.y - Math.cos(th) * len, at.z); }); }
-const sjCamBtn = document.getElementById('sjCam'); try { sj.back = localStorage.getItem('minimig-test.skihop-kamera') === 'bag'; } catch (e) {}
-sjCamBtn.onclick = () => { sj.back = !sj.back; sjCamBtn.classList.toggle('back', sj.back); try { localStorage.setItem('minimig-test.skihop-kamera', sj.back ? 'bag' : 'for'); } catch (e) {} sfx('swish'); };
-const SJ_LEAN = .85, SJ_ARMS = -1.1, SJ_FRONT = 1.36, SJ_TUCK = .2, SJ_RUN_LEAN = .5, SJ_RUN_MAX = -1.2, SJ_FOOT = 1, SJ_HOLD = .1, SJ_SPREAD = .16, SJ_V = .2;
+    sj.ski[i].position.set(mx, b.y - bootLift() - .035 + Math.tan(sj.skiRot) * (mx - b.x), (a.z + b.z) / 2); sj.ski[i].rotation.set(0, (i ? -1 : 1) * sj.vee, sj.skiRot); }); }
+const SJ_Y = new THREE.Vector3(0, 1, 0), SJ_LEAN = .85, SJ_ARMS = -1.1, SJ_FRONT = 1.36, SJ_FOOT = 1, SJ_SPREAD = .09, SJ_V = .2, SJ_VL = .1,
+  // (the crouch: the body's lean forward from square to the hill, the thighs' lean back, the shins' lean forward, the arms, the head up)
+  SJ_SIT = [1.4, .8, .75, -.2, .45];
 function pkStart() { pkBuild(); pkAbeLoad(); scene.add(pk.world); holder.add(pk.rig); pk.rig.add(glb); pk.rig.position.set(0, 0, 0); game.rotY = Math.PI;
   floor.visible = false; disc.visible = false; for (const el of [bgNear, bgFar, bgNear2]) el.hidden = true; stage.classList.add('pitch'); controls.maxDistance = 40;
   if (!pk.ball) { pk.ball = makeItem('fodbold'); pk.ball.group.scale.setScalar(kick.r / .158); scene.remove(pk.ball.group); }
@@ -6166,6 +6169,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.12.0 (adeb979)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.12.0 (9ad9639)</div>
 </body>
 </html>
