@@ -46,6 +46,7 @@ nav a:hover, nav a[aria-current] { color: var(--ink); }
 .learn h2 { margin: 0 0 8px; }
 .learn > p { margin: 0; color: var(--muted); }
 .learn .cards { grid-template-columns: repeat(2, 1fr); margin: 14px 0 0; }
+.learn .card:last-child:nth-child(odd) { grid-column: 1 / -1; } /* (an odd one out spans the row) */
 .pet { margin: 30px 0 0; }
 .pet-pics { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
 .pet img { width: 100%; height: auto; border-radius: 18px; box-shadow: 0 4px 14px var(--shadow); display: block; }
