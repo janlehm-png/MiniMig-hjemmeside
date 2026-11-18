@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>MiniMig &ndash; byg og spil</title>
-<meta name="minimig-version" content="0.13.0">
+<title>MiniMig™ version 2</title>
+<meta name="minimig-version" content="0.13.1">
 <!-- (the number of this version, shown under the i - see VERSIONER.md - raised for each package and each fix put out) -->
 <!-- (the same icon as version 1 on a home screen, under the name MiniMig 2 - the icons lie in the website's billeder/;
      the user, 03-11-2026, sharing version 2 with testers) -->
@@ -363,6 +363,12 @@
   .sound-opt[aria-pressed="true"] b { background: #2FB872; }
   .sound-opt[aria-pressed="true"] b::after { left: 23px; }
   .sound-all { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  /* (Hele MiniMig, for grown-ups: what it holds, as pictures that cannot be tapped, then the purchase) */
+  .full-sheet h3 { margin: 12px 0 4px; font-size: 1rem; }
+  .choices.showcase button { pointer-events: none; } .choices.showcase .emo { font-size: 1.8rem; line-height: 1; }
+  .full-own { text-align: center; font-size: 1.15rem; font-weight: 800; color: #2FB872; margin: 8px 0; }
+  .full-test { margin-top: 12px; border: 2px dashed #CBBEF7; border-radius: 14px; padding: 8px; display: grid; gap: 6px; }
+  .full-test button.on { background: #7A4DFF; color: #fff; border-color: #7A4DFF; }
   .share-choices button.best { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent) inset; }
   .share-choices small { display: block; font-weight: 600; font-size: .8rem; color: #6B6191; }
   .toast { position: fixed; left: 50%; top: max(24px, env(safe-area-inset-top, 0px)); transform: translateX(-50%); z-index: 60; pointer-events: none;
@@ -425,6 +431,8 @@
     <!-- (the coins are on the button too - the user, 04-11-2026) -->
     <button id="starBtn"><img src="ikoner/knap-stjerner.png" alt=""><span>Stjerner og mønter</span></button>
     <!-- (the language: a globe and the other language's name - no flag, English being spoken under many - the user, 04-11-2026) -->
+    <!-- (Hele MiniMig, for grown-ups: in the app and on the test site only - on the website all of it is free) -->
+    <button id="fullBtn" class="grown" hidden><span class="emo" aria-hidden="true">🎁</span><span>Hele MiniMig</span></button>
     <button id="langBtn" class="grown"><span class="emo" aria-hidden="true"></span><span></span></button>
     <!-- (on minimig.dk only: the website's "Til voksne" - home screen, offline, privacy - from its pwa.js) -->
     <!-- (drawn here: an iPad shows the family emoji as a grey outline - the user, 04-11-2026) -->
@@ -570,6 +578,7 @@
     <p class="note">Hvert barn har sin egen MiniMig og sine egne stjerner. Byg barnets figur, og tryk 📷 – så gemmes figuren på skærmen som barnets MiniMig. Under Mine figurer trykker barnet bare på sit billede. Gemmes kun på denne enhed.</p>
     <div class="player-list" id="playerList"></div>
     <button class="share-off players-btn" id="addPlayer">➕ Ny spiller</button>
+    <p class="note" id="morePlayers" hidden>Flere børn, hver med sin egen MiniMig og sine egne stjerner, følger med i Hele MiniMig.</p>
   </div>
 </div>
 <!-- the time, for grown-ups (held 3 seconds, then the sum): how long a day MiniMig may be played - the user, 08-11-2026 -->
@@ -600,6 +609,18 @@
       <button class="sound-opt" data-sound="voice"><span>🗣️ Stemmen, der siger navnet</span><b></b></button>
     </div>
     <div class="sound-all"><button class="share-off" data-sound-all="0">Slå al lyd fra</button><button class="share-off" data-sound-all="1">Slå al lyd til</button></div>
+  </div>
+</div>
+<!-- Hele MiniMig, for grown-ups (behind the sum): what the full version holds, and the purchase - the user, 17-11-2026 -->
+<div class="sheet" id="fullSheet" hidden>
+  <div class="sheet-card full-sheet" role="dialog" aria-modal="true" aria-labelledby="fullTitle">
+    <div class="sheet-head"><h2 id="fullTitle">Hele MiniMig™</h2><button class="sheet-x" data-close aria-label="Luk">✕</button></div>
+    <p class="note" id="fullNote"></p>
+    <div class="full-own" id="fullOwn" hidden>✓ I har Hele MiniMig</div>
+    <div id="fullShow"></div>
+    <div class="sound-all" id="fullBuyRow"><button class="share-off" id="fullBuy">Køb Hele MiniMig</button><button class="share-off" id="fullRestore">Gendan køb</button></div>
+    <p class="note">Ét køb – intet abonnement. Det gælder alle børn på denne enhed.</p>
+    <div class="full-test" id="fullTest" hidden><p class="note">Kun på testsiden: prøv spillet som</p><div class="sound-all"><button class="share-off" data-edition="basis">Basis</button><button class="share-off" data-edition="hele">Hele MiniMig</button></div></div>
   </div>
 </div>
 <!-- the star: save the whole figure or its profile picture in Mine figurer (stays on the device, so no grown-up needed) -->
@@ -707,9 +728,15 @@ const EN = {
   'Ingen grænse': 'No limit', '⏱️ Hold knappen inde i 3 sekunder': '⏱️ Hold the button down for 3 seconds',
   'Gem i Mine figurer': 'Save in My figures', 'Ny MiniMig': 'New MiniMig', 'Dreng': 'Boy', 'Pige': 'Girl', 'Den figur, du har nu, bliver gemt i Mine figurer 🖼️.': 'The figure you have now is saved in My figures 🖼️.', 'Børn': 'Children', '🖼️ Gemte figurer': '🖼️ Saved figures', 'Børn og spillere – for voksne': 'Children and players – for grown-ups',
   'Dit billede': 'Your picture', 'Tryk og hold på billedet, og vælg': 'Press and hold the picture, and choose', 'Gem i Fotos': 'Save to Photos', 'eller': 'or', 'Del': 'Share', '💾 Gem billedet': '💾 Save the picture', 'Billedet gemmes i mappen Overførsler. Du kan også højreklikke på billedet og vælge': 'The picture is saved in your Downloads folder. You can also right-click the picture and choose', 'Gem billede som': 'Save image as',
-  'Sådan gør du': 'How it works', 'Musik til og fra': 'Music on and off', 'Skift beat': 'Change beat', 'Trommer': 'Drums', 'Skriv dit navn': 'Write your name', 'Navn på trøjen': 'Name on the top', 'Sig navnet': 'Say the name', 'Slet din egen stemme': 'Delete your own voice', 'Gem dansen': 'Save the dance', 'Start forfra': 'Start again', 'Navn på dansen': 'Name of the dance', 'Luk': 'Close', 'Slet': 'Delete', 'Mønterne på disken': 'The coins on the counter', 'Billedet af figuren': 'The picture of the figure', 'Min MiniMig': 'My MiniMig' };
+  'Sådan gør du': 'How it works', 'Musik til og fra': 'Music on and off', 'Skift beat': 'Change beat', 'Trommer': 'Drums', 'Skriv dit navn': 'Write your name', 'Navn på trøjen': 'Name on the top', 'Sig navnet': 'Say the name', 'Slet din egen stemme': 'Delete your own voice', 'Gem dansen': 'Save the dance', 'Start forfra': 'Start again', 'Navn på dansen': 'Name of the dance', 'Luk': 'Close', 'Slet': 'Delete', 'Mønterne på disken': 'The coins on the counter', 'Billedet af figuren': 'The picture of the figure', 'Min MiniMig': 'My MiniMig',
+  'Hele MiniMig': 'The full MiniMig', 'Hele MiniMig™': 'The full MiniMig™', 'Køb Hele MiniMig': 'Buy the full MiniMig', 'Gendan køb': 'Restore purchase', '✓ I har Hele MiniMig': '✓ You have the full MiniMig',
+  'Ét køb – intet abonnement. Det gælder alle børn på denne enhed.': 'One purchase – no subscription. It covers every child on this device.',
+  'Kun på testsiden: prøv spillet som': 'Test site only: try the game as', 'Basis': 'Basic',
+  'Flere børn, hver med sin egen MiniMig og sine egne stjerner, følger med i Hele MiniMig.': 'More children, each with their own MiniMig and their own stars, come with the full MiniMig.',
+  'Spil': 'Games', 'Tøj og udstyr': 'Clothes and gear', 'Ting, baggrunde og dyr': 'Things, backgrounds and pets', 'Familien': 'The family',
+  'Flere børn': 'More children', 'Sjov': 'Fun', 'Disco': 'Disco' };
 const tr = s => LANG === 'en' ? EN[String(s).replace(/­/g, '')] ?? s : s;
-document.documentElement.lang = LANG; if (LANG === 'en') document.title = 'MiniMig – build and play';
+document.documentElement.lang = LANG; if (LANG === 'en') document.title = 'MiniMig™ – build and play';
 // (the page's own texts and labels; a text's spaces round it are kept, as words sit beside the bold ones in a line)
 if (LANG === 'en') { const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT), nodes = []; while (walk.nextNode()) nodes.push(walk.currentNode);
   for (const n of nodes) { const key = n.nodeValue.trim(); if (key) { const en = tr(key); if (en !== key) n.nodeValue = n.nodeValue.replace(key, en); } }
@@ -772,7 +799,7 @@ function applyTab(c) { apply(colourPart(), c); if (partNow.startsWith('gear-') &
 function tapMain(id) { foldNow = ''; showFold(); if (mainNow === id) { mainNow = ''; boxOpen = false; showSwatches(); return; } mainNow = id; boxOpen = true; partNow = lastSub[id] || MAIN.find(m => m[0] === id)[3][0]; showSwatches(); lookFor(partNow); }
 function showSwatches() { const move = /^(move|game)-/.test(partNow); if (!move) slidersFrom(picked[colourPart()] || START[colourPart()]);
   { const mo = mainOf(partNow); if (mo && boxOpen) { mainNow = mo; lastSub[mo] = partNow; } else if (move && boxOpen) mainNow = ''; if (!partNow.startsWith('gear-')) { dressWant = ''; dressSnap = null; }
-    const subs = document.getElementById('subs'); if (subs) { subs.hidden = !mainNow; for (const b of subs.children) b.hidden = mainOf(b.dataset.part) !== mainNow; for (const b of document.querySelectorAll('#mains [data-main]')) b.classList.toggle('on', b.dataset.main === mainNow); } }
+    const subs = document.getElementById('subs'); if (subs) { subs.hidden = !mainNow; for (const b of subs.children) b.hidden = mainOf(b.dataset.part) !== mainNow || !free(b.dataset.part); for (const b of document.querySelectorAll('#mains [data-main]')) b.classList.toggle('on', b.dataset.main === mainNow); } }
   const noColour = move || ['nose', 'mouth', 'pynt', 'name', 'ears', 'bg'].includes(partNow) || partNow === 'pants' && briefsOn || partNow === 'item' && petPick;
   document.getElementById('sliders').style.display = noColour ? 'none' : '';
   // (the fixed colours of the app over the sliders: skin, hair - the brows too - eyes, and the clothes' colours for the rest)
@@ -803,7 +830,7 @@ function renderStyles() { const all = typeof styleLists === 'undefined' ? null :
   box.innerHTML = ''; box.hidden = !list || !hairBase;
   if (box.hidden) continue; const [items, now, set] = list;
   // (now: the chosen one - or, for Pynt, the list of all chosen, Ingen lit when it is empty)
-  for (const [n, label] of items) { const b = iconButton(`ikoner/valg-${n || 'ingen-' + none}.png`, label), locked = !owns(n);
+  for (const [n, label] of items) { if (!free(n)) continue; const b = iconButton(`ikoner/valg-${n || 'ingen-' + none}.png`, label), locked = !owns(n);
     if (locked) { b.classList.add('locked'); b.append(Object.assign(document.createElement('span'), { className: 'price', textContent: `🔒 ${krTxt(SHOP[n])}` })); }
     b.classList.toggle('on', Array.isArray(now) ? (n.endsWith('-ingen') ? !now.length : now.includes(n)) : n === now); b.onclick = () => locked ? askBuy(n) : set(n); b.dataset.n = n; box.append(b); } }
   // (a game's gear: what is still to be put on moves a little once the game was asked for, and last in the row the green
@@ -819,6 +846,31 @@ function renderStyles() { const all = typeof styleLists === 'undefined' ? null :
 const SHOP = { 'hat-krone': 40, 'kjole-prinsesse': 60, 'kjole-havfrue': 60, 'sko-hoej': 30, 'briller-hjerte': 20, 'briller-stjerne': 20,
   'ting-tryllestav': 30, 'bg-slot': 30, 'bg-slikland': 40, 'bg-rummet': 40, 'dyr-kat': 100, 'dyr-hund': 100, 'dyr-kanin': 100, 'dyr-halsbaand': 30, 'dyr-skaal': 40, 'dyr-bold': 40 };
 const krOf = s => s.kr ??= Math.max(0, (s.total || 0) - (s.spent || 0));
+// ---- Basis and Hele MiniMig (the user, 17-11-2026): the app is free, with one purchase - Hele MiniMig. What is not in
+// the free Basis is hidden from the children - no locks, no "buy" - and shown to the grown-ups under Hele MiniMig, behind
+// the sum. FULL is the one list of what belongs to Hele MiniMig: take a name out of it, and it is in Basis. On the website
+// (bygogspil) all of it is free, as before; in the app only after the purchase; on the test site a switch tries both ----
+const FULL = new Set([
+  // (the games - Hop over bolden, Skateboard and Skattejagt are in Basis - and the other games' gear tabs)
+  'game-snow', 'game-skihop', 'game-sea', 'game-space', 'game-hide', 'game-pk', 'game-cypher', 'gear-snow', 'gear-sea', 'gear-space', 'gear-pk',
+  // (the dance: Dansestudie with Hiphop and the first beat are in Basis; Cypher, the other styles and beats are not)
+  'ds-Show', 'ds-Sjov', 'ds-Break', 'beat-1', 'beat-2',
+  // (clothes and gear - the face, hair and all, is in Basis: a child should be able to look like themselves)
+  'toej-fodbold', 'bukser-cowboy', 'bukser-fodbold', 'kjole-havfrue', 'dragt-bade', 'dragt-badebukser', 'dragt-rum', 'dragt-ski',
+  'stroemper-fodbold', 'stroemper-hoeje', 'sko-fodbold', 'sko-ballet', 'sko-rum', 'sko-ski', 'hat-kanin', 'hat-rumhjelm', 'hat-skihjelm',
+  'briller-stjerne', 'briller-svoemme', 'briller-snorkel', 'briller-ski', 'handsker-ski', 'udstyr-jetpack',
+  // (things, backgrounds and pets - the cat is in Basis, bought in the star shop as before)
+  'ting-fodbold', 'ting-hulahop', 'bg-ridderborg', 'bg-havbund', 'bg-slikland', 'bg-vinter', 'bg-rummet', 'bg-fodboldbane', 'bg-dansesal', 'dyr-hund', 'dyr-kanin',
+  // (more than one child on the device)
+  'players']);
+const IS_APP = !!window.Capacitor?.isNativePlatform?.(), TEST_SITE = location.pathname.includes('/test/') || /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+const FULL_KEY = 'minimig3d.hele', TRY_KEY = 'minimig3d.udgave';
+function fullOwned() { try { const t = TEST_SITE && localStorage.getItem(TRY_KEY); if (t) return t === 'hele'; return !IS_APP || localStorage.getItem(FULL_KEY) === '1'; } catch (e) { return !IS_APP; } }
+let fullNow = fullOwned();
+// (free: may this be shown - all of it with Hele MiniMig, in Basis what is not on the list)
+const free = n => fullNow || !FULL.has(n);
+// (a saved figure in Basis: what it wears from Hele MiniMig is taken off - the background back to the sun)
+const basisFigure = f => fullNow ? f : { ...f, wear: Object.fromEntries(Object.entries(f.wear || {}).map(([p, n]) => [p, free(n) ? n : ''])), item: free(f.item) ? f.item : '', pet: free(f.pet) ? f.pet : '', bg: free(f.bg) ? f.bg : 'bg-sol' };
 function owns(n) { if (!SHOP[n]) return true; try { return !!playerNow().score.owned?.includes(n); } catch (e) { return true; } }
 // (the tab a shop thing belongs to: its name and how to put it on)
 function shopThing(n) { for (const top of Object.values(styleLists())) for (const l of [top, top?.[3], top?.[3]?.[4], PET_TOYS_LIST()]) { const it = Array.isArray(l?.[0]) && l[0].find(i => i[0] === n); if (it) return { label: it[1], set: l[2] }; } return { label: '', set: null }; }
@@ -2493,7 +2545,22 @@ async function setGarment(part, name) { const G = GARMENTS[part], ask = ++dressi
   const shirt = !!(GARMENTS.dress.now || GARMENTS.shirt.now || GARMENTS.suit.now), pants = !!(GARMENTS.dress.now || GARMENTS.pants.now || GARMENTS.suit.now);
   if (tex && (!!tex.covered[PARTS.shirt] !== shirt || !!tex.covered[PARTS.pants] !== pants)) { tex.covered = { [PARTS.shirt]: shirt, [PARTS.pants]: pants }; redrawBody(); }
   for (const g of Object.values(GARMENTS)) for (const [n, m] of Object.entries(g.meshes)) if (m) m.visible = n === g.shown;
-  wearUnder(); hideBody(); layer(); hatHair(); chestName(); }
+  wearUnder(); hideBody(); layer(); tuckIn(); hatHair(); chestName(); }
+// (trousers tucked into tall boots: long trousers over the rubber boots - the boots' blue came out through the trouser
+// legs, they being wider, the user said 18-11-2026. Below a little under the boots' top the trouser legs are left out, as
+// trousers tucked into wellies are; the boots, wider, hide their end. Only for tall boots - their top over .15 of the
+// height; with lower shoes all of the trousers, as before)
+function tuckIn() { const T = GARMENTS.pants.meshes[GARMENTS.pants.shown]; if (!T || !hairBase?.whole) return; const geo = T.geometry;
+  if (!('allIndex' in geo.userData)) geo.userData.allIndex = geo.index ? geo.index.array.slice() : null;
+  const S = GARMENTS.shoe, o = S.items.find(i => i[0] === S.shown)?.[2] || {}, B = S.meshes[S.shown], { inv, H } = hairBase.whole, M = inv.clone().invert(), v = new THREE.Vector3();
+  // (the boots' top: a made boot's own; a loaded one's measured once - its highest points, the top fiftieth left out)
+  let top = -Infinity; if (o.made && o.boot) top = o.top * H;
+  else if (B && !o.made) { if (B.userData.top == null) { const P = B.geometry.attributes.position, ys = new Float32Array(P.count); for (let i = 0; i < P.count; i++) ys[i] = v.fromBufferAttribute(P, i).applyMatrix4(M).y; ys.sort(); B.userData.top = ys[Math.floor(ys.length * .98)]; } top = B.userData.top; }
+  const all = geo.userData.allIndex, P = geo.attributes.position, n = all ? all.length : P.count, cut = top - .025 * H;
+  if (top < .15 * H) { if (T.userData.tucked) { geo.setIndex(all ? Array.from(all) : null); T.userData.tucked = 0; } return; }
+  if (T.userData.tucked === cut) return; const low = new Uint8Array(P.count); for (let i = 0; i < P.count; i++) low[i] = v.fromBufferAttribute(P, i).applyMatrix4(M).y < cut;
+  const keep = []; for (let t = 0; t < n; t += 3) { const a = all ? all[t] : t, b = all ? all[t + 1] : t + 1, c = all ? all[t + 2] : t + 2; if (!(low[a] && low[b] && low[c])) keep.push(a, b, c); }
+  geo.setIndex(keep); T.userData.tucked = cut; }
 // (swim goggles after the user's picture, 11-11-2026: two rounded glasses, each a thin sharp-edged frame in front and a
 // soft clear rim behind it down on to the face, lying on its curves, a short bridge between them, and small clips at
 // their outer ends holding the strap - a thin flat band going up over the ears and round the back of the head, outside
@@ -3810,7 +3877,7 @@ const unpaint = list => { for (const t of list) { const im = t.ctx.createImageDa
 function unpick(part) { delete picked[part]; if (part === 'socks' || part === 'shoe') { paintSocks(); paintHeels(); } if (part === 'item') paintItem(); if (part === 'hair') unpaint(hairTexs); if (GARMENTS[part]) unpaint(GARMENTS[part].texs); if (part === 'suit') unpaint(gearTexs);
   if (tex && PARTS[part]) { delete tex.colours[PARTS[part]]; if (part === 'hair' && !picked.brows) delete tex.colours[PARTS.brows]; if (part === 'brows' && picked.hair) tex.colours[PARTS.brows] = tex.colours[PARTS.hair]; } }
 let dressingUp = 0;
-async function wearFigure(f) { const ask = ++dressingUp;
+async function wearFigure(f) { const ask = ++dressingUp; f = basisFigure(f);
   // (the colours: the brows before the hair, which they follow when they have none of their own)
   for (const [part] of CHOICES) if (part !== 'hair') { if (f.picked[part]) { picked[part] = f.picked[part]; recolour(part, f.picked[part]); } else unpick(part); }
   if (f.picked.hair) { picked.hair = f.picked.hair; recolour('hair', f.picked.hair); } else unpick('hair');
@@ -6064,8 +6131,10 @@ function dsStop() { dsPickEl.hidden = true; stage.classList.remove('dsroom', 'ds
 // (in the room: the row, the styles and the dances of the style chosen; a dance tapped goes into the row and is shown)
 function dsRoom() { ds.phase = 'room'; ds.rig.position.set(0, 0, 0); stage.classList.add('dsroom'); stage.classList.remove('dsshow'); if (glbActions.staa) runAnim('staa'); hintEl.hidden = true; game.hint = 0; dsShowPick(); }
 function dsShowPick() { const list = mdList(), row = document.getElementById('dsRow'), tabs = document.getElementById('dsStyles'), opts = document.getElementById('dsOpts'), go = document.getElementById('dsGo'); dsPickEl.hidden = false; row.innerHTML = ''; tabs.innerHTML = ''; opts.innerHTML = '';
+  // (in Basis only Hiphop: steps of the other styles, put in with Hele MiniMig, taken out - Hiphop's own tab stays, to say what the steps are)
+  if (!free('ds-' + DS.styles[ds.style][0])) ds.style = 0; for (let i = list.length; i--;) if (!free('ds-' + DS.styles[dsStyleOf(list[i])]?.[0])) list.splice(i, 1);
   for (let i = 0; i < MD_MAX; i++) { const id = list[i], b = document.createElement('button'); if (id) { b.className = 'full'; b.innerHTML = `<img src="ikoner/valg-${id}.png" alt=""><span class="x">✕</span>`; b.setAttribute('aria-label', tr('Tag ud')); b.onclick = () => { list.splice(i, 1); savePlayers(); dsShowPick(); }; } else { b.textContent = i + 1; b.disabled = true; } row.append(b); }
-  DS.styles.forEach(([name, emo], i) => { const b = document.createElement('button'); b.innerHTML = `<span class="emo">${emo}</span><span>${tr(name)}</span>`; b.classList.toggle('on', i === ds.style); b.onclick = () => { ds.style = i; sfx('swish'); dsShowPick(); }; tabs.append(b); });
+  DS.styles.forEach(([name, emo], i) => { if (!free('ds-' + name)) return; const b = document.createElement('button'); b.innerHTML = `<span class="emo">${emo}</span><span>${tr(name)}</span>`; b.classList.toggle('on', i === ds.style); b.onclick = () => { ds.style = i; sfx('swish'); dsShowPick(); }; tabs.append(b); });
   for (const id of DS.styles[ds.style][2]) { const b = iconButton(`ikoner/valg-${id}.png`, cyLabel(id)); b.onclick = async () => { soundOut()?.resume(); if (list.length >= MD_MAX) { toast('Der er plads til 5 – tryk ✕ for at tage en ud'); return; } list.push(id); savePlayers(); sfx('ding'); dsShowPick(); const a = await loadMove(id); if (a && game.on && game.mode === 'studio' && ds.phase === 'room') runAnim(id); }; opts.append(b); }
   go.disabled = !list.length; go.textContent = tr('▶ Vis dansen!'); }
 document.getElementById('dsGo').onclick = async () => { const list = mdList(); if (!list.length || ds.phase !== 'room') return; soundOut()?.resume(); dsPickEl.hidden = true; ds.phase = 'wait'; const got = await Promise.all(list.map(loadMove)); if (!game.on || game.mode !== 'studio') return; if (!got.some(Boolean)) return dsRoom();
@@ -6177,10 +6246,10 @@ function showStarSheet(id = starShown || players.now) { starShown = id; const p 
   document.getElementById('starNote').textContent = s.games ? T(`⭐ ${s.total} stjerner samlet i ${s.games} spil på denne enhed.`, `⭐ ${s.total} stars collected in ${s.games} games on this device.`) : tr('Spil et af spillene for at samle stjerner.');
   document.getElementById('starTable').innerHTML = `<tr><th></th>${LEVELS.map(([id, name]) => `<th><img src="ikoner/valg-${id}.png" alt="${tr(name)}"></th>`).join('')}</tr><tr><td>${tr('⭐ giver')}</td>${LEVELS.map(([id]) => `<td>${krTxt(starWorth(id))}</td>`).join('')}</tr>` +
     // (Hop over bolden: its best of the three ways to see it)
-    GAME_NAMES.map(([g, name]) => `<tr><td>${tr(name)}</td>${LEVELS.map(([id]) => { const b = g === 'hop' ? Math.max(...HOP_WAYS.map(w => s.best[w[0]]?.[id] || 0)) : s.best[g]?.[id]; return b ? `<td>🏆 ${b}</td>` : '<td class="none">–</td>'; }).join('')}</tr>`).join('');
+    GAME_NAMES.filter(([g]) => free('game-' + g)).map(([g, name]) => `<tr><td>${tr(name)}</td>${LEVELS.map(([id]) => { const b = g === 'hop' ? Math.max(...HOP_WAYS.map(w => s.best[w[0]]?.[id] || 0)) : s.best[g]?.[id]; return b ? `<td>🏆 ${b}</td>` : '<td class="none">–</td>'; }).join('')}</tr>`).join('');
   // (the shop: every special thing, ✓ when this child owns it, the lock and the price when not - tapping one buys it)
   const shop = document.getElementById('shopList'); shop.innerHTML = '';
-  for (const [n, price] of Object.entries(SHOP)) { const b = iconButton(`ikoner/valg-${n}.png`, shopThing(n).label), own = s.owned?.includes(n);
+  for (const [n, price] of Object.entries(SHOP)) { if (!free(n)) continue; const b = iconButton(`ikoner/valg-${n}.png`, shopThing(n).label), own = s.owned?.includes(n);
     b.classList.toggle('locked', !own); b.append(Object.assign(document.createElement('span'), { className: 'price' + (own ? ' own' : ''), textContent: own ? '✓' : `🔒 ${krTxt(price)}` }));
     b.onclick = () => { if (!own) askBuy(n, p.id); }; shop.append(b); }
   // (what this child has bought, the newest first - a picture to go by, the name, the day and the price)
@@ -6204,7 +6273,37 @@ function showPlayers() { document.getElementById('playerList').innerHTML = playe
 const adultBtn = document.getElementById('adultBtn'), pwaDialog = () => document.querySelector('.pwa-dialog');
 adultBtn.hidden = !pwaDialog(); addEventListener('load', () => { adultBtn.hidden = !pwaDialog(); }); adultBtn.onclick = () => pwaDialog()?.showModal();
 document.getElementById('playersBtn').onclick = () => askGrownUp(() => { document.getElementById('figSheet').hidden = true; showPlayers(); });
-document.getElementById('addPlayer').onclick = () => { newPlayer(); showPlayers(); showPlayer(); };
+document.getElementById('addPlayer').onclick = () => { if (!free('players')) return; newPlayer(); showPlayers(); showPlayer(); };
+// ---- Hele MiniMig, the grown-ups' sheet and the edition put to the page (see FULL) ----
+// (the edition to the page: the games, the sub tabs, Ny spiller and the button; the figure's things from Hele MiniMig off)
+function applyEdition() { document.querySelectorAll('[data-game]').forEach(b => b.hidden = !free('game-' + b.dataset.game));
+  const more = !free('players') && players.list.length >= 1; document.getElementById('addPlayer').hidden = more; document.getElementById('morePlayers').hidden = !more;
+  document.getElementById('fullBtn').hidden = !(IS_APP || TEST_SITE) || fullNow && !TEST_SITE; showSwatches(); }
+// (what Hele MiniMig holds, as pictures: the games, the dance, the clothes, the things - all of it from the list FULL)
+function showFull() { const box = document.getElementById('fullShow'), label = {}; box.innerHTML = '';
+  for (const [n, l] of [...Object.values(GARMENTS).flatMap(G => G.items), ...ITEMS, ...BGS, ...PETS]) label[n] ??= l;
+  const tile = (src, name, emo) => { const b = iconButton(src || '', tr(name)); b.tabIndex = -1; if (emo) b.prepend(Object.assign(document.createElement('span'), { className: 'emo', textContent: emo })); return b; };
+  const group = (title, tiles) => { if (!tiles.length) return; box.append(Object.assign(document.createElement('h3'), { textContent: tr(title) })); const g = document.createElement('div'); g.className = 'choices showcase'; g.append(...tiles); box.append(g); };
+  const gameTile = g => tile(document.querySelector(`[data-game="${g}"] img`)?.getAttribute('src'), GAME_NAMES.find(x => x[0] === g)?.[1] || g);
+  group('Spil', GAME_NAMES.filter(([g]) => g !== 'cypher' && FULL.has('game-' + g)).map(([g]) => gameTile(g)));
+  group('Dans', [...(FULL.has('game-cypher') ? [gameTile('cypher')] : []), ...DS.styles.filter(st => FULL.has('ds-' + st[0])).map(([name, emo]) => tile('', name, emo)),
+    ...BEAT_SETS.filter((b, i) => FULL.has('beat-' + i)).map(([emo, name]) => tile('', name, emo))]);
+  group('Tøj og udstyr', Object.values(GARMENTS).flatMap(G => G.items.map(i => i[0])).filter((n, i, a) => FULL.has(n) && a.indexOf(n) === i).map(n => tile(`ikoner/valg-${n}.png`, label[n])));
+  group('Ting, baggrunde og dyr', [...ITEMS, ...BGS, ...PETS].map(i => i[0]).filter(n => FULL.has(n)).map(n => tile(`ikoner/valg-${n}.png`, label[n])));
+  if (FULL.has('players')) group('Familien', [tile('', 'Flere børn', '👨‍👩‍👧')]);
+  document.getElementById('fullNote').textContent = fullNow ? T('Tak! Alt i MiniMig er låst op på denne enhed. Det her følger med:', 'Thank you! All of MiniMig is unlocked on this device. This is what comes with it:')
+    : T('Det her får I med Hele MiniMig. Børnene ser det ikke, før det er købt – ingen hængelåse og intet mas i spillet.', 'This is what you get with the full MiniMig. The children don’t see it until it is bought – no locks and no nagging in the game.');
+  document.getElementById('fullOwn').hidden = !fullNow; document.getElementById('fullBuyRow').hidden = fullNow;
+  const test = document.getElementById('fullTest'); test.hidden = !TEST_SITE; for (const b of test.querySelectorAll('[data-edition]')) b.classList.toggle('on', (b.dataset.edition === 'hele') === fullNow); }
+document.getElementById('fullBtn').onclick = () => askGrownUp(() => { showFull(); document.getElementById('fullSheet').hidden = false; });
+// (the purchase itself comes with Apple's in the app - phase 2; till then it says so)
+async function buyFull() { toast(T('Købet kommer, når appen er klar', 'The purchase comes when the app is ready')); }
+async function restoreFull() { toast(T('Købet kommer, når appen er klar', 'The purchase comes when the app is ready')); }
+document.getElementById('fullBuy').onclick = buyFull; document.getElementById('fullRestore').onclick = restoreFull;
+// (the test site's switch: Basis or Hele MiniMig, remembered on this device; the figure takes off what Basis has not)
+document.getElementById('fullTest').addEventListener('click', async e => { const b = e.target.closest('[data-edition]'); if (!b) return; try { localStorage.setItem(TRY_KEY, b.dataset.edition); } catch (er) {}
+  if (game.on) stopGame(true); fullNow = b.dataset.edition === 'hele'; applyEdition(); showFull(); if (!fullNow && hairBase) await wearFigure(figureNow()); });
+applyEdition();
 document.getElementById('playerList').addEventListener('input', e => { const row = e.target.closest('[data-id]'), p = row && players.list.find(q => q.id === row.dataset.id); if (p) { p.name = e.target.value.trim(); savePlayers(); showPlayer(); } });
 document.getElementById('playerList').addEventListener('click', e => { const row = e.target.closest('[data-id]'), p = row && players.list.find(q => q.id === row.dataset.id); if (!p) return;
   // (📷: the figure on the screen becomes the child's own MiniMig - its picture and the whole figure, to be put on again
@@ -6330,7 +6429,7 @@ addEventListener('pagehide', tlSave); tlCheck();
 document.addEventListener('visibilitychange', () => { try { if (document.hidden) game.audio?.suspend(); else if (musicPlaying()) game.audio?.resume(); } catch (e) {} });
 function musicPlaying() { return musicOn && ((isDance(anim) && sound.dance) || (game.on && sound.game) || (md.on && sound.dance)); }
 function musicTick() { musicBtn.hidden = !(isDance(anim) && sound.dance) && !(game.on && sound.game) && !(md.on && sound.dance); musicBtn.textContent = musicOn ? '🎵' : '🔇';
-  beatBtn.hidden = musicBtn.hidden || !musicOn; if (beatBtn.textContent !== BEAT_SETS[beatNow][0]) beatBtn.textContent = BEAT_SETS[beatNow][0];
+  beatBtn.hidden = musicBtn.hidden || !musicOn || !free('beat-1'); if (beatBtn.textContent !== BEAT_SETS[beatNow][0]) beatBtn.textContent = BEAT_SETS[beatNow][0];
   // (the music's volume shut at once when no music should play - on a computer the notes already on their way went on
   // a moment after the dance stopped, the user said 03-11-2026 - and opened again when it should)
   const gate = musicPlaying(); if (music.out && gate !== music.gate) { music.gate = gate; const c = music.out.context; music.out.gain.cancelScheduledValues(c.currentTime); music.out.gain.setTargetAtTime(gate ? .4 : 0, c.currentTime, gate ? .01 : .02); }
@@ -6357,7 +6456,7 @@ function hiss(ctx, t, len, from, vol) { if (!music.noise) { const b = music.nois
   g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0008, t + len); s.connect(f).connect(g).connect(musicOut(ctx)); s.start(t); s.stop(t + len + .02); }
 // (k: the step in the tune - its chords; n: the steps counted since it began, for the keyboard, which comes in now and
 // then: chords on the off-beats every second bar, a little run up the chord every fourth - the user, 03-11-2026)
-function playStep(ctx, t, k, stepT, B, n = k) { if (beatNow === 1) return discoStep(ctx, t, k, stepT, n); if (beatNow === 2) return drumStep(ctx, t, k, stepT, n); const s = k % 16, chord = CHORDS[Math.floor(k / 16) % 4], bar = Math.floor(n / 16);
+function playStep(ctx, t, k, stepT, B, n = k) { const beat = free('beat-' + beatNow) ? beatNow : 0; if (beat === 1) return discoStep(ctx, t, k, stepT, n); if (beat === 2) return drumStep(ctx, t, k, stepT, n); const s = k % 16, chord = CHORDS[Math.floor(k / 16) % 4], bar = Math.floor(n / 16);
   if (B.k[s] === '1') tone(ctx, t, 150, .16, 'sine', .7, 45);
   if (B.s[s] === '1') { hiss(ctx, t, .14, 1200, .28); tone(ctx, t, 190, .08, 'triangle', .1); }
   if (B.h[s] === '1') hiss(ctx, t, .035, 7000, .08);
@@ -6424,7 +6523,9 @@ if (location.pathname.includes('/test/')) { const b = document.createElement('bu
 // (one more line while the child isn't saved with a name yet - the user, 04-11-2026: how to keep one's own player)
 const infoSave = document.createElement('span'); infoSave.innerHTML = T('<br>🙂 Gem dig selv som spiller: Byg din figur, og tryk på billedet nederst i højre hjørne. Vælg »Børn og spillere – for voksne«, og få en voksen til at løse regnestykket. Skriv navnet, og tryk 📷', '<br>🙂 Save yourself as a player: Build your figure and tap the picture in the bottom right corner. Choose “Children and players – for grown-ups” and get a grown-up to solve the math problem. Write the name and tap 📷');
 const infoVersion = document.createElement('small'); infoVersion.style.cssText = 'display:block;margin-top:6px;opacity:.65;font-weight:600'; infoVersion.textContent = 'Version ' + document.querySelector('meta[name="minimig-version"]').content;
-infoBtn.onclick = () => { const p = playerNow(); infoSave.remove(); infoVersion.remove(); if (!p.name || !p.fig) infoPop.append(infoSave); infoPop.append(infoVersion); infoPop.hidden = !infoPop.hidden; infoBtn.setAttribute('aria-expanded', String(!infoPop.hidden)); clearTimeout(infoTimer); if (!infoPop.hidden) infoTimer = setTimeout(() => { infoPop.hidden = true; infoBtn.setAttribute('aria-expanded', 'false'); }, 16000); };
+// (and the trademark under it - the user, 18-11-2026: ™ until a formal registration, never ®)
+const infoTm = document.createElement('small'); infoTm.style.cssText = 'display:block;margin-top:2px;opacity:.55;font-weight:600;font-size:.72em'; infoTm.textContent = T('MiniMig™ er et varemærke tilhørende LEHCO ApS.', 'MiniMig™ is a trademark of LEHCO ApS.');
+infoBtn.onclick = () => { const p = playerNow(); infoSave.remove(); infoVersion.remove(); infoTm.remove(); if (!p.name || !p.fig) infoPop.append(infoSave); infoPop.append(infoVersion, infoTm); infoPop.hidden = !infoPop.hidden; infoBtn.setAttribute('aria-expanded', String(!infoPop.hidden)); clearTimeout(infoTimer); if (!infoPop.hidden) infoTimer = setTimeout(() => { infoPop.hidden = true; infoBtn.setAttribute('aria-expanded', 'false'); }, 16000); };
 // (the figure on the screen remembered on this device, and put on again when the game opens - the pages promised it, and
 // a new version comes in by itself when the game is put away; never while it is being put on, nor in a game. A child with
 // a MiniMig of their own and nothing remembered yet gets that)
