@@ -93,6 +93,11 @@
   .swatches[hidden] { display: none; }
   .panel .swatches button { width: 38px; height: 38px; padding: 0; border-radius: 50%; border: 3px solid #FFFFFF; box-shadow: 0 0 0 2px var(--line); }
   .panel .swatches button.on { box-shadow: 0 0 0 3px var(--accent); }
+  /* (the patterns: rounded squares under the round colours, each a little picture of the pattern) */
+  .patterns { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 10px; }
+  .patterns[hidden] { display: none; }
+  .panel .patterns button { width: 38px; height: 38px; padding: 0; border-radius: 10px; border: 3px solid #FFFFFF; box-shadow: 0 0 0 2px var(--line); }
+  .panel .patterns button.on { box-shadow: 0 0 0 3px var(--accent); }
   .sliders { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 14px; font-size: 12px; font-weight: 700; }
   .sliders label { display: flex; align-items: center; gap: 6px; }
   .sliders input { width: min(210px, 70vw); height: 22px; border-radius: 11px; -webkit-appearance: none; appearance: none; }
@@ -485,6 +490,8 @@
     </div>
     <!-- (the app's fixed colours as round buttons - back beside the sliders, the user wanted, 03-11-2026) -->
     <div class="swatches" id="swatches"></div>
+    <!-- (the patterns under the colours - the user, 18-11-2026) -->
+    <div class="patterns" id="patterns" hidden></div>
     <div class="sliders" id="sliders">
       <label>Farve <input type="range" id="s-h" min="0" max="360" step="1"></label>
       <label>Styrke <input type="range" id="s-s" min="0" max="100" step="1"></label>
@@ -727,7 +734,7 @@ const EN = {
   'Gem i Mine figurer': 'Save in My figures', 'Ny MiniMig': 'New MiniMig', 'Dreng': 'Boy', 'Pige': 'Girl', 'Den figur, du har nu, bliver gemt i Mine figurer 🖼️.': 'The figure you have now is saved in My figures 🖼️.', 'Børn': 'Children', '🖼️ Gemte figurer': '🖼️ Saved figures', 'Børn og spillere – for voksne': 'Children and players – for grown-ups',
   'Dit billede': 'Your picture', 'Tryk og hold på billedet, og vælg': 'Press and hold the picture, and choose', 'Gem i Fotos': 'Save to Photos', 'eller': 'or', 'Del': 'Share', '💾 Gem billedet': '💾 Save the picture', 'Billedet gemmes i mappen Overførsler. Du kan også højreklikke på billedet og vælge': 'The picture is saved in your Downloads folder. You can also right-click the picture and choose', 'Gem billede som': 'Save image as',
   'Sådan gør du': 'How it works', 'Musik til og fra': 'Music on and off', 'Skift beat': 'Change beat', 'Trommer': 'Drums', 'Skriv dit navn': 'Write your name', 'Navn på trøjen': 'Name on the top', 'Sig navnet': 'Say the name', 'Slet din egen stemme': 'Delete your own voice', 'Gem dansen': 'Save the dance', 'Start forfra': 'Start again', 'Navn på dansen': 'Name of the dance', 'Luk': 'Close', 'Slet': 'Delete', 'Mønterne på disken': 'The coins on the counter', 'Billedet af figuren': 'The picture of the figure', 'Min MiniMig': 'My MiniMig',
-  'Hele MiniMig': 'The full MiniMig', 'Hele MiniMig™': 'The full MiniMig™', 'Køb Hele MiniMig': 'Buy the full MiniMig', 'Gendan køb': 'Restore purchase', '✓ I har Hele MiniMig': '✓ You have the full MiniMig',
+  'Hele MiniMig': 'The full MiniMig', 'Ensfarvet': 'Plain', 'Striber': 'Stripes', 'Kontrastærmer': 'Contrast sleeves', 'Bånd': 'Band', 'Lodrette striber': 'Vertical stripes', 'Sidestriber': 'Side stripes', 'Knælapper': 'Knee patches', 'Opslag': 'Turn-ups', 'Stribe': 'Stripe', 'Tåkappe': 'Toe cap', 'Hælkappe': 'Heel cap', 'Hele MiniMig™': 'The full MiniMig™', 'Køb Hele MiniMig': 'Buy the full MiniMig', 'Gendan køb': 'Restore purchase', '✓ I har Hele MiniMig': '✓ You have the full MiniMig',
   'Ét køb – intet abonnement. Det gælder alle børn på denne enhed.': 'One purchase – no subscription. It covers every child on this device.',
   'Kun på testsiden: prøv spillet som': 'Test site only: try the game as', 'Basis': 'Basic',
   'Flere børn, hver med sin egen MiniMig og sine egne stjerner, følger med i Hele MiniMig.': 'More children, each with their own MiniMig and their own stars, come with the full MiniMig.',
@@ -770,7 +777,7 @@ disc.rotation.x = -Math.PI / 2; disc.position.y = .001; scene.add(disc);
 const CHOICES = [['skin', 'Hud', 'hud'], ['hair', 'Hår', 'haar'], ['eyes', 'Øjne', 'oejne'], ['brows', 'Bryn', 'bryn'], ['nose', 'Næse', 'naese'], ['mouth', 'Mund', 'mund'], ['ears', 'Ører', 'oerer'], ['pynt', 'Pynt', 'kinder'], ['shirt', 'Trøje', 'troeje'], ['pants', 'Bukser', 'bukser'], ['dress', 'Kjole', 'kjoler'], ['gear-skate', 'Skateboard', 'fane-skate'], ['gear-sea', 'Svømning', 'fane-svoem'], ['gear-space', 'Rumrejse', 'fane-rum'], ['gear-pk', 'Straffespark', 'fane-straffe'], ['gear-snow', 'Sne', 'fane-snow'],
   ['socks', 'Strømper', 'stroemper'], ['shoe', 'Sko', 'sko'], ['hat', 'Hat', 'hat'], ['glasses', 'Briller', 'briller'], ['item', 'Ting', 'ting'], ['name', 'Navn', 'navn'], ['bg', 'Baggrund', 'baggrund']];
 const picked = {}, START = { skin: '#EDB98A', hair: '#4A2C1D', eyes: '#7A4220', brows: '#4A2C1D', mouth: '#C0505A', pynt: '#FF5A6E', nose: '#EDB98A', shirt: '#FF7A2F', pants: '#2C3E8C', dress: '#3D8BFF', suit: '#3D8BFF', socks: '#3D8BFF', item: '#E8384F', shoe: '#3D8BFF', hat: '#3D8BFF', glasses: '#3D8BFF' }; let partNow = 'shirt';
-const apply = (part, c) => { picked[part] = c; recolour(part, c); if (part === 'shirt' || part === 'dress') chestName(); };
+const apply = (part, c) => { picked[part] = c; recolour(part, c); if (part === 'shirt' || part === 'dress') chestName(); if (typeof paintPatterns === 'function') { paintPatterns(part); showPatterns(false); } };
 const iconButton = (src, label) => { const b = document.createElement('button'), i = new Image(); i.src = src; i.alt = ''; i.onerror = () => i.remove();
   const s = document.createElement('span'); s.textContent = tr(label); b.append(i, s); return b; };
 // (the app's colours, as in version 2.5D)
@@ -804,6 +811,7 @@ function showSwatches() { const move = /^(move|game)-/.test(partNow); if (!move)
   const sw = document.getElementById('swatches'), list = noColour ? [] : PALETTES[colourPart()] || PALETTES.cloth; sw.hidden = !list.length; sw.innerHTML = '';
   for (const c of list) { const b = document.createElement('button'); b.style.background = c; b.setAttribute('aria-label', c); b.classList.toggle('on', (picked[colourPart()] || START[colourPart()] || '').toLowerCase() === c.toLowerCase());
     b.onclick = () => { applyTab(c); slidersFrom(c); sw.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); }; sw.append(b); }
+  try { showPatterns(noColour); } catch (e) {}
   document.getElementById('nameBox').hidden = partNow !== 'name'; document.getElementById('myDance').hidden = partNow !== 'move-mindans';
   document.querySelectorAll('#subs [data-part]').forEach(b => b.classList.toggle('on', b.dataset.part === partNow && boxOpen));
   renderStyles(); placeBox(); }
@@ -2543,7 +2551,7 @@ async function setGarment(part, name) { const G = GARMENTS[part], ask = ++dressi
   const shirt = !!(GARMENTS.dress.now || GARMENTS.shirt.now || GARMENTS.suit.now), pants = !!(GARMENTS.dress.now || GARMENTS.pants.now || GARMENTS.suit.now);
   if (tex && (!!tex.covered[PARTS.shirt] !== shirt || !!tex.covered[PARTS.pants] !== pants)) { tex.covered = { [PARTS.shirt]: shirt, [PARTS.pants]: pants }; redrawBody(); }
   for (const g of Object.values(GARMENTS)) for (const [n, m] of Object.entries(g.meshes)) if (m) m.visible = n === g.shown;
-  wearUnder(); hideBody(); layer(); tuckIn(); hatHair(); chestName(); }
+  wearUnder(); hideBody(); layer(); tuckIn(); hatHair(); chestName(); try { paintAllPatterns(); } catch (e) { console.warn(e); } if (part === 'shirt' || part === 'pants' || part === 'shoe') showPatterns(false); }
 // (trousers tucked into tall boots: long trousers over the rubber boots - the boots' blue came out through the trouser
 // legs, they being wider, the user said 18-11-2026. Below a little under the boots' top the trouser legs are left out, as
 // trousers tucked into wellies are; the boots, wider, hide their end. Only for tall boots - their top over .15 of the
@@ -3805,6 +3813,93 @@ function footballPrints() { if (!hairBase) return; const { H } = hairBase.whole,
     g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = `800 ${h * .78}px ui-rounded, "Arial Rounded MT Bold", system-ui, sans-serif`;
     g.shadowColor = light ? 'rgba(255,255,255,.35)' : 'rgba(0,0,0,.25)'; g.shadowOffsetY = 5; g.shadowBlur = 8;
     g.fillStyle = light ? '#2B2153' : '#FFFFFF'; g.fillText('10', w / 2, h / 2 + h * .04); })); }
+// ---- Patterns on the clothes (the user, 18-11-2026: "smartere udseender end bare enkeltfarver" - stripes and such, for a
+// fresher look): under the colours a row of small pictures - plain, and a few patterns for the top, the trousers and the
+// sneakers. The second colour is chosen by itself - white, or navy on light clothes, as the socks' band - so the child
+// picks only a colour and a pattern. Drawn by the garment's own light and folds, sharp at any distance: each point of the
+// garment knows where it sits on the body as made (height, side, front or back, how far it is arm), and the picture is
+// worked out for each dot of the screen from that. No real brand's marks - no three stripes, no swoosh
+var PATTERNS = {
+  shirt: [['', 'Ensfarvet'], ['striber', 'Striber'], ['kontrast', 'Kontrastærmer'], ['baand', 'Bånd'], ['lodret', 'Lodrette striber']],
+  pants: [['', 'Ensfarvet'], ['sidestriber', 'Sidestriber'], ['knae', 'Knælapper'], ['opslag', 'Opslag']],
+  shoe: [['', 'Ensfarvet'], ['stribe', 'Stribe'], ['taa', 'Tåkappe'], ['hael', 'Hælkappe']] };
+var PAT_ID = { striber: 1, kontrast: 2, baand: 3, lodret: 4, sidestriber: 11, knae: 12, opslag: 13, stribe: 21, taa: 22, hael: 23 };
+var patternNow = {}; // (var, all three: asked for before this line runs, they are just not there yet)
+// (which garments take a pattern: the tops, the trousers but the briefs, and the sneakers - football boots too)
+const patOk = (part, name) => !!name && (part === 'shoe' ? ['sko-sneakers', 'sko-fodbold'].includes(name) : part === 'pants' ? name !== 'bukser-trusser' : part === 'shirt');
+const PAT_GLSL = `
+uniform float mmPat; uniform vec3 mmCol2; uniform vec3 mmBase; uniform float mmNeck; uniform float mmCrotch; uniform float mmHem; uniform vec4 mmKnee;
+varying vec3 vMmRest; varying vec3 vMmNor; varying float vMmArm; varying float vMmLeg; varying float vMmFoot;
+float mmBand(float x, float a, float b) { float f = max(fwidth(x), 1e-4); return smoothstep(a - f, a + f, x) - smoothstep(b - f, b + f, x); }
+float mmStripe(float x) { float t = abs(fract(x) - .5) * 2.; float f = max(fwidth(t), 1e-4); return smoothstep(.5 - f, .5 + f, t); }
+float mmMask() { vec3 r = vMmRest; float nl = length(vMmNor); vec3 n = nl > .1 ? vMmNor / nl : vec3(0.); float arm = smoothstep(.35, .65, vMmArm), side = r.x < 0. ? -1. : 1.;
+  if (mmPat < 1.5) return mmStripe(r.y / .045) * (1. - smoothstep(mmNeck - .03, mmNeck - .02, r.y));
+  if (mmPat < 2.5) return arm;
+  if (mmPat < 3.5) return mmBand(r.y, mmNeck - .2, mmNeck - .155) * (1. - arm);
+  if (mmPat < 4.5) return mmStripe(r.x / .045 + .5) * (1. - arm) * (1. - smoothstep(mmNeck - .03, mmNeck - .02, r.y));
+  if (mmPat < 11.5) { float a = atan(n.z, n.x * side); a = vMmLeg; return vMmLeg < -5. ? 0. : (mmBand(a, .05, .2) + mmBand(a, .32, .47)) * step(r.y, mmCrotch); }
+  if (mmPat < 12.5) { vec2 k = side < 0. ? mmKnee.xy : mmKnee.zw; vec2 d = abs(r.xy - k); return mmBand(d.x, -1., .03) * mmBand(d.y, -1., .032) * smoothstep(.15, .35, n.z); }
+  if (mmPat < 13.5) return 1. - smoothstep(mmHem + .018, mmHem + .023, r.y);
+  if (mmPat < 21.5) return mmBand(r.y, .026, .038) * smoothstep(.25, .45, abs(n.x));
+  if (mmPat < 22.5) return smoothstep(.7, .74, vMmFoot) * step(.011, r.y);
+  return (1. - smoothstep(.22, .26, vMmFoot)) * step(.011, r.y) * step(-1., vMmFoot); }
+`;
+// (each point's place on the body as made - its height, side and depth in heights of the figure, the way it faces, how
+// much it moves with an arm - put on the garment once, and on the rims and bands that share its stuff)
+function patPrep(mesh) { if (mesh.userData.patReady) return; mesh.userData.patReady = true;
+  const { inv, H } = hairBase.whole, K = clothMarks(), M = inv.clone().invert(), N = new THREE.Matrix3().getNormalMatrix(M), v = new THREE.Vector3();
+  const bones = hairBase.body.skeleton.bones, arms = new Set(bones.flatMap((b, j) => /Arm|Hand/.test(b.name) ? [j] : []));
+  // (the legs: each point's leg by the bones it moves with, and its angle round that leg at its height - 0 straight out to
+  // the side, forwards positive. The side stripes by it: by the way the cloth faced they came out on one leg only, wavy)
+  const legOf = new Map(bones.flatMap((b, j) => /(Left|Right)(UpLeg|Leg|Foot|ToeBase)/.test(b.name) ? [[j, Math.sign(hairBase.at[j].x - K.mid) || 1]] : []));
+  for (const m of [mesh, ...(mesh.parent?.children || []).filter(o => o !== mesh && o.isSkinnedMesh && o.material === mesh.material)]) {
+    const g = m.geometry, P = g.attributes.position, Nn = g.attributes.normal, si = g.attributes.skinIndex, sw = g.attributes.skinWeight, n = P.count, R = new Float32Array(n * 3), Q = new Float32Array(n * 3), A = new Float32Array(n);
+    for (let i = 0; i < n; i++) { v.fromBufferAttribute(P, i).applyMatrix4(M); R[i * 3] = (v.x - K.mid) / H; R[i * 3 + 1] = v.y / H; R[i * 3 + 2] = (v.z - K.cz) / H;
+      if (Nn) { v.fromBufferAttribute(Nn, i).applyMatrix3(N).normalize(); Q[i * 3] = v.x; Q[i * 3 + 1] = v.y; Q[i * 3 + 2] = v.z; }
+      let a = 0; if (si && sw) for (let c = 0; c < 4; c++) if (arms.has(si.getComponent(i, c))) a += sw.getComponent(i, c); A[i] = a; }
+    // (round the leg's own line, hip to knee to ankle, as the bones stand)
+    const L = new Float32Array(n).fill(-9), axis = {}, joint = (sd, re) => { const j = bones.findIndex((b, k) => re.test(b.name) && (Math.sign(hairBase.at[k].x - K.mid) || 1) === sd); return j < 0 ? null : [(hairBase.at[j].x - K.mid) / H, hairBase.at[j].y / H, (hairBase.at[j].z - K.cz) / H]; };
+    for (const sd of [-1, 1]) axis[sd] = [joint(sd, /(Left|Right)UpLeg$/), joint(sd, /(Left|Right)Leg$/), joint(sd, /(Left|Right)Foot$/)];
+    const centre = (sd, y) => { const [h, k, a] = axis[sd]; if (!h || !k || !a) return null; const [p, q] = y >= k[1] ? [k, h] : [a, k], t = Math.min(1, Math.max(0, (y - p[1]) / (q[1] - p[1] || 1))); return [p[0] + (q[0] - p[0]) * t, p[2] + (q[2] - p[2]) * t]; };
+    if (si && sw) for (let i = 0; i < n; i++) { let l = 0, r = 0; for (let c = 0; c < 4; c++) { const sd = legOf.get(si.getComponent(i, c)); if (sd < 0) l += sw.getComponent(i, c); else if (sd > 0) r += sw.getComponent(i, c); }
+      if (l + r < .5) continue; const sd = l > r ? -1 : 1, c = centre(sd, R[i * 3 + 1]); if (c) L[i] = Math.atan2(R[i * 3 + 2] - c[1], (R[i * 3] - c[0]) * sd); }
+    g.setAttribute('mmRest', new THREE.BufferAttribute(R, 3)); g.setAttribute('mmNor', new THREE.BufferAttribute(Q, 3)); g.setAttribute('mmArm', new THREE.BufferAttribute(A, 1)); g.setAttribute('mmLeg', new THREE.BufferAttribute(L, 1));
+    // (a shoe's own length: each point's place from the heel, 0, to the toe, 1 - for the toe and heel caps)
+    const F = new Float32Array(n).fill(-9), lo = { '-1': Infinity, 1: Infinity }, hi = { '-1': -Infinity, 1: -Infinity };
+    for (let i = 0; i < n; i++) if (R[i * 3 + 1] < .09) { const sd = R[i * 3] < 0 ? -1 : 1; lo[sd] = Math.min(lo[sd], R[i * 3 + 2]); hi[sd] = Math.max(hi[sd], R[i * 3 + 2]); }
+    for (let i = 0; i < n; i++) if (R[i * 3 + 1] < .09) { const sd = R[i * 3] < 0 ? -1 : 1; F[i] = (R[i * 3 + 2] - lo[sd]) / Math.max(1e-4, hi[sd] - lo[sd]); }
+    g.setAttribute('mmFoot', new THREE.BufferAttribute(F, 1)); } }
+// (the garment's stuff taught the patterns once: the picture's colour, then the pattern laid over it in the second colour,
+// as light or dark as the garment is there - its folds and shade go on through the pattern)
+function patMaterial(mesh, hem) { const mats = [].concat(mesh.material).filter(Boolean); if (mats[0]?.userData.pat) return mats[0].userData.pat;
+  const U = { mmPat: { value: 0 }, mmCol2: { value: new THREE.Color('#FFFFFF') }, mmBase: { value: new THREE.Color('#FFFFFF') }, mmNeck: { value: 0 }, mmCrotch: { value: 0 }, mmHem: { value: hem || 0 }, mmKnee: { value: new THREE.Vector4() } };
+  for (const mat of mats) { const prev = mat.onBeforeCompile;
+  mat.onBeforeCompile = (sh, r) => { if (prev && prev !== THREE.Material.prototype.onBeforeCompile) prev.call(mat, sh, r); Object.assign(sh.uniforms, U);
+    sh.vertexShader = 'attribute vec3 mmRest;\nattribute vec3 mmNor;\nattribute float mmArm;\nattribute float mmLeg;\nattribute float mmFoot;\nvarying float vMmLeg;\nvarying float vMmFoot;\nvarying vec3 vMmRest;\nvarying vec3 vMmNor;\nvarying float vMmArm;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nvMmRest = mmRest; vMmNor = mmNor; vMmArm = mmArm; vMmLeg = mmLeg; vMmFoot = mmFoot;');
+    sh.fragmentShader = PAT_GLSL + sh.fragmentShader.replace('#include <map_fragment>', '#include <map_fragment>\nif (mmPat > .5) { float mmM = clamp(mmMask(), 0., 1.); vec3 mmL = vec3(.2126, .7152, .0722); float mmK = clamp(dot(diffuseColor.rgb, mmL) / max(dot(mmBase, mmL), .02), .75, 1.4); diffuseColor.rgb = mix(diffuseColor.rgb, mmCol2 * mmK, mmM); }'); };
+  mat.customProgramCacheKey = () => 'mm-pattern'; mat.needsUpdate = true; mat.userData.pat = U; } return U; }
+// (the pattern on what is worn now - or off: a garment with none, or one that takes none)
+function paintPatterns(part) { if (!PATTERNS || !hairBase?.whole || !PATTERNS[part] || typeof GARMENTS === 'undefined') return; const G = GARMENTS[part], { H } = hairBase.whole, K = clothMarks();
+  for (const [n, top] of Object.entries(G.meshes)) for (const m of (() => { const l = []; if (top?.isSkinnedMesh) return [top]; top?.traverse?.(o => { if (o.isSkinnedMesh && o.material) l.push(o); }); return l; })()) { const id = n === G.shown && patOk(part, n) ? PAT_ID[patternNow[part]] || 0 : 0;
+    if (!id) { const u = [].concat(m.material)[0]?.userData.pat; if (u) u.mmPat.value = 0; continue; }
+    patPrep(m); const U = patMaterial(m, (G.items.find(i => i[0] === n)?.[2]?.hem) || 0), base = picked[part] ? new THREE.Color().setStyle(picked[part], THREE.SRGBColorSpace) : clothColour(part, m), c = {};
+    base.getRGB(c, THREE.SRGBColorSpace); U.mmBase.value.copy(base); U.mmCol2.value.setStyle(.2126 * c.r + .7152 * c.g + .0722 * c.b > .6 ? '#2C3E8C' : '#FFFFFF', THREE.SRGBColorSpace);
+    U.mmNeck.value = K.neckY / H; U.mmCrotch.value = (hairBase.hipY - .06 * H) / H;
+    const bones = hairBase.body.skeleton.bones, knee = sx => { const j = bones.findIndex((b, k) => /(Left|Right)Leg$/.test(b.name) && !/UpLeg/.test(b.name) && Math.sign(hairBase.at[k].x - K.mid) === sx); return j < 0 ? [sx * .05, .27] : [(hairBase.at[j].x - K.mid) / H, hairBase.at[j].y / H]; };
+    const [lx, ly] = knee(-1), [rx, ry] = knee(1); U.mmKnee.value.set(lx, ly, rx, ry); U.mmPat.value = id; } }
+function paintAllPatterns() { if (PATTERNS) for (const p of Object.keys(PATTERNS)) paintPatterns(p); }
+// (the row of patterns under the colours: each a little picture of the pattern in the garment's colour and the second one)
+function patPreview(id, c, c2) { const g = (a, b) => `linear-gradient(${a}, ${b})`;
+  return { '': c, striber: `repeating-linear-gradient(0deg, ${c} 0 6px, ${c2} 6px 11px)`, kontrast: g('90deg', `${c2} 0 26%, ${c} 26% 74%, ${c2} 74%`), baand: g('0deg', `${c} 0 38%, ${c2} 38% 62%, ${c} 62%`),
+    lodret: `repeating-linear-gradient(90deg, ${c} 0 6px, ${c2} 6px 11px)`, sidestriber: g('90deg', `${c} 0 62%, ${c2} 62% 70%, ${c} 70% 78%, ${c2} 78% 86%, ${c} 86%`),
+    knae: `linear-gradient(${c2}, ${c2}) 22% 62% / 24% 26% no-repeat, linear-gradient(${c2}, ${c2}) 78% 62% / 24% 26% no-repeat, ${c}`, opslag: g('0deg', `${c2} 0 26%, ${c} 26%`),
+    stribe: g('0deg', `${c} 0 40%, ${c2} 40% 58%, ${c} 58%`), taa: g('90deg', `${c} 0 62%, ${c2} 62%`), hael: g('90deg', `${c2} 0 32%, ${c} 32%`) }[id] || c; }
+function showPatterns(noColour) { const box = document.getElementById('patterns'); if (!box || !PATTERNS) return; const part = colourPart(), list = PATTERNS[part];
+  const show = !noColour && list && typeof GARMENTS !== 'undefined' && patOk(part, GARMENTS[part]?.now); box.hidden = !show; box.innerHTML = ''; if (!show) return;
+  const c = picked[part] || START[part], hsl = {}, cc = new THREE.Color().setStyle(c, THREE.SRGBColorSpace), s = {}; cc.getRGB(s, THREE.SRGBColorSpace); const c2 = .2126 * s.r + .7152 * s.g + .0722 * s.b > .6 ? '#2C3E8C' : '#FFFFFF';
+  for (const [id, label] of list) { const b = document.createElement('button'); b.style.background = patPreview(id, c, c2); b.setAttribute('aria-label', tr(label)); b.title = tr(label); b.classList.toggle('on', (patternNow[part] || '') === id);
+    b.onclick = () => { if (id) patternNow[part] = id; else delete patternNow[part]; paintPatterns(part); box.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); }; box.append(b); } }
+
 // (the tab: a box to write the name in and the badges under it, in place of styles and colours)
 const nameInput = document.getElementById('nameInput'); nameInput.value = nameNow;
 nameInput.addEventListener('input', () => { nameNow = nameInput.value; chestName(); showRec(); clearTimeout(sayTimer); sayTimer = setTimeout(sayName, 1100); });
@@ -3869,13 +3964,14 @@ showBadges();
 // saved out of the page (the camera, behind a grown-up's sum) ----
 // (a figure: its choices - the colours picked, the hair, the face, what it wears, the name)
 const figureNow = () => ({ picked: { ...picked }, hair: hairNow, eyes: eyesNow, brows: browsNow, mouth: mouthNow, nose: noseNow, pynt: [...pyntNow],
-  wear: Object.fromEntries(Object.entries(GARMENTS).map(([p, G]) => [p, G.now])), name: nameNow, badge: badgeNow, item: itemNow, pet: petNow, petToys: [...petToys], ears: earsNow, earrings: earringsNow, bg: bgNow });
+  wear: Object.fromEntries(Object.entries(GARMENTS).map(([p, G]) => [p, G.now])), name: nameNow, badge: badgeNow, item: itemNow, pet: petNow, petToys: [...petToys], ears: earsNow, earrings: earringsNow, bg: bgNow, pattern: { ...patternNow } });
 // (a part's own colour back: the figure's painted one, the hair's and the garments' as made)
 const unpaint = list => { for (const t of list) { const im = t.ctx.createImageData(t.w, t.h); im.data.set(t.src); t.ctx.putImageData(im, 0, 0); t.texture.needsUpdate = true; } };
 function unpick(part) { delete picked[part]; if (part === 'socks' || part === 'shoe') { paintSocks(); paintHeels(); } if (part === 'item') paintItem(); if (part === 'hair') unpaint(hairTexs); if (GARMENTS[part]) unpaint(GARMENTS[part].texs); if (part === 'suit') unpaint(gearTexs);
   if (tex && PARTS[part]) { delete tex.colours[PARTS[part]]; if (part === 'hair' && !picked.brows) delete tex.colours[PARTS.brows]; if (part === 'brows' && picked.hair) tex.colours[PARTS.brows] = tex.colours[PARTS.hair]; } }
 let dressingUp = 0;
 async function wearFigure(f) { const ask = ++dressingUp; f = basisFigure(f);
+  if (patternNow) { for (const k of Object.keys(patternNow)) delete patternNow[k]; Object.assign(patternNow, f.pattern || {}); }
   // (the colours: the brows before the hair, which they follow when they have none of their own)
   for (const [part] of CHOICES) if (part !== 'hair') { if (f.picked[part]) { picked[part] = f.picked[part]; recolour(part, f.picked[part]); } else unpick(part); }
   if (f.picked.hair) { picked.hair = f.picked.hair; recolour('hair', f.picked.hair); } else unpick('hair');
@@ -6562,6 +6658,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.13.1 (33aa888)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.13.1 (e866b06)</div>
 </body>
 </html>
