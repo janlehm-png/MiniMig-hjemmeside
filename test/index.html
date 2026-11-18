@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>TEST MiniMig</title>
+<title>MiniMig™ version 2</title>
 <meta name="minimig-version" content="0.13.0">
 <!-- (the number of this version, shown under the i - see VERSIONER.md - raised for each package and each fix put out) -->
 <!-- (the same icon as version 1 on a home screen, under the name MiniMig 2 - the icons lie in the website's billeder/;
@@ -612,7 +612,7 @@
 <!-- Hele MiniMig, for grown-ups (behind the sum): what the full version holds, and the purchase - the user, 17-11-2026 -->
 <div class="sheet" id="fullSheet" hidden>
   <div class="sheet-card full-sheet" role="dialog" aria-modal="true" aria-labelledby="fullTitle">
-    <div class="sheet-head"><h2 id="fullTitle">Hele MiniMig</h2><button class="sheet-x" data-close aria-label="Luk">✕</button></div>
+    <div class="sheet-head"><h2 id="fullTitle">Hele MiniMig™</h2><button class="sheet-x" data-close aria-label="Luk">✕</button></div>
     <p class="note" id="fullNote"></p>
     <div class="full-own" id="fullOwn" hidden>✓ I har Hele MiniMig</div>
     <div id="fullShow"></div>
@@ -727,14 +727,14 @@ const EN = {
   'Gem i Mine figurer': 'Save in My figures', 'Ny MiniMig': 'New MiniMig', 'Dreng': 'Boy', 'Pige': 'Girl', 'Den figur, du har nu, bliver gemt i Mine figurer 🖼️.': 'The figure you have now is saved in My figures 🖼️.', 'Børn': 'Children', '🖼️ Gemte figurer': '🖼️ Saved figures', 'Børn og spillere – for voksne': 'Children and players – for grown-ups',
   'Dit billede': 'Your picture', 'Tryk og hold på billedet, og vælg': 'Press and hold the picture, and choose', 'Gem i Fotos': 'Save to Photos', 'eller': 'or', 'Del': 'Share', '💾 Gem billedet': '💾 Save the picture', 'Billedet gemmes i mappen Overførsler. Du kan også højreklikke på billedet og vælge': 'The picture is saved in your Downloads folder. You can also right-click the picture and choose', 'Gem billede som': 'Save image as',
   'Sådan gør du': 'How it works', 'Musik til og fra': 'Music on and off', 'Skift beat': 'Change beat', 'Trommer': 'Drums', 'Skriv dit navn': 'Write your name', 'Navn på trøjen': 'Name on the top', 'Sig navnet': 'Say the name', 'Slet din egen stemme': 'Delete your own voice', 'Gem dansen': 'Save the dance', 'Start forfra': 'Start again', 'Navn på dansen': 'Name of the dance', 'Luk': 'Close', 'Slet': 'Delete', 'Mønterne på disken': 'The coins on the counter', 'Billedet af figuren': 'The picture of the figure', 'Min MiniMig': 'My MiniMig',
-  'Hele MiniMig': 'The full MiniMig', 'Køb Hele MiniMig': 'Buy the full MiniMig', 'Gendan køb': 'Restore purchase', '✓ I har Hele MiniMig': '✓ You have the full MiniMig',
+  'Hele MiniMig': 'The full MiniMig', 'Hele MiniMig™': 'The full MiniMig™', 'Køb Hele MiniMig': 'Buy the full MiniMig', 'Gendan køb': 'Restore purchase', '✓ I har Hele MiniMig': '✓ You have the full MiniMig',
   'Ét køb – intet abonnement. Det gælder alle børn på denne enhed.': 'One purchase – no subscription. It covers every child on this device.',
   'Kun på testsiden: prøv spillet som': 'Test site only: try the game as', 'Basis': 'Basic',
   'Flere børn, hver med sin egen MiniMig og sine egne stjerner, følger med i Hele MiniMig.': 'More children, each with their own MiniMig and their own stars, come with the full MiniMig.',
   'Spil': 'Games', 'Tøj og udstyr': 'Clothes and gear', 'Ting, baggrunde og dyr': 'Things, backgrounds and pets', 'Familien': 'The family',
   'Flere børn': 'More children', 'Sjov': 'Fun', 'Disco': 'Disco' };
 const tr = s => LANG === 'en' ? EN[String(s).replace(/­/g, '')] ?? s : s;
-document.documentElement.lang = LANG; if (LANG === 'en') document.title = 'MiniMig – build and play';
+document.documentElement.lang = LANG; if (LANG === 'en') document.title = 'MiniMig™ – build and play';
 // (the page's own texts and labels; a text's spaces round it are kept, as words sit beside the bold ones in a line)
 if (LANG === 'en') { const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT), nodes = []; while (walk.nextNode()) nodes.push(walk.currentNode);
   for (const n of nodes) { const key = n.nodeValue.trim(); if (key) { const en = tr(key); if (en !== key) n.nodeValue = n.nodeValue.replace(key, en); } }
@@ -6521,7 +6521,9 @@ if (location.pathname.includes('/test/')) { const b = document.createElement('bu
 // (one more line while the child isn't saved with a name yet - the user, 04-11-2026: how to keep one's own player)
 const infoSave = document.createElement('span'); infoSave.innerHTML = T('<br>🙂 Gem dig selv som spiller: Byg din figur, og tryk på billedet nederst i højre hjørne. Vælg »Børn og spillere – for voksne«, og få en voksen til at løse regnestykket. Skriv navnet, og tryk 📷', '<br>🙂 Save yourself as a player: Build your figure and tap the picture in the bottom right corner. Choose “Children and players – for grown-ups” and get a grown-up to solve the math problem. Write the name and tap 📷');
 const infoVersion = document.createElement('small'); infoVersion.style.cssText = 'display:block;margin-top:6px;opacity:.65;font-weight:600'; infoVersion.textContent = 'Version ' + document.querySelector('meta[name="minimig-version"]').content;
-infoBtn.onclick = () => { const p = playerNow(); infoSave.remove(); infoVersion.remove(); if (!p.name || !p.fig) infoPop.append(infoSave); infoPop.append(infoVersion); infoPop.hidden = !infoPop.hidden; infoBtn.setAttribute('aria-expanded', String(!infoPop.hidden)); clearTimeout(infoTimer); if (!infoPop.hidden) infoTimer = setTimeout(() => { infoPop.hidden = true; infoBtn.setAttribute('aria-expanded', 'false'); }, 16000); };
+// (and the trademark under it - the user, 18-11-2026: ™ until a formal registration, never ®)
+const infoTm = document.createElement('small'); infoTm.style.cssText = 'display:block;margin-top:2px;opacity:.55;font-weight:600;font-size:.72em'; infoTm.textContent = T('MiniMig™ er et varemærke tilhørende LEHCO ApS.', 'MiniMig™ is a trademark of LEHCO ApS.');
+infoBtn.onclick = () => { const p = playerNow(); infoSave.remove(); infoVersion.remove(); infoTm.remove(); if (!p.name || !p.fig) infoPop.append(infoSave); infoPop.append(infoVersion, infoTm); infoPop.hidden = !infoPop.hidden; infoBtn.setAttribute('aria-expanded', String(!infoPop.hidden)); clearTimeout(infoTimer); if (!infoPop.hidden) infoTimer = setTimeout(() => { infoPop.hidden = true; infoBtn.setAttribute('aria-expanded', 'false'); }, 16000); };
 // (the figure on the screen remembered on this device, and put on again when the game opens - the pages promised it, and
 // a new version comes in by itself when the game is put away; never while it is being put on, nor in a game. A child with
 // a MiniMig of their own and nothing remembered yet gets that)
@@ -6560,6 +6562,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.13.0 (7526885)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.13.0 (3a32cc4)</div>
 </body>
 </html>

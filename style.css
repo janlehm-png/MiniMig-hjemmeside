@@ -74,6 +74,10 @@ hr { border: 0; border-top: 2px solid var(--line); margin: 34px 0; }
 footer { color: var(--muted); font-size: .9rem; padding: 10px 0 40px; text-align: center; }
 footer a { color: var(--muted); }
 footer .maker { margin: 6px 0 0; font-size: .85rem; }
+/* (MiniMig™: the ™ small and raised just after the name - discreet, in the logo too; the line height kept) */
+sup.tm { font-size: .5em; line-height: 0; vertical-align: .85em; margin-left: .04em; font-weight: 700; letter-spacing: 0; }
+.logo sup.tm { font-size: .42em; vertical-align: 1.15em; color: var(--ink); }
+footer .tm-note { margin-top: 2px; }
 
 @media (max-width: 700px) {
   .hero { grid-template-columns: 1fr; text-align: center; }

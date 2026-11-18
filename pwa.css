@@ -28,3 +28,6 @@ body.pwa-game { min-height:100vh; min-height:100dvh; }
  .pwa-game > .pwa-tools button { min-height:34px; padding:4px 12px; }
  .pwa-game .stage { height:calc(100% - 8px); } /* (not the upright phone's small stage) */
 }
+
+/* (the trademark line at the bottom of Til voksne: small and quiet) */
+.pwa-dialog .pwa-tm { font-size: .8rem; opacity: .7; margin-top: 4px; }
