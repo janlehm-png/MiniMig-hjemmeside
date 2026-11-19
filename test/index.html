@@ -179,6 +179,18 @@
   .record { background: var(--tile); border-radius: 999px; padding: 4px 11px; font: 700 15px/1.2 system-ui, sans-serif; box-shadow: 0 2px 10px rgba(58, 46, 92, .15); }
   .record.beaten { background: #FFC233; }
   /* the stars kept: how many in all, and the best of each game at each level */
+  /* (the trophy shelf - the user, 19-11-2026: a cup for each jar filled, standing on a wooden shelf in the stars sheet;
+     one row a game, a place for each world - the cup gold when won, a pale one and the jar's progress when not yet) */
+  .shelf { display: grid; gap: 14px; margin: 6px 0 4px; }
+  .shelf-row h4 { margin: 0 0 4px; font: 800 .95rem/1.2 system-ui, sans-serif; color: #2B2153; }
+  .shelf-cups { display: flex; justify-content: space-around; align-items: flex-end; gap: 6px; padding: 8px 6px 0; border-radius: 16px 16px 0 0; background: linear-gradient(#F6F1FF, #EDE5FF); }
+  .shelf-plank { height: 14px; border-radius: 4px; background: linear-gradient(#C98B4E, #9A6332); box-shadow: 0 4px 8px rgba(90, 55, 20, .3); }
+  .cup { display: flex; flex-direction: column; align-items: center; width: 88px; text-align: center; font: 700 .8rem/1.15 system-ui, sans-serif; color: #2B2153; }
+  .cup svg { width: 64px; height: 76px; display: block; }
+  .cup.won svg { animation: cupShine 2.4s ease-in-out infinite; } @keyframes cupShine { 50% { transform: translateY(-2px) scale(1.04); } }
+  .cup .cup-name { margin-top: 2px; } .cup:not(.won) .cup-name { color: #8A82AA; }
+  .cup .cup-bar { display: block; width: 56px; height: 6px; margin: 3px 0 6px; border-radius: 3px; background: #DCD3F2; overflow: hidden; } .cup .cup-bar i { display: block; height: 100%; background: #FFB020; }
+  .cup.won .cup-bar { visibility: hidden; }
   .star-total { text-align: center; font: 800 2.4rem/1.1 system-ui, sans-serif; }
   .star-table { width: 100%; border-collapse: collapse; font: 700 .95rem/1.2 system-ui, sans-serif; }
   .star-table th, .star-table td { padding: 6px 4px; text-align: center; }
@@ -571,6 +583,7 @@
     <div class="who who-small" id="starWho"></div>
     <div class="star-total" id="starTotal">⭐ 0</div>
     <p class="note" id="starNote"></p>
+    <div id="trophyBox"><h3>🏆 Pokalhylden</h3><div class="shelf" id="trophyShelf"></div><p class="note">Fyld stjernekrukken i en verden, så får du en pokal på hylden.</p></div>
     <table class="star-table" id="starTable"></table>
     <p class="note">🏆 = din rekord i det spil på det niveau.</p>
     <h3>🔒 Stjernebutik</h3>
@@ -751,7 +764,7 @@ const EN = {
   '👆 Træk for at dreje figuren': '👆 Drag to turn the figure', '🤏 Knib for at zoome': '🤏 Pinch to zoom', '👕 Tryk på navnet på trøjen, så siger figuren det – med din egen indtalte stemme, hvis du har indtalt en': '👕 Tap the name on the top and the figure says it – in your own recorded voice, if you have recorded one',
   'Indtal selv': 'Record yourself', 'Gem ✓': 'Save ✓', 'Farve': 'Color', 'Styrke': 'Strength', 'Lys': 'Light', 'Gem billede': 'Save picture', 'Hele figuren': 'The whole figure', 'Profilbillede': 'Profile picture', 'Slå fra igen': 'Turn off again',
   'Skal barnet kunne dele billeder uden at spørge?': 'May the child share pictures without asking?', 'Nej, spørg hver gang': 'No, ask every time', 'Ja, i 1 time': 'Yes, for 1 hour', 'Ja, resten af i dag': 'Yes, for the rest of today', 'Ja, indtil jeg slår det fra igen': 'Yes, until I turn it off', '(kræver et sværere regnestykke)': '(needs a harder math problem)', 'Gælder kun på denne enhed. Et navn på trøjen kommer med på billedet.': 'Applies to this device only. A name on the top will be in the picture.',
-  'Spørg en voksen': 'Ask a grown-up', 'Stjernerne fra spillene bliver til mønter – jo sværere niveau, jo flere. For mønterne får du ting i butikken.': 'The stars from the games become coins in your account – the harder the level, the more. With the coins you buy things in the shop.', '🏆 = din rekord i det spil på det niveau.': '🏆 = your record in that game at that level.', '🔒 Stjernebutik': '🔒 Star shop', 'Tryk på en ting med 🔒, og betal med mønter. Hvert barn køber for sig selv.': 'Tap a thing with 🔒 and pay with coins. Each child buys for themselves.', '🧾 Det har du købt': '🧾 What you have bought',
+  'Spørg en voksen': 'Ask a grown-up', 'Stjernerne fra spillene bliver til mønter – jo sværere niveau, jo flere. For mønterne får du ting i butikken.': 'The stars from the games become coins in your account – the harder the level, the more. With the coins you buy things in the shop.', '🏆 = din rekord i det spil på det niveau.': '🏆 = your record in that game at that level.', '🔒 Stjernebutik': '🔒 Star shop', '🏆 Pokalhylden': '🏆 Trophy shelf', 'Fyld stjernekrukken i en verden, så får du en pokal på hylden.': 'Fill the star jar in a world, and you get a cup on the shelf.', 'Tryk på en ting med 🔒, og betal med mønter. Hvert barn køber for sig selv.': 'Tap a thing with 🔒 and pay with coins. Each child buys for themselves.', '🧾 Det har du købt': '🧾 What you have bought',
   'Køb': 'Buy', '🤝 Hjælp': '🤝 Help', 'Betal ✓': 'Pay ✓', 'Børn og spillere': 'Children and players', 'Hvert barn har sin egen MiniMig og sine egne stjerner. Byg barnets figur, og tryk 📷 – så gemmes figuren på skærmen som barnets MiniMig. Under Mine figurer trykker barnet bare på sit billede. Gemmes kun på denne enhed.': 'Each child has their own MiniMig and their own stars. Build the child’s figure and tap 📷 – the figure on the screen is then saved as the child’s MiniMig. Under My figures the child just taps their picture. Kept on this device only.', '➕ Ny spiller': '➕ New player',
   'For voksne: vælg hvilke lyde MiniMig må lave. Valget huskes på denne enhed.': 'For grown-ups: choose which sounds MiniMig may make. The choice is remembered on this device.', '🎮 Musik i spillene': '🎮 Music in the games', '💃 Musik til dansene': '💃 Music for the dances', '🔔 Lydeffekter – boing, bonk og ta-da': '🔔 Sound effects – boing, bonk and ta-da', '🗣️ Stemmen, der siger navnet': '🗣️ The voice saying the name', 'Slå al lyd fra': 'All sound off', 'Slå al lyd til': 'All sound on',
   'Tid': 'Time', 'For voksne: hvor længe må der spilles om dagen? Når tiden er brugt, holder MiniMig pause til i morgen. Valget huskes på denne enhed.': 'For grown-ups: how long may MiniMig be played each day? When the time is used up, MiniMig takes a break until tomorrow. The choice is remembered on this device.',
@@ -5169,7 +5182,7 @@ function jarGain(n) { const L = WORLDS[game.mode]; if (!L || !game.on || n <= 0)
 function worldWin(i, next) { const L = WORLDS[game.mode], mode = game.mode; game.paused = true; celebrate(); try { sfx('cheer'); } catch (e) {}
   document.getElementById('hudJar').classList.add('full'); setTimeout(() => document.getElementById('hudJar')?.classList.remove('full'), 1400);
   document.getElementById('wwTitle').textContent = T(`Mester i ${L[i][1]}!`, `Champion of ${L[i][2]}!`);
-  document.getElementById('wwText').textContent = next > 0 ? T(`Du har fyldt stjernekrukken. Nu er ${L[next][1]} åben!`, `You filled the star jar. Now ${L[next][2]} is open!`) : T('Du har fyldt stjernekrukken helt op!', 'You filled the star jar right up!');
+  document.getElementById('wwText').textContent = next > 0 ? T(`Du har fyldt stjernekrukken, og pokalen står på din hylde. Nu er ${L[next][1]} åben!`, `You filled the star jar, and the cup is on your shelf. Now ${L[next][2]} is open!`) : T('Du har fyldt stjernekrukken, og pokalen står på din hylde!', 'You filled the star jar, and the cup is on your shelf!');
   const go = document.getElementById('wwNext'), stay = document.getElementById('wwStay'); go.hidden = next < 0; go.textContent = next > 0 ? T(`${L[next][3]} Kør i ${L[next][1]}`, `${L[next][3]} Ride in ${L[next][2]}`) : '';
   stay.textContent = next > 0 ? T(`Bliv i ${L[i][1]}`, `Stay in ${L[i][2]}`) : T('Videre', 'Go on');
   const close = () => { document.getElementById('worldWin').hidden = true; game.paused = false; };
@@ -6635,6 +6648,21 @@ function pkTick(dt) { const t = performance.now() / 1000, L = pkLevel(), kp = pk
     // (head up once it has kicked, to follow the ball - it is seen from behind, so it takes a clear lift - the user, 04-11-2026)
     const lift = Math.min(1, Math.max(0, after) / .25) * w; if (lift > 0) { glb.getWorldQuaternion(kaQ); turnBone('Head', new THREE.Vector3(1, 0, 0).applyQuaternion(kaQ), -.55 * lift); turnBone('Spine2', new THREE.Vector3(1, 0, 0).applyQuaternion(kaQ), -.12 * lift); } } } }
 const GAME_NAMES = [['hop', 'Hop over bolden'], ['skate', 'Skateboard'], ['snow', 'Snowboard'], ['island', 'Skattejagt'], ['sea', 'Svømmeverden'], ['space', 'Rumrejse'], ['hide', 'Gemmeleg'], ['pk', 'Straffespark'], ['skihop', 'Skihop'], ['cypher', 'Cypher'], ['studio', 'Dansestudie']];
+// (the trophy shelf in the stars sheet: one row for each game with worlds, a cup for each world - gold with the world's
+// sign when its jar was filled, pale with the jar's progress under it when not yet; each child's own)
+function trophySvg(won, col) { const g = won ? ['#FFE27A', '#FFB020', '#D98A00'] : ['#EEEAF6', '#DDD6EC', '#C4BBD8'];
+  return `<svg viewBox="0 0 64 76" aria-hidden="true"><defs><linearGradient id="cg${won ? 1 : 0}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${g[0]}"/><stop offset="1" stop-color="${g[1]}"/></linearGradient></defs>`
+    + `<path d="M16 12c-9 0-11 5-11 9 0 7 6 12 13 13M48 12c9 0 11 5 11 9 0 7-6 12-13 13" fill="none" stroke="${g[2]}" stroke-width="5" stroke-linecap="round"/>`
+    + `<path d="M13 6h38v14c0 13-8 22-19 22S13 33 13 20z" fill="url(#cg${won ? 1 : 0})" stroke="${g[2]}" stroke-width="2"/>`
+    + `<rect x="28" y="41" width="8" height="12" fill="${g[1]}" stroke="${g[2]}" stroke-width="2"/><rect x="18" y="52" width="28" height="9" rx="3" fill="url(#cg${won ? 1 : 0})" stroke="${g[2]}" stroke-width="2"/>`
+    + `<rect x="12" y="60" width="40" height="12" rx="4" fill="${won ? col : '#E4DEF0'}"/>`
+    + (won ? `<path d="M32 13l3 6.2 6.8.9-5 4.7 1.3 6.7-6.1-3.3-6.1 3.3 1.3-6.7-5-4.7 6.8-.9z" fill="#FFFFFF" opacity=".9"/><path d="M19 10v9" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" opacity=".6"/>` : `<text x="32" y="30" text-anchor="middle" font-size="16" font-weight="800" fill="#C4BBD8">?</text>`) + '</svg>'; }
+function showShelf(s) { const shelf = document.getElementById('trophyShelf'), games = GAME_NAMES.filter(([g]) => WORLDS[g] && free('game-' + g));
+  document.getElementById('trophyBox').hidden = !games.length;
+  shelf.innerHTML = games.map(([g, name]) => { const w = s.worlds?.[g] || {}, won = w.won || [], jar = w.jar || [];
+    return `<div class="shelf-row"><h4>${tr(name)}</h4><div class="shelf-cups">` + WORLDS[g].map(([id, da, en, sign, col], i) => { if (!worldOk(g, i)) return ''; const ok = won.includes(i);
+      return `<div class="cup${ok ? ' won' : ''}">${trophySvg(ok, col)}<span class="cup-name">${sign} ${T(da, en.replace(/^the (.)/, (m, c) => c.toUpperCase()))}</span><span class="cup-bar"><i style="width:${Math.round(100 * Math.min(1, (jar[i] || 0) / JAR))}%"></i></span></div>`; }).join('')
+      + '</div><div class="shelf-plank"></div></div>'; }).join(''); }
 // (with two players or more: their pictures on top, the one shown marked - tapping another shows that child's stars)
 let starShown = null;
 function showStarSheet(id = starShown || players.now) { starShown = id; const p = players.list.find(q => q.id === id) || playerNow(), s = p.score, have = krOf(s), many = players.list.length > 1;
@@ -6643,6 +6671,7 @@ function showStarSheet(id = starShown || players.now) { starShown = id; const p 
   document.getElementById('starTitle').textContent = p.name ? T(`${p.name}s mønter`, `${p.name}’s coins`) : tr('Dine mønter');
   document.getElementById('starTotal').textContent = `💰 ${krTxt(have)}`;
   document.getElementById('starNote').textContent = s.games ? T(`⭐ ${s.total} stjerner samlet i ${s.games} spil på denne enhed.`, `⭐ ${s.total} stars collected in ${s.games} games on this device.`) : tr('Spil et af spillene for at samle stjerner.');
+  showShelf(s);
   document.getElementById('starTable').innerHTML = `<tr><th></th>${LEVELS.map(([id, name]) => `<th><img src="ikoner/valg-${id}.png" alt="${tr(name)}"></th>`).join('')}</tr><tr><td>${tr('⭐ giver')}</td>${LEVELS.map(([id]) => `<td>${krTxt(starWorth(id))}</td>`).join('')}</tr>` +
     // (Hop over bolden: its best of the three ways to see it)
     GAME_NAMES.filter(([g]) => free('game-' + g)).map(([g, name]) => `<tr><td>${tr(name)}</td>${LEVELS.map(([id]) => { const b = g === 'hop' ? Math.max(...HOP_WAYS.map(w => s.best[w[0]]?.[id] || 0)) : s.best[g]?.[id]; return b ? `<td>🏆 ${b}</td>` : '<td class="none">–</td>'; }).join('')}</tr>`).join('');
@@ -6963,6 +6992,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.13.1 (2ee5e0f)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.13.1 (a9dede8)</div>
 </body>
 </html>
