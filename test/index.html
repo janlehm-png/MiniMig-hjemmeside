@@ -150,6 +150,27 @@
   .lvl-pop button { width: 56px; height: 56px; padding: 2px; border-radius: 16px; border: 3px solid transparent; background: #F4F0FF; cursor: pointer; }
   .lvl-pop button.on { border-color: var(--accent); background: #fff; }
   .lvl-pop img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+  /* (the worlds in the level box: a picture each - a big sign on its colours - and its jar under it; one not yet open faded) */
+  .lvl-pop .worlds button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 26px; line-height: 1; color: #fff; }
+  .lvl-pop .worlds button.shut { opacity: .45; }
+  .lvl-pop .worlds b { display: block; width: 36px; height: 6px; border-radius: 3px; background: rgba(255,255,255,.55); overflow: hidden; }
+  .lvl-pop .worlds b i { display: block; height: 100%; background: #FFB020; }
+  /* (the star jar by the stars: it fills from the bottom; gold when full) */
+  .jar { position: relative; display: inline-block; width: 26px; height: 32px; border: 3px solid #FFFFFF; border-top-width: 5px; border-radius: 7px 7px 11px 11px; background: rgba(255,255,255,.35); overflow: hidden; box-shadow: 0 2px 10px rgba(58, 46, 92, .2); }
+  .jar[hidden] { display: none; }
+  .jar i { position: absolute; left: 0; right: 0; bottom: 0; height: var(--fill, 0%); background: linear-gradient(#FFE27A, #FFB020); transition: height .4s; }
+  .jar.full { animation: jarPop .6s ease 2; } @keyframes jarPop { 50% { transform: scale(1.25); } }
+  .world-win { position: absolute; inset: 0; z-index: 6; display: flex; align-items: center; justify-content: center; background: rgba(42, 31, 79, .35); }
+  .world-win[hidden] { display: none; }
+  .ww-card { background: #FFFFFF; border-radius: 28px; padding: 22px 26px; max-width: 340px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,.25); animation: wwIn .5s ease; }
+  @keyframes wwIn { from { transform: scale(.6); opacity: 0; } }
+  .ww-cup { font-size: 76px; line-height: 1; animation: jarPop .8s ease 3; }
+  .ww-card h2 { margin: 8px 0 4px; font-size: 1.5rem; color: #2B2153; }
+  .ww-card p { margin: 0 0 16px; color: #6B6191; }
+  .ww-go { display: flex; flex-direction: column; gap: 8px; }
+  .ww-go button { border: 0; border-radius: 16px; padding: 14px 18px; font: 800 1.1rem system-ui, sans-serif; cursor: pointer; }
+  .ww-next { background: #2FB872; color: #FFFFFF; } .ww-next[hidden] { display: none; }
+  .ww-stay { background: #F4F0FF; color: #2B2153; }
   .stage.playing .tap-hint { bottom: max(18px, env(safe-area-inset-bottom)); }
   .hud-left { display: flex; align-items: center; gap: 6px; }
   .record { background: var(--tile); border-radius: 999px; padding: 4px 11px; font: 700 15px/1.2 system-ui, sans-serif; box-shadow: 0 2px 10px rgba(58, 46, 92, .15); }
@@ -399,9 +420,11 @@
 <button class="info-btn" id="infoBtn" aria-label="Sådan gør du" aria-expanded="false" hidden>i</button>
 <div class="info-pop" id="infoPop" hidden>👆 Træk for at dreje figuren<br>🤏 Knib for at zoome<br>👕 Tryk på navnet på trøjen, så siger figuren det – med din egen indtalte stemme, hvis du har indtalt en</div>
 <!-- Hop over bolden: the stars won, and the cross that ends the game; a hint at the start -->
-<div class="hud" id="hud" hidden><span class="hud-left"><span class="hud-face" id="hudFace" hidden></span><span class="stars" id="stars">⭐ 0</span><span class="record" id="record" title="Din rekord">🏆 0</span><span class="record" id="hudKr" title="Dine mønter">💰 0</span></span><span class="hud-right"><button class="game-x game-lvl" id="gameLvl" aria-label="Sværhedsgrad" aria-expanded="false"><img alt=""></button><button class="game-x" id="gameExit" aria-label="Stop spillet">✕</button></span></div>
+<div class="hud" id="hud" hidden><span class="hud-left"><span class="hud-face" id="hudFace" hidden></span><span class="stars" id="stars">⭐ 0</span><span class="record" id="record" title="Din rekord">🏆 0</span><span class="record" id="hudKr" title="Dine mønter">💰 0</span><span class="jar" id="hudJar" hidden title="Stjernekrukken"><i></i></span></span><span class="hud-right"><button class="game-x game-lvl" id="gameLvl" aria-label="Sværhedsgrad" aria-expanded="false"><img alt=""></button><button class="game-x" id="gameExit" aria-label="Stop spillet">✕</button></span></div>
 <!-- (the levels - and in Hop over bolden the three ways to play - chosen without leaving the game: the user, 11-11-2026) -->
 <div class="lvl-pop" id="lvlPop" hidden></div>
+<!-- (a world won: the cup, and the gate to the next world - the user, 18-11-2026) -->
+<div class="world-win" id="worldWin" hidden><div class="ww-card"><div class="ww-cup" aria-hidden="true">🏆</div><h2 id="wwTitle"></h2><p id="wwText"></p><div class="ww-go"><button class="ww-next" id="wwNext"></button><button class="ww-stay" id="wwStay"></button></div></div></div>
 <div class="tap-hint" id="tapHint" hidden>👆 Tryk for at hoppe</div>
 <!-- (Cypher: the round's four parts chosen one at a time - the user, 15-11-2026) -->
 <div class="cy-pick" id="cyPick" hidden><div class="cy-title" id="cyTitle"></div><div class="cy-opts" id="cyOpts"></div></div>
@@ -868,7 +891,7 @@ const FULL = new Set([
   // (things, backgrounds and pets - the cat is in Basis, bought in the star shop as before)
   'ting-fodbold', 'ting-hulahop', 'bg-ridderborg', 'bg-havbund', 'bg-slikland', 'bg-vinter', 'bg-rummet', 'bg-fodboldbane', 'bg-dansesal', 'dyr-hund', 'dyr-kanin',
   // (more than one child on the device)
-  'players']);
+  'players', 'verden-3']);
 const IS_APP = !!window.Capacitor?.isNativePlatform?.(), TEST_SITE = location.pathname.includes('/test/') || /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
 const FULL_KEY = 'minimig-test.hele', TRY_KEY = 'minimig-test.udgave';
 function fullOwned() { try { const t = TEST_SITE && localStorage.getItem(TRY_KEY); if (t) return t === 'hele'; return !IS_APP || localStorage.getItem(FULL_KEY) === '1'; } catch (e) { return !IS_APP; } }
@@ -4874,11 +4897,11 @@ function startGame(mode = game.mode) { if (game.on || !glb) return; if (!game.ag
     game.bigPool ??= [goldBall(), goldBall()]; Object.assign(game, { dive: false, sinceBig: 0 });
     const run = levelNow().run; Promise.all([run, GAME.jump, GAME.trip, GAME.cheer, GAME.dive].map(loadMove)).then(() => { if (game.on) runAnim(run); }); }
   hintEl.textContent = tr(onBoard(mode) ? '👈 Tryk i siden for at svinge 👉' : mode === 'island' ? '👆 Tryk hvor du vil gå hen' : mode === 'space' ? '👆 Tryk – så flyver du derhen. To hurtige tryk giver fart 🚀' : mode === 'sea' ? '👆 Tryk eller træk – så svømmer du derhen' : mode === 'hide' ? '🔍 Hvor er jeg? Tryk på busken' : mode === 'skihop' ? '👆 Tryk for at køre – og tryk igen ved kanten for at hoppe!' : mode === 'cypher' ? '🎵 Vælg fire trin til din runde' : mode === 'studio' ? '🎵 Sæt din dans sammen' : mode === 'pk' ? '👆 Tryk i målet, hvor bolden skal hen' : '👆 Tryk for at hoppe');
-  hud.hidden = false; hintEl.hidden = mode === 'cypher' || mode === 'studio'; try { showLvl(); } catch (e) {} document.querySelector('.top').hidden = true; document.getElementById('stage').classList.add('playing'); showStars(); showRecord();
+  hud.hidden = false; hintEl.hidden = mode === 'cypher' || mode === 'studio'; try { showLvl(); showJar(); } catch (e) {} document.querySelector('.top').hidden = true; document.getElementById('stage').classList.add('playing'); showStars(); showRecord();
   if (MODES[mode].from) game.hopWay = mode; // (the way last chosen in Hop over bolden)
   document.querySelectorAll('[data-game]').forEach(b => b.classList.toggle('on', b.dataset.game === mode || b.dataset.game === 'hop' && !!MODES[mode].from)); prepScene(); }
 // (again: only stopped to start once more - at another level or in another way - the figure's own setting not put back)
-function stopGame(again) { if (!game.on) return; game.on = false; for (const b of [...gamePool(), ...(game.bigPool || [])]) b.group.visible = false; game.dive = false; game.balls = []; confetti.length = 0; unprepScene(); skateStop(); hopWorldStop(); hideStop(); islandStop(); seaStop(); spaceStop(); pkStop(); sjStop(); cyStop(); dsStop();
+function stopGame(again) { if (!game.on) return; game.on = false; game.paused = false; document.getElementById('worldWin').hidden = true; for (const b of [...gamePool(), ...(game.bigPool || [])]) b.group.visible = false; game.dive = false; game.balls = []; confetti.length = 0; unprepScene(); skateStop(); hopWorldStop(); hideStop(); islandStop(); seaStop(); spaceStop(); pkStop(); sjStop(); cyStop(); dsStop();
   // (the sound shut down when nothing plays: on an iPad an open sound channel could go on sounding after the game)
   if (!again) { try { game.audio?.suspend(); } catch (e) {} setItem(game.held ?? itemNow); game.held = undefined; }
   if (again) { game.again = true; return; } holder.position.x = 0; wearBack(game.wore); try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) {}
@@ -4909,6 +4932,7 @@ function gameTick(dt) { confettiTick(dt); if (!game.on || !glb) return; const r 
   const [cx, cy, cz, tx, ty, tz] = M.cam(wideCam()), halfW = Math.tan(camera.fov * Math.PI / 360) * Math.hypot(cx - tx, cz - tz) * camera.aspect;
   camera.position.set(cx, cy, cz); controls.target.set(tx, ty, tz); camera.lookAt(controls.target);
   if (game.hint > 0 && (game.hint -= dt) <= 0) hintEl.hidden = true; else if (game.hint <= 0) hintEl.hidden = true;
+  if (game.paused) return; // (a world won: everything stands still under the cup)
   if (onBoard(game.mode)) { skateTick(dt); return; }
   if (game.mode === 'island') { islandTick(dt); return; }
   if (game.mode === 'sea') { seaTick(dt); return; }
@@ -5066,7 +5090,7 @@ function skWorldBuild() { if (sk.world) return; const w = sk.world = new THREE.G
 // the verge, bushes and trees further out, houses behind them, and now and then a tree far out in the meadow)
 function skSidePut(kind, u, x, rot = 0, size = 1) { const pool = sk.sidePools[kind] ??= []; let g = pool.find(p => !p.visible); if (!g) { g = SK_SIDE[kind](); pool.push(g); sk.ground.add(g); }
   g.visible = true; g.scale.setScalar(size); sk.side.push({ g, u, x, rot, kind }); }
-function skSideRow(u) { sk.rowN = (sk.rowN || 0) + 1;
+function skSideRow(u) { if (sk.look === 'by') return citySideRow(u); sk.rowN = (sk.rowN || 0) + 1;
   for (const s of [-1, 1]) { const E = SKW.edge, r = Math.random(), turn = s > 0 ? -Math.PI / 2 : Math.PI / 2;
     // (in the snow: firs only, some near the run and some far off)
     if (sk.snow) { if (r < .6) skSidePut('gran', u, s * (E + 1.5 + Math.random() * 4.5), 0, .8 + Math.random() * .8); if (Math.random() < .45) skSidePut('gran', u + 1, s * (E + 7.5 + Math.random() * 9), 0, 1 + Math.random() * .6); continue; }
@@ -5082,22 +5106,90 @@ function skSideRow(u) { sk.rowN = (sk.rowN || 0) + 1;
     if (Math.random() < .45) skSidePut(Math.random() < .5 ? 'trae' : 'gran', u + Math.random() * 2, s * (E + 7.5 + Math.random() * 9), Math.random() * 6.28, 1 + Math.random() * .5); } }
 // (the world's look: the green meadow and the asphalt road - or, for the snowboard run, snow all over and a groomed run:
 // white with a little blue in it, fine lines down the run as the snow machine leaves them)
-function skTheme(snow) { sk.snow = !!snow; skWorldBuild(); if (!sk.road) return;
+function skTheme(snow, look = 'park') { sk.snow = !!snow; skWorldBuild(); skCityBuild(); sk.look = snow ? 'snow' : look; if (!sk.road) return;
   if (snow && !sk.snowTex) { const tex = draw => { const cv = document.createElement('canvas'); cv.width = cv.height = 256; draw(cv.getContext('2d')); const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; return t; };
     sk.snowTex = tex(c => { c.fillStyle = '#F6FAFF'; c.fillRect(0, 0, 256, 256); for (let i = 0; i < 900; i++) { c.fillStyle = `rgba(${Math.random() < .5 ? '170,200,235' : '255,255,255'},${(Math.random() * .35).toFixed(3)})`; c.beginPath(); c.arc(Math.random() * 256, Math.random() * 256, 1 + Math.random() * 3, 0, 7); c.fill(); } }); sk.snowTex.repeat.set(30, 20);
     sk.pisteTex = tex(c => { c.fillStyle = '#E4EFFB'; c.fillRect(0, 0, 256, 256); c.fillStyle = 'rgba(150,185,225,.35)'; for (let x = 4; x < 256; x += 8) c.fillRect(x, 0, 2, 256);
       const rw = SKATE.lane * 3 + .3; c.fillStyle = 'rgba(90,140,205,.55)'; for (const q of [-1, 1]) c.fillRect((.5 + q * SKATE.lane / 2 / rw) * 256 - 2, 0, 4, 128); c.fillStyle = '#4F86D9'; c.fillRect(0, 0, 6, 256); c.fillRect(250, 0, 6, 256); }); sk.pisteTex.repeat.set(1, 20); }
   { const k = snow ? SNOW_SLOPE : 0; sk.ground.matrix.set(1, 0, 0, 0, 0, 1, k, 0, 0, 0, 1, 0, 0, 0, 0, 1); sk.ground.matrixWorldNeedsUpdate = true; sk.hills.position.y = snow ? -11 : 0; }
-  sk.grass.material.map = snow ? sk.snowTex : sk.grassTex; sk.grass.material.needsUpdate = true; sk.road.material.map = snow ? sk.pisteTex : sk.roadTex; sk.road.material.needsUpdate = true;
+  sk.grass.material.map = snow ? sk.snowTex : sk.look === 'by' ? sk.tileTex : sk.grassTex; sk.grass.material.needsUpdate = true; sk.hills.visible = sk.look !== 'by'; sk.city.visible = sk.look === 'by'; sk.road.material.map = snow ? sk.pisteTex : sk.roadTex; sk.road.material.needsUpdate = true;
   // (the snowboard in the skateboard's place)
   if (snow && !sk.snowBoard) { sk.snowBoard = new THREE.Group(); sk.snowBoard.position.y = .02; sk.board.add(sk.snowBoard); propInto(sk.snowBoard, 'udstyr-snowboard.glb', 1.3, SNOW_BOARD_TURN, [], 'w'); }
   for (const o of sk.boardParts || []) o.visible = !snow; if (sk.snowBoard) sk.snowBoard.visible = !!snow;
   // (the low green hills before the mountains white too)
   for (const h of sk.hills.children.slice(1)) { h.userData.green ??= h.material.color.clone(); h.material.color.copy(snow ? new THREE.Color('#EEF4FC') : h.userData.green); } }
 const SNOW_BOARD_TURN = Math.PI / 2, SNOW_SLOPE = .24;
+// ---- Worlds in the games (the user, 18-11-2026): three worlds in each game - the same play in new surroundings, a
+// little like the one before. Each world has its star jar: the stars won there fill it - more for a harder level, so
+// practising the harder ones gets one on quicker (Let 1, Mellem 2, Svær 3) - and they still become coins as before. A
+// full jar: everything stops, confetti, the cup - "Mester i Parken!" - and the gate to the next world opens. One never
+// loses: the jar only fills. The first: Skateboard - Parken (the meadow as it was) and Byen; Strandpromenaden later.
+// Basis: worlds 1 and 2 of the free games; Hele MiniMig the rest
+const WORLDS = { skate: [['park', 'Parken', 'the park', '🌳', '#5DBF55'], ['by', 'Byen', 'the town', '🏙️', '#6F8FD8']] };
+const JAR = 60, JAR_GAIN = { 'niveau-meget-let': 1, 'niveau-let': 1, 'niveau-mellem': 2, 'niveau-svaer': 3, 'niveau-meget-svaer': 3 };
+// (each child's own: the world played now, how full each jar is, how many are open, and those won - kept with the stars)
+function worldsOf(mode) { score.worlds ??= {}; const w = score.worlds[mode] ??= { now: 0, jar: [], open: 1, won: [] }; w.jar ??= []; w.won ??= []; return w; }
+const worldOk = (mode, i) => i < 2 || free('verden-' + (i + 1));
+function worldNow(mode) { if (!WORLDS[mode]) return 0; const w = worldsOf(mode); return Math.max(0, Math.min(w.now || 0, w.open - 1, WORLDS[mode].length - 1)); }
+function showJar() { const el = document.getElementById('hudJar'); if (!el) return; const L = WORLDS[game.mode]; el.hidden = !L || !game.on; if (el.hidden) return;
+  const i = worldNow(game.mode), v = worldsOf(game.mode).jar[i] || 0; el.style.setProperty('--fill', Math.round(100 * Math.min(1, v / JAR)) + '%'); el.title = T(`Stjernekrukken i ${L[i][1]}`, `The star jar in ${L[i][2]}`); }
+function jarGain(n) { const L = WORLDS[game.mode]; if (!L || !game.on || n <= 0) return; const w = worldsOf(game.mode), i = worldNow(game.mode), was = w.jar[i] || 0;
+  w.jar[i] = Math.min(JAR, was + n * (JAR_GAIN[game.level] || 1)); showJar();
+  if (was < JAR && w.jar[i] >= JAR && !w.won.includes(i)) { w.won.push(i); const next = i + 1 < L.length && worldOk(game.mode, i + 1) ? i + 1 : -1; if (next > 0) w.open = Math.max(w.open, next + 1); saveScore(); worldWin(i, next); } }
+// (the win: the game stops under it, the cup and confetti; the next world to ride into straight away, or stay)
+function worldWin(i, next) { const L = WORLDS[game.mode], mode = game.mode; game.paused = true; celebrate(); try { sfx('cheer'); } catch (e) {}
+  document.getElementById('hudJar').classList.add('full'); setTimeout(() => document.getElementById('hudJar')?.classList.remove('full'), 1400);
+  document.getElementById('wwTitle').textContent = T(`Mester i ${L[i][1]}!`, `Champion of ${L[i][2]}!`);
+  document.getElementById('wwText').textContent = next > 0 ? T(`Du har fyldt stjernekrukken. Nu er ${L[next][1]} åben!`, `You filled the star jar. Now ${L[next][2]} is open!`) : T('Du har fyldt stjernekrukken helt op!', 'You filled the star jar right up!');
+  const go = document.getElementById('wwNext'), stay = document.getElementById('wwStay'); go.hidden = next < 0; go.textContent = next > 0 ? T(`${L[next][3]} Kør i ${L[next][1]}`, `${L[next][3]} Ride in ${L[next][2]}`) : '';
+  stay.textContent = next > 0 ? T(`Bliv i ${L[i][1]}`, `Stay in ${L[i][2]}`) : T('Videre', 'Go on');
+  const close = () => { document.getElementById('worldWin').hidden = true; game.paused = false; };
+  go.onclick = () => { close(); setWorld(mode, next); }; stay.onclick = close; document.getElementById('worldWin').hidden = false; }
+function setWorld(mode, i) { const w = worldsOf(mode); if (i >= w.open) return; w.now = i; saveScore(); if (game.on && game.mode === mode) { stopGame(true); startGame(mode); } }
+// (the worlds' row in the level box: a picture of each, its jar under it; one not open yet faded, and a tap on it does nothing)
+function worldRow() { const L = WORLDS[game.mode]; if (!L) return null; const w = worldsOf(game.mode), now = worldNow(game.mode), d = document.createElement('div'); d.className = 'worlds';
+  L.forEach(([id, da, en, sign, col], i) => { if (!worldOk(game.mode, i)) return; const b = document.createElement('button'), open = i < w.open; b.style.background = col; b.classList.toggle('on', i === now); b.classList.toggle('shut', !open);
+    b.setAttribute('aria-label', T(da, en)); b.innerHTML = `<span>${sign}</span><b><i style="width:${Math.round(100 * Math.min(1, (w.jar[i] || 0) / JAR))}%"></i></b>`;
+    b.onclick = () => { if (!open) { toast(T(`Fyld stjernekrukken for at komme til ${da}`, `Fill the star jar to get to ${en}`)); return; } lvlPop.hidden = true; if (i !== now) setWorld(game.mode, i); showLvl(); }; d.append(b); });
+  return d; }
+// ---- Byen: the skateboard's second world - a street of tall narrow town houses close by the road, shops below with
+// striped awnings, cars parked along the kerb, street lamps, trees in beds, traffic lights now and then, and town
+// roofs far off instead of the mountains. Paving instead of grass. Made of simple shapes, as the first things by the road
+SK_SIDE.byhus = () => { const G = SK_SIDE.geo, R = Math.random, wall = ['#F6C177', '#E98A7B', '#9FC7E8', '#F4E3C3', '#B8D98C', '#D7B4E6', '#F2A8C4', '#FFFFFF'][Math.floor(R() * 8)], trim = '#FFFFFF', w = 2.3 + R() * .5, floors = 2 + Math.floor(R() * 2), h = 1.25 + floors * 1.05, parts = [[G.box, wall, 0, h / 2, 0, w, h, 2.2], [G.box, '#E9E2D6', 0, h + .08, 0, w + .12, .16, 2.34]];
+  for (let f = 0; f < floors; f++) for (const x of [-w * .26, w * .26]) { const y = 1.75 + f * 1.05; parts.push([G.box, trim, x, y, 1.11, .62, .78, .03], [G.box, '#8FD3FF', x, y, 1.125, .5, .66, .03], [G.box, trim, x, y - .4, 1.15, .7, .06, .1]); }
+  const aw = [['#E8384F', '#FFFFFF'], ['#2FB872', '#FFFFFF'], ['#3D8BFF', '#FFFFFF'], ['#FFB020', '#FFFFFF']][Math.floor(R() * 4)];
+  parts.push([G.box, '#BFE6FF', -w * .12, .62, 1.11, w * .52, .74, .03], [G.box, '#7A5C8E', w * .33, .55, 1.11, .45, 1.1, .04]);
+  for (let k = 0; k < 6; k++) parts.push([G.box, aw[k % 2], -w * .12 - w * .26 + (k + .5) * w * .52 / 6, 1.18, 1.32, w * .52 / 6, .07, .5, 0, -.35]);
+  return skPiece(parts); };
+SK_SIDE.bil = () => { const G = SK_SIDE.geo, R = Math.random, c = ['#E8384F', '#3D8BFF', '#FFC233', '#2FB872', '#FFFFFF', '#FF7A2F', '#7A4DFF'][Math.floor(R() * 7)], parts = [[G.box, c, 0, .36, 0, .8, .42, 1.8], [G.box, c, 0, .72, -.05, .72, .36, 1.0], [G.box, '#8FD3FF', 0, .74, -.05, .74, .28, .9], [G.box, '#8FD3FF', 0, .74, -.05, .6, .28, 1.02],
+    [G.box, '#FFF4C2', .26, .4, .91, .16, .1, .02], [G.box, '#FFF4C2', -.26, .4, .91, .16, .1, .02], [G.box, '#E8384F', .28, .4, -.91, .14, .08, .02], [G.box, '#E8384F', -.28, .4, -.91, .14, .08, .02]];
+  for (const x of [-.4, .4]) for (const z of [-.58, .58]) parts.push([G.ball, '#2B2B33', x, .18, z, .07, .18, .18], [G.ball, '#C9CED6', x * 1.08, .18, z, .02, .08, .08]);
+  return skPiece(parts); };
+SK_SIDE.lyskryds = () => { const G = SK_SIDE.geo; return skPiece([[G.cyl, '#4A4F5A', 0, 1.2, 0, .06, 2.4, .06], [G.box, '#2B2B33', 0, 2.55, 0, .3, .8, .26], [G.ball, '#FF4B4B', 0, 2.8, .14, .09], [G.ball, '#FFC233', 0, 2.55, .14, .09], [G.ball, '#3DDC84', 0, 2.3, .14, .09]]); };
+SK_SIDE.bed = () => { const G = SK_SIDE.geo, g = ['#4FB04A', '#5CC257'][Math.floor(Math.random() * 2)]; return skPiece([[G.box, '#B9B4AE', 0, .18, 0, .9, .36, .9], [G.box, '#6B4A2E', 0, .37, 0, .8, .04, .8], [G.cyl, '#8A5A33', 0, .9, 0, .07, 1.1, .07], [G.ball, g, 0, 1.7, 0, .6, .55, .6], [G.ball, g, .25, 1.5, .1, .4]]); };
+function citySideRow(u) { sk.rowN = (sk.rowN || 0) + 1; const E = SKW.edge;
+  for (const s of [-1, 1]) { const turn = s > 0 ? -Math.PI / 2 : Math.PI / 2, r = Math.random();
+    // (the houses in a row, as a town street is - a little gap now and then)
+    if (r > .06) skSidePut('byhus', u, s * (E + 3.4), turn);
+    if (sk.rowN % 4 === (s > 0 ? 0 : 2)) skSidePut('lygte', u, s * (E + 1.3), s > 0 ? 0 : Math.PI);
+    else if (sk.rowN % 11 === (s > 0 ? 5 : 8)) skSidePut('lyskryds', u, s * (E + 1.35), turn);
+    else if (Math.random() < .3) skSidePut('bil', u, s * (E + .75), Math.random() < .5 ? 0 : Math.PI);
+    else if (Math.random() < .25) skSidePut('bed', u, s * (E + 1.6)); } }
+// (the town roofs far off: blocks of different heights in soft blues, with a few lit windows, instead of the mountains)
+function skCityBuild() { if (sk.city) return; const g = sk.city = new THREE.Group(), R = Math.random, P = [], C = [], col = new THREE.Color(), box = new THREE.BoxGeometry(1, 1, 1).toNonIndexed();
+  const put = (x, z, w, h, c) => { const b = box.clone(); b.scale(w, h, 4); b.translate(x, h / 2, z); P.push(...b.attributes.position.array); col.set(c); for (let i = 0; i < b.attributes.position.count; i++) C.push(col.r, col.g, col.b); };
+  for (let k = 0; k < 34; k++) put(-80 + k * 4.8 + R() * 2, -78 - R() * 4, 3 + R() * 3, 6 + R() * 14, ['#9DB0D6', '#AFC0E0', '#8FA3CC'][k % 3]);
+  for (let k = 0; k < 28; k++) put(-72 + k * 5.4 + R() * 2, -70 - R() * 2, 3 + R() * 2.5, 4 + R() * 7, ['#C3D0EA', '#D2DCEF'][k % 2]);
+  const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); geo.setAttribute('color', new THREE.Float32BufferAttribute(C, 3)); geo.computeVertexNormals();
+  g.add(new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 1, fog: false }))); g.visible = false; sk.world.add(g);
+  // (and the paving: light grey slabs with fine joints, a little uneven)
+  const cv = document.createElement('canvas'); cv.width = cv.height = 256; const c = cv.getContext('2d'); c.fillStyle = '#C9C5BF'; c.fillRect(0, 0, 256, 256);
+  for (let y = 0; y < 256; y += 32) for (let x = 0; x < 256; x += 32) { c.fillStyle = `rgba(${R() < .5 ? '255,255,255' : '120,115,110'},${(R() * .12).toFixed(2)})`; c.fillRect(x + 1, y + 1, 30, 30); }
+  c.strokeStyle = 'rgba(110,105,100,.55)'; c.lineWidth = 2; for (let k = 0; k <= 256; k += 32) { c.beginPath(); c.moveTo(k, 0); c.lineTo(k, 256); c.moveTo(0, k); c.lineTo(256, k); c.stroke(); }
+  const t = sk.tileTex = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(60, 40); t.anisotropy = 4; }
 function skWorldStart() { skWorldBuild(); skPropsLoad(); scene.add(sk.world); for (const it of sk.side) it.g.visible = false; sk.side = []; sk.sideGo = 0; sk.sideSkip = { '-1': 0, 1: 0 };
   for (let u = 3; u < SKW.far; u += SKW.step) skSideRow(u);
-  scene.fog = new THREE.Fog(0xCDEBFF, 36, 88); floor.visible = false; disc.visible = false; for (const el of [bgNear, bgFar, bgNear2]) el.hidden = true; stage.classList.add('street'); }
+  scene.fog = new THREE.Fog(sk.look === 'by' ? 0xDCE6F2 : 0xCDEBFF, 36, 88); floor.visible = false; disc.visible = false; for (const el of [bgNear, bgFar, bgNear2]) el.hidden = true; stage.classList.add('street'); }
 // ---- Hop over bolden in a world of its own (the user, 14-11-2026: more round about it, from all three sides): the
 // skateboard game's meadow - trees, firs, bushes, houses, fences, benches, flowers, the mountains far off - with a sandy
 // path where the figure runs, gliding by the way it runs: from the side the world is turned a quarter round and only
@@ -5227,7 +5319,7 @@ function skateRow(from = SKATE.from) { const easy = ['niveau-meget-let', 'niveau
   // (the stars never in the lane the figure rides in now - one has to steer to them, not just stand)
   if (Math.random() < (easy ? .9 : .7)) { const free = [-1, 0, 1].filter(l => !used.has(l) && l !== sk.lane); if (free.length) { const lane = free[Math.floor(Math.random() * free.length)], n = 1 + Math.floor(Math.random() * 3);
     for (let k = 0; k < n; k++) put(skateThing('stjerne'), lane * SKATE.lane, from + (k - (n - 1) / 2) * 1.1); } } }
-function skateStart(snow) { skateBuild(); skTheme(snow); Object.assign(sk, { lane: 0, x: 0, lean: 0, slow: 0, wobble: 0, next: .3, first: true, curve: 0, curveTo: 0, curveT: 3, jy: 0, jv: 0, spin: 0, rampWait: 0, fork: null, forkT: snow ? Infinity : 13, lastDir: 0 }); if (sk.forkG) sk.forkG.visible = false; for (const it of sk.live) it.group.visible = false; sk.live = [];
+function skateStart(snow) { skateBuild(); skTheme(snow, !snow && WORLDS[game.mode] ? WORLDS[game.mode][worldNow(game.mode)][0] : 'park'); Object.assign(sk, { lane: 0, x: 0, lean: 0, slow: 0, wobble: 0, next: .3, first: true, curve: 0, curveTo: 0, curveT: 3, jy: 0, jv: 0, spin: 0, rampWait: 0, fork: null, forkT: snow ? Infinity : 13, lastDir: 0 }); if (sk.forkG) sk.forkG.visible = false; for (const it of sk.live) it.group.visible = false; sk.live = [];
   holder.add(sk.rig); sk.rig.position.set(0, 0, 0); sk.rig.rotation.set(0, 0, 0); sk.rig.add(glb); sk.ground.add(sk.road); skWorldStart();
   // (riding: the standing with the page's own pose, arms out - Mixamo's riding stood with a foot each side of our board,
   // the user said, 03-11-2026; it was made for a board pointing the way the figure faces. Its push off, Skateboarding
@@ -5371,7 +5463,7 @@ let picOf = ''; setInterval(() => { try { const p = playerNow(); if (p.fig || !h
 const bestNow = () => score.best[game.mode]?.[game.level] || 0;
 // (a star's worth in kroner: one on the easiest level, five on the hardest - the user, 04-11-2026: harder is worth more)
 const starWorth = (level = game.level) => LEVELS.findIndex(l => l[0] === level) + 1;
-function scoreGain(n) { krOf(score); score.kr += n * starWorth(); score.total += n; if (!game.counted) { game.counted = true; score.games++; } const best = bestNow(); if (game.stars > best) { (score.best[game.mode] ??= {})[game.level] = game.stars;
+function scoreGain(n) { try { jarGain(n); } catch (e) {} krOf(score); score.kr += n * starWorth(); score.total += n; if (!game.counted) { game.counted = true; score.games++; } const best = bestNow(); if (game.stars > best) { (score.best[game.mode] ??= {})[game.level] = game.stars;
     if (best > 0 && !game.record) { game.record = true; toast('🏆 Ny rekord!'); celebrate(); } }
   saveScore(); showRecord(); }
 // (🏆 Stjerner: the stars to spend, and a table - a game a row, a level a column, with its icon)
@@ -6432,7 +6524,7 @@ const lvlBtn = document.getElementById('gameLvl'), lvlPop = document.getElementB
 function showLvl(open = false) { lvlBtn.firstElementChild.src = `ikoner/valg-${game.level}.png`; lvlPop.hidden = !open; lvlBtn.setAttribute('aria-expanded', String(open)); if (!open) return; lvlPop.innerHTML = '';
   const row = (items, now, set) => { const d = document.createElement('div'); for (const [id, label] of items) { const b = document.createElement('button'), i = new Image(); i.src = `ikoner/valg-${id}.png`; i.alt = ''; b.append(i); b.setAttribute('aria-label', tr(label)); b.classList.toggle('on', id === now);
       b.onclick = () => { lvlPop.hidden = true; if (id !== now) set(id); showLvl(); }; d.append(b); } lvlPop.append(d); };
-  row(LEVELS, game.level, setLevel); if (MODES[game.mode]?.from) row(HOP_WAYS, game.mode, setHopWay); }
+  { const wr = worldRow(); if (wr) lvlPop.append(wr); } row(LEVELS, game.level, setLevel); if (MODES[game.mode]?.from) row(HOP_WAYS, game.mode, setHopWay); }
 lvlBtn.onclick = () => showLvl(lvlPop.hidden);
 // (no menu from a long press anywhere but in the name box)
 document.querySelector('.main').addEventListener('contextmenu', e => { if (e.target.tagName !== 'INPUT') e.preventDefault(); });
@@ -6658,6 +6750,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.13.1 (e866b06)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.13.1 (eff1c0e)</div>
 </body>
 </html>
