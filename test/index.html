@@ -5001,7 +5001,10 @@ function skateBuild() { if (sk.rig) return; sk.rig = new THREE.Group();
   for (let i = 0; i < 1400; i++) { c.fillStyle = `rgba(${Math.random() < .6 ? '200,200,205' : '10,10,14'},${(Math.random() * .22).toFixed(3)})`; c.fillRect(Math.random() * 256, Math.random() * 256, 1 + Math.random() * 2, 1 + Math.random() * 2); }
   const rw = SKATE.lane * 3 + .3; c.fillStyle = '#FFFFFF'; for (const s of [-1, 1]) c.fillRect((.5 + s * SKATE.lane / 2 / rw) * 256 - 3, 0, 6, 128); c.fillRect(0, 0, 7, 256); c.fillRect(249, 0, 7, 256);
   const t = sk.roadTex = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(1, 20); t.anisotropy = 4;
-  sk.road = new THREE.Mesh(new THREE.PlaneGeometry(SKATE.lane * 3 + .3, 60, 1, 120), new THREE.MeshStandardMaterial({ map: t, roughness: .95 })); sk.road.rotation.x = -Math.PI / 2; sk.road.position.set(0, .004, -26); sk.road.receiveShadow = true;
+  sk.road = new THREE.Mesh(new THREE.PlaneGeometry(SKATE.lane * 3 + .3, 60, 17, 120), new THREE.MeshStandardMaterial({ map: t, roughness: .95 })); sk.road.rotation.x = -Math.PI / 2; sk.road.position.set(0, .004, -26); sk.road.receiveShadow = true;
+  // (17 strips across, so the lane lines are corners of their own - the user, 19-11-2026: before a fork, where the road
+  // grows wider, the white dashes flickered: one strip across bent the picture of them into a zigzag. Now the outer lanes
+  // move out whole, lines and all, and only the middle one grows)
   sk.roadX = Float32Array.from({ length: sk.road.geometry.attributes.position.count }, (_, i) => sk.road.geometry.attributes.position.getX(i));
   // (the bits flying: drops from a puddle, sparks from a present)
   sk.bits = []; sk.bitMats = { vand: skMat('#6FC3FF', .2, '#2B7FD0'), guld: skMat('#FFD23F', .25, '#B07800') }; }
@@ -5049,11 +5052,25 @@ async function readProp(url) { const buf = await (await fetch(url)).arrayBuffer(
   return { geo, map }; }
 // (height: how tall, in metres; turn: turned so its front - the house's door, the lamp's arm - is where the simple one's was)
 // (and the fir, the bush, the tulips, the bench and the fence - the user, 12-11-2026, when there were points for them)
+// (which way each of Byen's models faces as Meshy made it: turned so its front is towards +z, as the pieces are made)
+const BY_TURN = { hus: 0, bil: Math.PI / 2, poelse: 0, post: 0, skrald: 0, vej: 0, hane: 0, due: 0 };
 const SK_PROPS = { hus: ['skate-hus.glb', 2.9, 0], trae: ['skate-trae.glb', 2.5, 0], lygte: ['skate-lygte.glb', 2.7, Math.PI], gran: ['skate-gran.glb', 2.6, 0], busk: ['skate-busk.glb', .8, 0], blomster: ['skate-blomster.glb', .5, 0],
-  baenk: ['skate-baenk.glb', .8, -Math.PI / 2], hegn: ['skate-hegn.glb', .75, Math.PI / 2] };
+  baenk: ['skate-baenk.glb', .8, -Math.PI / 2], hegn: ['skate-hegn.glb', .75, Math.PI / 2],
+  // (Byen's own from Meshy - the user, 19-11-2026: "noget mere liv ind i det med noget ordentlig grafik": two town houses, a
+  // car, a hot dog stand and a post box; the ones made of simple shapes stand in till they are fetched)
+  byhus1: ['by-hus-gul.glb', 5, BY_TURN.hus], byhus2: ['by-hus-blaa.glb', 5, BY_TURN.hus], bil: ['by-bil.glb', .82, BY_TURN.bil], poelsevogn: ['by-poelsevogn.glb', 1.9, BY_TURN.poelse], postkasse: ['by-postkasse.glb', 1, BY_TURN.post] };
+// (a copy of a picture with its strong reds turned to another colour, the light and shade kept)
+function repaintRed(map, hex) { const im = map.image, cv = document.createElement('canvas'); cv.width = im.width; cv.height = im.height; const c = cv.getContext('2d'); c.drawImage(im, 0, 0);
+  const d = c.getImageData(0, 0, cv.width, cv.height), a = d.data, to = new THREE.Color(hex), hsl = {}; to.getHSL(hsl); const white = hsl.s < .1;
+  for (let i = 0; i < a.length; i += 4) { const r = a[i], g = a[i + 1], b = a[i + 2]; if (r < 90 || r < g * 1.6 || r < b * 1.6) continue; const k = Math.min(1, (r - Math.max(g, b)) / 120), l = r / 255;
+    const t = white ? [l * 255, l * 255, l * 255].map(v => Math.min(255, v * 1.15)) : [to.r, to.g, to.b].map(v => Math.min(255, v * 255 * (.35 + .9 * l)));
+    for (let q = 0; q < 3; q++) a[i + q] = a[i + q] * (1 - k) + t[q] * k; }
+  c.putImageData(d, 0, 0); const t = new THREE.CanvasTexture(cv); t.flipY = map.flipY; t.colorSpace = map.colorSpace; return t; }
 function skPropsLoad() { sk.propsLoad ??= Promise.all(Object.entries(SK_PROPS).map(async ([kind, [url, height, turn]]) => { try { const { geo, map } = await readProp(url);
     geo.computeBoundingBox(); const b = geo.boundingBox, k = height / (b.max.y - b.min.y); geo.translate(-(b.min.x + b.max.x) / 2, -b.min.y, -(b.min.z + b.max.z) / 2); geo.scale(k, k, k); if (turn) geo.rotateY(turn);
     const mat = new THREE.MeshStandardMaterial({ map, roughness: .8, metalness: 0 }); SK_SIDE[kind] = () => new THREE.Mesh(geo, mat);
+    // (the car is red from Meshy: in other colours too, its red painted over in each - not every car in town the same)
+    if (kind === 'bil') { const mats = [mat, ...['#3D8BFF', '#FFC233', '#2FB872', '#9B6BFF', '#FFFFFF'].map(c => new THREE.MeshStandardMaterial({ map: repaintRed(map, c), roughness: .8, metalness: 0 }))]; SK_SIDE[kind] = () => new THREE.Mesh(geo, mats[Math.floor(Math.random() * mats.length)]); }
     // (those standing by the road now changed for the new ones)
     const old = sk.sidePools[kind] || []; sk.sidePools[kind] = []; for (const it of sk.side) if (it.kind === kind) { const g = SK_SIDE[kind](); g.scale.copy(it.g.scale); sk.sidePools[kind].push(g); sk.ground.add(g); it.g = g; } for (const g of old) { g.visible = false; sk.world.remove(g); } } catch (e) { /* (the simple one stays) */ } })); }
 function skWorldBuild() { if (sk.world) return; const w = sk.world = new THREE.Group();
@@ -5166,14 +5183,19 @@ SK_SIDE.bil = () => { const G = SK_SIDE.geo, R = Math.random, c = ['#E8384F', '#
   for (const x of [-.4, .4]) for (const z of [-.58, .58]) parts.push([G.ball, '#2B2B33', x, .18, z, .07, .18, .18], [G.ball, '#C9CED6', x * 1.08, .18, z, .02, .08, .08]);
   return skPiece(parts); };
 SK_SIDE.lyskryds = () => { const G = SK_SIDE.geo; return skPiece([[G.cyl, '#4A4F5A', 0, 1.2, 0, .06, 2.4, .06], [G.box, '#2B2B33', 0, 2.55, 0, .3, .8, .26], [G.ball, '#FF4B4B', 0, 2.8, .14, .09], [G.ball, '#FFC233', 0, 2.55, .14, .09], [G.ball, '#3DDC84', 0, 2.3, .14, .09]]); };
+SK_SIDE.byhus1 = () => SK_SIDE.byhus(); SK_SIDE.byhus2 = () => SK_SIDE.byhus();
+SK_SIDE.poelsevogn = () => { const G = SK_SIDE.geo; return skPiece([[G.box, '#FFFFFF', 0, .75, 0, 1.6, 1, .9], [G.box, '#E8384F', 0, .3, 0, 1.64, .18, .94], [G.box, '#E8384F', 0, 1.35, .3, 1.7, .08, .5, 0, -.3]]); };
+SK_SIDE.postkasse = () => { const G = SK_SIDE.geo; return skPiece([[G.cyl, '#2B2B33', 0, .3, 0, .06, .6, .06], [G.box, '#E8384F', 0, .78, 0, .42, .4, .3]]); };
 SK_SIDE.bed = () => { const G = SK_SIDE.geo, g = ['#4FB04A', '#5CC257'][Math.floor(Math.random() * 2)]; return skPiece([[G.box, '#B9B4AE', 0, .18, 0, .9, .36, .9], [G.box, '#6B4A2E', 0, .37, 0, .8, .04, .8], [G.cyl, '#8A5A33', 0, .9, 0, .07, 1.1, .07], [G.ball, g, 0, 1.7, 0, .6, .55, .6], [G.ball, g, .25, 1.5, .1, .4]]); };
 function citySideRow(u) { sk.rowN = (sk.rowN || 0) + 1; const E = SKW.edge;
   for (const s of [-1, 1]) { const turn = s > 0 ? -Math.PI / 2 : Math.PI / 2, r = Math.random();
     // (the houses in a row, as a town street is - a little gap now and then)
-    if (r > .06) skSidePut('byhus', u, s * (E + 3.4), turn);
+    if (r > .06) skSidePut(Math.random() < .5 ? 'byhus1' : 'byhus2', u, s * (E + 3.4), turn);
     if (sk.rowN % 4 === (s > 0 ? 0 : 2)) skSidePut('lygte', u, s * (E + 1.3), s > 0 ? 0 : Math.PI);
     else if (sk.rowN % 11 === (s > 0 ? 5 : 8)) skSidePut('lyskryds', u, s * (E + 1.35), turn);
-    else if (Math.random() < .3) skSidePut('bil', u, s * (E + .75), Math.random() < .5 ? 0 : Math.PI);
+    else if (Math.random() < .16) skSidePut('bil', u, s * (E + .75), Math.random() < .5 ? 0 : Math.PI);
+    else if (Math.random() < .08) skSidePut('poelsevogn', u, s * (E + 1.5), turn);
+    else if (Math.random() < .08) skSidePut('postkasse', u, s * (E + .9), turn);
     else if (Math.random() < .25) skSidePut('bed', u, s * (E + 1.6)); } }
 // (the town roofs far off: blocks of different heights in soft blues, with a few lit windows, instead of the mountains)
 function skCityBuild() { if (sk.city) return; const g = sk.city = new THREE.Group(), R = Math.random, P = [], C = [], col = new THREE.Color(), box = new THREE.BoxGeometry(1, 1, 1).toNonIndexed();
@@ -5239,8 +5261,8 @@ function skForkSign(good) { const cv = sk.forkCv, c = cv.getContext('2d'), W = c
   c.fillText(good < 0 ? '⭐' : '💦', 186, H / 2 + 6); c.fillText(good < 0 ? '💦' : '⭐', W - 186, H / 2 + 6); sk.forkTex.needsUpdate = true; }
 function skForkStart() { skForkBuild(); if (!sk.forkG.parent) sk.ground.add(sk.forkG); const F = SK_FORK, u = SKATE.from + 9, good = Math.random() < .5 ? -1 : 1; sk.fork = { u, good }; skForkSign(good); sk.forkG.visible = true;
   // (one side: stars all the way and a present at the end; the other: puddles, and a star between them)
-  for (let q = 2; q < F.len - 3; q += 1.5) skPut(skateThing('stjerne'), good * SKATE.lane, u + q); skPut(skateThing('gave'), good * SKATE.lane, u + F.len - 1.5);
-  for (const q of [3, 8.5, 14]) skPut(skateThing('pyt'), -good * SKATE.lane, u + q); for (const q of [5.8, 11.3]) skPut(skateThing('stjerne'), -good * SKATE.lane, u + q);
+  for (let q = 2; q < F.len - 3; q += 1.5) skPut(skateThing('stjerne'), good * SKATE.lane, u + q); skPut(skateThing(sk.look === 'by' ? 'balloner' : 'gave'), good * SKATE.lane, u + F.len - 1.5);
+  for (const q of [3, 8.5, 14]) skPut(skateThing(sk.look === 'by' ? 'fontaene' : 'pyt'), -good * SKATE.lane, u + q); for (const q of [5.8, 11.3]) skPut(skateThing('stjerne'), -good * SKATE.lane, u + q);
   // (bushes and flowers on the island)
   skSidePut('busk', u + 5, 0, Math.random() * 6.28, .9); skSidePut('blomster', u + 7.6, .1); skSidePut('busk', u + 10.2, -.05, Math.random() * 6.28, 1.05); skSidePut('blomster', u + 12.4, -.1); }
 function skForkTick(dt, v) { const f = sk.fork, F = SK_FORK; if (!f) { if ((sk.forkT -= dt) <= 0 && !sk.jy && !sk.push) { skForkStart(); sk.forkT = 26 + Math.random() * 12; } return; }
@@ -5255,7 +5277,7 @@ function skateBits(kind, x, y, z, n) { x += skShift(x, 0); for (let k = 0; k < n
 // (the things on the road, each made once and used again: half - half its width; len - its length along the road)
 function skateThing(kind) { const pool = sk.pools[kind] ??= [], free = pool.find(p => !p.group.visible); if (free) return free;
   const g = new THREE.Group(), add = (geo, m, x, y, z) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.castShadow = true; g.add(o); return o; }; let half = .3, len = .4;
-  if (kind === 'kegle') { add(new THREE.BoxGeometry(.36, .04, .36), skMat('#FF7A2F', .5), 0, .02, 0); add(new THREE.ConeGeometry(.17, .46, 24), skMat('#FF7A2F', .5), 0, .27, 0); add(new THREE.CylinderGeometry(.1, .12, .07, 24), skMat('#FFFFFF', .5), 0, .26, 0); half = .2; len = .36; }
+  if (kind === 'kegle') { add(new THREE.BoxGeometry(.36, .04, .36), skMat('#FF7A2F', .5), 0, .02, 0); add(new THREE.ConeGeometry(.17, .46, 24), skMat('#FF7A2F', .5), 0, .27, 0); add(new THREE.CylinderGeometry(.1, .12, .07, 24), skMat('#FFFFFF', .5), 0, .26, 0); propInto(g, 'by-kegle.glb', .52); half = .2; len = .36; }
   if (kind === 'kasse') { add(new THREE.BoxGeometry(.62, .62, .62), skMat('#C98B4B', .85), 0, .31, 0); for (const y of [.12, .5]) add(new THREE.BoxGeometry(.64, .06, .64), skMat('#9C6630', .85), 0, y, 0); half = .32; len = .62; }
   if (kind === 'rail') { for (const z of [-1.2, 0, 1.2]) add(new THREE.BoxGeometry(.06, .45, .06), skMat('#E8384F', .4), 0, .225, z); for (let k = 0; k < 6; k++) add(new THREE.BoxGeometry(.08, .08, .4), skMat(k % 2 ? '#FFFFFF' : '#E8384F', .4), 0, .45, -1 + k * .4); half = .14; len = 2.6; }
   if (kind === 'bom') { for (const x of [-.85, .85]) add(new THREE.BoxGeometry(.08, .55, .08), skMat('#3A2E5C', .5), x, .275, 0); for (let k = 0; k < 8; k++) add(new THREE.BoxGeometry(.22, .14, .1), skMat(k % 2 ? '#FFFFFF' : '#E8384F', .4), -.77 + k * .22, .45, 0); half = .9; len = .3; }
@@ -5284,17 +5306,65 @@ function skateThing(kind) { const pool = sk.pools[kind] ??= [], free = pool.find
     const simple = [...body.children]; loadWalker('dyr-and.glb', 'dyr-and.jpg', .42) /* (smaller than the cat and the dog - the user, 12-11-2026: it was out of proportion beside them) */.then(m => { m.group.rotation.y = Math.PI / 2; for (const o of simple) o.visible = false; body.add(m.group); body.userData.walker = m; }).catch(() => {}); }
   if (kind === 'bold') { const cv = document.createElement('canvas'); cv.width = 128; cv.height = 8; const c = cv.getContext('2d'); ['#FF4F8B', '#FFFFFF', '#FFC233', '#FFFFFF', '#3DA5FF', '#FFFFFF'].forEach((f, k) => { c.fillStyle = f; c.fillRect(k * 128 / 6, 0, 128 / 6 + 1, 8); });
     const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; body = add(new THREE.SphereGeometry(.26, 28, 18), new THREE.MeshStandardMaterial({ map: t, roughness: .4 }), 0, .26, 0); half = .26; len = .5; }
-  const it = { group: g, kind, half, len, lid, body }; g.visible = false; (sk.ground || scene).add(g); pool.push(it);
+  // (Byen's own things - the user, 19-11-2026: the town is to have other things on the road than the park, fun ones. A
+  // green wheelie bin with a smiling face, a road-works barrier over two lanes with orange lamps blinking, a water jet
+  // springing up out of a grate in the road to ride through, a bunch of balloons to ride into - they fly off up - and
+  // pigeons pecking in the road that flutter up as one comes. All made by the page, round and soft, no Meshy)
+  let anim = null, reset = null;
+  if (kind === 'skrald') { const green = skMat('#2FA55E', .6); add(new THREE.CylinderGeometry(.22, .19, .56, 4, 1), green, 0, .34, 0).rotation.y = Math.PI / 4;
+    add(new THREE.BoxGeometry(.4, .07, .44), skMat('#23844A', .55), 0, .65, -.01); add(new THREE.BoxGeometry(.32, .035, .04), skMat('#23844A', .55), 0, .67, -.23);
+    for (const x of [-.15, .15]) { const w = add(new THREE.CylinderGeometry(.065, .065, .05, 16), skMat('#2B2B33', .8), x, .065, -.17); w.rotation.z = Math.PI / 2; }
+    for (const x of [-.075, .075]) { add(new THREE.SphereGeometry(.05, 14, 10), skMat('#FFFFFF', .4), x, .46, .175).scale.z = .5; add(new THREE.SphereGeometry(.025, 10, 8), skMat('#1A1A22', .3), x, .46, .2); }
+    const smile = add(new THREE.TorusGeometry(.07, .014, 8, 16, Math.PI), skMat('#1A1A22', .4), 0, .37, .19); smile.rotation.z = Math.PI; propInto(g, 'by-skrald.glb', .8, BY_TURN.skrald); half = .24; len = .46; }
+  if (kind === 'afspaerring') { const lamp = new THREE.MeshStandardMaterial({ color: '#FF9A1F', emissive: new THREE.Color('#FF7A00'), emissiveIntensity: 1, roughness: .3 });
+    for (const x of [-.85, .85]) { add(new THREE.BoxGeometry(.08, .6, .08), skMat('#F2F2F5', .5), x, .3, 0); add(new THREE.BoxGeometry(.1, .05, .42), skMat('#3A3A44', .7), x, .025, 0); add(new THREE.SphereGeometry(.07, 14, 10), lamp, x, .67, 0).castShadow = false; }
+    for (let k = 0; k < 8; k++) { add(new THREE.BoxGeometry(.22, .16, .07), skMat(k % 2 ? '#22222A' : '#FFC21A', .45), -.77 + k * .22, .44, 0); add(new THREE.BoxGeometry(.22, .08, .05), skMat(k % 2 ? '#FFC21A' : '#22222A', .45), -.77 + k * .22, .2, 0); }
+    propInto(g, 'by-vejarbejde.glb', 1.95, BY_TURN.vej, undefined, 'w');
+    anim = (dt, now) => { lamp.emissiveIntensity = Math.sin(now * 7) > 0 ? 1.8 : .1; }; half = .9; len = .3; }
+  if (kind === 'fontaene') { add(new THREE.CylinderGeometry(.34, .36, .03, 28), skMat('#8E939E', .7), 0, .015, 0).castShadow = false; add(new THREE.CylinderGeometry(.24, .24, .035, 28), skMat('#4A4F5A', .8), 0, .018, 0).castShadow = false;
+    const wet = new THREE.MeshStandardMaterial({ color: '#D2F0FF', emissive: new THREE.Color('#4AA8F5'), emissiveIntensity: .55, roughness: .05, transparent: true, opacity: .6, depthWrite: false }), jets = [];
+    for (let k = 0; k < 6; k++) { const a = k / 5 * Math.PI * 2, r = k === 5 ? 0 : .14, j = add(new THREE.CylinderGeometry(.04, .028, 1, 10), wet, Math.cos(a) * r, .5, Math.sin(a) * r), d = add(new THREE.SphereGeometry(.06, 12, 8), wet, j.position.x, 1, j.position.z); j.castShadow = d.castShadow = false; jets.push([j, d, k === 5 ? 1.25 : 1]); }
+    // (a fire hydrant in the middle, the water coming out round it - from Meshy)
+    { const hy = new THREE.Group(); g.add(hy); propInto(hy, 'by-brandhane.glb', .5, BY_TURN.hane, []); }
+    // (and drops falling from the tops all round, in arcs, as from a real water jet)
+    const drops = Array.from({ length: 14 }, (_, k) => { const o = add(new THREE.SphereGeometry(.03, 8, 6), wet, 0, 0, 0); o.castShadow = false; return [o, k / 14 * Math.PI * 2 + k * .4, k / 14]; });
+    anim = (dt, now) => { for (const [j, d, big] of jets) { const h = big * (.35 + .3 * (.5 + .5 * Math.sin(now * 5 + j.position.x * 20 + j.position.z * 13))); j.scale.y = h; j.position.y = h / 2 + .03; d.position.y = h + .05; }
+      for (const [o, a, ph] of drops) { const t = (now * 1.1 + ph) % 1, r = .05 + .3 * t; o.position.set(Math.cos(a) * r, Math.max(.03, .7 + .35 * t - 1.3 * t * t), Math.sin(a) * r); } }; half = .32; len = .7; }
+  if (kind === 'balloner') { add(new THREE.BoxGeometry(.12, .1, .12), skMat('#6B6F7A', .6), 0, .05, 0); body = new THREE.Group(); g.add(body); const bs = [];
+    ['#FF4F8B', '#FFC233', '#3DA5FF', '#7BD35A', '#B57CFF'].forEach((c, k) => { const a = k / 5 * Math.PI * 2, x = Math.cos(a) * .13, z = Math.sin(a) * .13, y = .95 + (k % 2) * .15;
+      const b = new THREE.Mesh(new THREE.SphereGeometry(.13, 18, 14), skMat(c, .3)); b.scale.set(1, 1.2, 1); b.position.set(x, y, z); b.castShadow = true; body.add(b); bs.push([b, y]);
+      const top = new THREE.Vector3(x, y - .15, z), bot = new THREE.Vector3(0, .1, 0), str = new THREE.Mesh(new THREE.CylinderGeometry(.004, .004, 1, 4), skMat('#FFFFFF', .8));
+      str.position.copy(top).add(bot).multiplyScalar(.5); str.scale.y = top.distanceTo(bot); str.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), top.clone().sub(bot).normalize()); body.add(str); });
+    anim = (dt, now, it) => { if (it.hit) { body.position.y += dt * 3.5; body.rotation.y += dt * 1.5; } else bs.forEach(([b, y], k) => { b.position.y = y + .03 * Math.sin(now * 2 + k); }); }; half = .28; len = .4; }
+  if (kind === 'duer') { body = new THREE.Group(); g.add(body); const grey = skMat('#A3A9B8', .7), dark = skMat('#646B7D', .7), neck = skMat('#5BA08A', .35), birds = [];
+    for (const [x, z, r] of [[-.15, .1, .4], [.13, -.06, -.7], [.02, .2, 2.5]]) { const p = new THREE.Group(); p.position.set(x, 0, z); p.rotation.y = r; body.add(p);
+      // (the pigeon from Meshy, standing, and another flying, wings up - shown when it takes off; the simple one stands in till then)
+      const code = new THREE.Group(), stand = new THREE.Group(), fly = new THREE.Group(); p.add(code, stand, fly); fly.visible = false;
+      propInto(stand, 'by-due.glb', .22, BY_TURN.due, [code]); propInto(fly, 'by-due-flyv.glb', .26, BY_TURN.due, [code]);
+      const m = (geo, mat, px, py, pz, par = code) => { const o = new THREE.Mesh(geo, mat); o.position.set(px, py, pz); o.castShadow = true; par.add(o); return o; };
+      m(new THREE.SphereGeometry(.08, 16, 12), grey, 0, .12, 0).scale.set(1.45, .95, 1); m(new THREE.BoxGeometry(.1, .02, .07), dark, -.13, .13, 0).rotation.z = .3;
+      for (const zz of [-.03, .03]) m(new THREE.CylinderGeometry(.008, .008, .06, 6), skMat('#E87A8A', .6), .02, .03, zz);
+      const head = new THREE.Group(); head.position.set(.09, .17, 0); code.add(head); m(new THREE.SphereGeometry(.05, 12, 10), neck, .01, .0, 0, head).scale.set(1, 1.1, 1.1); m(new THREE.SphereGeometry(.045, 14, 10), grey, .04, .05, 0, head);
+      m(new THREE.ConeGeometry(.013, .045, 8), skMat('#3A3A44', .5), .095, .045, 0, head).rotation.z = -Math.PI / 2; for (const zz of [-.028, .028]) m(new THREE.SphereGeometry(.011, 8, 6), skMat('#E85A2A', .4), .065, .065, zz, head);
+      const wings = [-1, 1].map(sd => { const w = new THREE.Group(); w.position.set(-.01, .16, sd * .055); code.add(w); m(new THREE.SphereGeometry(.07, 12, 8), dark, -.02, 0, sd * .03, w).scale.set(1.3, .25, .7); return [w, sd]; });
+      birds.push({ p, head, wings, x, z, r, stand, fly, dir: Math.random() * Math.PI * 2 }); }
+    anim = (dt, now, it) => { birds.forEach((b, k) => { b.stand.visible = !it.hit; b.fly.visible = !!it.hit; if (it.hit) { b.p.rotation.y = -b.dir; b.fly.position.y = .03 * Math.sin(now * 22 + k); b.fly.rotation.z = .25; b.p.position.y += dt * (2.2 + k * .4); b.p.position.x += Math.cos(b.dir) * dt * 1.6; b.p.position.z += Math.sin(b.dir) * dt * 1.6; for (const [w, sd] of b.wings) w.rotation.x = sd * (.2 + 1.1 * Math.abs(Math.sin(now * 28 + k))); b.head.rotation.z = 0; }
+      else { const peck = Math.max(0, Math.sin(now * 3.2 + k * 1.9)); b.head.rotation.z = -peck * .8; b.stand.rotation.z = -peck * .35; for (const [w] of b.wings) w.rotation.x = 0; } }); };
+    body.scale.setScalar(1.45); reset = () => birds.forEach(b => { b.p.position.set(b.x, 0, b.z); b.p.rotation.y = b.r; }); half = .3; len = .45; }
+  const it = { group: g, kind, half, len, lid, body, anim, reset }; g.visible = false; (sk.ground || scene).add(g); pool.push(it);
   // (the dog, the cat and the rabbit from Dyr - the user, 12-11-2026: they run over the road from out in the grass)
   if (SK_PETS[kind]) { it.half = .34; it.len = .5; loadGlbPet(kind + '.glb', kind + '.jpg', SK_PETS[kind], .11, .022).then(m => { m.collar.visible = false; g.add(m.group); it.pet = m; }).catch(() => {}); }
   return it; }
 const SK_PETS = { 'dyr-kat': .54, 'dyr-hund': .58, 'dyr-kanin': .58 }, skPetsIn = () => Object.keys(SK_PETS).filter(k => (sk.pools[k] || []).some(p => p.pet && !p.group.visible));
 // (the good ones: run into on purpose - a star, a splash, a jump, a present - not bumped into)
-const SK_GOOD = new Set(['stjerne', 'pyt', 'rampe', 'gave']);
+const SK_GOOD = new Set(['stjerne', 'pyt', 'rampe', 'gave', 'fontaene', 'balloner', 'duer']);
+// (what comes in Byen: the town's own things in place of the crates, the bars, the puddles, the presents and the duck)
+const SK_CITY = [[['kegle', 2.5], ['skrald', 2], ['fontaene', 2], ['rampe', 2], ['duer', 1.4], ['dyr', 1.6], ['balloner', .9], ['bold', 1]],
+  [['kegle', 2], ['skrald', 2], ['afspaerring', 2.2], ['rail', 1.2], ['fontaene', 1.5], ['rampe', 2], ['duer', 1.4], ['dyr', 1.8], ['balloner', .8], ['bold', 1.4]]];
 // (a row of things far down the road: one thing - or a bar over two lanes - and, mostly, stars in a free lane; the
 // easiest levels only cones and crates)
 function skPut(it, x, u) { Object.assign(it, { x, u, hit: false, done: false, mine: false, dir: 0, vy: 0, pair: null, over: false }); { const ud = it.group.userData; if (ud.snow) { ud.snow.visible = !!sk.snow; for (const o of ud.wood) o.visible = !sk.snow; } } it.group.position.set(x, 0, -u); it.group.rotation.set(0, 0, 0); it.group.visible = true;
-  if (it.lid) { it.lid.position.set(0, .4, 0); it.lid.rotation.set(0, 0, 0); it.lid.visible = true; } if (it.body) it.body.rotation.set(0, 0, 0); if (it.body) it.body.position.y = it.kind === 'bold' ? .26 : 0; sk.live.push(it); }
+  if (it.lid) { it.lid.position.set(0, .4, 0); it.lid.rotation.set(0, 0, 0); it.lid.visible = true; } if (it.body) it.body.rotation.set(0, 0, 0); if (it.body) it.body.position.y = it.kind === 'bold' ? .26 : 0; it.reset?.(); sk.live.push(it); }
 function skateRow(from = SKATE.from) { const easy = ['niveau-meget-let', 'niveau-let'].includes(game.level), r = Math.random(), used = new Set();
   const put = skPut;
   // (what comes: a pick weighted for the level - the easiest only the soft things and the fun ones)
@@ -5305,9 +5375,9 @@ function skateRow(from = SKATE.from) { const easy = ['niveau-meget-let', 'niveau
   // and gone from the road five seconds' ride later)
   const rampNear = sk.rampWait > 0;
   const pets = skPetsIn();
-  const kind = pick((easy ? [['kegle', 3], ['kasse', 2], ['pyt', 2], ['rampe', 2], ['and', 1.2], ['dyr', 1.6], ['gave', .8], ['bold', 1]]
+  const kind = pick((sk.look === 'by' ? SK_CITY[easy ? 0 : 1] : easy ? [['kegle', 3], ['kasse', 2], ['pyt', 2], ['rampe', 2], ['and', 1.2], ['dyr', 1.6], ['gave', .8], ['bold', 1]]
     : [['kegle', 2.5], ['kasse', 2], ['rail', 1.5], ['bom', 2], ['pyt', 1.5], ['rampe', 2], ['and', 1.2], ['dyr', 1.8], ['gave', .7], ['bold', 1.5]]).filter(([k]) => (k !== 'rampe' || !rampNear) && (k !== 'dyr' || pets.length) && !(sk.snow && ['pyt', 'and', 'bold', 'kasse', 'rail', 'bom'].includes(k))));
-  if (kind === 'bom') { const left = Math.random() < .5; put(skateThing('bom'), (left ? -.5 : .5) * SKATE.lane, from); used.add(left ? -1 : 1); used.add(0); }
+  if (kind === 'bom' || kind === 'afspaerring') { const left = Math.random() < .5; put(skateThing(kind), (left ? -.5 : .5) * SKATE.lane, from); used.add(left ? -1 : 1); used.add(0); }
   // (the duck and the ball cross the road from one side to the other, timed to be in the middle about as they come by)
   // (an animal starts well out in the grass, and is at the road as it comes by)
   else if (kind === 'and' || kind === 'bold' || kind === 'dyr') { const pet = kind === 'dyr', it = skateThing(pet ? pets[Math.floor(Math.random() * pets.length)] : kind), dir = Math.random() < .5 ? -1 : 1, off = pet ? SKW.edge + 2.6 : 1.5 * SKATE.lane; put(it, -dir * off, from + 2); it.dir = dir; it.cross = off / ((from + 2) / skateLevel().speed) * (kind === 'and' ? .9 : pet ? 1 : 1.1); used.add(-1).add(0).add(1); }
@@ -5315,7 +5385,7 @@ function skateRow(from = SKATE.from) { const easy = ['niveau-meget-let', 'niveau
     // (mostly a crate or a cone just past a ramp, in its lane: up the ramp, and over it - the user said 08-11-2026; as
     // far past it as the jump goes at this level's speed, so the figure is in the air as it goes under)
     if (kind === 'rampe') sk.rampWait = sk.snow ? 3 : 5;
-    if (kind === 'rampe' && Math.random() < .75) { const ob = skateThing(!sk.snow && Math.random() < .55 ? 'kasse' : 'kegle'); put(ob, lane * SKATE.lane, from + Math.max(.95, .45 * skateLevel().speed - .4)); it.pair = ob; } }
+    if (kind === 'rampe' && Math.random() < .75) { const ob = skateThing(!sk.snow && Math.random() < .55 ? (sk.look === 'by' ? 'skrald' : 'kasse') : 'kegle'); put(ob, lane * SKATE.lane, from + Math.max(.95, .45 * skateLevel().speed - .4)); it.pair = ob; } }
   // (the stars never in the lane the figure rides in now - one has to steer to them, not just stand)
   if (Math.random() < (easy ? .9 : .7)) { const free = [-1, 0, 1].filter(l => !used.has(l) && l !== sk.lane); if (free.length) { const lane = free[Math.floor(Math.random() * free.length)], n = 1 + Math.floor(Math.random() * 3);
     for (let k = 0; k < n; k++) put(skateThing('stjerne'), lane * SKATE.lane, from + (k - (n - 1) / 2) * 1.1); } } }
@@ -5376,7 +5446,7 @@ function skateTick(dt) { dt = Math.min(dt, .1); // (never a long jump after a pa
   // (the bend: a new way every few seconds, eased into)
   if ((sk.curveT -= dt) <= 0) { sk.curveTo = Math.random() < .25 ? 0 : (Math.random() < .5 ? -1 : 1) * (.5 + Math.random() * .5); sk.curveT = 4 + Math.random() * 4; }
   sk.curve += (sk.curveTo - sk.curve) * Math.min(1, dt * .35);
-  { const P = sk.road.geometry.attributes.position; for (let i = 0; i < P.count; i++) P.setX(i, sk.roadX[i] + skBend(26 + P.getY(i)) + Math.sign(sk.roadX[i]) * skWide(26 + P.getY(i))); P.needsUpdate = true; }
+  { const P = sk.road.geometry.attributes.position; for (let i = 0; i < P.count; i++) P.setX(i, sk.roadX[i] + skBend(26 + P.getY(i)) + skShift(sk.roadX[i], 26 + P.getY(i))); P.needsUpdate = true; }
   for (const b of sk.bits) if (b.mesh.visible) { b.v.y -= 9.8 * dt; b.mesh.position.addScaledVector(b.v, dt); if ((b.life -= dt) <= 0 || b.mesh.position.y < 0) b.mesh.visible = false; }
   { const rt = sk.road.material.map; rt.offset.y = (rt.offset.y + v * dt / 3) % 1; } skForkTick(dt, v); skWorldTick(dt, v); skatePose();
   // (the first row near: down the far end of the road it took 7 seconds on the easiest level before anything happened, the
@@ -5396,6 +5466,7 @@ function skateTick(dt) { dt = Math.min(dt, .1); // (never a long jump after a pa
     // round its foot, down through the road, and looked broken)
     else if (it.hit && k === 'bold') { const d = it.dir || 1; it.x += d * 4.5 * dt; it.vy -= 9.8 * dt; it.body.position.y += it.vy * dt; if (it.body.position.y < .26) { it.body.position.y = .26; it.vy = Math.abs(it.vy) * .6; } it.body.rotation.z -= d * 14 * dt; }
     else if (it.hit && !good) { if (k === 'and') { g.position.y += 2.2 * dt; it.body.rotation.z = .4 * Math.sin(now * 40); g.rotation.z = 0; } else { g.rotation.x -= dt * 6; g.position.y = Math.max(0, g.position.y + (it.vy -= 9.8 * dt) * dt); } }
+    if (it.anim) it.anim(dt, now, it);
     if (k === 'gave' && it.hit) { it.lid.position.y += (it.vy -= 9.8 * dt) * dt; it.lid.rotation.x += dt * 7; if (it.lid.position.y < -1) it.lid.visible = false; }
     // (on the bend: across with the road, and turned along it)
     g.position.x = it.x + skBend(it.u) + skShift(it.x, it.u); g.position.z = -it.u; g.rotation.y = star ? now * 3 : -Math.atan(skSlope(it.u)) + (k === 'and' && it.dir < 0 ? Math.PI : 0) + (SK_PETS[k] ? it.dir * Math.PI / 2 : 0);
@@ -5418,6 +5489,9 @@ function skateTick(dt) { dt = Math.min(dt, .1); // (never a long jump after a pa
         // crate; and anything within one and a half seconds' ride past the landing jumped too: too near to steer from after coming down)
         const T = Math.min(1.6, Math.max(.3, land / 2 / vv)); sk.jv = 2.1 / T; sk.jg = 2.1 / (T * T); sk.jt = 2 * T; sk.jy = .001; addStars(2); sfx('boing'); }
       else if (k === 'gave') { it.hit = true; it.vy = 4; it.lid.visible = true; skateBits('guld', g.position.x, .5, g.position.z, 26); addStars(3); for (const t of [0, .12, .24]) sfx('ding', t); }
+      else if (k === 'fontaene') { it.hit = true; skateBits('vand', sk.x, .3, 0, 30); addStars(1); sfx('plask'); }
+      else if (k === 'balloner') { it.hit = true; skateBits('guld', g.position.x, .9, g.position.z, 20); addStars(2); sfx('ding'); sfx('ding', .14); }
+      else if (k === 'duer') { it.hit = true; addStars(1); sfx('swish'); sfx('swish', .12); }
       else if (k === 'and') { it.hit = true; sk.wobble = .5; sfx('rap'); sfx('rap', .18); }
       // (an animal run into is a bump like any other thing - the user, 12-11-2026: one rode straight through them - and it
       // jumps off out of the way)
@@ -6750,6 +6824,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.13.1 (eff1c0e)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.13.1 (de22c90)</div>
 </body>
 </html>
