@@ -156,9 +156,12 @@
   .lvl-pop .worlds b { display: block; width: 36px; height: 6px; border-radius: 3px; background: rgba(255,255,255,.55); overflow: hidden; }
   .lvl-pop .worlds b i { display: block; height: 100%; background: #FFB020; }
   /* (the star jar by the stars: it fills from the bottom; gold when full) */
-  .jar { position: relative; display: inline-block; width: 26px; height: 32px; border: 3px solid #FFFFFF; border-top-width: 5px; border-radius: 7px 7px 11px 11px; background: rgba(255,255,255,.35); overflow: hidden; box-shadow: 0 2px 10px rgba(58, 46, 92, .2); }
+  /* (a real jar - the user, 19-11-2026: "not much jar about it" - a glass jar with a red lid, filling with gold, on a
+     white tile like the stars and coins beside it) */
+  .jar { position: relative; display: inline-grid; place-items: center; background: var(--tile); border-radius: 999px; padding: 1px 16px; box-shadow: 0 2px 10px rgba(58, 46, 92, .2); }
+  .jar svg { width: 32px; height: 40px; display: block; overflow: visible; }
+  .jar .jar-gold { transform-box: fill-box; transform-origin: 50% 100%; transform: scaleY(var(--f, 0)); transition: transform .4s; }
   .jar[hidden] { display: none; }
-  .jar i { position: absolute; left: 0; right: 0; bottom: 0; height: var(--fill, 0%); background: linear-gradient(#FFE27A, #FFB020); transition: height .4s; }
   .jar.full { animation: jarPop .6s ease 2; } @keyframes jarPop { 50% { transform: scale(1.25); } }
   .world-win { position: absolute; inset: 0; z-index: 6; display: flex; align-items: center; justify-content: center; background: rgba(42, 31, 79, .35); }
   .world-win[hidden] { display: none; }
@@ -420,7 +423,7 @@
 <button class="info-btn" id="infoBtn" aria-label="Sådan gør du" aria-expanded="false" hidden>i</button>
 <div class="info-pop" id="infoPop" hidden>👆 Træk for at dreje figuren<br>🤏 Knib for at zoome<br>👕 Tryk på navnet på trøjen, så siger figuren det – med din egen indtalte stemme, hvis du har indtalt en</div>
 <!-- Hop over bolden: the stars won, and the cross that ends the game; a hint at the start -->
-<div class="hud" id="hud" hidden><span class="hud-left"><span class="hud-face" id="hudFace" hidden></span><span class="stars" id="stars">⭐ 0</span><span class="record" id="record" title="Din rekord">🏆 0</span><span class="record" id="hudKr" title="Dine mønter">💰 0</span><span class="jar" id="hudJar" hidden title="Stjernekrukken"><i></i></span></span><span class="hud-right"><button class="game-x game-lvl" id="gameLvl" aria-label="Sværhedsgrad" aria-expanded="false"><img alt=""></button><button class="game-x" id="gameExit" aria-label="Stop spillet">✕</button></span></div>
+<div class="hud" id="hud" hidden><span class="hud-left"><span class="hud-face" id="hudFace" hidden></span><span class="stars" id="stars">⭐ 0</span><span class="record" id="record" title="Din rekord">🏆 0</span><span class="record" id="hudKr" title="Dine mønter">💰 0</span><span class="jar" id="hudJar" hidden title="Stjernekrukken"><svg viewBox="0 0 30 38" aria-hidden="true"><defs><clipPath id="jarIn"><path d="M8 11h14v2c3 1 5 3.5 5 7v11a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5V20c0-3.5 2-6 5-7z"/></clipPath><linearGradient id="jarGold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFE27A"/><stop offset="1" stop-color="#FFA81F"/></linearGradient></defs><path d="M8 11h14v2c3 1 5 3.5 5 7v11a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5V20c0-3.5 2-6 5-7z" fill="#DDF0FF"/><g clip-path="url(#jarIn)"><rect class="jar-gold" x="0" y="11" width="30" height="27" fill="url(#jarGold)"/></g><path d="M15 19.5l1.6 3.3 3.6.5-2.6 2.5.6 3.6-3.2-1.7-3.2 1.7.6-3.6-2.6-2.5 3.6-.5z" fill="#FFFFFF" stroke="#E89A10" stroke-width="1" stroke-linejoin="round"/><path d="M8 11h14v2c3 1 5 3.5 5 7v11a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5V20c0-3.5 2-6 5-7z" fill="none" stroke="#5FA8E0" stroke-width="2" stroke-linejoin="round"/><path d="M6.5 20c0-2 1-3.4 2.4-4.2M6.5 23v6" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity=".9"/><rect x="6" y="3" width="18" height="8" rx="3" fill="#E8384F"/><rect x="6" y="7.5" width="18" height="2" fill="#B8243A" opacity=".6"/><rect x="8" y="4.3" width="6" height="1.6" rx=".8" fill="#FFFFFF" opacity=".55"/></svg></span></span><span class="hud-right"><button class="game-x game-lvl" id="gameLvl" aria-label="Sværhedsgrad" aria-expanded="false"><img alt=""></button><button class="game-x" id="gameExit" aria-label="Stop spillet">✕</button></span></div>
 <!-- (the levels - and in Hop over bolden the three ways to play - chosen without leaving the game: the user, 11-11-2026) -->
 <div class="lvl-pop" id="lvlPop" hidden></div>
 <!-- (a world won: the cup, and the gate to the next world - the user, 18-11-2026) -->
@@ -5158,7 +5161,7 @@ function worldsOf(mode) { score.worlds ??= {}; const w = score.worlds[mode] ??= 
 const worldOk = (mode, i) => i < 2 || free('verden-' + (i + 1));
 function worldNow(mode) { if (!WORLDS[mode]) return 0; const w = worldsOf(mode); return Math.max(0, Math.min(w.now || 0, w.open - 1, WORLDS[mode].length - 1)); }
 function showJar() { const el = document.getElementById('hudJar'); if (!el) return; const L = WORLDS[game.mode]; el.hidden = !L || !game.on; if (el.hidden) return;
-  const i = worldNow(game.mode), v = worldsOf(game.mode).jar[i] || 0; el.style.setProperty('--fill', Math.round(100 * Math.min(1, v / JAR)) + '%'); el.title = T(`Stjernekrukken i ${L[i][1]}`, `The star jar in ${L[i][2]}`); }
+  const i = worldNow(game.mode), v = worldsOf(game.mode).jar[i] || 0; el.style.setProperty('--f', Math.min(1, v / JAR).toFixed(3)); el.title = T(`Stjernekrukken i ${L[i][1]}`, `The star jar in ${L[i][2]}`); }
 function jarGain(n) { const L = WORLDS[game.mode]; if (!L || !game.on || n <= 0) return; const w = worldsOf(game.mode), i = worldNow(game.mode), was = w.jar[i] || 0;
   w.jar[i] = Math.min(JAR, was + n * (JAR_GAIN[game.level] || 1)); showJar();
   if (was < JAR && w.jar[i] >= JAR && !w.won.includes(i)) { w.won.push(i); const next = i + 1 < L.length && worldOk(game.mode, i + 1) ? i + 1 : -1; if (next > 0) w.open = Math.max(w.open, next + 1); saveScore(); worldWin(i, next); } }
@@ -6960,6 +6963,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.13.1 (38d4166)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.13.1 (2ee5e0f)</div>
 </body>
 </html>
