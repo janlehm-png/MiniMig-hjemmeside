@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>MiniMig™ version 2</title>
-<meta name="minimig-version" content="0.13.1">
+<meta name="minimig-version" content="0.14.0">
 <!-- (the number of this version, shown under the i - see VERSIONER.md - raised for each package and each fix put out) -->
 <!-- (the same icon as version 1 on a home screen, under the name MiniMig 2 - the icons lie in the website's billeder/;
      the user, 03-11-2026, sharing version 2 with testers) -->
@@ -93,6 +93,11 @@
   .swatches[hidden] { display: none; }
   .panel .swatches button { width: 38px; height: 38px; padding: 0; border-radius: 50%; border: 3px solid #FFFFFF; box-shadow: 0 0 0 2px var(--line); }
   .panel .swatches button.on { box-shadow: 0 0 0 3px var(--accent); }
+  /* (the patterns: rounded squares under the round colours, each a little picture of the pattern) */
+  .patterns { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 10px; }
+  .patterns[hidden] { display: none; }
+  .panel .patterns button { width: 38px; height: 38px; padding: 0; border-radius: 10px; border: 3px solid #FFFFFF; box-shadow: 0 0 0 2px var(--line); }
+  .panel .patterns button.on { box-shadow: 0 0 0 3px var(--accent); }
   .sliders { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 14px; font-size: 12px; font-weight: 700; }
   .sliders label { display: flex; align-items: center; gap: 6px; }
   .sliders input { width: min(210px, 70vw); height: 22px; border-radius: 11px; -webkit-appearance: none; appearance: none; }
@@ -145,11 +150,47 @@
   .lvl-pop button { width: 56px; height: 56px; padding: 2px; border-radius: 16px; border: 3px solid transparent; background: #F4F0FF; cursor: pointer; }
   .lvl-pop button.on { border-color: var(--accent); background: #fff; }
   .lvl-pop img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+  /* (the worlds in the level box: a picture each - a big sign on its colours - and its jar under it; one not yet open faded) */
+  .lvl-pop .worlds button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 26px; line-height: 1; color: #fff; }
+  .lvl-pop .worlds button.shut { opacity: .45; }
+  .lvl-pop .worlds b { display: block; width: 36px; height: 6px; border-radius: 3px; background: rgba(255,255,255,.55); overflow: hidden; }
+  .lvl-pop .worlds b i { display: block; height: 100%; background: #FFB020; }
+  /* (the star jar by the stars: it fills from the bottom; gold when full) */
+  /* (a real jar - the user, 19-11-2026: "not much jar about it" - a glass jar with a red lid, filling with gold, on a
+     white tile like the stars and coins beside it) */
+  .jar { position: relative; display: inline-grid; place-items: center; background: var(--tile); border-radius: 999px; padding: 1px 16px; box-shadow: 0 2px 10px rgba(58, 46, 92, .2); }
+  .jar svg { width: 32px; height: 40px; display: block; overflow: visible; }
+  .jar .jar-gold { transform-box: fill-box; transform-origin: 50% 100%; transform: scaleY(var(--f, 0)); transition: transform .4s; }
+  .jar[hidden] { display: none; }
+  .jar.full { animation: jarPop .6s ease 2; } @keyframes jarPop { 50% { transform: scale(1.25); } }
+  .world-win { position: absolute; inset: 0; z-index: 6; display: flex; align-items: center; justify-content: center; background: rgba(42, 31, 79, .35); }
+  .world-win[hidden] { display: none; }
+  .ww-card { background: #FFFFFF; border-radius: 28px; padding: 22px 26px; max-width: 340px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,.25); animation: wwIn .5s ease; }
+  @keyframes wwIn { from { transform: scale(.6); opacity: 0; } }
+  .ww-cup { font-size: 76px; line-height: 1; animation: jarPop .8s ease 3; }
+  .ww-card h2 { margin: 8px 0 4px; font-size: 1.5rem; color: #2B2153; }
+  .ww-card p { margin: 0 0 16px; color: #6B6191; }
+  .ww-go { display: flex; flex-direction: column; gap: 8px; }
+  .ww-go button { border: 0; border-radius: 16px; padding: 14px 18px; font: 800 1.1rem system-ui, sans-serif; cursor: pointer; }
+  .ww-next { background: #2FB872; color: #FFFFFF; } .ww-next[hidden] { display: none; }
+  .ww-stay { background: #F4F0FF; color: #2B2153; }
   .stage.playing .tap-hint { bottom: max(18px, env(safe-area-inset-bottom)); }
   .hud-left { display: flex; align-items: center; gap: 6px; }
   .record { background: var(--tile); border-radius: 999px; padding: 4px 11px; font: 700 15px/1.2 system-ui, sans-serif; box-shadow: 0 2px 10px rgba(58, 46, 92, .15); }
   .record.beaten { background: #FFC233; }
   /* the stars kept: how many in all, and the best of each game at each level */
+  /* (the trophy shelf - the user, 19-11-2026: a cup for each jar filled, standing on a wooden shelf in the stars sheet;
+     one row a game, a place for each world - the cup gold when won, a pale one and the jar's progress when not yet) */
+  .shelf { display: grid; gap: 14px; margin: 6px 0 4px; }
+  .shelf-row h4 { margin: 0 0 4px; font: 800 .95rem/1.2 system-ui, sans-serif; color: #2B2153; }
+  .shelf-cups { display: flex; justify-content: space-around; align-items: flex-end; gap: 6px; padding: 8px 6px 0; border-radius: 16px 16px 0 0; background: linear-gradient(#F6F1FF, #EDE5FF); }
+  .shelf-plank { height: 14px; border-radius: 4px; background: linear-gradient(#C98B4E, #9A6332); box-shadow: 0 4px 8px rgba(90, 55, 20, .3); }
+  .cup { display: flex; flex-direction: column; align-items: center; width: 88px; text-align: center; font: 700 .8rem/1.15 system-ui, sans-serif; color: #2B2153; }
+  .cup svg { width: 64px; height: 76px; display: block; }
+  .cup.won svg { animation: cupShine 2.4s ease-in-out infinite; } @keyframes cupShine { 50% { transform: translateY(-2px) scale(1.04); } }
+  .cup .cup-name { margin-top: 2px; } .cup:not(.won) .cup-name { color: #8A82AA; }
+  .cup .cup-bar { display: block; width: 56px; height: 6px; margin: 3px 0 6px; border-radius: 3px; background: #DCD3F2; overflow: hidden; } .cup .cup-bar i { display: block; height: 100%; background: #FFB020; }
+  .cup.won .cup-bar { visibility: hidden; }
   .star-total { text-align: center; font: 800 2.4rem/1.1 system-ui, sans-serif; }
   .star-table { width: 100%; border-collapse: collapse; font: 700 .95rem/1.2 system-ui, sans-serif; }
   .star-table th, .star-table td { padding: 6px 4px; text-align: center; }
@@ -396,9 +437,11 @@
 <button class="info-btn" id="infoBtn" aria-label="Sådan gør du" aria-expanded="false" hidden>i</button>
 <div class="info-pop" id="infoPop" hidden>👆 Træk for at dreje figuren<br>🤏 Knib for at zoome<br>👕 Tryk på navnet på trøjen, så siger figuren det – med din egen indtalte stemme, hvis du har indtalt en</div>
 <!-- Hop over bolden: the stars won, and the cross that ends the game; a hint at the start -->
-<div class="hud" id="hud" hidden><span class="hud-left"><span class="hud-face" id="hudFace" hidden></span><span class="stars" id="stars">⭐ 0</span><span class="record" id="record" title="Din rekord">🏆 0</span><span class="record" id="hudKr" title="Dine mønter">💰 0</span></span><span class="hud-right"><button class="game-x game-lvl" id="gameLvl" aria-label="Sværhedsgrad" aria-expanded="false"><img alt=""></button><button class="game-x" id="gameExit" aria-label="Stop spillet">✕</button></span></div>
+<div class="hud" id="hud" hidden><span class="hud-left"><span class="hud-face" id="hudFace" hidden></span><span class="stars" id="stars">⭐ 0</span><span class="record" id="record" title="Din rekord">🏆 0</span><span class="record" id="hudKr" title="Dine mønter">💰 0</span><span class="jar" id="hudJar" hidden title="Stjernekrukken"><svg viewBox="0 0 30 38" aria-hidden="true"><defs><clipPath id="jarIn"><path d="M8 11h14v2c3 1 5 3.5 5 7v11a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5V20c0-3.5 2-6 5-7z"/></clipPath><linearGradient id="jarGold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFE27A"/><stop offset="1" stop-color="#FFA81F"/></linearGradient></defs><path d="M8 11h14v2c3 1 5 3.5 5 7v11a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5V20c0-3.5 2-6 5-7z" fill="#DDF0FF"/><g clip-path="url(#jarIn)"><rect class="jar-gold" x="0" y="11" width="30" height="27" fill="url(#jarGold)"/></g><path d="M15 19.5l1.6 3.3 3.6.5-2.6 2.5.6 3.6-3.2-1.7-3.2 1.7.6-3.6-2.6-2.5 3.6-.5z" fill="#FFFFFF" stroke="#E89A10" stroke-width="1" stroke-linejoin="round"/><path d="M8 11h14v2c3 1 5 3.5 5 7v11a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5V20c0-3.5 2-6 5-7z" fill="none" stroke="#5FA8E0" stroke-width="2" stroke-linejoin="round"/><path d="M6.5 20c0-2 1-3.4 2.4-4.2M6.5 23v6" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity=".9"/><rect x="6" y="3" width="18" height="8" rx="3" fill="#E8384F"/><rect x="6" y="7.5" width="18" height="2" fill="#B8243A" opacity=".6"/><rect x="8" y="4.3" width="6" height="1.6" rx=".8" fill="#FFFFFF" opacity=".55"/></svg></span></span><span class="hud-right"><button class="game-x game-lvl" id="gameLvl" aria-label="Sværhedsgrad" aria-expanded="false"><img alt=""></button><button class="game-x" id="gameExit" aria-label="Stop spillet">✕</button></span></div>
 <!-- (the levels - and in Hop over bolden the three ways to play - chosen without leaving the game: the user, 11-11-2026) -->
 <div class="lvl-pop" id="lvlPop" hidden></div>
+<!-- (a world won: the cup, and the gate to the next world - the user, 18-11-2026) -->
+<div class="world-win" id="worldWin" hidden><div class="ww-card"><div class="ww-cup" aria-hidden="true">🏆</div><h2 id="wwTitle"></h2><p id="wwText"></p><div class="ww-go"><button class="ww-next" id="wwNext"></button><button class="ww-stay" id="wwStay"></button></div></div></div>
 <div class="tap-hint" id="tapHint" hidden>👆 Tryk for at hoppe</div>
 <!-- (Cypher: the round's four parts chosen one at a time - the user, 15-11-2026) -->
 <div class="cy-pick" id="cyPick" hidden><div class="cy-title" id="cyTitle"></div><div class="cy-opts" id="cyOpts"></div></div>
@@ -487,6 +530,8 @@
     </div>
     <!-- (the app's fixed colours as round buttons - back beside the sliders, the user wanted, 03-11-2026) -->
     <div class="swatches" id="swatches"></div>
+    <!-- (the patterns under the colours - the user, 18-11-2026) -->
+    <div class="patterns" id="patterns" hidden></div>
     <div class="sliders" id="sliders">
       <label>Farve <input type="range" id="s-h" min="0" max="360" step="1"></label>
       <label>Styrke <input type="range" id="s-s" min="0" max="100" step="1"></label>
@@ -540,6 +585,7 @@
     <div class="who who-small" id="starWho"></div>
     <div class="star-total" id="starTotal">⭐ 0</div>
     <p class="note" id="starNote"></p>
+    <div id="trophyBox"><h3>🏆 Pokalhylden</h3><div class="shelf" id="trophyShelf"></div><p class="note">Fyld stjernekrukken i en verden, så får du en pokal på hylden.</p></div>
     <table class="star-table" id="starTable"></table>
     <p class="note">🏆 = din rekord i det spil på det niveau.</p>
     <h3>🔒 Stjernebutik</h3>
@@ -720,7 +766,7 @@ const EN = {
   '👆 Træk for at dreje figuren': '👆 Drag to turn the figure', '🤏 Knib for at zoome': '🤏 Pinch to zoom', '👕 Tryk på navnet på trøjen, så siger figuren det – med din egen indtalte stemme, hvis du har indtalt en': '👕 Tap the name on the top and the figure says it – in your own recorded voice, if you have recorded one',
   'Indtal selv': 'Record yourself', 'Gem ✓': 'Save ✓', 'Farve': 'Color', 'Styrke': 'Strength', 'Lys': 'Light', 'Gem billede': 'Save picture', 'Hele figuren': 'The whole figure', 'Profilbillede': 'Profile picture', 'Slå fra igen': 'Turn off again',
   'Skal barnet kunne dele billeder uden at spørge?': 'May the child share pictures without asking?', 'Nej, spørg hver gang': 'No, ask every time', 'Ja, i 1 time': 'Yes, for 1 hour', 'Ja, resten af i dag': 'Yes, for the rest of today', 'Ja, indtil jeg slår det fra igen': 'Yes, until I turn it off', '(kræver et sværere regnestykke)': '(needs a harder math problem)', 'Gælder kun på denne enhed. Et navn på trøjen kommer med på billedet.': 'Applies to this device only. A name on the top will be in the picture.',
-  'Spørg en voksen': 'Ask a grown-up', 'Stjernerne fra spillene bliver til mønter – jo sværere niveau, jo flere. For mønterne får du ting i butikken.': 'The stars from the games become coins in your account – the harder the level, the more. With the coins you buy things in the shop.', '🏆 = din rekord i det spil på det niveau.': '🏆 = your record in that game at that level.', '🔒 Stjernebutik': '🔒 Star shop', 'Tryk på en ting med 🔒, og betal med mønter. Hvert barn køber for sig selv.': 'Tap a thing with 🔒 and pay with coins. Each child buys for themselves.', '🧾 Det har du købt': '🧾 What you have bought',
+  'Spørg en voksen': 'Ask a grown-up', 'Stjernerne fra spillene bliver til mønter – jo sværere niveau, jo flere. For mønterne får du ting i butikken.': 'The stars from the games become coins in your account – the harder the level, the more. With the coins you buy things in the shop.', '🏆 = din rekord i det spil på det niveau.': '🏆 = your record in that game at that level.', '🔒 Stjernebutik': '🔒 Star shop', '🏆 Pokalhylden': '🏆 Trophy shelf', 'Fyld stjernekrukken i en verden, så får du en pokal på hylden.': 'Fill the star jar in a world, and you get a cup on the shelf.', 'Tryk på en ting med 🔒, og betal med mønter. Hvert barn køber for sig selv.': 'Tap a thing with 🔒 and pay with coins. Each child buys for themselves.', '🧾 Det har du købt': '🧾 What you have bought',
   'Køb': 'Buy', '🤝 Hjælp': '🤝 Help', 'Betal ✓': 'Pay ✓', 'Børn og spillere': 'Children and players', 'Hvert barn har sin egen MiniMig og sine egne stjerner. Byg barnets figur, og tryk 📷 – så gemmes figuren på skærmen som barnets MiniMig. Under Mine figurer trykker barnet bare på sit billede. Gemmes kun på denne enhed.': 'Each child has their own MiniMig and their own stars. Build the child’s figure and tap 📷 – the figure on the screen is then saved as the child’s MiniMig. Under My figures the child just taps their picture. Kept on this device only.', '➕ Ny spiller': '➕ New player',
   'For voksne: vælg hvilke lyde MiniMig må lave. Valget huskes på denne enhed.': 'For grown-ups: choose which sounds MiniMig may make. The choice is remembered on this device.', '🎮 Musik i spillene': '🎮 Music in the games', '💃 Musik til dansene': '💃 Music for the dances', '🔔 Lydeffekter – boing, bonk og ta-da': '🔔 Sound effects – boing, bonk and ta-da', '🗣️ Stemmen, der siger navnet': '🗣️ The voice saying the name', 'Slå al lyd fra': 'All sound off', 'Slå al lyd til': 'All sound on',
   'Tid': 'Time', 'For voksne: hvor længe må der spilles om dagen? Når tiden er brugt, holder MiniMig pause til i morgen. Valget huskes på denne enhed.': 'For grown-ups: how long may MiniMig be played each day? When the time is used up, MiniMig takes a break until tomorrow. The choice is remembered on this device.',
@@ -729,7 +775,7 @@ const EN = {
   'Gem i Mine figurer': 'Save in My figures', 'Ny MiniMig': 'New MiniMig', 'Dreng': 'Boy', 'Pige': 'Girl', 'Den figur, du har nu, bliver gemt i Mine figurer 🖼️.': 'The figure you have now is saved in My figures 🖼️.', 'Børn': 'Children', '🖼️ Gemte figurer': '🖼️ Saved figures', 'Børn og spillere – for voksne': 'Children and players – for grown-ups',
   'Dit billede': 'Your picture', 'Tryk og hold på billedet, og vælg': 'Press and hold the picture, and choose', 'Gem i Fotos': 'Save to Photos', 'eller': 'or', 'Del': 'Share', '💾 Gem billedet': '💾 Save the picture', 'Billedet gemmes i mappen Overførsler. Du kan også højreklikke på billedet og vælge': 'The picture is saved in your Downloads folder. You can also right-click the picture and choose', 'Gem billede som': 'Save image as',
   'Sådan gør du': 'How it works', 'Musik til og fra': 'Music on and off', 'Skift beat': 'Change beat', 'Trommer': 'Drums', 'Skriv dit navn': 'Write your name', 'Navn på trøjen': 'Name on the top', 'Sig navnet': 'Say the name', 'Slet din egen stemme': 'Delete your own voice', 'Gem dansen': 'Save the dance', 'Start forfra': 'Start again', 'Navn på dansen': 'Name of the dance', 'Luk': 'Close', 'Slet': 'Delete', 'Mønterne på disken': 'The coins on the counter', 'Billedet af figuren': 'The picture of the figure', 'Min MiniMig': 'My MiniMig',
-  'Hele MiniMig': 'The full MiniMig', 'Hele MiniMig™': 'The full MiniMig™', 'Køb Hele MiniMig': 'Buy the full MiniMig', 'Gendan køb': 'Restore purchase', '✓ I har Hele MiniMig': '✓ You have the full MiniMig',
+  'Hele MiniMig': 'The full MiniMig', 'Ensfarvet': 'Plain', 'Striber': 'Stripes', 'Kontrastærmer': 'Contrast sleeves', 'Bånd': 'Band', 'Lodrette striber': 'Vertical stripes', 'Sidestriber': 'Side stripes', 'Knælapper': 'Knee patches', 'Opslag': 'Turn-ups', 'Stribe': 'Stripe', 'Tåkappe': 'Toe cap', 'Hælkappe': 'Heel cap', 'Hele MiniMig™': 'The full MiniMig™', 'Køb Hele MiniMig': 'Buy the full MiniMig', 'Gendan køb': 'Restore purchase', '✓ I har Hele MiniMig': '✓ You have the full MiniMig',
   'Ét køb – intet abonnement. Det gælder alle børn på denne enhed.': 'One purchase – no subscription. It covers every child on this device.',
   'Kun på testsiden: prøv spillet som': 'Test site only: try the game as', 'Basis': 'Basic',
   'Flere børn, hver med sin egen MiniMig og sine egne stjerner, følger med i Hele MiniMig.': 'More children, each with their own MiniMig and their own stars, come with the full MiniMig.',
@@ -772,7 +818,7 @@ disc.rotation.x = -Math.PI / 2; disc.position.y = .001; scene.add(disc);
 const CHOICES = [['skin', 'Hud', 'hud'], ['hair', 'Hår', 'haar'], ['eyes', 'Øjne', 'oejne'], ['brows', 'Bryn', 'bryn'], ['nose', 'Næse', 'naese'], ['mouth', 'Mund', 'mund'], ['ears', 'Ører', 'oerer'], ['pynt', 'Pynt', 'kinder'], ['shirt', 'Trøje', 'troeje'], ['pants', 'Bukser', 'bukser'], ['dress', 'Kjole', 'kjoler'], ['gear-skate', 'Skateboard', 'fane-skate'], ['gear-sea', 'Svømning', 'fane-svoem'], ['gear-space', 'Rumrejse', 'fane-rum'], ['gear-pk', 'Straffespark', 'fane-straffe'], ['gear-snow', 'Sne', 'fane-snow'],
   ['socks', 'Strømper', 'stroemper'], ['shoe', 'Sko', 'sko'], ['hat', 'Hat', 'hat'], ['glasses', 'Briller', 'briller'], ['item', 'Ting', 'ting'], ['name', 'Navn', 'navn'], ['bg', 'Baggrund', 'baggrund']];
 const picked = {}, START = { skin: '#EDB98A', hair: '#4A2C1D', eyes: '#7A4220', brows: '#4A2C1D', mouth: '#C0505A', pynt: '#FF5A6E', nose: '#EDB98A', shirt: '#FF7A2F', pants: '#2C3E8C', dress: '#3D8BFF', suit: '#3D8BFF', socks: '#3D8BFF', item: '#E8384F', shoe: '#3D8BFF', hat: '#3D8BFF', glasses: '#3D8BFF' }; let partNow = 'shirt';
-const apply = (part, c) => { picked[part] = c; recolour(part, c); if (part === 'shirt' || part === 'dress') chestName(); };
+const apply = (part, c) => { picked[part] = c; recolour(part, c); if (part === 'shirt' || part === 'dress') chestName(); if (typeof paintPatterns === 'function') { paintPatterns(part); showPatterns(false); } };
 const iconButton = (src, label) => { const b = document.createElement('button'), i = new Image(); i.src = src; i.alt = ''; i.onerror = () => i.remove();
   const s = document.createElement('span'); s.textContent = tr(label); b.append(i, s); return b; };
 // (the app's colours, as in version 2.5D)
@@ -806,6 +852,7 @@ function showSwatches() { const move = /^(move|game)-/.test(partNow); if (!move)
   const sw = document.getElementById('swatches'), list = noColour ? [] : PALETTES[colourPart()] || PALETTES.cloth; sw.hidden = !list.length; sw.innerHTML = '';
   for (const c of list) { const b = document.createElement('button'); b.style.background = c; b.setAttribute('aria-label', c); b.classList.toggle('on', (picked[colourPart()] || START[colourPart()] || '').toLowerCase() === c.toLowerCase());
     b.onclick = () => { applyTab(c); slidersFrom(c); sw.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); }; sw.append(b); }
+  try { showPatterns(noColour); } catch (e) {}
   document.getElementById('nameBox').hidden = partNow !== 'name'; document.getElementById('myDance').hidden = partNow !== 'move-mindans';
   document.querySelectorAll('#subs [data-part]').forEach(b => b.classList.toggle('on', b.dataset.part === partNow && boxOpen));
   renderStyles(); placeBox(); }
@@ -862,7 +909,7 @@ const FULL = new Set([
   // (things, backgrounds and pets - the cat is in Basis, bought in the star shop as before)
   'ting-fodbold', 'ting-hulahop', 'bg-ridderborg', 'bg-havbund', 'bg-slikland', 'bg-vinter', 'bg-rummet', 'bg-fodboldbane', 'bg-dansesal', 'dyr-hund', 'dyr-kanin',
   // (more than one child on the device)
-  'players']);
+  'players', 'verden-3']);
 const IS_APP = !!window.Capacitor?.isNativePlatform?.(), TEST_SITE = location.pathname.includes('/test/') || /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
 const FULL_KEY = 'minimig3d.hele', TRY_KEY = 'minimig3d.udgave';
 function fullOwned() { try { const t = TEST_SITE && localStorage.getItem(TRY_KEY); if (t) return t === 'hele'; return !IS_APP || localStorage.getItem(FULL_KEY) === '1'; } catch (e) { return !IS_APP; } }
@@ -2545,7 +2592,7 @@ async function setGarment(part, name) { const G = GARMENTS[part], ask = ++dressi
   const shirt = !!(GARMENTS.dress.now || GARMENTS.shirt.now || GARMENTS.suit.now), pants = !!(GARMENTS.dress.now || GARMENTS.pants.now || GARMENTS.suit.now);
   if (tex && (!!tex.covered[PARTS.shirt] !== shirt || !!tex.covered[PARTS.pants] !== pants)) { tex.covered = { [PARTS.shirt]: shirt, [PARTS.pants]: pants }; redrawBody(); }
   for (const g of Object.values(GARMENTS)) for (const [n, m] of Object.entries(g.meshes)) if (m) m.visible = n === g.shown;
-  wearUnder(); hideBody(); layer(); tuckIn(); hatHair(); chestName(); }
+  wearUnder(); hideBody(); layer(); tuckIn(); hatHair(); chestName(); try { paintAllPatterns(); } catch (e) { console.warn(e); } if (part === 'shirt' || part === 'pants' || part === 'shoe') showPatterns(false); }
 // (trousers tucked into tall boots: long trousers over the rubber boots - the boots' blue came out through the trouser
 // legs, they being wider, the user said 18-11-2026. Below a little under the boots' top the trouser legs are left out, as
 // trousers tucked into wellies are; the boots, wider, hide their end. Only for tall boots - their top over .15 of the
@@ -3807,6 +3854,93 @@ function footballPrints() { if (!hairBase) return; const { H } = hairBase.whole,
     g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = `800 ${h * .78}px ui-rounded, "Arial Rounded MT Bold", system-ui, sans-serif`;
     g.shadowColor = light ? 'rgba(255,255,255,.35)' : 'rgba(0,0,0,.25)'; g.shadowOffsetY = 5; g.shadowBlur = 8;
     g.fillStyle = light ? '#2B2153' : '#FFFFFF'; g.fillText('10', w / 2, h / 2 + h * .04); })); }
+// ---- Patterns on the clothes (the user, 18-11-2026: "smartere udseender end bare enkeltfarver" - stripes and such, for a
+// fresher look): under the colours a row of small pictures - plain, and a few patterns for the top, the trousers and the
+// sneakers. The second colour is chosen by itself - white, or navy on light clothes, as the socks' band - so the child
+// picks only a colour and a pattern. Drawn by the garment's own light and folds, sharp at any distance: each point of the
+// garment knows where it sits on the body as made (height, side, front or back, how far it is arm), and the picture is
+// worked out for each dot of the screen from that. No real brand's marks - no three stripes, no swoosh
+var PATTERNS = {
+  shirt: [['', 'Ensfarvet'], ['striber', 'Striber'], ['kontrast', 'Kontrastærmer'], ['baand', 'Bånd'], ['lodret', 'Lodrette striber']],
+  pants: [['', 'Ensfarvet'], ['sidestriber', 'Sidestriber'], ['knae', 'Knælapper'], ['opslag', 'Opslag']],
+  shoe: [['', 'Ensfarvet'], ['stribe', 'Stribe'], ['taa', 'Tåkappe'], ['hael', 'Hælkappe']] };
+var PAT_ID = { striber: 1, kontrast: 2, baand: 3, lodret: 4, sidestriber: 11, knae: 12, opslag: 13, stribe: 21, taa: 22, hael: 23 };
+var patternNow = {}; // (var, all three: asked for before this line runs, they are just not there yet)
+// (which garments take a pattern: the tops, the trousers but the briefs, and the sneakers - football boots too)
+const patOk = (part, name) => !!name && (part === 'shoe' ? ['sko-sneakers', 'sko-fodbold'].includes(name) : part === 'pants' ? name !== 'bukser-trusser' : part === 'shirt');
+const PAT_GLSL = `
+uniform float mmPat; uniform vec3 mmCol2; uniform vec3 mmBase; uniform float mmNeck; uniform float mmCrotch; uniform float mmHem; uniform vec4 mmKnee;
+varying vec3 vMmRest; varying vec3 vMmNor; varying float vMmArm; varying float vMmLeg; varying float vMmFoot;
+float mmBand(float x, float a, float b) { float f = max(fwidth(x), 1e-4); return smoothstep(a - f, a + f, x) - smoothstep(b - f, b + f, x); }
+float mmStripe(float x) { float t = abs(fract(x) - .5) * 2.; float f = max(fwidth(t), 1e-4); return smoothstep(.5 - f, .5 + f, t); }
+float mmMask() { vec3 r = vMmRest; float nl = length(vMmNor); vec3 n = nl > .1 ? vMmNor / nl : vec3(0.); float arm = smoothstep(.35, .65, vMmArm), side = r.x < 0. ? -1. : 1.;
+  if (mmPat < 1.5) return mmStripe(r.y / .045) * (1. - smoothstep(mmNeck - .03, mmNeck - .02, r.y));
+  if (mmPat < 2.5) return arm;
+  if (mmPat < 3.5) return mmBand(r.y, mmNeck - .2, mmNeck - .155) * (1. - arm);
+  if (mmPat < 4.5) return mmStripe(r.x / .045 + .5) * (1. - arm) * (1. - smoothstep(mmNeck - .03, mmNeck - .02, r.y));
+  if (mmPat < 11.5) { float a = atan(n.z, n.x * side); a = vMmLeg; return vMmLeg < -5. ? 0. : (mmBand(a, .05, .2) + mmBand(a, .32, .47)) * step(r.y, mmCrotch); }
+  if (mmPat < 12.5) { vec2 k = side < 0. ? mmKnee.xy : mmKnee.zw; vec2 d = abs(r.xy - k); return mmBand(d.x, -1., .03) * mmBand(d.y, -1., .032) * smoothstep(.15, .35, n.z); }
+  if (mmPat < 13.5) return 1. - smoothstep(mmHem + .018, mmHem + .023, r.y);
+  if (mmPat < 21.5) return mmBand(r.y, .026, .038) * smoothstep(.25, .45, abs(n.x));
+  if (mmPat < 22.5) return smoothstep(.7, .74, vMmFoot) * step(.011, r.y);
+  return (1. - smoothstep(.22, .26, vMmFoot)) * step(.011, r.y) * step(-1., vMmFoot); }
+`;
+// (each point's place on the body as made - its height, side and depth in heights of the figure, the way it faces, how
+// much it moves with an arm - put on the garment once, and on the rims and bands that share its stuff)
+function patPrep(mesh) { if (mesh.userData.patReady) return; mesh.userData.patReady = true;
+  const { inv, H } = hairBase.whole, K = clothMarks(), M = inv.clone().invert(), N = new THREE.Matrix3().getNormalMatrix(M), v = new THREE.Vector3();
+  const bones = hairBase.body.skeleton.bones, arms = new Set(bones.flatMap((b, j) => /Arm|Hand/.test(b.name) ? [j] : []));
+  // (the legs: each point's leg by the bones it moves with, and its angle round that leg at its height - 0 straight out to
+  // the side, forwards positive. The side stripes by it: by the way the cloth faced they came out on one leg only, wavy)
+  const legOf = new Map(bones.flatMap((b, j) => /(Left|Right)(UpLeg|Leg|Foot|ToeBase)/.test(b.name) ? [[j, Math.sign(hairBase.at[j].x - K.mid) || 1]] : []));
+  for (const m of [mesh, ...(mesh.parent?.children || []).filter(o => o !== mesh && o.isSkinnedMesh && o.material === mesh.material)]) {
+    const g = m.geometry, P = g.attributes.position, Nn = g.attributes.normal, si = g.attributes.skinIndex, sw = g.attributes.skinWeight, n = P.count, R = new Float32Array(n * 3), Q = new Float32Array(n * 3), A = new Float32Array(n);
+    for (let i = 0; i < n; i++) { v.fromBufferAttribute(P, i).applyMatrix4(M); R[i * 3] = (v.x - K.mid) / H; R[i * 3 + 1] = v.y / H; R[i * 3 + 2] = (v.z - K.cz) / H;
+      if (Nn) { v.fromBufferAttribute(Nn, i).applyMatrix3(N).normalize(); Q[i * 3] = v.x; Q[i * 3 + 1] = v.y; Q[i * 3 + 2] = v.z; }
+      let a = 0; if (si && sw) for (let c = 0; c < 4; c++) if (arms.has(si.getComponent(i, c))) a += sw.getComponent(i, c); A[i] = a; }
+    // (round the leg's own line, hip to knee to ankle, as the bones stand)
+    const L = new Float32Array(n).fill(-9), axis = {}, joint = (sd, re) => { const j = bones.findIndex((b, k) => re.test(b.name) && (Math.sign(hairBase.at[k].x - K.mid) || 1) === sd); return j < 0 ? null : [(hairBase.at[j].x - K.mid) / H, hairBase.at[j].y / H, (hairBase.at[j].z - K.cz) / H]; };
+    for (const sd of [-1, 1]) axis[sd] = [joint(sd, /(Left|Right)UpLeg$/), joint(sd, /(Left|Right)Leg$/), joint(sd, /(Left|Right)Foot$/)];
+    const centre = (sd, y) => { const [h, k, a] = axis[sd]; if (!h || !k || !a) return null; const [p, q] = y >= k[1] ? [k, h] : [a, k], t = Math.min(1, Math.max(0, (y - p[1]) / (q[1] - p[1] || 1))); return [p[0] + (q[0] - p[0]) * t, p[2] + (q[2] - p[2]) * t]; };
+    if (si && sw) for (let i = 0; i < n; i++) { let l = 0, r = 0; for (let c = 0; c < 4; c++) { const sd = legOf.get(si.getComponent(i, c)); if (sd < 0) l += sw.getComponent(i, c); else if (sd > 0) r += sw.getComponent(i, c); }
+      if (l + r < .5) continue; const sd = l > r ? -1 : 1, c = centre(sd, R[i * 3 + 1]); if (c) L[i] = Math.atan2(R[i * 3 + 2] - c[1], (R[i * 3] - c[0]) * sd); }
+    g.setAttribute('mmRest', new THREE.BufferAttribute(R, 3)); g.setAttribute('mmNor', new THREE.BufferAttribute(Q, 3)); g.setAttribute('mmArm', new THREE.BufferAttribute(A, 1)); g.setAttribute('mmLeg', new THREE.BufferAttribute(L, 1));
+    // (a shoe's own length: each point's place from the heel, 0, to the toe, 1 - for the toe and heel caps)
+    const F = new Float32Array(n).fill(-9), lo = { '-1': Infinity, 1: Infinity }, hi = { '-1': -Infinity, 1: -Infinity };
+    for (let i = 0; i < n; i++) if (R[i * 3 + 1] < .09) { const sd = R[i * 3] < 0 ? -1 : 1; lo[sd] = Math.min(lo[sd], R[i * 3 + 2]); hi[sd] = Math.max(hi[sd], R[i * 3 + 2]); }
+    for (let i = 0; i < n; i++) if (R[i * 3 + 1] < .09) { const sd = R[i * 3] < 0 ? -1 : 1; F[i] = (R[i * 3 + 2] - lo[sd]) / Math.max(1e-4, hi[sd] - lo[sd]); }
+    g.setAttribute('mmFoot', new THREE.BufferAttribute(F, 1)); } }
+// (the garment's stuff taught the patterns once: the picture's colour, then the pattern laid over it in the second colour,
+// as light or dark as the garment is there - its folds and shade go on through the pattern)
+function patMaterial(mesh, hem) { const mats = [].concat(mesh.material).filter(Boolean); if (mats[0]?.userData.pat) return mats[0].userData.pat;
+  const U = { mmPat: { value: 0 }, mmCol2: { value: new THREE.Color('#FFFFFF') }, mmBase: { value: new THREE.Color('#FFFFFF') }, mmNeck: { value: 0 }, mmCrotch: { value: 0 }, mmHem: { value: hem || 0 }, mmKnee: { value: new THREE.Vector4() } };
+  for (const mat of mats) { const prev = mat.onBeforeCompile;
+  mat.onBeforeCompile = (sh, r) => { if (prev && prev !== THREE.Material.prototype.onBeforeCompile) prev.call(mat, sh, r); Object.assign(sh.uniforms, U);
+    sh.vertexShader = 'attribute vec3 mmRest;\nattribute vec3 mmNor;\nattribute float mmArm;\nattribute float mmLeg;\nattribute float mmFoot;\nvarying float vMmLeg;\nvarying float vMmFoot;\nvarying vec3 vMmRest;\nvarying vec3 vMmNor;\nvarying float vMmArm;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nvMmRest = mmRest; vMmNor = mmNor; vMmArm = mmArm; vMmLeg = mmLeg; vMmFoot = mmFoot;');
+    sh.fragmentShader = PAT_GLSL + sh.fragmentShader.replace('#include <map_fragment>', '#include <map_fragment>\nif (mmPat > .5) { float mmM = clamp(mmMask(), 0., 1.); vec3 mmL = vec3(.2126, .7152, .0722); float mmK = clamp(dot(diffuseColor.rgb, mmL) / max(dot(mmBase, mmL), .02), .75, 1.4); diffuseColor.rgb = mix(diffuseColor.rgb, mmCol2 * mmK, mmM); }'); };
+  mat.customProgramCacheKey = () => 'mm-pattern'; mat.needsUpdate = true; mat.userData.pat = U; } return U; }
+// (the pattern on what is worn now - or off: a garment with none, or one that takes none)
+function paintPatterns(part) { if (!PATTERNS || !hairBase?.whole || !PATTERNS[part] || typeof GARMENTS === 'undefined') return; const G = GARMENTS[part], { H } = hairBase.whole, K = clothMarks();
+  for (const [n, top] of Object.entries(G.meshes)) for (const m of (() => { const l = []; if (top?.isSkinnedMesh) return [top]; top?.traverse?.(o => { if (o.isSkinnedMesh && o.material) l.push(o); }); return l; })()) { const id = n === G.shown && patOk(part, n) ? PAT_ID[patternNow[part]] || 0 : 0;
+    if (!id) { const u = [].concat(m.material)[0]?.userData.pat; if (u) u.mmPat.value = 0; continue; }
+    patPrep(m); const U = patMaterial(m, (G.items.find(i => i[0] === n)?.[2]?.hem) || 0), base = picked[part] ? new THREE.Color().setStyle(picked[part], THREE.SRGBColorSpace) : clothColour(part, m), c = {};
+    base.getRGB(c, THREE.SRGBColorSpace); U.mmBase.value.copy(base); U.mmCol2.value.setStyle(.2126 * c.r + .7152 * c.g + .0722 * c.b > .6 ? '#2C3E8C' : '#FFFFFF', THREE.SRGBColorSpace);
+    U.mmNeck.value = K.neckY / H; U.mmCrotch.value = (hairBase.hipY - .06 * H) / H;
+    const bones = hairBase.body.skeleton.bones, knee = sx => { const j = bones.findIndex((b, k) => /(Left|Right)Leg$/.test(b.name) && !/UpLeg/.test(b.name) && Math.sign(hairBase.at[k].x - K.mid) === sx); return j < 0 ? [sx * .05, .27] : [(hairBase.at[j].x - K.mid) / H, hairBase.at[j].y / H]; };
+    const [lx, ly] = knee(-1), [rx, ry] = knee(1); U.mmKnee.value.set(lx, ly, rx, ry); U.mmPat.value = id; } }
+function paintAllPatterns() { if (PATTERNS) for (const p of Object.keys(PATTERNS)) paintPatterns(p); }
+// (the row of patterns under the colours: each a little picture of the pattern in the garment's colour and the second one)
+function patPreview(id, c, c2) { const g = (a, b) => `linear-gradient(${a}, ${b})`;
+  return { '': c, striber: `repeating-linear-gradient(0deg, ${c} 0 6px, ${c2} 6px 11px)`, kontrast: g('90deg', `${c2} 0 26%, ${c} 26% 74%, ${c2} 74%`), baand: g('0deg', `${c} 0 38%, ${c2} 38% 62%, ${c} 62%`),
+    lodret: `repeating-linear-gradient(90deg, ${c} 0 6px, ${c2} 6px 11px)`, sidestriber: g('90deg', `${c} 0 62%, ${c2} 62% 70%, ${c} 70% 78%, ${c2} 78% 86%, ${c} 86%`),
+    knae: `linear-gradient(${c2}, ${c2}) 22% 62% / 24% 26% no-repeat, linear-gradient(${c2}, ${c2}) 78% 62% / 24% 26% no-repeat, ${c}`, opslag: g('0deg', `${c2} 0 26%, ${c} 26%`),
+    stribe: g('0deg', `${c} 0 40%, ${c2} 40% 58%, ${c} 58%`), taa: g('90deg', `${c} 0 62%, ${c2} 62%`), hael: g('90deg', `${c2} 0 32%, ${c} 32%`) }[id] || c; }
+function showPatterns(noColour) { const box = document.getElementById('patterns'); if (!box || !PATTERNS) return; const part = colourPart(), list = PATTERNS[part];
+  const show = !noColour && list && typeof GARMENTS !== 'undefined' && patOk(part, GARMENTS[part]?.now); box.hidden = !show; box.innerHTML = ''; if (!show) return;
+  const c = picked[part] || START[part], hsl = {}, cc = new THREE.Color().setStyle(c, THREE.SRGBColorSpace), s = {}; cc.getRGB(s, THREE.SRGBColorSpace); const c2 = .2126 * s.r + .7152 * s.g + .0722 * s.b > .6 ? '#2C3E8C' : '#FFFFFF';
+  for (const [id, label] of list) { const b = document.createElement('button'); b.style.background = patPreview(id, c, c2); b.setAttribute('aria-label', tr(label)); b.title = tr(label); b.classList.toggle('on', (patternNow[part] || '') === id);
+    b.onclick = () => { if (id) patternNow[part] = id; else delete patternNow[part]; paintPatterns(part); box.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); }; box.append(b); } }
+
 // (the tab: a box to write the name in and the badges under it, in place of styles and colours)
 const nameInput = document.getElementById('nameInput'); nameInput.value = nameNow;
 nameInput.addEventListener('input', () => { nameNow = nameInput.value; chestName(); showRec(); clearTimeout(sayTimer); sayTimer = setTimeout(sayName, 1100); });
@@ -3871,13 +4005,14 @@ showBadges();
 // saved out of the page (the camera, behind a grown-up's sum) ----
 // (a figure: its choices - the colours picked, the hair, the face, what it wears, the name)
 const figureNow = () => ({ picked: { ...picked }, hair: hairNow, eyes: eyesNow, brows: browsNow, mouth: mouthNow, nose: noseNow, pynt: [...pyntNow],
-  wear: Object.fromEntries(Object.entries(GARMENTS).map(([p, G]) => [p, G.now])), name: nameNow, badge: badgeNow, item: itemNow, pet: petNow, petToys: [...petToys], ears: earsNow, earrings: earringsNow, bg: bgNow });
+  wear: Object.fromEntries(Object.entries(GARMENTS).map(([p, G]) => [p, G.now])), name: nameNow, badge: badgeNow, item: itemNow, pet: petNow, petToys: [...petToys], ears: earsNow, earrings: earringsNow, bg: bgNow, pattern: { ...patternNow } });
 // (a part's own colour back: the figure's painted one, the hair's and the garments' as made)
 const unpaint = list => { for (const t of list) { const im = t.ctx.createImageData(t.w, t.h); im.data.set(t.src); t.ctx.putImageData(im, 0, 0); t.texture.needsUpdate = true; } };
 function unpick(part) { delete picked[part]; if (part === 'socks' || part === 'shoe') { paintSocks(); paintHeels(); } if (part === 'item') paintItem(); if (part === 'hair') unpaint(hairTexs); if (GARMENTS[part]) unpaint(GARMENTS[part].texs); if (part === 'suit') unpaint(gearTexs);
   if (tex && PARTS[part]) { delete tex.colours[PARTS[part]]; if (part === 'hair' && !picked.brows) delete tex.colours[PARTS.brows]; if (part === 'brows' && picked.hair) tex.colours[PARTS.brows] = tex.colours[PARTS.hair]; } }
 let dressingUp = 0;
 async function wearFigure(f) { const ask = ++dressingUp; f = basisFigure(f);
+  if (patternNow) { for (const k of Object.keys(patternNow)) delete patternNow[k]; Object.assign(patternNow, f.pattern || {}); }
   // (the colours: the brows before the hair, which they follow when they have none of their own)
   for (const [part] of CHOICES) if (part !== 'hair') { if (f.picked[part]) { picked[part] = f.picked[part]; recolour(part, f.picked[part]); } else unpick(part); }
   if (f.picked.hair) { picked.hair = f.picked.hair; recolour('hair', f.picked.hair); } else unpick('hair');
@@ -4780,11 +4915,11 @@ function startGame(mode = game.mode) { if (game.on || !glb) return; if (!game.ag
     game.bigPool ??= [goldBall(), goldBall()]; Object.assign(game, { dive: false, sinceBig: 0 });
     const run = levelNow().run; Promise.all([run, GAME.jump, GAME.trip, GAME.cheer, GAME.dive].map(loadMove)).then(() => { if (game.on) runAnim(run); }); }
   hintEl.textContent = tr(onBoard(mode) ? '👈 Tryk i siden for at svinge 👉' : mode === 'island' ? '👆 Tryk hvor du vil gå hen' : mode === 'space' ? '👆 Tryk – så flyver du derhen. To hurtige tryk giver fart 🚀' : mode === 'sea' ? '👆 Tryk eller træk – så svømmer du derhen' : mode === 'hide' ? '🔍 Hvor er jeg? Tryk på busken' : mode === 'skihop' ? '👆 Tryk for at køre – og tryk igen ved kanten for at hoppe!' : mode === 'cypher' ? '🎵 Vælg fire trin til din runde' : mode === 'studio' ? '🎵 Sæt din dans sammen' : mode === 'pk' ? '👆 Tryk i målet, hvor bolden skal hen' : '👆 Tryk for at hoppe');
-  hud.hidden = false; hintEl.hidden = mode === 'cypher' || mode === 'studio'; try { showLvl(); } catch (e) {} document.querySelector('.top').hidden = true; document.getElementById('stage').classList.add('playing'); showStars(); showRecord();
+  hud.hidden = false; hintEl.hidden = mode === 'cypher' || mode === 'studio'; try { showLvl(); showJar(); } catch (e) {} document.querySelector('.top').hidden = true; document.getElementById('stage').classList.add('playing'); showStars(); showRecord();
   if (MODES[mode].from) game.hopWay = mode; // (the way last chosen in Hop over bolden)
   document.querySelectorAll('[data-game]').forEach(b => b.classList.toggle('on', b.dataset.game === mode || b.dataset.game === 'hop' && !!MODES[mode].from)); prepScene(); }
 // (again: only stopped to start once more - at another level or in another way - the figure's own setting not put back)
-function stopGame(again) { if (!game.on) return; game.on = false; for (const b of [...gamePool(), ...(game.bigPool || [])]) b.group.visible = false; game.dive = false; game.balls = []; confetti.length = 0; unprepScene(); skateStop(); hopWorldStop(); hideStop(); islandStop(); seaStop(); spaceStop(); pkStop(); sjStop(); cyStop(); dsStop();
+function stopGame(again) { if (!game.on) return; game.on = false; game.paused = false; document.getElementById('worldWin').hidden = true; for (const b of [...gamePool(), ...(game.bigPool || [])]) b.group.visible = false; game.dive = false; game.balls = []; confetti.length = 0; unprepScene(); skateStop(); hopWorldStop(); hideStop(); islandStop(); seaStop(); spaceStop(); pkStop(); sjStop(); cyStop(); dsStop();
   // (the sound shut down when nothing plays: on an iPad an open sound channel could go on sounding after the game)
   if (!again) { try { game.audio?.suspend(); } catch (e) {} setItem(game.held ?? itemNow); game.held = undefined; }
   if (again) { game.again = true; return; } holder.position.x = 0; wearBack(game.wore); try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) {}
@@ -4815,6 +4950,7 @@ function gameTick(dt) { confettiTick(dt); if (!game.on || !glb) return; const r 
   const [cx, cy, cz, tx, ty, tz] = M.cam(wideCam()), halfW = Math.tan(camera.fov * Math.PI / 360) * Math.hypot(cx - tx, cz - tz) * camera.aspect;
   camera.position.set(cx, cy, cz); controls.target.set(tx, ty, tz); camera.lookAt(controls.target);
   if (game.hint > 0 && (game.hint -= dt) <= 0) hintEl.hidden = true; else if (game.hint <= 0) hintEl.hidden = true;
+  if (game.paused) return; // (a world won: everything stands still under the cup)
   if (onBoard(game.mode)) { skateTick(dt); return; }
   if (game.mode === 'island') { islandTick(dt); return; }
   if (game.mode === 'sea') { seaTick(dt); return; }
@@ -4883,7 +5019,10 @@ function skateBuild() { if (sk.rig) return; sk.rig = new THREE.Group();
   for (let i = 0; i < 1400; i++) { c.fillStyle = `rgba(${Math.random() < .6 ? '200,200,205' : '10,10,14'},${(Math.random() * .22).toFixed(3)})`; c.fillRect(Math.random() * 256, Math.random() * 256, 1 + Math.random() * 2, 1 + Math.random() * 2); }
   const rw = SKATE.lane * 3 + .3; c.fillStyle = '#FFFFFF'; for (const s of [-1, 1]) c.fillRect((.5 + s * SKATE.lane / 2 / rw) * 256 - 3, 0, 6, 128); c.fillRect(0, 0, 7, 256); c.fillRect(249, 0, 7, 256);
   const t = sk.roadTex = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(1, 20); t.anisotropy = 4;
-  sk.road = new THREE.Mesh(new THREE.PlaneGeometry(SKATE.lane * 3 + .3, 60, 1, 120), new THREE.MeshStandardMaterial({ map: t, roughness: .95 })); sk.road.rotation.x = -Math.PI / 2; sk.road.position.set(0, .004, -26); sk.road.receiveShadow = true;
+  sk.road = new THREE.Mesh(new THREE.PlaneGeometry(SKATE.lane * 3 + .3, 60, 17, 120), new THREE.MeshStandardMaterial({ map: t, roughness: .95 })); sk.road.rotation.x = -Math.PI / 2; sk.road.position.set(0, .004, -26); sk.road.receiveShadow = true;
+  // (17 strips across, so the lane lines are corners of their own - the user, 19-11-2026: before a fork, where the road
+  // grows wider, the white dashes flickered: one strip across bent the picture of them into a zigzag. Now the outer lanes
+  // move out whole, lines and all, and only the middle one grows)
   sk.roadX = Float32Array.from({ length: sk.road.geometry.attributes.position.count }, (_, i) => sk.road.geometry.attributes.position.getX(i));
   // (the bits flying: drops from a puddle, sparks from a present)
   sk.bits = []; sk.bitMats = { vand: skMat('#6FC3FF', .2, '#2B7FD0'), guld: skMat('#FFD23F', .25, '#B07800') }; }
@@ -4931,11 +5070,32 @@ async function readProp(url) { const buf = await (await fetch(url)).arrayBuffer(
   return { geo, map }; }
 // (height: how tall, in metres; turn: turned so its front - the house's door, the lamp's arm - is where the simple one's was)
 // (and the fir, the bush, the tulips, the bench and the fence - the user, 12-11-2026, when there were points for them)
+// (which way each of Byen's models faces as Meshy made it: turned so its front is towards +z, as the pieces are made)
+// (and Strandpromenaden's, the same way)
+const STRAND_TURN = { maage: 0, krabbe: 0, slot: 0, kiste: 0, hus: 0, kiosk: 0, livredder: 0, parasol: 0, stol: 0, baad: 0 };
+const BY_TURN = { hus: 0, bil: Math.PI / 2, poelse: 0, post: 0, skrald: 0, vej: 0, hane: 0, due: 0 };
 const SK_PROPS = { hus: ['skate-hus.glb', 2.9, 0], trae: ['skate-trae.glb', 2.5, 0], lygte: ['skate-lygte.glb', 2.7, Math.PI], gran: ['skate-gran.glb', 2.6, 0], busk: ['skate-busk.glb', .8, 0], blomster: ['skate-blomster.glb', .5, 0],
-  baenk: ['skate-baenk.glb', .8, -Math.PI / 2], hegn: ['skate-hegn.glb', .75, Math.PI / 2] };
+  baenk: ['skate-baenk.glb', .8, -Math.PI / 2], hegn: ['skate-hegn.glb', .75, Math.PI / 2],
+  // (Byen's own from Meshy - the user, 19-11-2026: "noget mere liv ind i det med noget ordentlig grafik": two town houses, a
+  // car, a hot dog stand and a post box; the ones made of simple shapes stand in till they are fetched)
+  byhus1: ['by-hus-gul.glb', 5, BY_TURN.hus], byhus2: ['by-hus-blaa.glb', 5, BY_TURN.hus], bil: ['by-bil.glb', .82, BY_TURN.bil], poelsevogn: ['by-poelsevogn.glb', 1.9, BY_TURN.poelse], postkasse: ['by-postkasse.glb', 1, BY_TURN.post],
+  // (Strandpromenaden's from Meshy - the user, 19-11-2026: "Ja, lav modeller")
+  badehus: ['strand-badehus.glb', 2.5, STRAND_TURN.hus], iskiosk: ['strand-iskiosk.glb', 3.2, STRAND_TURN.kiosk], livredder: ['strand-livredder.glb', 4.2, STRAND_TURN.livredder], parasol: ['strand-parasol.glb', 2.1, STRAND_TURN.parasol], strandstol: ['strand-liggestol.glb', .85, STRAND_TURN.stol] };
+// (a copy of a picture with its strong reds turned to another colour, the light and shade kept)
+function repaintRed(map, hex, blue = false) { const im = map.image, cv = document.createElement('canvas'); cv.width = im.width; cv.height = im.height; const c = cv.getContext('2d'); c.drawImage(im, 0, 0);
+  const d = c.getImageData(0, 0, cv.width, cv.height), a = d.data, to = new THREE.Color(hex), hsl = {}; to.getHSL(hsl); const white = hsl.s < .1;
+  for (let i = 0; i < a.length; i += 4) { const r = blue ? a[i + 2] : a[i], g = a[i + 1], b = blue ? a[i] : a[i + 2]; if (r < 90 || r < g * 1.6 || r < b * 1.6) continue; const k = Math.min(1, (r - Math.max(g, b)) / 120), l = r / 255;
+    const t = white ? [l * 255, l * 255, l * 255].map(v => Math.min(255, v * 1.15)) : [to.r, to.g, to.b].map(v => Math.min(255, v * 255 * (.35 + .9 * l)));
+    for (let q = 0; q < 3; q++) a[i + q] = a[i + q] * (1 - k) + t[q] * k; }
+  c.putImageData(d, 0, 0); const t = new THREE.CanvasTexture(cv); t.flipY = map.flipY; t.colorSpace = map.colorSpace; return t; }
 function skPropsLoad() { sk.propsLoad ??= Promise.all(Object.entries(SK_PROPS).map(async ([kind, [url, height, turn]]) => { try { const { geo, map } = await readProp(url);
     geo.computeBoundingBox(); const b = geo.boundingBox, k = height / (b.max.y - b.min.y); geo.translate(-(b.min.x + b.max.x) / 2, -b.min.y, -(b.min.z + b.max.z) / 2); geo.scale(k, k, k); if (turn) geo.rotateY(turn);
     const mat = new THREE.MeshStandardMaterial({ map, roughness: .8, metalness: 0 }); SK_SIDE[kind] = () => new THREE.Mesh(geo, mat);
+    // (the car is red from Meshy: in other colours too, its red painted over in each - not every car in town the same)
+    if (kind === 'bil') { const mats = [mat, ...['#3D8BFF', '#FFC233', '#2FB872', '#9B6BFF', '#FFFFFF'].map(c => new THREE.MeshStandardMaterial({ map: repaintRed(map, c), roughness: .8, metalness: 0 }))]; SK_SIDE[kind] = () => new THREE.Mesh(geo, mats[Math.floor(Math.random() * mats.length)]); }
+    // (the beach huts blue from Meshy and the parasols red: in other colours too, a row of huts all different)
+    if (kind === 'badehus' || kind === 'parasol') { const blue = kind === 'badehus', mats = [mat, ...(blue ? ['#E8384F', '#2FB872', '#FFB020', '#9B6BFF', '#FF6FA8'] : ['#3D8BFF', '#FFB020', '#2FB872', '#FF6FA8'])
+      .map(c => new THREE.MeshStandardMaterial({ map: repaintRed(map, c, blue), roughness: .8, metalness: 0 }))]; SK_SIDE[kind] = () => new THREE.Mesh(geo, mats[Math.floor(Math.random() * mats.length)]); }
     // (those standing by the road now changed for the new ones)
     const old = sk.sidePools[kind] || []; sk.sidePools[kind] = []; for (const it of sk.side) if (it.kind === kind) { const g = SK_SIDE[kind](); g.scale.copy(it.g.scale); sk.sidePools[kind].push(g); sk.ground.add(g); it.g = g; } for (const g of old) { g.visible = false; sk.world.remove(g); } } catch (e) { /* (the simple one stays) */ } })); }
 function skWorldBuild() { if (sk.world) return; const w = sk.world = new THREE.Group();
@@ -4972,7 +5132,7 @@ function skWorldBuild() { if (sk.world) return; const w = sk.world = new THREE.G
 // the verge, bushes and trees further out, houses behind them, and now and then a tree far out in the meadow)
 function skSidePut(kind, u, x, rot = 0, size = 1) { const pool = sk.sidePools[kind] ??= []; let g = pool.find(p => !p.visible); if (!g) { g = SK_SIDE[kind](); pool.push(g); sk.ground.add(g); }
   g.visible = true; g.scale.setScalar(size); sk.side.push({ g, u, x, rot, kind }); }
-function skSideRow(u) { sk.rowN = (sk.rowN || 0) + 1;
+function skSideRow(u) { if (sk.look === 'by') return citySideRow(u); if (sk.look === 'strand') return strandSideRow(u); sk.rowN = (sk.rowN || 0) + 1;
   for (const s of [-1, 1]) { const E = SKW.edge, r = Math.random(), turn = s > 0 ? -Math.PI / 2 : Math.PI / 2;
     // (in the snow: firs only, some near the run and some far off)
     if (sk.snow) { if (r < .6) skSidePut('gran', u, s * (E + 1.5 + Math.random() * 4.5), 0, .8 + Math.random() * .8); if (Math.random() < .45) skSidePut('gran', u + 1, s * (E + 7.5 + Math.random() * 9), 0, 1 + Math.random() * .6); continue; }
@@ -4988,22 +5148,186 @@ function skSideRow(u) { sk.rowN = (sk.rowN || 0) + 1;
     if (Math.random() < .45) skSidePut(Math.random() < .5 ? 'trae' : 'gran', u + Math.random() * 2, s * (E + 7.5 + Math.random() * 9), Math.random() * 6.28, 1 + Math.random() * .5); } }
 // (the world's look: the green meadow and the asphalt road - or, for the snowboard run, snow all over and a groomed run:
 // white with a little blue in it, fine lines down the run as the snow machine leaves them)
-function skTheme(snow) { sk.snow = !!snow; skWorldBuild(); if (!sk.road) return;
+function skTheme(snow, look = 'park') { sk.snow = !!snow; skWorldBuild(); skCityBuild(); skBeachBuild(); sk.look = snow ? 'snow' : look; if (!sk.road) return;
   if (snow && !sk.snowTex) { const tex = draw => { const cv = document.createElement('canvas'); cv.width = cv.height = 256; draw(cv.getContext('2d')); const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; return t; };
     sk.snowTex = tex(c => { c.fillStyle = '#F6FAFF'; c.fillRect(0, 0, 256, 256); for (let i = 0; i < 900; i++) { c.fillStyle = `rgba(${Math.random() < .5 ? '170,200,235' : '255,255,255'},${(Math.random() * .35).toFixed(3)})`; c.beginPath(); c.arc(Math.random() * 256, Math.random() * 256, 1 + Math.random() * 3, 0, 7); c.fill(); } }); sk.snowTex.repeat.set(30, 20);
     sk.pisteTex = tex(c => { c.fillStyle = '#E4EFFB'; c.fillRect(0, 0, 256, 256); c.fillStyle = 'rgba(150,185,225,.35)'; for (let x = 4; x < 256; x += 8) c.fillRect(x, 0, 2, 256);
       const rw = SKATE.lane * 3 + .3; c.fillStyle = 'rgba(90,140,205,.55)'; for (const q of [-1, 1]) c.fillRect((.5 + q * SKATE.lane / 2 / rw) * 256 - 2, 0, 4, 128); c.fillStyle = '#4F86D9'; c.fillRect(0, 0, 6, 256); c.fillRect(250, 0, 6, 256); }); sk.pisteTex.repeat.set(1, 20); }
   { const k = snow ? SNOW_SLOPE : 0; sk.ground.matrix.set(1, 0, 0, 0, 0, 1, k, 0, 0, 0, 1, 0, 0, 0, 0, 1); sk.ground.matrixWorldNeedsUpdate = true; sk.hills.position.y = snow ? -11 : 0; }
-  sk.grass.material.map = snow ? sk.snowTex : sk.grassTex; sk.grass.material.needsUpdate = true; sk.road.material.map = snow ? sk.pisteTex : sk.roadTex; sk.road.material.needsUpdate = true;
+  sk.grass.material.map = snow ? sk.snowTex : sk.look === 'by' ? sk.tileTex : sk.look === 'strand' ? sk.sandTex : sk.grassTex; sk.grass.material.needsUpdate = true; sk.hills.visible = sk.look !== 'by' && sk.look !== 'strand'; sk.city.visible = sk.look === 'by'; sk.beach.visible = sk.beachFar.visible = sk.look === 'strand'; sk.road.material.map = snow ? sk.pisteTex : sk.look === 'strand' ? sk.boardTex : sk.roadTex; sk.road.material.needsUpdate = true;
   // (the snowboard in the skateboard's place)
   if (snow && !sk.snowBoard) { sk.snowBoard = new THREE.Group(); sk.snowBoard.position.y = .02; sk.board.add(sk.snowBoard); propInto(sk.snowBoard, 'udstyr-snowboard.glb', 1.3, SNOW_BOARD_TURN, [], 'w'); }
   for (const o of sk.boardParts || []) o.visible = !snow; if (sk.snowBoard) sk.snowBoard.visible = !!snow;
   // (the low green hills before the mountains white too)
   for (const h of sk.hills.children.slice(1)) { h.userData.green ??= h.material.color.clone(); h.material.color.copy(snow ? new THREE.Color('#EEF4FC') : h.userData.green); } }
 const SNOW_BOARD_TURN = Math.PI / 2, SNOW_SLOPE = .24;
+// ---- Worlds in the games (the user, 18-11-2026): three worlds in each game - the same play in new surroundings, a
+// little like the one before. Each world has its star jar: the stars won there fill it - more for a harder level, so
+// practising the harder ones gets one on quicker (Let 1, Mellem 2, Svær 3) - and they still become coins as before. A
+// full jar: everything stops, confetti, the cup - "Mester i Parken!" - and the gate to the next world opens. One never
+// loses: the jar only fills. The first: Skateboard - Parken (the meadow as it was) and Byen; Strandpromenaden later.
+// Basis: worlds 1 and 2 of the free games; Hele MiniMig the rest
+const WORLDS = { skate: [['park', 'Parken', 'the park', '🌳', '#5DBF55'], ['by', 'Byen', 'the town', '🏙️', '#6F8FD8'], ['strand', 'Strandpromenaden', 'the beach promenade', '🏖️', '#F2B544']] };
+// (250, every star counting 1 on every level - the user, 19-11-2026: worlds opened far too fast at 60 with Svær x3;
+// about 3-4 rides on Let, 1-2 on Svær, the harder levels faster only by more things on the road)
+const JAR = 250, JAR_GAIN = { 'niveau-meget-let': 1, 'niveau-let': 1, 'niveau-mellem': 1, 'niveau-svaer': 1, 'niveau-meget-svaer': 1 };
+// (each child's own: the world played now, how full each jar is, how many are open, and those won - kept with the stars)
+function worldsOf(mode) { score.worlds ??= {}; const w = score.worlds[mode] ??= { now: 0, jar: [], open: 1, won: [] }; w.jar ??= []; w.won ??= []; return w; }
+const worldOk = (mode, i) => i < 2 || free('verden-' + (i + 1));
+function worldNow(mode) { if (!WORLDS[mode]) return 0; const w = worldsOf(mode); return Math.max(0, Math.min(w.now || 0, w.open - 1, WORLDS[mode].length - 1)); }
+function showJar() { const el = document.getElementById('hudJar'); if (!el) return; const L = WORLDS[game.mode]; el.hidden = !L || !game.on; if (el.hidden) return;
+  const i = worldNow(game.mode), v = worldsOf(game.mode).jar[i] || 0; el.style.setProperty('--f', Math.min(1, v / JAR).toFixed(3)); el.title = T(`Stjernekrukken i ${L[i][1]}`, `The star jar in ${L[i][2]}`); }
+function jarGain(n) { const L = WORLDS[game.mode]; if (!L || !game.on || n <= 0) return; const w = worldsOf(game.mode), i = worldNow(game.mode), was = w.jar[i] || 0;
+  w.jar[i] = Math.min(JAR, was + n * (JAR_GAIN[game.level] || 1)); showJar();
+  if (was < JAR && w.jar[i] >= JAR && !w.won.includes(i)) { w.won.push(i); const next = i + 1 < L.length && worldOk(game.mode, i + 1) ? i + 1 : -1; if (next > 0) w.open = Math.max(w.open, next + 1); saveScore(); worldWin(i, next); } }
+// (the win: the game stops under it, the cup and confetti; the next world to ride into straight away, or stay)
+function worldWin(i, next) { const L = WORLDS[game.mode], mode = game.mode; game.paused = true; celebrate(); try { sfx('cheer'); } catch (e) {}
+  document.getElementById('hudJar').classList.add('full'); setTimeout(() => document.getElementById('hudJar')?.classList.remove('full'), 1400);
+  document.getElementById('wwTitle').textContent = T(`Mester i ${L[i][1]}!`, `Champion of ${L[i][2]}!`);
+  document.getElementById('wwText').textContent = next > 0 ? T(`Du har fyldt stjernekrukken, og pokalen står på din hylde. Nu er ${L[next][1]} åben!`, `You filled the star jar, and the cup is on your shelf. Now ${L[next][2]} is open!`) : T('Du har fyldt stjernekrukken, og pokalen står på din hylde!', 'You filled the star jar, and the cup is on your shelf!');
+  const go = document.getElementById('wwNext'), stay = document.getElementById('wwStay'); go.hidden = next < 0; go.textContent = next > 0 ? T(`${L[next][3]} Kør i ${L[next][1]}`, `${L[next][3]} Ride in ${L[next][2]}`) : '';
+  stay.textContent = next > 0 ? T(`Bliv i ${L[i][1]}`, `Stay in ${L[i][2]}`) : T('Videre', 'Go on');
+  const close = () => { document.getElementById('worldWin').hidden = true; game.paused = false; };
+  go.onclick = () => { close(); setWorld(mode, next); }; stay.onclick = close; document.getElementById('worldWin').hidden = false; }
+function setWorld(mode, i) { const w = worldsOf(mode); if (i >= w.open) return; w.now = i; saveScore(); if (game.on && game.mode === mode) { stopGame(true); startGame(mode); } }
+// (the worlds' row in the level box: a picture of each, its jar under it; one not open yet faded, and a tap on it does nothing)
+function worldRow() { const L = WORLDS[game.mode]; if (!L) return null; const w = worldsOf(game.mode), now = worldNow(game.mode), d = document.createElement('div'); d.className = 'worlds';
+  L.forEach(([id, da, en, sign, col], i) => { if (!worldOk(game.mode, i)) return; const b = document.createElement('button'), open = i < w.open; b.style.background = col; b.classList.toggle('on', i === now); b.classList.toggle('shut', !open);
+    b.setAttribute('aria-label', T(da, en)); b.innerHTML = `<span>${sign}</span><b><i style="width:${Math.round(100 * Math.min(1, (w.jar[i] || 0) / JAR))}%"></i></b>`;
+    b.onclick = () => { if (!open) { toast(T(`Fyld stjernekrukken for at komme til ${da}`, `Fill the star jar to get to ${en}`)); return; } lvlPop.hidden = true; if (i !== now) setWorld(game.mode, i); showLvl(); }; d.append(b); });
+  return d; }
+// ---- Byen: the skateboard's second world - a street of tall narrow town houses close by the road, shops below with
+// striped awnings, cars parked along the kerb, street lamps, trees in beds, traffic lights now and then, and town
+// roofs far off instead of the mountains. Paving instead of grass. Made of simple shapes, as the first things by the road
+SK_SIDE.byhus = () => { const G = SK_SIDE.geo, R = Math.random, wall = ['#F6C177', '#E98A7B', '#9FC7E8', '#F4E3C3', '#B8D98C', '#D7B4E6', '#F2A8C4', '#FFFFFF'][Math.floor(R() * 8)], trim = '#FFFFFF', w = 2.3 + R() * .5, floors = 2 + Math.floor(R() * 2), h = 1.25 + floors * 1.05, parts = [[G.box, wall, 0, h / 2, 0, w, h, 2.2], [G.box, '#E9E2D6', 0, h + .08, 0, w + .12, .16, 2.34]];
+  for (let f = 0; f < floors; f++) for (const x of [-w * .26, w * .26]) { const y = 1.75 + f * 1.05; parts.push([G.box, trim, x, y, 1.11, .62, .78, .03], [G.box, '#8FD3FF', x, y, 1.125, .5, .66, .03], [G.box, trim, x, y - .4, 1.15, .7, .06, .1]); }
+  const aw = [['#E8384F', '#FFFFFF'], ['#2FB872', '#FFFFFF'], ['#3D8BFF', '#FFFFFF'], ['#FFB020', '#FFFFFF']][Math.floor(R() * 4)];
+  parts.push([G.box, '#BFE6FF', -w * .12, .62, 1.11, w * .52, .74, .03], [G.box, '#7A5C8E', w * .33, .55, 1.11, .45, 1.1, .04]);
+  for (let k = 0; k < 6; k++) parts.push([G.box, aw[k % 2], -w * .12 - w * .26 + (k + .5) * w * .52 / 6, 1.18, 1.32, w * .52 / 6, .07, .5, 0, -.35]);
+  return skPiece(parts); };
+SK_SIDE.bil = () => { const G = SK_SIDE.geo, R = Math.random, c = ['#E8384F', '#3D8BFF', '#FFC233', '#2FB872', '#FFFFFF', '#FF7A2F', '#7A4DFF'][Math.floor(R() * 7)], parts = [[G.box, c, 0, .36, 0, .8, .42, 1.8], [G.box, c, 0, .72, -.05, .72, .36, 1.0], [G.box, '#8FD3FF', 0, .74, -.05, .74, .28, .9], [G.box, '#8FD3FF', 0, .74, -.05, .6, .28, 1.02],
+    [G.box, '#FFF4C2', .26, .4, .91, .16, .1, .02], [G.box, '#FFF4C2', -.26, .4, .91, .16, .1, .02], [G.box, '#E8384F', .28, .4, -.91, .14, .08, .02], [G.box, '#E8384F', -.28, .4, -.91, .14, .08, .02]];
+  for (const x of [-.4, .4]) for (const z of [-.58, .58]) parts.push([G.ball, '#2B2B33', x, .18, z, .07, .18, .18], [G.ball, '#C9CED6', x * 1.08, .18, z, .02, .08, .08]);
+  return skPiece(parts); };
+SK_SIDE.lyskryds = () => { const G = SK_SIDE.geo; return skPiece([[G.cyl, '#4A4F5A', 0, 1.2, 0, .06, 2.4, .06], [G.box, '#2B2B33', 0, 2.55, 0, .3, .8, .26], [G.ball, '#FF4B4B', 0, 2.8, .14, .09], [G.ball, '#FFC233', 0, 2.55, .14, .09], [G.ball, '#3DDC84', 0, 2.3, .14, .09]]); };
+SK_SIDE.byhus1 = () => SK_SIDE.byhus(); SK_SIDE.byhus2 = () => SK_SIDE.byhus();
+SK_SIDE.poelsevogn = () => { const G = SK_SIDE.geo; return skPiece([[G.box, '#FFFFFF', 0, .75, 0, 1.6, 1, .9], [G.box, '#E8384F', 0, .3, 0, 1.64, .18, .94], [G.box, '#E8384F', 0, 1.35, .3, 1.7, .08, .5, 0, -.3]]); };
+SK_SIDE.postkasse = () => { const G = SK_SIDE.geo; return skPiece([[G.cyl, '#2B2B33', 0, .3, 0, .06, .6, .06], [G.box, '#E8384F', 0, .78, 0, .42, .4, .3]]); };
+SK_SIDE.bed = () => { const G = SK_SIDE.geo, g = ['#4FB04A', '#5CC257'][Math.floor(Math.random() * 2)]; return skPiece([[G.box, '#B9B4AE', 0, .18, 0, .9, .36, .9], [G.box, '#6B4A2E', 0, .37, 0, .8, .04, .8], [G.cyl, '#8A5A33', 0, .9, 0, .07, 1.1, .07], [G.ball, g, 0, 1.7, 0, .6, .55, .6], [G.ball, g, .25, 1.5, .1, .4]]); };
+function citySideRow(u) { sk.rowN = (sk.rowN || 0) + 1; const E = SKW.edge;
+  for (const s of [-1, 1]) { const turn = s > 0 ? -Math.PI / 2 : Math.PI / 2, r = Math.random();
+    // (the houses in a row, as a town street is - a little gap now and then)
+    if (r > .06) skSidePut(Math.random() < .5 ? 'byhus1' : 'byhus2', u, s * (E + 3.4), turn);
+    if (sk.rowN % 4 === (s > 0 ? 0 : 2)) skSidePut('lygte', u, s * (E + 1.3), s > 0 ? 0 : Math.PI);
+    else if (sk.rowN % 11 === (s > 0 ? 5 : 8)) skSidePut('lyskryds', u, s * (E + 1.35), turn);
+    else if (Math.random() < .16) skSidePut('bil', u, s * (E + .75), Math.random() < .5 ? 0 : Math.PI);
+    else if (Math.random() < .08) skSidePut('poelsevogn', u, s * (E + 1.5), turn);
+    else if (Math.random() < .08) skSidePut('postkasse', u, s * (E + .9), turn);
+    else if (Math.random() < .25) skSidePut('bed', u, s * (E + 1.6)); } }
+// (the town roofs far off: blocks of different heights in soft blues, with a few lit windows, instead of the mountains)
+function skCityBuild() { if (sk.city) return; const g = sk.city = new THREE.Group(), R = Math.random, P = [], C = [], col = new THREE.Color(), box = new THREE.BoxGeometry(1, 1, 1).toNonIndexed();
+  const put = (x, z, w, h, c) => { const b = box.clone(); b.scale(w, h, 4); b.translate(x, h / 2, z); P.push(...b.attributes.position.array); col.set(c); for (let i = 0; i < b.attributes.position.count; i++) C.push(col.r, col.g, col.b); };
+  for (let k = 0; k < 34; k++) put(-80 + k * 4.8 + R() * 2, -78 - R() * 4, 3 + R() * 3, 6 + R() * 14, ['#9DB0D6', '#AFC0E0', '#8FA3CC'][k % 3]);
+  for (let k = 0; k < 28; k++) put(-72 + k * 5.4 + R() * 2, -70 - R() * 2, 3 + R() * 2.5, 4 + R() * 7, ['#C3D0EA', '#D2DCEF'][k % 2]);
+  const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); geo.setAttribute('color', new THREE.Float32BufferAttribute(C, 3)); geo.computeVertexNormals();
+  g.add(new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 1, fog: false }))); g.visible = false; sk.world.add(g);
+  // (and the paving: light grey slabs with fine joints, a little uneven)
+  const cv = document.createElement('canvas'); cv.width = cv.height = 256; const c = cv.getContext('2d'); c.fillStyle = '#C9C5BF'; c.fillRect(0, 0, 256, 256);
+  for (let y = 0; y < 256; y += 32) for (let x = 0; x < 256; x += 32) { c.fillStyle = `rgba(${R() < .5 ? '255,255,255' : '120,115,110'},${(R() * .12).toFixed(2)})`; c.fillRect(x + 1, y + 1, 30, 30); }
+  c.strokeStyle = 'rgba(110,105,100,.55)'; c.lineWidth = 2; for (let k = 0; k <= 256; k += 32) { c.beginPath(); c.moveTo(k, 0); c.lineTo(k, 256); c.moveTo(0, k); c.lineTo(256, k); c.stroke(); }
+  const t = sk.tileTex = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(60, 40); t.anisotropy = 4; }
+// ---- Strandpromenaden: the skateboard's third world (the user, 19-11-2026: "Du går bare i gang med strandpromenaden").
+// A boardwalk of planks along a beach: on the left the sand down to the sea - waves lapping, sailing boats out on it -
+// with parasols and towels, deckchairs, a lifeguard tower now and then and tufts of dune grass; on the right a row of
+// small striped beach huts, an ice-cream kiosk, Danish flags and benches; low dunes and a lighthouse far off instead of
+// the mountains. Sand instead of grass. Made of simple shapes, as the first things by the road
+SK_SIDE.badehus = () => { const G = SK_SIDE.geo, R = Math.random, [a, b] = [['#FFFFFF', '#3D8BFF'], ['#FFFFFF', '#E8384F'], ['#FFFFFF', '#2FB872'], ['#FFF4C2', '#FFB020'], ['#FFFFFF', '#9B6BFF'], ['#FFFFFF', '#FF6FA8']][Math.floor(R() * 6)];
+  const w = 1.5, h = 1.5, d = 1.5, y = .12 + h / 2, parts = [[G.box, a, 0, y, 0, w, h, d], [G.box, '#E9E2D6', 0, .2, 0, w + .1, .06, d + .1]];
+  for (const x of [-.6, .6]) for (const z of [-.6, .6]) parts.push([G.box, '#8A6A4A', x, .06, z, .1, .12, .1]);
+  for (let k = 1; k < 6; k += 2) parts.push([G.box, b, -w / 2 + (k + .5) * w / 6, y, d / 2 + .01, w / 6, h, .02], [G.box, b, -w / 2 - .01, y, -d / 2 + (k + .5) * d / 6, .02, h, d / 6], [G.box, b, w / 2 + .01, y, -d / 2 + (k + .5) * d / 6, .02, h, d / 6]);
+  parts.push([G.box, '#FFFFFF', 0, .12 + .58, d / 2 + .03, .62, 1.1, .02], [G.box, b, 0, .12 + .56, d / 2 + .045, .5, 1, .02], [G.ball, '#FFD23F', .17, .12 + .55, d / 2 + .06, .035],
+    [G.roof, b, 0, .12 + h + .32, 0, w * .82, .66, d * .82, Math.PI / 4], [G.ball, '#FFFFFF', 0, .12 + h + .68, 0, .07], [G.box, '#C8955E', 0, .1, d / 2 + .3, w * .9, .06, .5]);
+  return skPiece(parts); };
+SK_SIDE.parasol = () => { const G = SK_SIDE.geo, R = Math.random, pick = l => l[Math.floor(R() * l.length)], a = pick(['#E8384F', '#3D8BFF', '#FFB020', '#2FB872', '#FF6FA8', '#9B6BFF']), b = pick(['#FFFFFF', '#FFF4C2']), t = pick(['#3DA5FF', '#FF4F8B', '#FFC233', '#7BD35A', '#FF8A3D']);
+  const parts = [[G.cyl, '#FFFFFF', 0, .95, 0, .03, 1.9, .03], [G.cone, a, 0, 1.92, 0, 1.05, .36, 1.05], [G.cone, b, 0, 2.03, 0, .56, .2, .56], [G.ball, a, 0, 2.13, 0, .07],
+    [G.box, t, .55, .012, .55, .7, .02, 1.3], [G.box, '#FFFFFF', .55, .024, .2, .7, .005, .14], [G.box, '#FFFFFF', .55, .024, .9, .7, .005, .14]];
+  if (R() < .5) parts.push([G.ball, pick(['#FF4F8B', '#FFC233', '#3DA5FF']), -.5, .2, .6, .2]);
+  return skPiece(parts); };
+SK_SIDE.strandstol = () => { const G = SK_SIDE.geo, R = Math.random, a = ['#3D8BFF', '#E8384F', '#2FB872', '#FFB020'][Math.floor(R() * 4)], parts = [];
+  for (const x of [-.27, .27]) parts.push([G.box, '#C8955E', x, .3, -.12, .04, .04, .8, 0, -.7], [G.box, '#C8955E', x, .22, .18, .04, .44, .04]);
+  for (let k = 0; k < 4; k++) parts.push([G.box, k % 2 ? '#FFFFFF' : a, -.19 + k * .127, .48, -.22, .127, .03, .78, 0, -1.05]);
+  return skPiece(parts); };
+SK_SIDE.livredder = () => { const G = SK_SIDE.geo, parts = [];
+  for (const x of [-.5, .5]) for (const z of [-.5, .5]) parts.push([G.box, '#FFFFFF', x, 1, z, .1, 2, .1]);
+  parts.push([G.box, '#C8955E', 0, 2.05, 0, 1.5, .1, 1.5], [G.box, '#E8384F', 0, 2.6, -.15, 1.1, 1, 1], [G.box, '#FFFFFF', 0, 2.62, .36, 1.12, .26, .02], [G.box, '#BFE6FF', 0, 2.82, .37, .8, .2, .02],
+    [G.roof, '#FFFFFF', 0, 3.33, -.15, 1, .5, .95, Math.PI / 4], [G.cyl, '#DDDDDD', .58, 3.4, -.5, .025, 1.5, .025], [G.box, '#3DB843', .58, 3.95, -.25, .02, .3, .45]);
+  for (const x of [-.22, .22]) parts.push([G.box, '#FFFFFF', x, 1.02, 1.05, .05, 2.25, .05, 0, .42]);
+  for (let k = 0; k < 6; k++) parts.push([G.box, '#FFFFFF', 0, .2 + k * .33, .7 + (5 - k) * .14 + .1, .44, .04, .05]);
+  return skPiece(parts); };
+SK_SIDE.iskiosk = () => { const G = SK_SIDE.geo, parts = [[G.box, '#FFF4F8', 0, .95, 0, 1.8, 1.7, 1.4], [G.box, '#FF8FB8', 0, .15, 0, 1.86, .3, 1.46], [G.box, '#BFE6FF', 0, 1.15, .71, 1.2, .6, .02], [G.box, '#FF8FB8', 0, .8, .8, 1.4, .06, .25], [G.box, '#FF8FB8', 0, 1.85, 0, 1.92, .1, 1.5],
+    [G.cone, '#E2A55B', 0, 2.25, 0, .28, .7, .28, 0, Math.PI], [G.ball, '#FFB6D5', 0, 2.66, 0, .3], [G.ball, '#7A4A2A', 0, 2.93, 0, .24], [G.ball, '#E8384F', 0, 3.17, 0, .07]];
+  for (let k = 0; k < 6; k++) parts.push([G.box, k % 2 ? '#FFFFFF' : '#FF6FA8', -.75 + k * .3, 1.62, .98, .3, .05, .55, 0, .35]);
+  return skPiece(parts); };
+SK_SIDE.flag = () => { const G = SK_SIDE.geo; return skPiece([[G.cyl, '#FFFFFF', 0, 2, 0, .035, 4, .035], [G.ball, '#FFD23F', 0, 4.04, 0, .06], [G.box, '#C8102E', 0, 3.62, .45, .02, .56, .8], [G.box, '#FFFFFF', 0, 3.62, .32, .025, .56, .08], [G.box, '#FFFFFF', 0, 3.62, .45, .025, .08, .8]]); };
+SK_SIDE.klit = () => { const G = SK_SIDE.geo, R = Math.random, w = .9 + R() * .8, parts = [[G.ball, '#E6CB92', 0, 0, 0, w, .45 + R() * .25, w * .8]];
+  for (let k = 0; k < 9; k++) { const a = R() * 6.28, r = R() * w * .7, x = Math.cos(a) * r, z = Math.sin(a) * r * .8, top = .45 * Math.sqrt(Math.max(0, 1 - (r / w) ** 2)); for (let j = 0; j < 4; j++) { const h = .25 + R() * .3; parts.push([G.roof, ['#8DB45A', '#9DC266', '#7FA64F'][j % 3], x + (R() - .5) * .1, top + h / 2 - .05, z + (R() - .5) * .1, .025, h, .025, R() * 3, (R() - .5) * .8]); } }
+  return skPiece(parts); };
+SK_SIDE.strandkant = () => { const G = SK_SIDE.geo, R = Math.random, parts = [];
+  for (let k = 0; k < 4; k++) parts.push([G.peb, ['#FFFFFF', '#FFD9C9', '#FFE8B0', '#C9C3BA'][Math.floor(R() * 4)], .15 + R() * .5, .015, (R() - .5) * 2.2, .03 + R() * .03, .02, .04 + R() * .03]);
+  for (let k = 0; k < 2; k++) if (R() < .5) { const x = .3 + R() * .4, z = (R() - .5) * 2; for (let j = 0; j < 4; j++) { const h = .14 + R() * .18; parts.push([G.roof, ['#8DB45A', '#9DC266'][j % 2], x + (R() - .5) * .08, h / 2, z + (R() - .5) * .08, .02, h, .02, R() * 3, (R() - .5) * .8]); } }
+  if (!parts.length) parts.push([G.peb, '#FFFFFF', .3, .01, 0, .03, .02, .04]);
+  return skPiece(parts); };
+SK_SIDE.sejlbaad = () => { const G = SK_SIDE.geo, c = ['#E8384F', '#3D8BFF', '#FFB020'][Math.floor(Math.random() * 3)];
+  return skPiece([[G.box, '#FFFFFF', 0, .25, 0, .55, .35, 1.7], [G.box, c, 0, .1, 0, .5, .12, 1.6], [G.cyl, '#8A5A33', 0, 1.45, 0, .03, 2.3, .03], [G.roof, '#FFFFFF', 0, 1.5, -.32, .04, 2, .62], [G.roof, c, 0, 1.2, .45, .04, 1.4, .4]]); };
+function strandSideRow(u) { sk.rowN = (sk.rowN || 0) + 1; const E = SKW.edge, R = Math.random;
+  for (const s of [-1, 1]) { const turn = s > 0 ? -Math.PI / 2 : Math.PI / 2, r = R();
+    skSidePut('strandkant', u, s * (E + .05), s > 0 ? 0 : Math.PI);
+    if (sk.rowN % 8 === (s > 0 ? 0 : 4)) skSidePut('lygte', u, s * (E + .45), s > 0 ? 0 : Math.PI);
+    if (s < 0) { // (the beach side, down to the sea)
+      if (sk.rowN % 13 === 6) skSidePut('livredder', u, s * (E + 6.2), turn);
+      else if (r < .32) skSidePut('parasol', u, s * (E + 1.8 + R() * 4.5), R() * 6.28);
+      else if (r < .5) skSidePut('strandstol', u, s * (E + 1.5 + R() * 4), (R() - .5) * .9);
+      else if (r < .7) skSidePut('klit', u, s * (E + 1.2 + R() * 2.5), R() * 6.28);
+      continue; }
+    // (the promenade side: beach huts in a row, an ice-cream kiosk, flags, benches, and the dunes behind them)
+    if (sk.sideSkip[s] > 0) { sk.sideSkip[s]--; continue; }
+    if (sk.rowN % 9 === 4) { skSidePut('iskiosk', u, s * (E + 2), turn); sk.sideSkip[s] = 1; }
+    else if (r < .7) skSidePut('badehus', u, s * (E + 2.4), turn);
+    if (sk.rowN % 7 === 3) skSidePut('flag', u, s * (E + 1), R() * 6.28);
+    else if (R() < .12) skSidePut('baenk', u, s * (E + 1.05), 0);
+    if (R() < .5) skSidePut('klit', u + R() * 2, s * (E + 5 + R() * 6), R() * 6.28, 1 + R() * .6); } }
+// (the sea: a wide strip left of the beach, bent with the road as the things beside it are, so the shore always runs
+// along it; the waves glide by and lap a little up and down the sand; sailing boats far out. Far off: low dunes and a
+// lighthouse instead of the mountains. And the sand, light and fine with specks, and the planks of the boardwalk)
+const SK_SEA = { edge: 10, len: 130, from: -15 };
+function skBeachBuild() { if (sk.beach) return; const g = sk.beach = new THREE.Group(); g.visible = false; sk.ground.add(g); const R = Math.random;
+  const tex = (w, h, draw, rx, ry) => { const cv = document.createElement('canvas'); cv.width = w; cv.height = h; draw(cv.getContext('2d')); const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, ry); t.anisotropy = 4; return t; };
+  sk.sandTex = tex(256, 256, c => { c.fillStyle = '#EED6A3'; c.fillRect(0, 0, 256, 256); for (let i = 0; i < 50; i++) { c.fillStyle = `rgba(${R() < .5 ? '255,240,205' : '215,185,130'},${(.12 + R() * .15).toFixed(2)})`; c.beginPath(); c.ellipse(R() * 256, R() * 256, 16 + R() * 30, 6 + R() * 10, R() * 3, 0, 6.3); c.fill(); }
+    for (let i = 0; i < 900; i++) { c.fillStyle = `rgba(${R() < .5 ? '170,140,95' : '255,255,255'},${(R() * .4).toFixed(2)})`; c.fillRect(R() * 256, R() * 256, 1.5, 1.5); } }, 30, 20);
+  sk.boardTex = tex(256, 256, c => { const rw = SKATE.lane * 3 + .3; for (let k = 0; k < 16; k++) { const v = R() * 18 - 9; c.fillStyle = `rgb(${200 + v},${150 + v},${96 + v * .6})`; c.fillRect(0, k * 16, 256, 16); c.fillStyle = 'rgba(90,55,25,.55)'; c.fillRect(0, k * 16 + 14.5, 256, 1.5);
+      c.fillStyle = 'rgba(120,80,40,.18)'; for (let j = 0; j < 3; j++) c.fillRect(R() * 256, k * 16 + 3 + R() * 9, 30 + R() * 50, 1); c.fillStyle = 'rgba(70,45,25,.6)'; for (const x of [10, 128, 246]) c.fillRect(x, k * 16 + 6, 2, 2); }
+    c.fillStyle = '#FFFFFF'; for (const q of [-1, 1]) c.fillRect((.5 + q * SKATE.lane / 2 / rw) * 256 - 3, 0, 6, 128); c.fillStyle = '#8A5A33'; c.fillRect(0, 0, 8, 256); c.fillRect(248, 0, 8, 256); }, 1, 20);
+  const seaTex = sk.seaTex = tex(256, 256, c => { c.fillStyle = '#3EA3DA'; c.fillRect(0, 0, 256, 256); for (let i = 0; i < 70; i++) { c.fillStyle = `rgba(${R() < .6 ? '200,240,255' : '30,110,180'},${(.25 + R() * .35).toFixed(2)})`; c.beginPath(); c.ellipse(R() * 256, R() * 256, 10 + R() * 22, 1.5 + R() * 2, 0, 0, 6.3); c.fill(); } }, 16, 26);
+  // (the strip of sea and the shore - wet sand and foam - before it: each corner bent along with the road)
+  const strip = (w, x0, mat, segs) => { const geo = new THREE.PlaneGeometry(w, SK_SEA.len, 1, segs); geo.rotateX(-Math.PI / 2); geo.translate(x0 - w / 2, 0, -(SK_SEA.from + SK_SEA.len / 2)); const m = new THREE.Mesh(geo, mat); m.receiveShadow = true; g.add(m);
+    const P = geo.attributes.position; m.userData.x = Float32Array.from({ length: P.count }, (_, i) => P.getX(i)); m.userData.u = Float32Array.from({ length: P.count }, (_, i) => -P.getZ(i)); return m; };
+  sk.sea = strip(140, -(SKW.edge + SK_SEA.edge), new THREE.MeshStandardMaterial({ map: seaTex, color: '#FFFFFF', roughness: .3, metalness: .05 }), 65); sk.sea.position.y = .02;
+  const foam = tex(64, 4, c => { const gr = c.createLinearGradient(0, 0, 64, 0); gr.addColorStop(0, 'rgba(255,255,255,0.95)'); gr.addColorStop(.25, 'rgba(235,250,255,0.85)'); gr.addColorStop(.45, 'rgba(190,160,110,0.55)'); gr.addColorStop(1, 'rgba(200,170,120,0)'); c.fillStyle = gr; c.fillRect(0, 0, 64, 4); }, 1, 1);
+  foam.wrapS = THREE.ClampToEdgeWrapping; sk.shore = strip(3.2, -(SKW.edge + SK_SEA.edge) + 3.2, new THREE.MeshStandardMaterial({ map: foam, transparent: true, depthWrite: false, roughness: .6 }), 65); sk.shore.position.y = .025;
+  sk.boats = [0, 1, 2, 3].map(k => { const b = new THREE.Group(); b.add(SK_SIDE.sejlbaad()); propInto(b, 'strand-sejlbaad.glb', 2.6, STRAND_TURN.baad); b.scale.setScalar(1.6 + R() * .6); b.userData = { x: -(SKW.edge + SK_SEA.edge + 12 + R() * 30), u: 30 + k * 18 + R() * 8, v: (R() < .5 ? -1 : 1) * (.2 + R() * .3) }; b.rotation.y = Math.PI / 2; g.add(b); return b; });
+  // (far off on the right: low dunes with grass and a lighthouse, red and white)
+  const far = sk.beachFar = new THREE.Group(), parts = [], G = SK_SIDE.geo; far.visible = false; sk.world.add(far);
+  for (let k = 0; k < 16; k++) parts.push([G.ball, ['#E3C88E', '#D9BE84', '#EAD3A0'][k % 3], 4 + k * 5.5 + R() * 3, 0, -68 - R() * 6, 4 + R() * 3, 1.6 + R() * 1.8, 3], [G.ball, ['#93B861', '#86AD58'][k % 2], 4 + k * 5.5 + R() * 3, 1.4, -66 - R() * 2, 2 + R() * 1.5, .5, 1.2]);
+  const lx = 22, lz = -70; parts.push([G.cyl, '#FFFFFF', lx, 4.5, lz, 1.1, 9, 1.1], [G.cyl, '#E8384F', lx, 2, lz, 1.13, 1.4, 1.13], [G.cyl, '#E8384F', lx, 5.5, lz, 1.13, 1.4, 1.13], [G.cyl, '#3A3A44', lx, 9.3, lz, 1.3, .2, 1.3], [G.cyl, '#FFF2A8', lx, 9.9, lz, .75, 1, .75], [G.cone, '#E8384F', lx, 10.8, lz, 1, .9, 1]);
+  far.add(new THREE.Mesh(skPiece(parts).geometry, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, fog: false }))); }
+function skBeachTick(dt, v) { const now = performance.now() / 1000, bend = u => skBend(u) - skWide(u);
+  for (const [m, sway] of [[sk.sea, 0], [sk.shore, .22 * Math.sin(now * .9)]]) { const P = m.geometry.attributes.position, X = m.userData.x, U = m.userData.u; for (let i = 0; i < P.count; i++) P.setX(i, X[i] + bend(U[i]) + sway); P.needsUpdate = true; }
+  const t = sk.seaTex; t.offset.y = (t.offset.y + v * dt * 26 / SK_SEA.len) % 1; t.offset.x = (t.offset.x + dt * .004) % 1;
+  for (const b of sk.boats) { const d = b.userData; d.x += d.v * dt; if (d.x > -(SKW.edge + SK_SEA.edge + 8) || d.x < -(SKW.edge + SK_SEA.edge + 48)) d.v = -d.v; b.position.set(d.x + bend(d.u), .02 + .05 * Math.sin(now * 1.3 + d.u), -d.u); b.rotation.y = d.v > 0 ? Math.PI / 2 : -Math.PI / 2; b.rotation.z = .05 * Math.sin(now * 1.1 + d.u); }
+  sk.beachFar.position.x = -skBend(SKW.far) * .5; }
 function skWorldStart() { skWorldBuild(); skPropsLoad(); scene.add(sk.world); for (const it of sk.side) it.g.visible = false; sk.side = []; sk.sideGo = 0; sk.sideSkip = { '-1': 0, 1: 0 };
   for (let u = 3; u < SKW.far; u += SKW.step) skSideRow(u);
-  scene.fog = new THREE.Fog(0xCDEBFF, 36, 88); floor.visible = false; disc.visible = false; for (const el of [bgNear, bgFar, bgNear2]) el.hidden = true; stage.classList.add('street'); }
+  scene.fog = new THREE.Fog(sk.look === 'by' ? 0xDCE6F2 : sk.look === 'strand' ? 0xD4ECFA : 0xCDEBFF, 36, 88); floor.visible = false; disc.visible = false; for (const el of [bgNear, bgFar, bgNear2]) el.hidden = true; stage.classList.add('street'); }
 // ---- Hop over bolden in a world of its own (the user, 14-11-2026: more round about it, from all three sides): the
 // skateboard game's meadow - trees, firs, bushes, houses, fences, benches, flowers, the mountains far off - with a sandy
 // path where the figure runs, gliding by the way it runs: from the side the world is turned a quarter round and only
@@ -5015,7 +5339,7 @@ function hopWorldStart(mode) { skWorldBuild(); skateBuild(); skTheme(false); Obj
 function hopWorldStop() { if (!sk.hop) return; sk.hop = null; sk.world.rotation.y = 0; sk.hills.rotation.y = 0; sk.path.visible = false; skWorldStop(); }
 function hopWorldTick(dt) { if (!sk.hop || !game.on) return; skWorldTick(dt, levelNow().speed * (game.cheer ? 0 : game.busy ? .35 : 1) * sk.hop.dir); if (sk.hop.side) for (const it of sk.side) if (it.x > 0) it.g.visible = false; }
 function skWorldStop() { if (!sk.world?.parent) return; scene.remove(sk.world); scene.fog = null; stage.classList.remove('street'); floor.visible = true; setBg(bgNow); }
-function skWorldTick(dt, v) { { const gt = sk.grass.material.map; gt.offset.y = (gt.offset.y + v * dt / 5) % 1; } sk.hills.position.x = -skBend(SKW.far) * .5; for (const c of sk.clouds) { c.position.x += c.userData.v * dt; if (c.position.x > 60) c.position.x = -60; }
+function skWorldTick(dt, v) { if (sk.beach?.visible) skBeachTick(dt, v); { const gt = sk.grass.material.map; gt.offset.y = (gt.offset.y + v * dt / 5) % 1; } sk.hills.position.x = -skBend(SKW.far) * .5; for (const c of sk.clouds) { c.position.x += c.userData.v * dt; if (c.position.x > 60) c.position.x = -60; }
   sk.sideGo += Math.abs(v) * dt; while (sk.sideGo >= SKW.step) { sk.sideGo -= SKW.step; skSideRow(v < 0 ? SKW.gone : SKW.far); }
   for (let k = sk.side.length - 1; k >= 0; k--) { const it = sk.side[k]; it.u -= v * dt; if (it.u < SKW.gone - .01 || it.u > SKW.far + 3) { it.g.visible = false; sk.side.splice(k, 1); continue; }
     it.g.position.set(it.x + skBend(it.u) + (Math.abs(it.x) > 1 ? Math.sign(it.x) * skWide(it.u) : 0), 0, -it.u); it.g.rotation.y = it.rot - Math.atan(skSlope(it.u)); } }
@@ -5053,8 +5377,8 @@ function skForkSign(good) { const cv = sk.forkCv, c = cv.getContext('2d'), W = c
   c.fillText(good < 0 ? '⭐' : '💦', 186, H / 2 + 6); c.fillText(good < 0 ? '💦' : '⭐', W - 186, H / 2 + 6); sk.forkTex.needsUpdate = true; }
 function skForkStart() { skForkBuild(); if (!sk.forkG.parent) sk.ground.add(sk.forkG); const F = SK_FORK, u = SKATE.from + 9, good = Math.random() < .5 ? -1 : 1; sk.fork = { u, good }; skForkSign(good); sk.forkG.visible = true;
   // (one side: stars all the way and a present at the end; the other: puddles, and a star between them)
-  for (let q = 2; q < F.len - 3; q += 1.5) skPut(skateThing('stjerne'), good * SKATE.lane, u + q); skPut(skateThing('gave'), good * SKATE.lane, u + F.len - 1.5);
-  for (const q of [3, 8.5, 14]) skPut(skateThing('pyt'), -good * SKATE.lane, u + q); for (const q of [5.8, 11.3]) skPut(skateThing('stjerne'), -good * SKATE.lane, u + q);
+  for (let q = 2; q < F.len - 3; q += 1.5) skPut(skateThing('stjerne'), good * SKATE.lane, u + q); skPut(skateThing(sk.look === 'by' ? 'balloner' : sk.look === 'strand' ? 'skattekiste' : 'gave'), good * SKATE.lane, u + F.len - 1.5);
+  for (const q of [3, 8.5, 14]) skPut(skateThing(sk.look === 'by' ? 'fontaene' : 'pyt'), -good * SKATE.lane, u + q); for (const q of [5.8, 11.3]) skPut(skateThing('stjerne'), -good * SKATE.lane, u + q);
   // (bushes and flowers on the island)
   skSidePut('busk', u + 5, 0, Math.random() * 6.28, .9); skSidePut('blomster', u + 7.6, .1); skSidePut('busk', u + 10.2, -.05, Math.random() * 6.28, 1.05); skSidePut('blomster', u + 12.4, -.1); }
 function skForkTick(dt, v) { const f = sk.fork, F = SK_FORK; if (!f) { if ((sk.forkT -= dt) <= 0 && !sk.jy && !sk.push) { skForkStart(); sk.forkT = 26 + Math.random() * 12; } return; }
@@ -5069,7 +5393,7 @@ function skateBits(kind, x, y, z, n) { x += skShift(x, 0); for (let k = 0; k < n
 // (the things on the road, each made once and used again: half - half its width; len - its length along the road)
 function skateThing(kind) { const pool = sk.pools[kind] ??= [], free = pool.find(p => !p.group.visible); if (free) return free;
   const g = new THREE.Group(), add = (geo, m, x, y, z) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.castShadow = true; g.add(o); return o; }; let half = .3, len = .4;
-  if (kind === 'kegle') { add(new THREE.BoxGeometry(.36, .04, .36), skMat('#FF7A2F', .5), 0, .02, 0); add(new THREE.ConeGeometry(.17, .46, 24), skMat('#FF7A2F', .5), 0, .27, 0); add(new THREE.CylinderGeometry(.1, .12, .07, 24), skMat('#FFFFFF', .5), 0, .26, 0); half = .2; len = .36; }
+  if (kind === 'kegle') { add(new THREE.BoxGeometry(.36, .04, .36), skMat('#FF7A2F', .5), 0, .02, 0); add(new THREE.ConeGeometry(.17, .46, 24), skMat('#FF7A2F', .5), 0, .27, 0); add(new THREE.CylinderGeometry(.1, .12, .07, 24), skMat('#FFFFFF', .5), 0, .26, 0); propInto(g, 'by-kegle.glb', .52); half = .2; len = .36; }
   if (kind === 'kasse') { add(new THREE.BoxGeometry(.62, .62, .62), skMat('#C98B4B', .85), 0, .31, 0); for (const y of [.12, .5]) add(new THREE.BoxGeometry(.64, .06, .64), skMat('#9C6630', .85), 0, y, 0); half = .32; len = .62; }
   if (kind === 'rail') { for (const z of [-1.2, 0, 1.2]) add(new THREE.BoxGeometry(.06, .45, .06), skMat('#E8384F', .4), 0, .225, z); for (let k = 0; k < 6; k++) add(new THREE.BoxGeometry(.08, .08, .4), skMat(k % 2 ? '#FFFFFF' : '#E8384F', .4), 0, .45, -1 + k * .4); half = .14; len = 2.6; }
   if (kind === 'bom') { for (const x of [-.85, .85]) add(new THREE.BoxGeometry(.08, .55, .08), skMat('#3A2E5C', .5), x, .275, 0); for (let k = 0; k < 8; k++) add(new THREE.BoxGeometry(.22, .14, .1), skMat(k % 2 ? '#FFFFFF' : '#E8384F', .4), -.77 + k * .22, .45, 0); half = .9; len = .3; }
@@ -5098,17 +5422,101 @@ function skateThing(kind) { const pool = sk.pools[kind] ??= [], free = pool.find
     const simple = [...body.children]; loadWalker('dyr-and.glb', 'dyr-and.jpg', .42) /* (smaller than the cat and the dog - the user, 12-11-2026: it was out of proportion beside them) */.then(m => { m.group.rotation.y = Math.PI / 2; for (const o of simple) o.visible = false; body.add(m.group); body.userData.walker = m; }).catch(() => {}); }
   if (kind === 'bold') { const cv = document.createElement('canvas'); cv.width = 128; cv.height = 8; const c = cv.getContext('2d'); ['#FF4F8B', '#FFFFFF', '#FFC233', '#FFFFFF', '#3DA5FF', '#FFFFFF'].forEach((f, k) => { c.fillStyle = f; c.fillRect(k * 128 / 6, 0, 128 / 6 + 1, 8); });
     const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; body = add(new THREE.SphereGeometry(.26, 28, 18), new THREE.MeshStandardMaterial({ map: t, roughness: .4 }), 0, .26, 0); half = .26; len = .5; }
-  const it = { group: g, kind, half, len, lid, body }; g.visible = false; (sk.ground || scene).add(g); pool.push(it);
+  // (Byen's own things - the user, 19-11-2026: the town is to have other things on the road than the park, fun ones. A
+  // green wheelie bin with a smiling face, a road-works barrier over two lanes with orange lamps blinking, a water jet
+  // springing up out of a grate in the road to ride through, a bunch of balloons to ride into - they fly off up - and
+  // pigeons pecking in the road that flutter up as one comes. All made by the page, round and soft, no Meshy)
+  let anim = null, reset = null;
+  if (kind === 'skrald') { const green = skMat('#2FA55E', .6); add(new THREE.CylinderGeometry(.22, .19, .56, 4, 1), green, 0, .34, 0).rotation.y = Math.PI / 4;
+    add(new THREE.BoxGeometry(.4, .07, .44), skMat('#23844A', .55), 0, .65, -.01); add(new THREE.BoxGeometry(.32, .035, .04), skMat('#23844A', .55), 0, .67, -.23);
+    for (const x of [-.15, .15]) { const w = add(new THREE.CylinderGeometry(.065, .065, .05, 16), skMat('#2B2B33', .8), x, .065, -.17); w.rotation.z = Math.PI / 2; }
+    for (const x of [-.075, .075]) { add(new THREE.SphereGeometry(.05, 14, 10), skMat('#FFFFFF', .4), x, .46, .175).scale.z = .5; add(new THREE.SphereGeometry(.025, 10, 8), skMat('#1A1A22', .3), x, .46, .2); }
+    const smile = add(new THREE.TorusGeometry(.07, .014, 8, 16, Math.PI), skMat('#1A1A22', .4), 0, .37, .19); smile.rotation.z = Math.PI; propInto(g, 'by-skrald.glb', .8, BY_TURN.skrald); half = .24; len = .46; }
+  if (kind === 'afspaerring') { const lamp = new THREE.MeshStandardMaterial({ color: '#FF9A1F', emissive: new THREE.Color('#FF7A00'), emissiveIntensity: 1, roughness: .3 });
+    for (const x of [-.85, .85]) { add(new THREE.BoxGeometry(.08, .6, .08), skMat('#F2F2F5', .5), x, .3, 0); add(new THREE.BoxGeometry(.1, .05, .42), skMat('#3A3A44', .7), x, .025, 0); add(new THREE.SphereGeometry(.07, 14, 10), lamp, x, .67, 0).castShadow = false; }
+    for (let k = 0; k < 8; k++) { add(new THREE.BoxGeometry(.22, .16, .07), skMat(k % 2 ? '#22222A' : '#FFC21A', .45), -.77 + k * .22, .44, 0); add(new THREE.BoxGeometry(.22, .08, .05), skMat(k % 2 ? '#FFC21A' : '#22222A', .45), -.77 + k * .22, .2, 0); }
+    propInto(g, 'by-vejarbejde.glb', 1.95, BY_TURN.vej, undefined, 'w');
+    anim = (dt, now) => { lamp.emissiveIntensity = Math.sin(now * 7) > 0 ? 1.8 : .1; }; half = .9; len = .3; }
+  if (kind === 'fontaene') { add(new THREE.CylinderGeometry(.34, .36, .03, 28), skMat('#8E939E', .7), 0, .015, 0).castShadow = false; add(new THREE.CylinderGeometry(.24, .24, .035, 28), skMat('#4A4F5A', .8), 0, .018, 0).castShadow = false;
+    const wet = new THREE.MeshStandardMaterial({ color: '#D2F0FF', emissive: new THREE.Color('#4AA8F5'), emissiveIntensity: .55, roughness: .05, transparent: true, opacity: .6, depthWrite: false }), jets = [];
+    for (let k = 0; k < 6; k++) { const a = k / 5 * Math.PI * 2, r = k === 5 ? 0 : .14, j = add(new THREE.CylinderGeometry(.04, .028, 1, 10), wet, Math.cos(a) * r, .5, Math.sin(a) * r), d = add(new THREE.SphereGeometry(.06, 12, 8), wet, j.position.x, 1, j.position.z); j.castShadow = d.castShadow = false; jets.push([j, d, k === 5 ? 1.25 : 1]); }
+    // (a fire hydrant in the middle, the water coming out round it - from Meshy)
+    { const hy = new THREE.Group(); g.add(hy); propInto(hy, 'by-brandhane.glb', .5, BY_TURN.hane, []); }
+    // (and drops falling from the tops all round, in arcs, as from a real water jet)
+    const drops = Array.from({ length: 14 }, (_, k) => { const o = add(new THREE.SphereGeometry(.03, 8, 6), wet, 0, 0, 0); o.castShadow = false; return [o, k / 14 * Math.PI * 2 + k * .4, k / 14]; });
+    anim = (dt, now) => { for (const [j, d, big] of jets) { const h = big * (.35 + .3 * (.5 + .5 * Math.sin(now * 5 + j.position.x * 20 + j.position.z * 13))); j.scale.y = h; j.position.y = h / 2 + .03; d.position.y = h + .05; }
+      for (const [o, a, ph] of drops) { const t = (now * 1.1 + ph) % 1, r = .05 + .3 * t; o.position.set(Math.cos(a) * r, Math.max(.03, .7 + .35 * t - 1.3 * t * t), Math.sin(a) * r); } }; half = .32; len = .7; }
+  if (kind === 'balloner') { add(new THREE.BoxGeometry(.12, .1, .12), skMat('#6B6F7A', .6), 0, .05, 0); body = new THREE.Group(); g.add(body); const bs = [];
+    ['#FF4F8B', '#FFC233', '#3DA5FF', '#7BD35A', '#B57CFF'].forEach((c, k) => { const a = k / 5 * Math.PI * 2, x = Math.cos(a) * .13, z = Math.sin(a) * .13, y = .95 + (k % 2) * .15;
+      const b = new THREE.Mesh(new THREE.SphereGeometry(.13, 18, 14), skMat(c, .3)); b.scale.set(1, 1.2, 1); b.position.set(x, y, z); b.castShadow = true; body.add(b); bs.push([b, y]);
+      const top = new THREE.Vector3(x, y - .15, z), bot = new THREE.Vector3(0, .1, 0), str = new THREE.Mesh(new THREE.CylinderGeometry(.004, .004, 1, 4), skMat('#FFFFFF', .8));
+      str.position.copy(top).add(bot).multiplyScalar(.5); str.scale.y = top.distanceTo(bot); str.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), top.clone().sub(bot).normalize()); body.add(str); });
+    anim = (dt, now, it) => { if (it.hit) { body.position.y += dt * 3.5; body.rotation.y += dt * 1.5; } else bs.forEach(([b, y], k) => { b.position.y = y + .03 * Math.sin(now * 2 + k); }); }; half = .28; len = .4; }
+  // (and the seagulls on the beach: the pigeons' flock, white with grey wings and a yellow beak)
+  if (kind === 'duer' || kind === 'maager') { const gull = kind === 'maager'; body = new THREE.Group(); g.add(body); const grey = skMat(gull ? '#F4F6F8' : '#A3A9B8', .7), dark = skMat(gull ? '#9AA4B2' : '#646B7D', .7), neck = skMat(gull ? '#FFFFFF' : '#5BA08A', .35), birds = [];
+    for (const [x, z, r] of [[-.15, .1, .4], [.13, -.06, -.7], [.02, .2, 2.5]]) { const p = new THREE.Group(); p.position.set(x, 0, z); p.rotation.y = r; body.add(p);
+      // (the pigeon from Meshy, standing, and another flying, wings up - shown when it takes off; the simple one stands in till then)
+      const code = new THREE.Group(), stand = new THREE.Group(), fly = new THREE.Group(); p.add(code, stand, fly); fly.visible = false;
+      if (!gull) { propInto(stand, 'by-due.glb', .22, BY_TURN.due, [code]); propInto(fly, 'by-due-flyv.glb', .26, BY_TURN.due, [code]); }
+      else { propInto(stand, 'strand-maage.glb', .24, STRAND_TURN.maage, [code]); propInto(fly, 'strand-maage-flyv.glb', .28, STRAND_TURN.maage, [code]); }
+      const m = (geo, mat, px, py, pz, par = code) => { const o = new THREE.Mesh(geo, mat); o.position.set(px, py, pz); o.castShadow = true; par.add(o); return o; };
+      m(new THREE.SphereGeometry(.08, 16, 12), grey, 0, .12, 0).scale.set(1.45, .95, 1); m(new THREE.BoxGeometry(.1, .02, .07), dark, -.13, .13, 0).rotation.z = .3;
+      for (const zz of [-.03, .03]) m(new THREE.CylinderGeometry(.008, .008, .06, 6), skMat('#E87A8A', .6), .02, .03, zz);
+      const head = new THREE.Group(); head.position.set(.09, .17, 0); code.add(head); m(new THREE.SphereGeometry(.05, 12, 10), neck, .01, .0, 0, head).scale.set(1, 1.1, 1.1); m(new THREE.SphereGeometry(.045, 14, 10), grey, .04, .05, 0, head);
+      m(new THREE.ConeGeometry(.013, .045, 8), skMat(gull ? '#FFC233' : '#3A3A44', .5), .095, .045, 0, head).rotation.z = -Math.PI / 2; for (const zz of [-.028, .028]) m(new THREE.SphereGeometry(.011, 8, 6), skMat(gull ? '#1A1A22' : '#E85A2A', .4), .065, .065, zz, head);
+      const wings = [-1, 1].map(sd => { const w = new THREE.Group(); w.position.set(-.01, .16, sd * .055); code.add(w); m(new THREE.SphereGeometry(.07, 12, 8), dark, -.02, 0, sd * .03, w).scale.set(1.3, .25, .7); return [w, sd]; });
+      birds.push({ p, head, wings, x, z, r, stand, fly, dir: Math.random() * Math.PI * 2 }); }
+    anim = (dt, now, it) => { birds.forEach((b, k) => { b.stand.visible = !it.hit; b.fly.visible = !!it.hit; if (it.hit) { b.p.rotation.y = -b.dir; b.fly.position.y = .03 * Math.sin(now * 22 + k); b.fly.rotation.z = .25; b.p.position.y += dt * (2.2 + k * .4); b.p.position.x += Math.cos(b.dir) * dt * 1.6; b.p.position.z += Math.sin(b.dir) * dt * 1.6; for (const [w, sd] of b.wings) w.rotation.x = sd * (.2 + 1.1 * Math.abs(Math.sin(now * 28 + k))); b.head.rotation.z = 0; }
+      else { const peck = Math.max(0, Math.sin(now * 3.2 + k * 1.9)); b.head.rotation.z = -peck * .8; b.stand.rotation.z = -peck * .35; for (const [w] of b.wings) w.rotation.x = 0; } }); };
+    body.scale.setScalar(gull ? 1.65 : 1.45); reset = () => birds.forEach(b => { b.p.position.set(b.x, 0, b.z); b.p.rotation.y = b.r; }); half = .3; len = .45; }
+  // (Strandpromenaden's own things - the user, 19-11-2026: a sand castle and a bucket with a spade to ride round, a crab
+  // scuttling sideways over the boardwalk, seagulls that fly up as one comes, a treasure chest that opens with gold in it,
+  // and surfboards stuck up in a row over two lanes)
+  if (kind === 'sandslot') { const sand = skMat('#E6C27F', .95), dark = skMat('#D4AE69', .95); add(new THREE.CylinderGeometry(.34, .4, .14, 20), dark, 0, .07, 0);
+    add(new THREE.BoxGeometry(.4, .24, .32), sand, 0, .26, 0); for (const x of [-.22, .22]) for (const z of [-.15, .15]) { add(new THREE.CylinderGeometry(.075, .085, .34, 14), sand, x, .3, z); for (let k = 0; k < 4; k++) { const a = k * Math.PI / 2; add(new THREE.BoxGeometry(.04, .05, .04), sand, x + Math.cos(a) * .055, .49, z + Math.sin(a) * .055); } }
+    add(new THREE.CylinderGeometry(.1, .11, .52, 16), sand, 0, .4, 0); add(new THREE.ConeGeometry(.12, .16, 16), dark, 0, .74, 0); add(new THREE.CylinderGeometry(.006, .006, .26, 6), skMat('#FFFFFF', .5), 0, .92, 0); add(new THREE.BoxGeometry(.02, .08, .13), skMat('#C8102E', .5), 0, 1.0, .065);
+    add(new THREE.BoxGeometry(.1, .1, .02), skMat('#A07A40', .9), 0, .2, .165); propInto(g, 'strand-sandslot.glb', .8, STRAND_TURN.slot); half = .32; len = .4; }
+  if (kind === 'spand') { const c = ['#FF4F8B', '#3DA5FF', '#FFC233', '#7BD35A'][pool.length % 4]; add(new THREE.CylinderGeometry(.2, .26, .1, 20), skMat('#E6C27F', .95), 0, .05, 0);
+    add(new THREE.CylinderGeometry(.15, .11, .26, 20), skMat(c, .4), -.03, .23, 0); add(new THREE.TorusGeometry(.14, .01, 6, 20, Math.PI), skMat(c, .4), -.03, .34, 0);
+    const sp = add(new THREE.BoxGeometry(.02, .38, .02), skMat('#FFFFFF', .5), .16, .26, .03); sp.rotation.z = -.25; const bl = add(new THREE.BoxGeometry(.1, .12, .015), skMat(c === '#FFC233' ? '#3DA5FF' : '#FFC233', .45), .2, .1, .03); bl.rotation.z = -.25; half = .22; len = .3; }
+  if (kind === 'surf') { add(new THREE.BoxGeometry(1.9, .08, .3), skMat('#E6C27F', .95), 0, .04, 0); [['#FF4F8B', '#FFFFFF'], ['#3DA5FF', '#FFC233'], ['#7BD35A', '#FFFFFF'], ['#FFC233', '#E8384F'], ['#B57CFF', '#FFFFFF']].forEach(([a, b], k) => { const x = -.76 + k * .38;
+      const o = add(new THREE.SphereGeometry(.5, 20, 14), skMat(a, .35), x, .48, 0); o.scale.set(.32, 1, .08); o.rotation.z = (k - 2) * .06; const st = add(new THREE.BoxGeometry(.04, .7, .045), skMat(b, .35), x, .5, 0); st.rotation.z = o.rotation.z; }); half = .95; len = .3; }
+  if (kind === 'krabbe') { body = new THREE.Group(); g.add(body); const red = skMat('#F0533F', .45), legs = [], claws = [];
+    const m = (geo, mat, x, y, z, par = body) => { const o = new THREE.Mesh(geo, mat); o.position.set(x, y, z); o.castShadow = true; par.add(o); return o; };
+    m(new THREE.SphereGeometry(.15, 20, 14), red, 0, .14, 0).scale.set(1.35, .62, 1); for (const x of [-.05, .05]) { m(new THREE.CylinderGeometry(.012, .012, .1, 6), red, x, .25, .06); m(new THREE.SphereGeometry(.035, 12, 10), skMat('#FFFFFF', .3), x, .31, .06); m(new THREE.SphereGeometry(.018, 8, 6), skMat('#1A1A22', .3), x, .31, .09); }
+    m(new THREE.TorusGeometry(.035, .008, 6, 12, Math.PI), skMat('#7A1F14', .5), 0, .14, .145).rotation.z = Math.PI;
+    for (const sd of [-1, 1]) { for (let k = 0; k < 3; k++) { const L = new THREE.Group(); L.position.set(sd * .16, .12, -.07 + k * .06); body.add(L); m(new THREE.CylinderGeometry(.013, .01, .2, 6), red, sd * .08, -.05, 0, L).rotation.z = sd * 1.0; legs.push([L, k + (sd > 0 ? 3 : 0)]); }
+      const cl = new THREE.Group(); cl.position.set(sd * .17, .16, .12); body.add(cl); m(new THREE.CylinderGeometry(.018, .018, .12, 6), red, sd * .03, 0, 0, cl).rotation.z = sd * 1.1;
+      const top = m(new THREE.SphereGeometry(.05, 12, 8), red, sd * .09, .03, .04, cl); top.scale.set(1, .6, 1.4); const bot = m(new THREE.SphereGeometry(.04, 12, 8), red, sd * .09, -.02, .04, cl); bot.scale.set(1, .5, 1.2); claws.push([cl, top, sd]); }
+    anim = (dt, now, it) => { const f = it.hit ? 34 : 20; for (const [L, k] of legs) L.rotation.x = .45 * Math.sin(now * f + k * 1.3); for (const [cl, top, sd] of claws) { top.rotation.z = sd * .4 * Math.max(0, Math.sin(now * 6 + sd)); cl.rotation.x = -.2 + .15 * Math.sin(now * 3); }
+      body.position.y = .015 * Math.abs(Math.sin(now * f)); if (it.hit) it.x += (it.dir || 1) * 3.2 * dt; };
+    { const code = [...body.children], mk = new THREE.Group(); body.add(mk); propInto(mk, 'strand-krabbe.glb', .3, STRAND_TURN.krabbe, code); const was = anim; anim = (dt, now, it) => { was(dt, now, it); mk.rotation.z = .12 * Math.sin(now * (it.hit ? 34 : 20)); }; }
+    body.scale.setScalar(1.25); half = .28; len = .3; }
+  if (kind === 'skattekiste') { const wood = skMat('#9C5B2E', .7), gold = skMat('#FFD23F', .25, '#B07800'); add(new THREE.BoxGeometry(.5, .36, .36), wood, 0, .2, 0);
+    for (const x of [-.18, .18]) add(new THREE.BoxGeometry(.05, .37, .37), gold, x, .2, 0); add(new THREE.BoxGeometry(.08, .1, .03), gold, 0, .3, .19);
+    for (let k = 0; k < 7; k++) add(new THREE.CylinderGeometry(.045, .045, .02, 12), gold, (Math.random() - .5) * .34, .37 + Math.random() * .04, (Math.random() - .5) * .22).rotation.x = (Math.random() - .5) * .8;
+    lid = new THREE.Group(); lid.position.y = .4; g.add(lid); const hinge = new THREE.Group(); hinge.position.set(0, -.02, -.18); lid.add(hinge);
+    for (const [geo, mat, x, sx] of [[new THREE.CylinderGeometry(.18, .18, .5, 20, 1, false, 0, Math.PI), wood, 0, 1], [new THREE.CylinderGeometry(.185, .185, .05, 20, 1, false, 0, Math.PI), gold, -.18, 1], [new THREE.CylinderGeometry(.185, .185, .05, 20, 1, false, 0, Math.PI), gold, .18, 1]]) { const o = new THREE.Mesh(geo, mat); o.rotation.z = Math.PI / 2; o.position.set(x, 0, .18); o.castShadow = true; hinge.add(o); }
+    // (the chest from Meshy, shut; opened, the one made here takes its place, the lid going up and the gold in it)
+    const code = [...g.children], mk = new THREE.Group(); g.add(mk); propInto(mk, 'strand-kiste.glb', .5, STRAND_TURN.kiste, code); const shut = on => { const got = mk.children.length > 0; mk.visible = on || !got; for (const o of code) o.visible = !on || !got; };
+    anim = (dt, now, it) => { if (it.hit) { shut(false); hinge.rotation.x = Math.max(-1.9, hinge.rotation.x - dt * 7); } else hinge.rotation.x = 0; }; reset = () => { hinge.rotation.x = 0; shut(true); }; half = .28; len = .4; }
+  const it = { group: g, kind, half, len, lid, body, anim, reset }; g.visible = false; (sk.ground || scene).add(g); pool.push(it);
   // (the dog, the cat and the rabbit from Dyr - the user, 12-11-2026: they run over the road from out in the grass)
   if (SK_PETS[kind]) { it.half = .34; it.len = .5; loadGlbPet(kind + '.glb', kind + '.jpg', SK_PETS[kind], .11, .022).then(m => { m.collar.visible = false; g.add(m.group); it.pet = m; }).catch(() => {}); }
   return it; }
 const SK_PETS = { 'dyr-kat': .54, 'dyr-hund': .58, 'dyr-kanin': .58 }, skPetsIn = () => Object.keys(SK_PETS).filter(k => (sk.pools[k] || []).some(p => p.pet && !p.group.visible));
 // (the good ones: run into on purpose - a star, a splash, a jump, a present - not bumped into)
-const SK_GOOD = new Set(['stjerne', 'pyt', 'rampe', 'gave']);
+const SK_GOOD = new Set(['stjerne', 'pyt', 'rampe', 'gave', 'fontaene', 'balloner', 'duer', 'maager', 'skattekiste']);
+// (what comes on Strandpromenaden: sand castles, buckets, surfboards, crabs, gulls and a treasure chest now and then)
+const SK_STRAND = [[['spand', 2.5], ['sandslot', 2], ['pyt', 1.6], ['rampe', 2], ['maager', 1.4], ['krabbe', 1.3], ['dyr', 1.2], ['skattekiste', .8], ['bold', 1.2]],
+  [['spand', 2], ['sandslot', 2], ['surf', 2.2], ['rail', 1.2], ['pyt', 1.2], ['rampe', 2], ['maager', 1.4], ['krabbe', 1.6], ['dyr', 1.4], ['skattekiste', .7], ['bold', 1.4]]];
+// (what comes in Byen: the town's own things in place of the crates, the bars, the puddles, the presents and the duck)
+const SK_CITY = [[['kegle', 2.5], ['skrald', 2], ['fontaene', 2], ['rampe', 2], ['duer', 1.4], ['dyr', 1.6], ['balloner', .9], ['bold', 1]],
+  [['kegle', 2], ['skrald', 2], ['afspaerring', 2.2], ['rail', 1.2], ['fontaene', 1.5], ['rampe', 2], ['duer', 1.4], ['dyr', 1.8], ['balloner', .8], ['bold', 1.4]]];
 // (a row of things far down the road: one thing - or a bar over two lanes - and, mostly, stars in a free lane; the
 // easiest levels only cones and crates)
 function skPut(it, x, u) { Object.assign(it, { x, u, hit: false, done: false, mine: false, dir: 0, vy: 0, pair: null, over: false }); { const ud = it.group.userData; if (ud.snow) { ud.snow.visible = !!sk.snow; for (const o of ud.wood) o.visible = !sk.snow; } } it.group.position.set(x, 0, -u); it.group.rotation.set(0, 0, 0); it.group.visible = true;
-  if (it.lid) { it.lid.position.set(0, .4, 0); it.lid.rotation.set(0, 0, 0); it.lid.visible = true; } if (it.body) it.body.rotation.set(0, 0, 0); if (it.body) it.body.position.y = it.kind === 'bold' ? .26 : 0; sk.live.push(it); }
+  if (it.lid) { it.lid.position.set(0, .4, 0); it.lid.rotation.set(0, 0, 0); it.lid.visible = true; } if (it.body) it.body.rotation.set(0, 0, 0); if (it.body) it.body.position.y = it.kind === 'bold' ? .26 : 0; it.reset?.(); sk.live.push(it); }
 function skateRow(from = SKATE.from) { const easy = ['niveau-meget-let', 'niveau-let'].includes(game.level), r = Math.random(), used = new Set();
   const put = skPut;
   // (what comes: a pick weighted for the level - the easiest only the soft things and the fun ones)
@@ -5119,21 +5527,21 @@ function skateRow(from = SKATE.from) { const easy = ['niveau-meget-let', 'niveau
   // and gone from the road five seconds' ride later)
   const rampNear = sk.rampWait > 0;
   const pets = skPetsIn();
-  const kind = pick((easy ? [['kegle', 3], ['kasse', 2], ['pyt', 2], ['rampe', 2], ['and', 1.2], ['dyr', 1.6], ['gave', .8], ['bold', 1]]
+  const kind = pick((sk.look === 'by' ? SK_CITY[easy ? 0 : 1] : sk.look === 'strand' ? SK_STRAND[easy ? 0 : 1] : easy ? [['kegle', 3], ['kasse', 2], ['pyt', 2], ['rampe', 2], ['and', 1.2], ['dyr', 1.6], ['gave', .8], ['bold', 1]]
     : [['kegle', 2.5], ['kasse', 2], ['rail', 1.5], ['bom', 2], ['pyt', 1.5], ['rampe', 2], ['and', 1.2], ['dyr', 1.8], ['gave', .7], ['bold', 1.5]]).filter(([k]) => (k !== 'rampe' || !rampNear) && (k !== 'dyr' || pets.length) && !(sk.snow && ['pyt', 'and', 'bold', 'kasse', 'rail', 'bom'].includes(k))));
-  if (kind === 'bom') { const left = Math.random() < .5; put(skateThing('bom'), (left ? -.5 : .5) * SKATE.lane, from); used.add(left ? -1 : 1); used.add(0); }
+  if (kind === 'bom' || kind === 'afspaerring' || kind === 'surf') { const left = Math.random() < .5; put(skateThing(kind), (left ? -.5 : .5) * SKATE.lane, from); used.add(left ? -1 : 1); used.add(0); }
   // (the duck and the ball cross the road from one side to the other, timed to be in the middle about as they come by)
   // (an animal starts well out in the grass, and is at the road as it comes by)
-  else if (kind === 'and' || kind === 'bold' || kind === 'dyr') { const pet = kind === 'dyr', it = skateThing(pet ? pets[Math.floor(Math.random() * pets.length)] : kind), dir = Math.random() < .5 ? -1 : 1, off = pet ? SKW.edge + 2.6 : 1.5 * SKATE.lane; put(it, -dir * off, from + 2); it.dir = dir; it.cross = off / ((from + 2) / skateLevel().speed) * (kind === 'and' ? .9 : pet ? 1 : 1.1); used.add(-1).add(0).add(1); }
+  else if (kind === 'and' || kind === 'bold' || kind === 'dyr' || kind === 'krabbe') { const pet = kind === 'dyr', it = skateThing(pet ? pets[Math.floor(Math.random() * pets.length)] : kind), dir = Math.random() < .5 ? -1 : 1, off = pet ? SKW.edge + 2.6 : 1.5 * SKATE.lane; put(it, -dir * off, from + 2); it.dir = dir; it.cross = off / ((from + 2) / skateLevel().speed) * (kind === 'and' ? .9 : kind === 'krabbe' ? .8 : pet ? 1 : 1.1); used.add(-1).add(0).add(1); }
   else { const lane = Math.floor(Math.random() * 3) - 1, it = skateThing(kind); put(it, lane * SKATE.lane, from); used.add(lane);
     // (mostly a crate or a cone just past a ramp, in its lane: up the ramp, and over it - the user said 08-11-2026; as
     // far past it as the jump goes at this level's speed, so the figure is in the air as it goes under)
     if (kind === 'rampe') sk.rampWait = sk.snow ? 3 : 5;
-    if (kind === 'rampe' && Math.random() < .75) { const ob = skateThing(!sk.snow && Math.random() < .55 ? 'kasse' : 'kegle'); put(ob, lane * SKATE.lane, from + Math.max(.95, .45 * skateLevel().speed - .4)); it.pair = ob; } }
+    if (kind === 'rampe' && Math.random() < .75) { const ob = skateThing(!sk.snow && Math.random() < .55 ? (sk.look === 'by' ? 'skrald' : sk.look === 'strand' ? 'sandslot' : 'kasse') : sk.look === 'strand' ? 'spand' : 'kegle'); put(ob, lane * SKATE.lane, from + Math.max(.95, .45 * skateLevel().speed - .4)); it.pair = ob; } }
   // (the stars never in the lane the figure rides in now - one has to steer to them, not just stand)
   if (Math.random() < (easy ? .9 : .7)) { const free = [-1, 0, 1].filter(l => !used.has(l) && l !== sk.lane); if (free.length) { const lane = free[Math.floor(Math.random() * free.length)], n = 1 + Math.floor(Math.random() * 3);
     for (let k = 0; k < n; k++) put(skateThing('stjerne'), lane * SKATE.lane, from + (k - (n - 1) / 2) * 1.1); } } }
-function skateStart(snow) { skateBuild(); skTheme(snow); Object.assign(sk, { lane: 0, x: 0, lean: 0, slow: 0, wobble: 0, next: .3, first: true, curve: 0, curveTo: 0, curveT: 3, jy: 0, jv: 0, spin: 0, rampWait: 0, fork: null, forkT: snow ? Infinity : 13, lastDir: 0 }); if (sk.forkG) sk.forkG.visible = false; for (const it of sk.live) it.group.visible = false; sk.live = [];
+function skateStart(snow) { skateBuild(); skTheme(snow, !snow && WORLDS[game.mode] ? WORLDS[game.mode][worldNow(game.mode)][0] : 'park'); Object.assign(sk, { lane: 0, x: 0, lean: 0, slow: 0, wobble: 0, next: .3, first: true, curve: 0, curveTo: 0, curveT: 3, jy: 0, jv: 0, spin: 0, rampWait: 0, fork: null, forkT: snow ? Infinity : 13, lastDir: 0 }); if (sk.forkG) sk.forkG.visible = false; for (const it of sk.live) it.group.visible = false; sk.live = [];
   holder.add(sk.rig); sk.rig.position.set(0, 0, 0); sk.rig.rotation.set(0, 0, 0); sk.rig.add(glb); sk.ground.add(sk.road); skWorldStart();
   // (riding: the standing with the page's own pose, arms out - Mixamo's riding stood with a foot each side of our board,
   // the user said, 03-11-2026; it was made for a board pointing the way the figure faces. Its push off, Skateboarding
@@ -5190,7 +5598,7 @@ function skateTick(dt) { dt = Math.min(dt, .1); // (never a long jump after a pa
   // (the bend: a new way every few seconds, eased into)
   if ((sk.curveT -= dt) <= 0) { sk.curveTo = Math.random() < .25 ? 0 : (Math.random() < .5 ? -1 : 1) * (.5 + Math.random() * .5); sk.curveT = 4 + Math.random() * 4; }
   sk.curve += (sk.curveTo - sk.curve) * Math.min(1, dt * .35);
-  { const P = sk.road.geometry.attributes.position; for (let i = 0; i < P.count; i++) P.setX(i, sk.roadX[i] + skBend(26 + P.getY(i)) + Math.sign(sk.roadX[i]) * skWide(26 + P.getY(i))); P.needsUpdate = true; }
+  { const P = sk.road.geometry.attributes.position; for (let i = 0; i < P.count; i++) P.setX(i, sk.roadX[i] + skBend(26 + P.getY(i)) + skShift(sk.roadX[i], 26 + P.getY(i))); P.needsUpdate = true; }
   for (const b of sk.bits) if (b.mesh.visible) { b.v.y -= 9.8 * dt; b.mesh.position.addScaledVector(b.v, dt); if ((b.life -= dt) <= 0 || b.mesh.position.y < 0) b.mesh.visible = false; }
   { const rt = sk.road.material.map; rt.offset.y = (rt.offset.y + v * dt / 3) % 1; } skForkTick(dt, v); skWorldTick(dt, v); skatePose();
   // (the first row near: down the far end of the road it took 7 seconds on the easiest level before anything happened, the
@@ -5209,7 +5617,8 @@ function skateTick(dt) { dt = Math.min(dt, .1); // (never a long jump after a pa
     // (the ball knocked away whole, bouncing off to the side - the user, 12-11-2026: landed on from a ramp it tipped over
     // round its foot, down through the road, and looked broken)
     else if (it.hit && k === 'bold') { const d = it.dir || 1; it.x += d * 4.5 * dt; it.vy -= 9.8 * dt; it.body.position.y += it.vy * dt; if (it.body.position.y < .26) { it.body.position.y = .26; it.vy = Math.abs(it.vy) * .6; } it.body.rotation.z -= d * 14 * dt; }
-    else if (it.hit && !good) { if (k === 'and') { g.position.y += 2.2 * dt; it.body.rotation.z = .4 * Math.sin(now * 40); g.rotation.z = 0; } else { g.rotation.x -= dt * 6; g.position.y = Math.max(0, g.position.y + (it.vy -= 9.8 * dt) * dt); } }
+    else if (it.hit && !good && k !== 'krabbe') { if (k === 'and') { g.position.y += 2.2 * dt; it.body.rotation.z = .4 * Math.sin(now * 40); g.rotation.z = 0; } else { g.rotation.x -= dt * 6; g.position.y = Math.max(0, g.position.y + (it.vy -= 9.8 * dt) * dt); } }
+    if (it.anim) it.anim(dt, now, it);
     if (k === 'gave' && it.hit) { it.lid.position.y += (it.vy -= 9.8 * dt) * dt; it.lid.rotation.x += dt * 7; if (it.lid.position.y < -1) it.lid.visible = false; }
     // (on the bend: across with the road, and turned along it)
     g.position.x = it.x + skBend(it.u) + skShift(it.x, it.u); g.position.z = -it.u; g.rotation.y = star ? now * 3 : -Math.atan(skSlope(it.u)) + (k === 'and' && it.dir < 0 ? Math.PI : 0) + (SK_PETS[k] ? it.dir * Math.PI / 2 : 0);
@@ -5232,6 +5641,11 @@ function skateTick(dt) { dt = Math.min(dt, .1); // (never a long jump after a pa
         // crate; and anything within one and a half seconds' ride past the landing jumped too: too near to steer from after coming down)
         const T = Math.min(1.6, Math.max(.3, land / 2 / vv)); sk.jv = 2.1 / T; sk.jg = 2.1 / (T * T); sk.jt = 2 * T; sk.jy = .001; addStars(2); sfx('boing'); }
       else if (k === 'gave') { it.hit = true; it.vy = 4; it.lid.visible = true; skateBits('guld', g.position.x, .5, g.position.z, 26); addStars(3); for (const t of [0, .12, .24]) sfx('ding', t); }
+      else if (k === 'fontaene') { it.hit = true; skateBits('vand', sk.x, .3, 0, 30); addStars(1); sfx('plask'); }
+      else if (k === 'balloner') { it.hit = true; skateBits('guld', g.position.x, .9, g.position.z, 20); addStars(2); sfx('ding'); sfx('ding', .14); }
+      else if (k === 'duer' || k === 'maager') { it.hit = true; addStars(1); sfx('swish'); sfx('swish', .12); }
+      else if (k === 'skattekiste') { it.hit = true; skateBits('guld', g.position.x, .55, g.position.z, 30); addStars(3); for (const t of [0, .12, .24]) sfx('ding', t); }
+      else if (k === 'krabbe') { it.hit = true; sk.wobble = .5; sfx('boing'); }
       else if (k === 'and') { it.hit = true; sk.wobble = .5; sfx('rap'); sfx('rap', .18); }
       // (an animal run into is a bump like any other thing - the user, 12-11-2026: one rode straight through them - and it
       // jumps off out of the way)
@@ -5277,7 +5691,7 @@ let picOf = ''; setInterval(() => { try { const p = playerNow(); if (p.fig || !h
 const bestNow = () => score.best[game.mode]?.[game.level] || 0;
 // (a star's worth in kroner: one on the easiest level, five on the hardest - the user, 04-11-2026: harder is worth more)
 const starWorth = (level = game.level) => LEVELS.findIndex(l => l[0] === level) + 1;
-function scoreGain(n) { krOf(score); score.kr += n * starWorth(); score.total += n; if (!game.counted) { game.counted = true; score.games++; } const best = bestNow(); if (game.stars > best) { (score.best[game.mode] ??= {})[game.level] = game.stars;
+function scoreGain(n) { try { jarGain(n); } catch (e) {} krOf(score); score.kr += n * starWorth(); score.total += n; if (!game.counted) { game.counted = true; score.games++; } const best = bestNow(); if (game.stars > best) { (score.best[game.mode] ??= {})[game.level] = game.stars;
     if (best > 0 && !game.record) { game.record = true; toast('🏆 Ny rekord!'); celebrate(); } }
   saveScore(); showRecord(); }
 // (🏆 Stjerner: the stars to spend, and a table - a game a row, a level a column, with its icon)
@@ -6236,6 +6650,21 @@ function pkTick(dt) { const t = performance.now() / 1000, L = pkLevel(), kp = pk
     // (head up once it has kicked, to follow the ball - it is seen from behind, so it takes a clear lift - the user, 04-11-2026)
     const lift = Math.min(1, Math.max(0, after) / .25) * w; if (lift > 0) { glb.getWorldQuaternion(kaQ); turnBone('Head', new THREE.Vector3(1, 0, 0).applyQuaternion(kaQ), -.55 * lift); turnBone('Spine2', new THREE.Vector3(1, 0, 0).applyQuaternion(kaQ), -.12 * lift); } } } }
 const GAME_NAMES = [['hop', 'Hop over bolden'], ['skate', 'Skateboard'], ['snow', 'Snowboard'], ['island', 'Skattejagt'], ['sea', 'Svømmeverden'], ['space', 'Rumrejse'], ['hide', 'Gemmeleg'], ['pk', 'Straffespark'], ['skihop', 'Skihop'], ['cypher', 'Cypher'], ['studio', 'Dansestudie']];
+// (the trophy shelf in the stars sheet: one row for each game with worlds, a cup for each world - gold with the world's
+// sign when its jar was filled, pale with the jar's progress under it when not yet; each child's own)
+function trophySvg(won, col) { const g = won ? ['#FFE27A', '#FFB020', '#D98A00'] : ['#EEEAF6', '#DDD6EC', '#C4BBD8'];
+  return `<svg viewBox="0 0 64 76" aria-hidden="true"><defs><linearGradient id="cg${won ? 1 : 0}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${g[0]}"/><stop offset="1" stop-color="${g[1]}"/></linearGradient></defs>`
+    + `<path d="M16 12c-9 0-11 5-11 9 0 7 6 12 13 13M48 12c9 0 11 5 11 9 0 7-6 12-13 13" fill="none" stroke="${g[2]}" stroke-width="5" stroke-linecap="round"/>`
+    + `<path d="M13 6h38v14c0 13-8 22-19 22S13 33 13 20z" fill="url(#cg${won ? 1 : 0})" stroke="${g[2]}" stroke-width="2"/>`
+    + `<rect x="28" y="41" width="8" height="12" fill="${g[1]}" stroke="${g[2]}" stroke-width="2"/><rect x="18" y="52" width="28" height="9" rx="3" fill="url(#cg${won ? 1 : 0})" stroke="${g[2]}" stroke-width="2"/>`
+    + `<rect x="12" y="60" width="40" height="12" rx="4" fill="${won ? col : '#E4DEF0'}"/>`
+    + (won ? `<path d="M32 13l3 6.2 6.8.9-5 4.7 1.3 6.7-6.1-3.3-6.1 3.3 1.3-6.7-5-4.7 6.8-.9z" fill="#FFFFFF" opacity=".9"/><path d="M19 10v9" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" opacity=".6"/>` : `<text x="32" y="30" text-anchor="middle" font-size="16" font-weight="800" fill="#C4BBD8">?</text>`) + '</svg>'; }
+function showShelf(s) { const shelf = document.getElementById('trophyShelf'), games = GAME_NAMES.filter(([g]) => WORLDS[g] && free('game-' + g));
+  document.getElementById('trophyBox').hidden = !games.length;
+  shelf.innerHTML = games.map(([g, name]) => { const w = s.worlds?.[g] || {}, won = w.won || [], jar = w.jar || [];
+    return `<div class="shelf-row"><h4>${tr(name)}</h4><div class="shelf-cups">` + WORLDS[g].map(([id, da, en, sign, col], i) => { if (!worldOk(g, i)) return ''; const ok = won.includes(i);
+      return `<div class="cup${ok ? ' won' : ''}">${trophySvg(ok, col)}<span class="cup-name">${sign} ${T(da, en.replace(/^the (.)/, (m, c) => c.toUpperCase()))}</span><span class="cup-bar"><i style="width:${Math.round(100 * Math.min(1, (jar[i] || 0) / JAR))}%"></i></span></div>`; }).join('')
+      + '</div><div class="shelf-plank"></div></div>'; }).join(''); }
 // (with two players or more: their pictures on top, the one shown marked - tapping another shows that child's stars)
 let starShown = null;
 function showStarSheet(id = starShown || players.now) { starShown = id; const p = players.list.find(q => q.id === id) || playerNow(), s = p.score, have = krOf(s), many = players.list.length > 1;
@@ -6244,6 +6673,7 @@ function showStarSheet(id = starShown || players.now) { starShown = id; const p 
   document.getElementById('starTitle').textContent = p.name ? T(`${p.name}s mønter`, `${p.name}’s coins`) : tr('Dine mønter');
   document.getElementById('starTotal').textContent = `💰 ${krTxt(have)}`;
   document.getElementById('starNote').textContent = s.games ? T(`⭐ ${s.total} stjerner samlet i ${s.games} spil på denne enhed.`, `⭐ ${s.total} stars collected in ${s.games} games on this device.`) : tr('Spil et af spillene for at samle stjerner.');
+  showShelf(s);
   document.getElementById('starTable').innerHTML = `<tr><th></th>${LEVELS.map(([id, name]) => `<th><img src="ikoner/valg-${id}.png" alt="${tr(name)}"></th>`).join('')}</tr><tr><td>${tr('⭐ giver')}</td>${LEVELS.map(([id]) => `<td>${krTxt(starWorth(id))}</td>`).join('')}</tr>` +
     // (Hop over bolden: its best of the three ways to see it)
     GAME_NAMES.filter(([g]) => free('game-' + g)).map(([g, name]) => `<tr><td>${tr(name)}</td>${LEVELS.map(([id]) => { const b = g === 'hop' ? Math.max(...HOP_WAYS.map(w => s.best[w[0]]?.[id] || 0)) : s.best[g]?.[id]; return b ? `<td>🏆 ${b}</td>` : '<td class="none">–</td>'; }).join('')}</tr>`).join('');
@@ -6338,7 +6768,7 @@ const lvlBtn = document.getElementById('gameLvl'), lvlPop = document.getElementB
 function showLvl(open = false) { lvlBtn.firstElementChild.src = `ikoner/valg-${game.level}.png`; lvlPop.hidden = !open; lvlBtn.setAttribute('aria-expanded', String(open)); if (!open) return; lvlPop.innerHTML = '';
   const row = (items, now, set) => { const d = document.createElement('div'); for (const [id, label] of items) { const b = document.createElement('button'), i = new Image(); i.src = `ikoner/valg-${id}.png`; i.alt = ''; b.append(i); b.setAttribute('aria-label', tr(label)); b.classList.toggle('on', id === now);
       b.onclick = () => { lvlPop.hidden = true; if (id !== now) set(id); showLvl(); }; d.append(b); } lvlPop.append(d); };
-  row(LEVELS, game.level, setLevel); if (MODES[game.mode]?.from) row(HOP_WAYS, game.mode, setHopWay); }
+  { const wr = worldRow(); if (wr) lvlPop.append(wr); } row(LEVELS, game.level, setLevel); if (MODES[game.mode]?.from) row(HOP_WAYS, game.mode, setHopWay); }
 lvlBtn.onclick = () => showLvl(lvlPop.hidden);
 // (no menu from a long press anywhere but in the name box)
 document.querySelector('.main').addEventListener('contextmenu', e => { if (e.target.tagName !== 'INPUT') e.preventDefault(); });
