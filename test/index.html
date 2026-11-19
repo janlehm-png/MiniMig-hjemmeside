@@ -5073,6 +5073,8 @@ async function readProp(url) { const buf = await (await fetch(url)).arrayBuffer(
 // (which way each of Byen's models faces as Meshy made it: turned so its front is towards +z, as the pieces are made)
 // (and Strandpromenaden's, the same way)
 const STRAND_TURN = { maage: 0, krabbe: 0, slot: 0, kiste: 0, hus: 0, kiosk: 0, livredder: 0, parasol: 0, stol: 0, baad: 0 };
+// (and Skovstien's and Isslottet's)
+const SNE_TURN = { elg: 0, egern: 0, gran: 0, pingvin: 0, iglo: 0, lanterne: 0, krystal: 0, isslot: 0, hytte: 0, mand: 0 };
 const BY_TURN = { hus: 0, bil: Math.PI / 2, poelse: 0, post: 0, skrald: 0, vej: 0, hane: 0, due: 0 };
 const SK_PROPS = { hus: ['skate-hus.glb', 2.9, 0], trae: ['skate-trae.glb', 2.5, 0], lygte: ['skate-lygte.glb', 2.7, Math.PI], gran: ['skate-gran.glb', 2.6, 0], busk: ['skate-busk.glb', .8, 0], blomster: ['skate-blomster.glb', .5, 0],
   baenk: ['skate-baenk.glb', .8, -Math.PI / 2], hegn: ['skate-hegn.glb', .75, Math.PI / 2],
@@ -5080,7 +5082,14 @@ const SK_PROPS = { hus: ['skate-hus.glb', 2.9, 0], trae: ['skate-trae.glb', 2.5,
   // car, a hot dog stand and a post box; the ones made of simple shapes stand in till they are fetched)
   byhus1: ['by-hus-gul.glb', 5, BY_TURN.hus], byhus2: ['by-hus-blaa.glb', 5, BY_TURN.hus], bil: ['by-bil.glb', .82, BY_TURN.bil], poelsevogn: ['by-poelsevogn.glb', 1.9, BY_TURN.poelse], postkasse: ['by-postkasse.glb', 1, BY_TURN.post],
   // (Strandpromenaden's from Meshy - the user, 19-11-2026: "Ja, lav modeller")
-  badehus: ['strand-badehus.glb', 2.5, STRAND_TURN.hus], iskiosk: ['strand-iskiosk.glb', 3.2, STRAND_TURN.kiosk], livredder: ['strand-livredder.glb', 4.2, STRAND_TURN.livredder], parasol: ['strand-parasol.glb', 2.1, STRAND_TURN.parasol], strandstol: ['strand-liggestol.glb', .85, STRAND_TURN.stol] };
+  badehus: ['strand-badehus.glb', 2.5, STRAND_TURN.hus], iskiosk: ['strand-iskiosk.glb', 3.2, STRAND_TURN.kiosk], livredder: ['strand-livredder.glb', 4.2, STRAND_TURN.livredder], parasol: ['strand-parasol.glb', 2.1, STRAND_TURN.parasol], strandstol: ['strand-liggestol.glb', .85, STRAND_TURN.stol],
+  // (Skovstien's and Isslottet's from Meshy - the user, 19-11-2026: "Ja, lav modeller"; the cabin and the snowman are the ski jump's)
+  snegran: ['sne-gran.glb', 2.4, SNE_TURN.gran], hytte: ['sne-hytte.glb', 2.9, SNE_TURN.hytte], elg: ['sne-elg.glb', 2.3, SNE_TURN.elg], iglo: ['sne-iglo.glb', 1.15, SNE_TURN.iglo],
+  lanterne: ['sne-lanterne.glb', 1.95, SNE_TURN.lanterne], snemand: ['sne-snemand.glb', 1.45, SNE_TURN.mand], pingviner: ['sne-pingvin.glb', .62, SNE_TURN.pingvin] };
+// (a picture's lit parts - the warm yellow of a lamp or a window - alone, the rest black: to glow by in the evening)
+function glowOf(map) { const im = map.image, cv = document.createElement('canvas'); cv.width = im.width; cv.height = im.height; const c = cv.getContext('2d'); c.drawImage(im, 0, 0);
+  const d = c.getImageData(0, 0, cv.width, cv.height), a = d.data; for (let i = 0; i < a.length; i += 4) { const r = a[i], g = a[i + 1], b = a[i + 2], k = (r > 200 && g > 150 && b < 150 && r - b > 90) ? 1 : 0; a[i] *= k; a[i + 1] *= k; a[i + 2] *= k; }
+  c.putImageData(d, 0, 0); const t = new THREE.CanvasTexture(cv); t.flipY = map.flipY; t.colorSpace = map.colorSpace; return t; }
 // (a copy of a picture with its strong reds turned to another colour, the light and shade kept)
 function repaintRed(map, hex, blue = false) { const im = map.image, cv = document.createElement('canvas'); cv.width = im.width; cv.height = im.height; const c = cv.getContext('2d'); c.drawImage(im, 0, 0);
   const d = c.getImageData(0, 0, cv.width, cv.height), a = d.data, to = new THREE.Color(hex), hsl = {}; to.getHSL(hsl); const white = hsl.s < .1;
@@ -5096,6 +5105,10 @@ function skPropsLoad() { sk.propsLoad ??= Promise.all(Object.entries(SK_PROPS).m
     // (the beach huts blue from Meshy and the parasols red: in other colours too, a row of huts all different)
     if (kind === 'badehus' || kind === 'parasol') { const blue = kind === 'badehus', mats = [mat, ...(blue ? ['#E8384F', '#2FB872', '#FFB020', '#9B6BFF', '#FF6FA8'] : ['#3D8BFF', '#FFB020', '#2FB872', '#FF6FA8'])
       .map(c => new THREE.MeshStandardMaterial({ map: repaintRed(map, c, blue), roughness: .8, metalness: 0 }))]; SK_SIDE[kind] = () => new THREE.Mesh(geo, mats[Math.floor(Math.random() * mats.length)]); }
+    // (the lantern's lamp shining in the evening; the penguins in a little group of two or three, each a bit different in size)
+    if (kind === 'lanterne') { mat.emissiveMap = glowOf(map); mat.emissive.set('#FFC060'); mat.emissiveIntensity = 1.6; }
+    if (kind === 'pingviner') SK_SIDE[kind] = () => { const g = new THREE.Group(), n = 2 + Math.floor(Math.random() * 2); for (let k = 0; k < n; k++) { const m = new THREE.Mesh(geo, mat), sc = .85 + Math.random() * .4;
+      m.scale.setScalar(sc); m.position.set((k - (n - 1) / 2) * .5 + (Math.random() - .5) * .1, 0, (Math.random() - .5) * .3); m.rotation.y = (Math.random() - .5) * .8; g.add(m); } return g; };
     // (those standing by the road now changed for the new ones)
     const old = sk.sidePools[kind] || []; sk.sidePools[kind] = []; for (const it of sk.side) if (it.kind === kind) { const g = SK_SIDE[kind](); g.scale.copy(it.g.scale); sk.sidePools[kind].push(g); sk.ground.add(g); it.g = g; } for (const g of old) { g.visible = false; sk.world.remove(g); } } catch (e) { /* (the simple one stays) */ } })); }
 function skWorldBuild() { if (sk.world) return; const w = sk.world = new THREE.Group();
@@ -5218,6 +5231,10 @@ function skIceBuild() { if (sk.ice) return; const g = sk.ice = new THREE.Group()
   put(box, ice, 0, 3, -.5, 23, 6, 3); for (let k = -4; k <= 4; k++) put(box, ice, k * 2.5, 6.4, .6, .9, .8, .9); put(box, win, 0, 2, 1.05, 2.6, 4, .1);
   tower(0, -2.5, 3, 15); tower(-7.5, 0, 2, 10.5); tower(7.5, 0, 2, 10.5); tower(-12, .5, 1.5, 8); tower(12, .5, 1.5, 8);
   castle.position.set(0, -16, -62); castle.scale.setScalar(.78);
+  // (the castle from Meshy in its place, glowing a little blue of itself and its windows lit, as the evening is dark)
+  readProp('sne-isslot.glb').then(({ geo, map }) => { geo.computeBoundingBox(); const b = geo.boundingBox, k = 21 / (b.max.y - b.min.y); geo.translate(-(b.min.x + b.max.x) / 2, -b.min.y, -(b.min.z + b.max.z) / 2); geo.scale(k, k, k); geo.rotateY(SNE_TURN.isslot);
+    const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ map, roughness: .4, metalness: 0, fog: false, emissive: new THREE.Color('#FFFFFF'), emissiveMap: map, emissiveIntensity: .35 })), lit = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: glowOf(map), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
+    for (const o of castle.children) o.visible = false; castle.add(m, lit); }).catch(() => {});
   // (the northern lights: long bands of soft light, brightest at the bottom, waving slowly)
   const cv = document.createElement('canvas'); cv.width = 256; cv.height = 64; const c = cv.getContext('2d');
   for (let x = 0; x < 256; x++) { const a = .45 + .55 * Math.sin(x / 256 * Math.PI * 5) ** 2, gr = c.createLinearGradient(0, 64, 0, 0); gr.addColorStop(0, `rgba(90,255,170,${a.toFixed(3)})`); gr.addColorStop(.45, `rgba(60,220,210,${(a * .55).toFixed(3)})`); gr.addColorStop(1, 'rgba(170,90,255,0)'); c.fillStyle = gr; c.fillRect(x, 0, 1, 64); }
@@ -5597,20 +5614,23 @@ function skateThing(kind) { const pool = sk.pools[kind] ??= [], free = pool.find
   if (kind === 'snemand') { const w = skMat('#FAFCFF', .85); add(new THREE.SphereGeometry(.24, 20, 14), w, 0, .22, 0); add(new THREE.SphereGeometry(.17, 20, 14), w, 0, .54, 0); add(new THREE.SphereGeometry(.12, 20, 14), w, 0, .78, 0);
     add(new THREE.ConeGeometry(.025, .14, 10), skMat('#FF8A1F', .5), 0, .78, .17).rotation.x = Math.PI / 2; for (const x of [-.045, .045]) add(new THREE.SphereGeometry(.018, 8, 6), skMat('#1A1A22', .4), x, .82, .105);
     for (const y of [.48, .58]) add(new THREE.SphereGeometry(.02, 8, 6), skMat('#1A1A22', .4), 0, y, .165); add(new THREE.CylinderGeometry(.13, .13, .02, 18), skMat('#2B2153', .6), 0, .88, 0); add(new THREE.CylinderGeometry(.09, .09, .14, 18), skMat('#2B2153', .6), 0, .96, 0);
-    add(new THREE.TorusGeometry(.12, .035, 8, 20), skMat('#E8384F', .7), 0, .67, 0).rotation.x = Math.PI / 2; for (const sd of [-1, 1]) add(new THREE.CylinderGeometry(.012, .012, .32, 6), skMat('#6A4426', .9), sd * .25, .6, 0).rotation.z = sd * -1.0; half = .26; len = .4; }
+    add(new THREE.TorusGeometry(.12, .035, 8, 20), skMat('#E8384F', .7), 0, .67, 0).rotation.x = Math.PI / 2; for (const sd of [-1, 1]) add(new THREE.CylinderGeometry(.012, .012, .32, 6), skMat('#6A4426', .9), sd * .25, .6, 0).rotation.z = sd * -1.0; propInto(g, 'sne-snemand.glb', 1.05, SNE_TURN.mand); half = .26; len = .4; }
   if (kind === 'snebunke') { const w = skMat('#FFFFFF', .95); add(new THREE.SphereGeometry(.4, 22, 10, 0, Math.PI * 2, 0, Math.PI / 2), w, 0, 0, 0).scale.set(1, .55, 1.4); add(new THREE.SphereGeometry(.2, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), w, .22, 0, .25).scale.set(1, .6, 1);
     anim = (dt, now, it) => { g.scale.y += ((it.hit ? .25 : 1) - g.scale.y) * Math.min(1, dt * 10); }; reset = () => { g.scale.y = 1; }; half = .34; len = .8; }
   if (kind === 'isblok') { const m1 = skIceMat(); add(new THREE.BoxGeometry(.56, .5, .5), m1, 0, .25, 0); add(new THREE.BoxGeometry(.3, .26, .3), m1, .06, .63, -.02).rotation.y = .4; add(new THREE.BoxGeometry(.58, .04, .52), skMat('#FFFFFF', .9), 0, .51, 0); half = .3; len = .5; }
   if (kind === 'krystal') { body = new THREE.Group(); g.add(body); const cm = new THREE.MeshStandardMaterial({ color: '#D9B8FF', emissive: new THREE.Color('#9B5CFF'), emissiveIntensity: .9, roughness: .1, metalness: .2, flatShading: true }), oct = new THREE.OctahedronGeometry(.2, 0);
     const top = new THREE.Mesh(oct, cm); top.scale.set(.8, 1.5, .8); top.position.y = .62; body.add(top); for (const [x, z, k] of [[-.15, .05, .55], [.15, -.04, .6], [.02, .14, .45]]) { const o = new THREE.Mesh(oct, cm); o.scale.set(.5 * k, 1.3 * k, .5 * k); o.position.set(x, .18, z); o.rotation.z = x * 2; body.add(o); }
-    add(new THREE.CylinderGeometry(.22, .26, .08, 8), skMat('#E6F2FF', .8), 0, .04, 0);
-    anim = (dt, now, it) => { top.rotation.y += dt * 1.5; top.position.y = .62 + .05 * Math.sin(now * 2.5); cm.emissiveIntensity = .7 + .4 * Math.sin(now * 4); if (it.hit) { body.position.y += dt * 3; body.scale.multiplyScalar(Math.max(0, 1 - dt * 3)); } }; reset = () => body.scale.setScalar(1); half = .26; len = .4; }
+    const base = add(new THREE.CylinderGeometry(.22, .26, .08, 8), skMat('#E6F2FF', .8), 0, .04, 0);
+    // (the crystals from Meshy, turning slowly and glowing violet, pulsing as the ones made here did)
+    const mk = new THREE.Group(); propInto(mk, 'sne-krystal.glb', .8, SNE_TURN.krystal, [...body.children, base]); body.add(mk); const glow = () => { const o = mk.children[0]; if (o && !o.material.emissiveMap) { o.material.emissiveMap = o.material.map; o.material.emissive.set('#C9A0FF'); o.material.needsUpdate = true; } return o; };
+    anim = (dt, now, it) => { top.rotation.y += dt * 1.5; top.position.y = .62 + .05 * Math.sin(now * 2.5); cm.emissiveIntensity = .7 + .4 * Math.sin(now * 4); mk.rotation.y += dt * .8; { const o = glow(); if (o) o.material.emissiveIntensity = .45 + .25 * Math.sin(now * 4); } if (it.hit) { body.position.y += dt * 3; body.scale.multiplyScalar(Math.max(0, 1 - dt * 3)); } }; reset = () => body.scale.setScalar(1); half = .26; len = .4; }
   if (kind === 'egern') { body = new THREE.Group(); g.add(body); const fur = skMat('#C8642A', .8), light = skMat('#F2D2A8', .8), tail = new THREE.Group(); tail.position.set(0, .12, -.1); body.add(tail);
     const m = (geo, mat, x, y, z, par = body) => { const o = new THREE.Mesh(geo, mat); o.position.set(x, y, z); o.castShadow = true; par.add(o); return o; };
     m(new THREE.SphereGeometry(.11, 16, 12), fur, 0, .13, 0).scale.set(.9, 1.1, 1.2); m(new THREE.SphereGeometry(.07, 12, 10), light, 0, .12, .08).scale.set(.8, 1.1, .6); m(new THREE.SphereGeometry(.075, 14, 10), fur, 0, .27, .07);
     for (const sd of [-1, 1]) { m(new THREE.ConeGeometry(.022, .06, 8), fur, sd * .04, .35, .06); m(new THREE.SphereGeometry(.013, 8, 6), skMat('#1A1A22', .3), sd * .03, .29, .135); m(new THREE.SphereGeometry(.025, 8, 6), fur, sd * .06, .03, .06).scale.set(1, .6, 1.4); }
     m(new THREE.SphereGeometry(.013, 8, 6), skMat('#3A2414', .4), 0, .265, .145); for (const [y, z, r] of [[.02, -.04, .07], [.12, -.08, .08], [.22, -.06, .08], [.29, .0, .065]]) m(new THREE.SphereGeometry(r, 12, 10), skMat('#D9773A', .9), 0, y, z, tail);
     anim = (dt, now, it) => { const d = it.dir || 1, f = it.hit ? 16 : 9; body.rotation.y = d > 0 ? Math.PI / 2 : -Math.PI / 2; body.position.y = .07 * Math.abs(Math.sin(now * f)); tail.rotation.x = .3 * Math.sin(now * f); if (it.hit) it.x += d * 4 * dt; };
+    { const mk = new THREE.Group(); propInto(mk, 'sne-egern.glb', .38, SNE_TURN.egern, [...body.children]); body.add(mk); }
     body.scale.setScalar(1.7); half = .22; len = .3; }
   if (kind === 'pingvin') { body = new THREE.Group(); g.add(body); const inner = new THREE.Group(); body.add(inner); const blk = skMat('#1E2235', .5), wh = skMat('#FFFFFF', .6), org = skMat('#FF9A1F', .5), fl = [];
     const m = (geo, mat, x, y, z, par = inner) => { const o = new THREE.Mesh(geo, mat); o.position.set(x, y, z); o.castShadow = true; par.add(o); return o; };
@@ -5621,6 +5641,7 @@ function skateThing(kind) { const pool = sk.pools[kind] ??= [], free = pool.find
     anim = (dt, now, it) => { const d = it.dir || 1; body.rotation.y = d > 0 ? Math.PI / 2 : -Math.PI / 2;
       if (it.hit) { inner.rotation.z = 0; inner.rotation.x = Math.min(Math.PI / 2, inner.rotation.x + dt * 8); inner.position.y = .15 * inner.rotation.x / (Math.PI / 2); it.x += d * 4.5 * dt; for (const [f, sd] of fl) f.rotation.z = sd * 1.2; }
       else { inner.rotation.z = .18 * Math.sin(now * 12); for (const [f, sd] of fl) f.rotation.z = sd * (.3 + .3 * Math.sin(now * 12)); } };
+    { const mk = new THREE.Group(); propInto(mk, 'sne-pingvin.glb', .6, SNE_TURN.pingvin, [...inner.children]); inner.add(mk); }
     reset = () => { inner.rotation.set(0, 0, 0); inner.position.y = 0; }; body.scale.setScalar(1.3); half = .24; len = .3; }
   const it = { group: g, kind, half, len, lid, body, anim, reset }; g.visible = false; (sk.ground || scene).add(g); pool.push(it);
   // (the dog, the cat and the rabbit from Dyr - the user, 12-11-2026: they run over the road from out in the grass)
@@ -7125,6 +7146,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.14.0 (41f2f31)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.14.0 (a5059bc)</div>
 </body>
 </html>
