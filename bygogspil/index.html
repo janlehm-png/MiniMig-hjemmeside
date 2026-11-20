@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>MiniMig™ version 2</title>
-<meta name="minimig-version" content="0.15.0">
+<meta name="minimig-version" content="0.16.0">
 <!-- (the number of this version, shown under the i - see VERSIONER.md - raised for each package and each fix put out) -->
 <!-- (the same icon as version 1 on a home screen, under the name MiniMig 2 - the icons lie in the website's billeder/;
      the user, 03-11-2026, sharing version 2 with testers) -->
@@ -301,6 +301,8 @@
   .quest .q-me { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; background: #FFF4D6; display: inline-grid; place-items: center; }
   .stage.space { background: radial-gradient(ellipse at 28% 18%, #312A78, #110F3A 55%, #06051C); }
   .stage.sea { background: linear-gradient(#7FDBFF, #2FA3E0 35%, #1670B8 75%, #0E4F8E); }
+  .stage.sea.rev { background: linear-gradient(#9DF5F0, #3CD0D8 35%, #1AA6C8 75%, #0F7AA6); }
+  .stage.sea.skib { background: linear-gradient(#3E8FC4, #1C5C99 35%, #123E73 75%, #0A2448); }
   /* (Gemmeleg: green leaves over the picture while the figure hides, counting down) */
   .hide-cover { position: absolute; inset: 0; z-index: 3; display: grid; place-content: center; justify-items: center; gap: 8px; border-radius: inherit;
     background: radial-gradient(circle, #6CC24A, #2E8A3A); color: #fff; font: 800 88px/1 system-ui, sans-serif; pointer-events: none; }
@@ -5275,7 +5277,8 @@ const SNOW_BOARD_TURN = Math.PI / 2, SNOW_SLOPE = .24;
 // loses: the jar only fills. The first: Skateboard - Parken (the meadow as it was) and Byen; Strandpromenaden later.
 // Basis: worlds 1 and 2 of the free games; Hele MiniMig the rest
 const WORLDS = { skate: [['park', 'Parken', 'the park', '🌳', '#5DBF55'], ['by', 'Byen', 'the town', '🏙️', '#6F8FD8'], ['strand', 'Strandpromenaden', 'the beach promenade', '🏖️', '#F2B544']],
-  snow: [['piste', 'Skibakken', 'the ski slope', '⛷️', '#4F86D9'], ['skov', 'Skovstien', 'the forest trail', '🌲', '#2E8B57'], ['isslot', 'Isslottet', 'the ice castle', '🏰', '#6B4FD0']] };
+  snow: [['piste', 'Skibakken', 'the ski slope', '⛷️', '#4F86D9'], ['skov', 'Skovstien', 'the forest trail', '🌲', '#2E8B57'], ['isslot', 'Isslottet', 'the ice castle', '🏰', '#6B4FD0']],
+  sea: [['hav', 'Havet', 'the sea', '🐠', '#2FA3E0'], ['rev', 'Koralrevet', 'the coral reef', '🐚', '#FF6FA8'], ['skib', 'Det sunkne skib', 'the sunken ship', '⚓', '#1C5C99']] };
 // (250, every star counting 1 on every level - the user, 19-11-2026: worlds opened far too fast at 60 with Svær x3;
 // about 3-4 rides on Let, 1-2 on Svær, the harder levels faster only by more things on the road)
 const JAR = 250, JAR_GAIN = { 'niveau-meget-let': 1, 'niveau-let': 1, 'niveau-mellem': 1, 'niveau-svaer': 1, 'niveau-meget-svaer': 1 };
@@ -6120,7 +6123,7 @@ function seaBox() { const [cx, cy, cz] = MODES.sea.cam(wideCam()), halfH = Math.
   // (the hips kept a body's length from the sides: lying in the water the head reaches far ahead of them)
   b.sand = cy - halfH * .92; b.l = -halfW + 1.05; b.r = halfW - 1.05; b.b = b.sand - .2; b.t = cy + halfH - 1.65; b.edge = halfW + .6; b.cy = cy; b.halfH = halfH;
   sea.sand.position.y = b.sand; sea.ground.position.y = b.sand; }
-function seaStart() { seaBuild(); scene.add(sea.world); holder.add(sea.rig); sea.rig.add(glb); seaBox(); sea.pos.set(0, (sea.box.b + sea.box.t) / 2, 0);
+function seaStart() { seaBuild(); scene.add(sea.world); holder.add(sea.rig); sea.rig.add(glb); seaBox(); sea.pos.set(0, (sea.box.b + sea.box.t) / 2, 0); seaLook(WORLDS.sea[worldNow('sea')][0]);
   Object.assign(sea, { target: null, held: false, swim: false, up: false, roll: 0, safe: 1.5, face: 0, tilt: 0, next: .6 }); game.rotY = 0;
   sea.rig.rotation.set(0, 0, 0); floor.visible = false; disc.visible = false; for (const el of [bgNear, bgFar, bgNear2]) el.hidden = true; stage.classList.add('sea');
   for (const s of sea.stars) s.visible = false; for (const f of sea.fish) f.visible = false;
@@ -6129,7 +6132,7 @@ function seaStart() { seaBuild(); scene.add(sea.world); holder.add(sea.rig); sea
   sea.jellies.forEach((j, k) => { j.visible = k < L.jelly; j.userData.x = sea.box.r - k * (sea.box.r - sea.box.l) / Math.max(1, L.jelly) * .9 + (k ? 0 : -.4); j.userData.y = sea.box.cy - .2 + (k % 2 ? .7 : -.5); j.userData.t = k * 1.3; });
   for (const d of sea.dots) d.position.set((Math.random() - .5) * 2 * sea.box.edge, sea.box.sand + Math.random() * sea.box.halfH * 2, d.position.z);
   loadMove('traed-vande').then(() => { if (game.on && game.mode === 'sea' && !sea.swim) runAnim('traed-vande'); }); loadMove('svoem'); }
-function seaStop() { if (!sea.world?.parent) return; scene.remove(sea.world); holder.add(glb); holder.remove(sea.rig); stage.classList.remove('sea'); sea.target = null; sea.held = false; floor.visible = true; setBg(bgNow); }
+function seaStop() { if (!sea.world?.parent) return; scene.remove(sea.world); holder.add(glb); holder.remove(sea.rig); stage.classList.remove('sea', 'rev', 'skib'); sea.target = null; sea.held = false; floor.visible = true; setBg(bgNow); }
 // ---- Rumrejse, the space game (the user, 12-11-2026: flying about out in space in a space suit with a jetpack, on the
 // same lines as the swim world; no spaceship). A tap or a finger moved: the jetpack flies the figure there, floating -
 // it speeds up and slows down softly. Two quick taps: a boost, a burst of speed with long flames. Stars drift in to be
@@ -6239,7 +6242,7 @@ function seaTap(e) { const r = renderer.domElement.getBoundingClientRect(); ilAt
   if (!ilRay.ray.intersectPlane(seaPlane, seaHit) || sea.roll) return; const b = sea.box; game.hint = 0;
   sea.target = new THREE.Vector3(Math.min(b.r, Math.max(b.l, seaHit.x)), Math.min(b.t, Math.max(b.b, seaHit.y - SEA.hips)), 0); }
 function seaTick(dt) { seaBox(); // (the picture's own edges, as it is now - measured only at the start, before the game filled the screen, it was too narrow: the figure stopped after two strokes, far from where the finger was, the user 12-11-2026)
-  const t = performance.now() / 1000, p = sea.pos, b = sea.box, L = SEA.levels[game.level] || SEA.levels['niveau-let'];
+  const t = performance.now() / 1000, p = sea.pos, b = sea.box, L = SEA.levels[game.level] || SEA.levels['niveau-let']; seaLookTick(t, dt);
   // (swimming: on towards the finger, turned the way it goes and tipped up or down; there - or rolling - treading water)
   if (sea.target && !sea.roll) { const dx = sea.target.x - p.x, dy = sea.target.y - p.y, d = Math.hypot(dx, dy);
     if (d < .08 && !sea.held) sea.target = null;
@@ -6287,8 +6290,106 @@ function seaTick(dt) { seaBox(); // (the picture's own edges, as it is now - mea
   seaT.value = t; sea.crab.position.x = -1.2 + Math.sin(t * .3) * 1.7; sea.horse.position.y = 1.2 + Math.sin(t * 1.3) * .12; sea.horse.rotation.z = Math.sin(t * .9) * .08;
   { const c = (t * .035) % 1; sea.turtle.position.set(b.edge + 1.5 - c * (2 * b.edge + 3), b.cy + .9 + Math.sin(t * .5) * .3, -2.6); sea.turtle.rotation.z = Math.cos(t * .5) * .1; }
   for (const wd of sea.weeds) wd.segs.forEach((g, k) => { g.rotation.z = Math.sin(t * 1.1 + wd.t + k * .5) * .12; });
-  sea.rays.forEach((r, k) => { r.material.opacity = .07 + .05 * Math.sin(t * .6 + k * 1.7); });
+  sea.rays.forEach((r, k) => { r.material.opacity = (.07 + .05 * Math.sin(t * .6 + k * 1.7)) * (sea.rayK || 1); });
   for (const d of sea.dots) { d.position.y += d.userData.v * dt; d.position.x += Math.sin(t * 2 + d.userData.v * 9) * .1 * dt; if (d.position.y > b.cy + b.halfH + .3) d.position.set((Math.random() - .5) * 2 * b.edge, b.sand, d.position.z); } }
+// ---- Svømmeverden's worlds (the user, 20-11-2026: "Ja, Svømmeverden"): Havet as it was; Koralrevet - clear turquoise
+// water over a reef of corals in many colours, branching, round and bumpy, fans and tubes, an anemone with a clownfish
+// going round it, a shoal of little blue fish passing behind; and Det sunkne skib - deeper, darker water, an old wooden
+// ship lying on the bottom with its mast broken and a lamp still glowing in the portholes, an anchor and its chain,
+// barrels, jars and an open chest of gold. In each a prize on the sand: a clam (on the reef) or a treasure chest (by the
+// ship) opening and shutting - swum to while open, three stars. Made here, round and soft; Meshy only if the user asks
+// (Koralrevet's and Det sunkne skib's things from Meshy - the user, 20-11-2026: "Lav mesh-modeller til koralrevet og det sunkne
+// skib": a branching coral, a brain coral, a fan, an anemone, the wreck, an anchor, a barrel and a jar. Each into the group
+// that the one made here is in, that one put away once it is there; the corals in the colours they had - the picture's own
+// colour turned to that, its light and shade kept - and the wreck's portholes and windows glowing)
+const SEA_TURN = { skib: 0, anker: -1.3 };
+function hueTo(map, hex) { const im = map.image, cv = document.createElement('canvas'); cv.width = im.width; cv.height = im.height; const c = cv.getContext('2d'); c.drawImage(im, 0, 0);
+  const d = c.getImageData(0, 0, cv.width, cv.height), a = d.data, to = {}, col = new THREE.Color(); new THREE.Color(hex).getHSL(to); const hsl = {};
+  for (let i = 0; i < a.length; i += 4) { col.setRGB(a[i] / 255, a[i + 1] / 255, a[i + 2] / 255); col.getHSL(hsl); if (hsl.s < .2) continue; col.setHSL(to.h, Math.min(1, hsl.s * .5 + to.s * .5), hsl.l * .6 + to.l * .4);
+    a[i] = col.r * 255; a[i + 1] = col.g * 255; a[i + 2] = col.b * 255; }
+  c.putImageData(d, 0, 0); const t = new THREE.CanvasTexture(cv); t.flipY = map.flipY; t.colorSpace = map.colorSpace; return t; }
+function seaPropInto(g, url, size, { turn = 0, by = 'h', hue = null, glow = false, hide = [...g.children] } = {}) { const cache = seaPropInto.cache ??= {};
+  (cache[url] ??= readProp(url).then(({ geo, map }) => { geo.computeBoundingBox(); const b = geo.boundingBox, d = b.getSize(new THREE.Vector3()); geo.translate(-(b.min.x + b.max.x) / 2, -b.min.y, -(b.min.z + b.max.z) / 2); return { geo, map, d, mats: {} }; })
+    .catch(e => { delete cache[url]; throw e; })).then(o => { const mat = o.mats[hue || '-'] ??= new THREE.MeshStandardMaterial({ map: hue ? hueTo(o.map, hue) : o.map, roughness: .7, metalness: 0,
+      ...(glow ? { emissive: new THREE.Color('#FFFFFF'), emissiveMap: glowOf(o.map), emissiveIntensity: 1.2 } : {}) });
+    const m = new THREE.Mesh(o.geo, mat); m.scale.setScalar(size / (by === 'h' ? o.d.y : Math.max(o.d.x, o.d.z))); m.rotation.y = turn; m.castShadow = true; m.receiveShadow = true; g.add(m); for (const x of hide) x.visible = false; }).catch(() => {}); return g; }
+function seaLooksBuild() { if (sea.looks) return; const L = sea.looks = { rev: new THREE.Group(), skib: new THREE.Group() }; for (const g of Object.values(L)) { g.visible = false; sea.ground.add(g); }
+  sea.sway = []; sea.tent = []; const M = (c, r = .7, e) => ilM(c, r, e), ds = THREE.DoubleSide, R = L.rev, S = L.skib;
+  // (branching corals: a stem, three branches on it, three on each of those, round tips)
+  const branch = (par, x, y, z, len, r, ang, rot, mat, depth) => { const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.set(0, rot, ang); par.add(g); ilMesh(new THREE.CylinderGeometry(r * .75, r, len, 8), mat, 0, len / 2, 0, g);
+    if (depth) for (const [a, k] of [[-.6, .72], [.55, .68], [.05, .8]]) branch(g, 0, len * (.55 + .2 * Math.abs(a)), 0, len * k, r * .78, a, 1.3, mat, depth - 1); else ilMesh(new THREE.SphereGeometry(r * .95, 10, 8), mat, 0, len, 0, g); return g; };
+  for (const [x, z, h, c] of [[-5.2, -2.2, .7, '#FF6FA8'], [-3.6, -2.9, .8, '#FF8A3D'], [-.9, -2.7, .6, '#9B6BFF'], [1.3, -3, .75, '#FF6FA8'], [3.3, -1.9, .55, '#FFB020'], [5.4, -2.6, .8, '#E8384F'], [7, -1.9, .65, '#9B6BFF'], [-7, -2.4, .7, '#FFB020'], [-2.9, -3.7, .9, '#FF8A3D'], [.2, -3.9, 1, '#E8384F'], [2.4, -4, .9, '#9B6BFF'], [5.9, -3.7, .9, '#FF6FA8'], [-5.6, -3.9, .95, '#E8384F']]) {
+    const g = branch(R, x, 0, z, h * .9, .1, 0, x, M(c, .55), 2); sea.sway.push({ o: g, t: x, a: .06, axis: 'z', base: 0 }); seaPropInto(g, 'hav-koral-gren.glb', h * 1.25, { hue: c }); }
+  // (round bumpy brain corals, fans standing up, clusters of tubes)
+  for (const [x, z, r, c, d] of [[-4.4, -1.4, .55, '#B8D98C', '#7FA84F'], [2.3, -1.3, .45, '#FFD36A', '#D9A33A'], [4.6, -3.2, .65, '#F2A8C4', '#C97598'], [-6.2, -1.2, .4, '#8FD3FF', '#5A9CD0']]) { const g = new THREE.Group(); g.position.set(x, 0, z); R.add(g);
+    ilMesh(new THREE.SphereGeometry(r, 22, 12, 0, Math.PI * 2, 0, Math.PI / 2), M(c, .85), 0, 0, 0, g).scale.y = .75; for (let k = 0; k < 4; k++) { const f = .25 + k * .18; ilMesh(new THREE.TorusGeometry(r * f, r * .05, 6, 28), M(d, .85), 0, r * .75 * Math.sqrt(1 - f * f), 0, g).rotation.x = Math.PI / 2; } seaPropInto(g, 'hav-hjernekoral.glb', r * 2.1, { by: 'w', hue: c }); }
+  for (const [x, z, h, c, d] of [[-1.8, -3.4, 1.35, '#C77DFF', '#8A4FD0'], [4.2, -2.7, 1.05, '#FF7A9C', '#D04F70'], [-6, -3.3, 1.2, '#FF8A3D', '#C9601F'], [1, -4.2, 1.4, '#FFB020', '#C98A10']]) { const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = x * .1; R.add(g);
+    ilMesh(new THREE.CircleGeometry(h, 26, 0, Math.PI), new THREE.MeshStandardMaterial({ color: c, roughness: .7, side: ds, transparent: true, opacity: .88 }), 0, .12, 0, g, false);
+    for (let k = 0; k < 7; k++) { const a = .2 + k / 6 * (Math.PI - .4), rib = ilMesh(new THREE.CylinderGeometry(.016, .026, h, 5), M(d), Math.cos(a) * h / 2, .12 + Math.sin(a) * h / 2, .012, g, false); rib.rotation.z = a - Math.PI / 2; }
+    ilMesh(new THREE.CylinderGeometry(.04, .06, .14, 6), M(d), 0, .07, 0, g); seaPropInto(g, 'hav-viftekoral.glb', h * 1.5, { by: 'w', hue: c }); sea.sway.push({ o: g, t: x * 2, a: .1, axis: 'x', base: 0 }); }
+  for (const [x, z, c] of [[.3, -1.9, '#FFB020'], [6, -1.2, '#2FD3B5'], [-3.1, -1.1, '#2FD3B5']]) for (let k = 0; k < 5; k++) { const r = .09 + (k % 3) * .03, h = .38 + k * .1, a = k * 1.3, tx = x + Math.cos(a) * .2 * (k ? 1 : 0), tz = z + Math.sin(a) * .2 * (k ? 1 : 0);
+    ilMesh(new THREE.CylinderGeometry(r, r * 1.15, h, 14, 1, true), new THREE.MeshStandardMaterial({ color: c, roughness: .6, side: ds }), tx, h / 2, tz, R); ilMesh(new THREE.CircleGeometry(r * .9, 14), M('#5A3A2A', .9), tx, h - .03, tz, R, false).rotation.x = -Math.PI / 2; }
+  // (the anemone, its arms swaying, and a clownfish going round over it)
+  { const g = sea.anem = new THREE.Group(); g.position.set(-2.4, 0, -1.6); g.scale.setScalar(1.5); R.add(g); ilMesh(new THREE.CylinderGeometry(.2, .25, .2, 16), M('#FF6FA8', .6), 0, .1, 0, g); const tm = M('#C77DFF', .5), tip = M('#FFD1F0', .4);
+    for (let k = 0; k < 22; k++) { const a = k * 2.4, rr = .05 + (k % 3) * .055, t = new THREE.Group(); t.position.set(Math.cos(a) * rr, .19, Math.sin(a) * rr); t.rotation.set(Math.sin(a) * .4, 0, -Math.cos(a) * .4); g.add(t);
+      ilMesh(new THREE.CylinderGeometry(.018, .028, .32, 6), tm, 0, .16, 0, t, false); ilMesh(new THREE.SphereGeometry(.026, 8, 6), tip, 0, .32, 0, t, false); sea.tent.push({ o: t, x: t.rotation.x, z: t.rotation.z, k }); }
+    seaPropInto(g, 'hav-anemone.glb', .62); sea.clown = seaModelInto(new THREE.Group(), 'hav-klovnfisk', Math.PI / 2); R.add(sea.clown); }
+  // (a shoal of little fish passing far behind, now and then)
+  sea.school = new THREE.Group(); R.add(sea.school); for (let k = 0; k < 11; k++) { const f = seaModelInto(new THREE.Group(), 'hav-blaafisk', Math.PI / 2); f.rotation.y = Math.PI; f.scale.setScalar(.7); f.userData.o = [(k % 4) * .38 + (k % 2) * .15, Math.floor(k / 4) * .3 - .3 + (k % 2) * .08, (k % 3) * .2]; sea.school.add(f); }
+  // ---- the sunken ship: a wooden hull lying a little over on the bottom, planks, portholes (two still lit), a hole in the
+  // side, the deck, a cabin with lit windows, the mast broken off and a torn sail; green growing on it here and there
+  { const ship = new THREE.Group(); ship.position.set(1.9, -.12, -3.8); ship.rotation.set(0, -.28, .14); S.add(ship); const wood = M('#7A4E2C', .85), dark = M('#5A3820', .9), glow = new THREE.MeshStandardMaterial({ color: '#FFE6A0', emissive: new THREE.Color('#FFB43A'), emissiveIntensity: .9, roughness: .4 });
+    const sh = new THREE.Shape(); sh.moveTo(-2.4, 1.2); sh.lineTo(-2.2, .2); sh.quadraticCurveTo(-1.8, -.15, -1, -.15); sh.lineTo(1.4, -.15); sh.quadraticCurveTo(2.6, 0, 3.05, 1.05); sh.lineTo(2.9, 1.2); sh.lineTo(-2.4, 1.2);
+    const hg = new THREE.ExtrudeGeometry(sh, { depth: 1.4, bevelEnabled: true, bevelSize: .06, bevelThickness: .06, bevelSegments: 2 }); hg.translate(0, 0, -.7); ilMesh(hg, wood, 0, 0, 0, ship);
+    for (const y of [.25, .55, .85]) ilMesh(new THREE.BoxGeometry(4.6, .035, .04), dark, .25, y, .78, ship, false); ilMesh(new THREE.BoxGeometry(5.3, .08, 1.5), M('#9C6B3E', .85), .3, 1.24, 0, ship);
+    for (const [x, lit] of [[-1.3, false], [-.4, true], [.5, false], [1.4, true]]) { ilMesh(new THREE.TorusGeometry(.12, .03, 8, 18), M('#C9A23A', .4), x, .68, .77, ship, false); ilMesh(new THREE.CircleGeometry(.11, 18), lit ? glow : M('#1C2A3A', .5), x, .68, .765, ship, false); }
+    ilMesh(new THREE.CircleGeometry(.3, 18), M('#24140A', .95), 2.1, .42, .77, ship, false).scale.x = 1.4;
+    ilMesh(new THREE.BoxGeometry(1.1, .7, 1.1), wood, -1.65, 1.62, 0, ship); ilMesh(new THREE.BoxGeometry(1.25, .08, 1.25), dark, -1.65, 2, 0, ship); for (const x of [-1.9, -1.4]) ilMesh(new THREE.BoxGeometry(.24, .24, .02), glow, x, 1.65, .56, ship, false);
+    const mast = ilMesh(new THREE.CylinderGeometry(.08, .1, 1.7, 10), dark, .6, 2.05, 0, ship); mast.rotation.z = -.35; const sail = ilMesh(new THREE.PlaneGeometry(1, .75), new THREE.MeshStandardMaterial({ color: '#E9E2D0', roughness: .9, side: ds }), .95, 2.2, .06, ship, false); sail.rotation.set(.2, .3, -.6);
+    ilMesh(new THREE.CylinderGeometry(.07, .08, 1.5, 10), dark, -3.5, .07, 1.2, ship).rotation.set(Math.PI / 2, 0, 1.1);
+    for (const [x, y] of [[-1.9, .5], [.9, .2], [2.4, .9], [-.2, 1.25], [1.7, 1.25]]) ilMesh(new THREE.SphereGeometry(.14, 10, 8), M('#3E9A3A', .8), x, y, .7, ship, false).scale.set(1.4, .8, .5);
+    seaPropInto(ship, 'hav-skibsvrag.glb', 4.7, { by: 'w', turn: SEA_TURN.skib, glow: true }); sea.shipGlow = glow; }
+  // (the anchor lying on the sand, its chain running off)
+  { const a = new THREE.Group(), m = M('#5E6673', .6); a.position.set(-3.7, .1, -1.4); a.rotation.set(-Math.PI / 2 + .25, 0, .5); S.add(a); ilMesh(new THREE.CylinderGeometry(.055, .055, 1.1, 10), m, 0, .55, 0, a);
+    ilMesh(new THREE.TorusGeometry(.11, .035, 8, 18), m, 0, 1.2, 0, a); ilMesh(new THREE.CylinderGeometry(.04, .04, .6, 8), m, 0, .95, 0, a).rotation.z = Math.PI / 2; ilMesh(new THREE.TorusGeometry(.38, .05, 8, 20, Math.PI), m, 0, .38, 0, a).rotation.z = Math.PI;
+    for (const sd of [-1, 1]) ilMesh(new THREE.ConeGeometry(.11, .22, 4), m, sd * .38, .45, 0, a);
+    { const mk = new THREE.Group(); mk.position.set(-3.7, 0, -1.4); mk.rotation.y = .5 + SEA_TURN.anker; S.add(mk); seaPropInto(mk, 'hav-anker.glb', 1.3, { by: 'w', hide: [a] }); }
+    for (let k = 0; k < 9; k++) ilMesh(new THREE.TorusGeometry(.06, .018, 6, 12), m, -3.7 + .35 + k * .12, .03, -1.4 - .55 - k * .05, S, false).rotation.set(k % 2 ? 0 : Math.PI / 2, .4, 0); }
+  // (barrels, old jars and a chest standing open with gold in it)
+  const barrel = (x, y, z, lie) => { const g = new THREE.Group(); g.position.set(x, y, z); if (lie) g.rotation.set(0, .6, Math.PI / 2); S.add(g); ilMesh(new THREE.CylinderGeometry(.24, .24, .58, 16), M('#8B5A2E', .85), 0, .29, 0, g);
+    ilMesh(new THREE.SphereGeometry(.27, 16, 10), M('#8B5A2E', .85), 0, .29, 0, g).scale.set(1, .85, 1); for (const y2 of [.08, .5]) ilMesh(new THREE.TorusGeometry(.25, .02, 6, 20), M('#5E6673', .5), 0, y2, 0, g, false).rotation.x = Math.PI / 2; seaPropInto(g, 'hav-toende.glb', .62); };
+  barrel(-1.5, .25, -2.3, true); barrel(-.9, 0, -2.9, false); barrel(5.9, 0, -2.2, false);
+  const jar = (x, z, lie) => { const pts = [[.0, 0], [.12, .02], [.2, .15], [.22, .35], [.15, .55], [.07, .62], [.08, .72], [.11, .75]].map(([a, b]) => new THREE.Vector2(a, b)); const o = ilMesh(new THREE.LatheGeometry(pts, 16), new THREE.MeshStandardMaterial({ color: '#C96F3B', roughness: .8, side: ds }), x, lie ? .2 : 0, z, S); if (lie) o.rotation.set(0, .8, Math.PI / 2 - .1); const g = new THREE.Group(); g.position.copy(o.position); g.rotation.copy(o.rotation); S.add(g); seaPropInto(g, 'hav-krukke.glb', .8, { hide: [o] }); };
+  jar(-5.6, -2.3, false); jar(-5.1, -2, true); jar(4.5, -1.3, false);
+  { const g = new THREE.Group(); g.position.set(5.3, 0, -1.4); g.rotation.y = -.5; S.add(g); ilMesh(new THREE.BoxGeometry(.6, .34, .4), M('#8B5A2E', .8), 0, .17, 0, g);
+    const lid = ilMesh(new THREE.CylinderGeometry(.2, .2, .6, 16, 1, false, 0, Math.PI), M('#7A4E2C', .8), 0, .5, -.3, g); lid.rotation.set(-1.9, 0, Math.PI / 2);
+    ilMesh(new THREE.BoxGeometry(.52, .06, .32), new THREE.MeshStandardMaterial({ color: '#FFD36A', emissive: new THREE.Color('#FFB020'), emissiveIntensity: .7, roughness: .3, metalness: .4 }), 0, .34, 0, g);
+    for (let k = 0; k < 6; k++) ilMesh(new THREE.CylinderGeometry(.06, .06, .02, 14), M('#FFC233', .3, '#B07A00'), (k - 2.5) * .15, .01, .3 + (k % 2) * .1, g, false); }
+  // (the prizes on the sand: a clam with a pearl, a treasure chest with gold - each opening and shutting)
+  const prize = (par, kind) => { const g = new THREE.Group(), hinge = new THREE.Group(); par.add(g); const gm = new THREE.MeshStandardMaterial({ color: kind === 'musling' ? '#FFF4FA' : '#FFD36A', emissive: new THREE.Color(kind === 'musling' ? '#FFB0D8' : '#FFB020'), emissiveIntensity: .7, roughness: .2, metalness: .3 });
+    let gem; if (kind === 'musling') { const sm = M('#F2A8C4', .55); g.position.y = .14; ilMesh(new THREE.SphereGeometry(.32, 22, 10, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), sm, 0, 0, 0, g).scale.y = .45; hinge.position.set(0, 0, -.3); g.add(hinge);
+      const top = ilMesh(new THREE.SphereGeometry(.32, 22, 10, 0, Math.PI * 2, 0, Math.PI / 2), sm, 0, 0, .3, hinge); top.scale.y = .45; for (let k = 0; k < 5; k++) ilMesh(new THREE.TorusGeometry(.32, .012, 4, 22, Math.PI), M('#E080A8', .6), 0, 0, .3, hinge, false).rotation.set(0, (k - 2) * .35 + Math.PI / 2, 0);
+      gem = ilMesh(new THREE.SphereGeometry(.11, 18, 14), gm, 0, .08, .02, g, false); }
+    else { const wood = M('#8B5A2E', .8), band = M('#FFC233', .35, '#B07A00'); ilMesh(new THREE.BoxGeometry(.62, .36, .42), wood, 0, .18, 0, g); for (const x of [-.22, .22]) ilMesh(new THREE.BoxGeometry(.06, .37, .43), band, x, .18, 0, g, false);
+      hinge.position.set(0, .36, -.21); g.add(hinge); const lid = ilMesh(new THREE.CylinderGeometry(.21, .21, .62, 16, 1, false, 0, Math.PI), wood, 0, 0, .21, hinge); lid.rotation.z = Math.PI / 2; for (const x of [-.22, .22]) ilMesh(new THREE.CylinderGeometry(.215, .215, .06, 16, 1, false, 0, Math.PI), band, x, 0, .21, hinge, false).rotation.z = Math.PI / 2;
+      ilMesh(new THREE.BoxGeometry(.1, .12, .04), band, 0, -.02, .43, hinge, false); gem = new THREE.Group(); g.add(gem); ilMesh(new THREE.BoxGeometry(.54, .08, .36), gm, 0, .34, 0, gem, false); for (let k = 0; k < 5; k++) ilMesh(new THREE.SphereGeometry(.06, 10, 8), gm, (k - 2) * .1, .4, (k % 2) * .08 - .04, gem, false); }
+    Object.assign(g.userData, { hinge, gem, gm, open: kind === 'musling' ? 1 : 1.3, t: 0, amt: 0, cool: 0 }); return g; };
+  sea.clam = prize(R, 'musling'); sea.chest = prize(S, 'kiste'); }
+// (the world's look as the game starts: which of them shows, the water's colour, how bright the light from above is,
+// and where the prize lies - on the sand to one side, not under the figure)
+function seaLook(look) { seaLooksBuild(); sea.look = look; for (const [k, g] of Object.entries(sea.looks)) g.visible = k === look; stage.classList.toggle('rev', look === 'rev'); stage.classList.toggle('skib', look === 'skib');
+  sea.sand.material.color.set(look === 'skib' ? '#BCA57A' : look === 'rev' ? '#F2E2B8' : '#E9D3A0'); sea.rayK = look === 'skib' ? .55 : look === 'rev' ? 1.3 : 1; sea.special = look === 'rev' ? sea.clam : look === 'skib' ? sea.chest : null; const b = sea.box;
+  if (sea.special) { const x = (Math.random() < .5 ? -1 : 1) * (1.4 + Math.random() * 1.2); sea.special.position.z = -.2; Object.assign(sea.special.userData, { x, t: 0, amt: 0, cool: 0 }); } }
+function seaLookTick(t, dt) { if (!sea.looks || !sea.look || sea.look === 'hav') return; const b = sea.box;
+  if (sea.look === 'rev') { for (const s of sea.sway) s.o.rotation[s.axis] = s.base + Math.sin(t * 1.1 + s.t) * s.a; for (const s of sea.tent) { s.o.rotation.x = s.x + .22 * Math.sin(t * 1.6 + s.k * .7); s.o.rotation.z = s.z + .18 * Math.cos(t * 1.3 + s.k); }
+    const a = t * .9, ax = sea.anem.position.x, az = sea.anem.position.z; sea.clown.position.set(ax + Math.cos(a) * .5, .8 + Math.sin(t * 2) * .05, az + Math.sin(a) * .5); sea.clown.rotation.y = Math.atan2(-Math.cos(a), -Math.sin(a));
+    const c = (t * .045) % 1; sea.school.position.set(b.edge + 3 - c * (2 * b.edge + 8), 1.9 + Math.sin(t * .4) * .3, -2.4); sea.school.children.forEach((f, k) => { const o = f.userData.o; f.position.set(o[0] + Math.sin(t * 2 + k) * .05, o[1] + Math.sin(t * 2.4 + k * 1.7) * .06, o[2]); }); }
+  if (sea.look === 'skib' && sea.shipGlow) sea.shipGlow.emissiveIntensity = .75 + .25 * Math.sin(t * 2.2);
+  // (the prize opening for a while and shutting again; reached while open - three stars, and it is empty a little while)
+  const sp = sea.special; if (!sp) return; const u = sp.userData; { const px = Math.max(b.l + .2, Math.min(b.r - .2, u.x)); if (Number.isFinite(px)) sp.position.x = px; } // (kept inside the picture as it is now)
+  u.cool = Math.max(0, u.cool - dt); u.t += dt; const want = !u.cool && (u.t % 5.5) < 3.2 ? 1 : 0; u.amt += (want - u.amt) * Math.min(1, dt * 5);
+  u.hinge.rotation.x = -u.open * u.amt; u.gem.visible = !u.cool; u.gm.emissiveIntensity = .55 + .35 * Math.sin(t * 5);
+  if (u.amt > .55 && !u.cool && Math.hypot(seaHips.x - sp.position.x, seaHips.y - (sea.ground.position.y + .3)) < .9) { u.cool = 7; sfx('ding'); sfx('ding', .12); sfx('ding', .24); addStars(3); } }
 // ---- Gemmeleg: hide and seek on the island (the user, 03-11-2026, one of the games chosen after the talk about the other
 // children's apps) ----
 // The child's own figure hides on Skattejagt's island - behind a bush or the treasure chest - and the child finds it by
