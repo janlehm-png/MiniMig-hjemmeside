@@ -6296,27 +6296,42 @@ function seaTick(dt) { seaBox(); // (the picture's own edges, as it is now - mea
 // ship lying on the bottom with its mast broken and a lamp still glowing in the portholes, an anchor and its chain,
 // barrels, jars and an open chest of gold. In each a prize on the sand: a clam (on the reef) or a treasure chest (by the
 // ship) opening and shutting - swum to while open, three stars. Made here, round and soft; Meshy only if the user asks
+// (Koralrevet's and Det sunkne skib's things from Meshy - the user, 20-11-2026: "Lav mesh-modeller til koralrevet og det sunkne
+// skib": a branching coral, a brain coral, a fan, an anemone, the wreck, an anchor, a barrel and a jar. Each into the group
+// that the one made here is in, that one put away once it is there; the corals in the colours they had - the picture's own
+// colour turned to that, its light and shade kept - and the wreck's portholes and windows glowing)
+const SEA_TURN = { skib: 0, anker: -1.3 };
+function hueTo(map, hex) { const im = map.image, cv = document.createElement('canvas'); cv.width = im.width; cv.height = im.height; const c = cv.getContext('2d'); c.drawImage(im, 0, 0);
+  const d = c.getImageData(0, 0, cv.width, cv.height), a = d.data, to = {}, col = new THREE.Color(); new THREE.Color(hex).getHSL(to); const hsl = {};
+  for (let i = 0; i < a.length; i += 4) { col.setRGB(a[i] / 255, a[i + 1] / 255, a[i + 2] / 255); col.getHSL(hsl); if (hsl.s < .2) continue; col.setHSL(to.h, Math.min(1, hsl.s * .5 + to.s * .5), hsl.l * .6 + to.l * .4);
+    a[i] = col.r * 255; a[i + 1] = col.g * 255; a[i + 2] = col.b * 255; }
+  c.putImageData(d, 0, 0); const t = new THREE.CanvasTexture(cv); t.flipY = map.flipY; t.colorSpace = map.colorSpace; return t; }
+function seaPropInto(g, url, size, { turn = 0, by = 'h', hue = null, glow = false, hide = [...g.children] } = {}) { const cache = seaPropInto.cache ??= {};
+  (cache[url] ??= readProp(url).then(({ geo, map }) => { geo.computeBoundingBox(); const b = geo.boundingBox, d = b.getSize(new THREE.Vector3()); geo.translate(-(b.min.x + b.max.x) / 2, -b.min.y, -(b.min.z + b.max.z) / 2); return { geo, map, d, mats: {} }; })
+    .catch(e => { delete cache[url]; throw e; })).then(o => { const mat = o.mats[hue || '-'] ??= new THREE.MeshStandardMaterial({ map: hue ? hueTo(o.map, hue) : o.map, roughness: .7, metalness: 0,
+      ...(glow ? { emissive: new THREE.Color('#FFFFFF'), emissiveMap: glowOf(o.map), emissiveIntensity: 1.2 } : {}) });
+    const m = new THREE.Mesh(o.geo, mat); m.scale.setScalar(size / (by === 'h' ? o.d.y : Math.max(o.d.x, o.d.z))); m.rotation.y = turn; m.castShadow = true; m.receiveShadow = true; g.add(m); for (const x of hide) x.visible = false; }).catch(() => {}); return g; }
 function seaLooksBuild() { if (sea.looks) return; const L = sea.looks = { rev: new THREE.Group(), skib: new THREE.Group() }; for (const g of Object.values(L)) { g.visible = false; sea.ground.add(g); }
   sea.sway = []; sea.tent = []; const M = (c, r = .7, e) => ilM(c, r, e), ds = THREE.DoubleSide, R = L.rev, S = L.skib;
   // (branching corals: a stem, three branches on it, three on each of those, round tips)
   const branch = (par, x, y, z, len, r, ang, rot, mat, depth) => { const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.set(0, rot, ang); par.add(g); ilMesh(new THREE.CylinderGeometry(r * .75, r, len, 8), mat, 0, len / 2, 0, g);
     if (depth) for (const [a, k] of [[-.6, .72], [.55, .68], [.05, .8]]) branch(g, 0, len * (.55 + .2 * Math.abs(a)), 0, len * k, r * .78, a, 1.3, mat, depth - 1); else ilMesh(new THREE.SphereGeometry(r * .95, 10, 8), mat, 0, len, 0, g); return g; };
   for (const [x, z, h, c] of [[-5.2, -2.2, .7, '#FF6FA8'], [-3.6, -2.9, .8, '#FF8A3D'], [-.9, -2.7, .6, '#9B6BFF'], [1.3, -3, .75, '#FF6FA8'], [3.3, -1.9, .55, '#FFB020'], [5.4, -2.6, .8, '#E8384F'], [7, -1.9, .65, '#9B6BFF'], [-7, -2.4, .7, '#FFB020'], [-2.9, -3.7, .9, '#FF8A3D'], [.2, -3.9, 1, '#E8384F'], [2.4, -4, .9, '#9B6BFF'], [5.9, -3.7, .9, '#FF6FA8'], [-5.6, -3.9, .95, '#E8384F']]) {
-    const g = branch(R, x, 0, z, h * .9, .1, 0, x, M(c, .55), 2); sea.sway.push({ o: g, t: x, a: .06, axis: 'z', base: 0 }); }
+    const g = branch(R, x, 0, z, h * .9, .1, 0, x, M(c, .55), 2); sea.sway.push({ o: g, t: x, a: .06, axis: 'z', base: 0 }); seaPropInto(g, 'hav-koral-gren.glb', h * 1.25, { hue: c }); }
   // (round bumpy brain corals, fans standing up, clusters of tubes)
   for (const [x, z, r, c, d] of [[-4.4, -1.4, .55, '#B8D98C', '#7FA84F'], [2.3, -1.3, .45, '#FFD36A', '#D9A33A'], [4.6, -3.2, .65, '#F2A8C4', '#C97598'], [-6.2, -1.2, .4, '#8FD3FF', '#5A9CD0']]) { const g = new THREE.Group(); g.position.set(x, 0, z); R.add(g);
-    ilMesh(new THREE.SphereGeometry(r, 22, 12, 0, Math.PI * 2, 0, Math.PI / 2), M(c, .85), 0, 0, 0, g).scale.y = .75; for (let k = 0; k < 4; k++) { const f = .25 + k * .18; ilMesh(new THREE.TorusGeometry(r * f, r * .05, 6, 28), M(d, .85), 0, r * .75 * Math.sqrt(1 - f * f), 0, g).rotation.x = Math.PI / 2; } }
+    ilMesh(new THREE.SphereGeometry(r, 22, 12, 0, Math.PI * 2, 0, Math.PI / 2), M(c, .85), 0, 0, 0, g).scale.y = .75; for (let k = 0; k < 4; k++) { const f = .25 + k * .18; ilMesh(new THREE.TorusGeometry(r * f, r * .05, 6, 28), M(d, .85), 0, r * .75 * Math.sqrt(1 - f * f), 0, g).rotation.x = Math.PI / 2; } seaPropInto(g, 'hav-hjernekoral.glb', r * 2.1, { by: 'w', hue: c }); }
   for (const [x, z, h, c, d] of [[-1.8, -3.4, 1.35, '#C77DFF', '#8A4FD0'], [4.2, -2.7, 1.05, '#FF7A9C', '#D04F70'], [-6, -3.3, 1.2, '#FF8A3D', '#C9601F'], [1, -4.2, 1.4, '#FFB020', '#C98A10']]) { const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = x * .1; R.add(g);
     ilMesh(new THREE.CircleGeometry(h, 26, 0, Math.PI), new THREE.MeshStandardMaterial({ color: c, roughness: .7, side: ds, transparent: true, opacity: .88 }), 0, .12, 0, g, false);
     for (let k = 0; k < 7; k++) { const a = .2 + k / 6 * (Math.PI - .4), rib = ilMesh(new THREE.CylinderGeometry(.016, .026, h, 5), M(d), Math.cos(a) * h / 2, .12 + Math.sin(a) * h / 2, .012, g, false); rib.rotation.z = a - Math.PI / 2; }
-    ilMesh(new THREE.CylinderGeometry(.04, .06, .14, 6), M(d), 0, .07, 0, g); sea.sway.push({ o: g, t: x * 2, a: .1, axis: 'x', base: 0 }); }
+    ilMesh(new THREE.CylinderGeometry(.04, .06, .14, 6), M(d), 0, .07, 0, g); seaPropInto(g, 'hav-viftekoral.glb', h * 1.5, { by: 'w', hue: c }); sea.sway.push({ o: g, t: x * 2, a: .1, axis: 'x', base: 0 }); }
   for (const [x, z, c] of [[.3, -1.9, '#FFB020'], [6, -1.2, '#2FD3B5'], [-3.1, -1.1, '#2FD3B5']]) for (let k = 0; k < 5; k++) { const r = .09 + (k % 3) * .03, h = .38 + k * .1, a = k * 1.3, tx = x + Math.cos(a) * .2 * (k ? 1 : 0), tz = z + Math.sin(a) * .2 * (k ? 1 : 0);
     ilMesh(new THREE.CylinderGeometry(r, r * 1.15, h, 14, 1, true), new THREE.MeshStandardMaterial({ color: c, roughness: .6, side: ds }), tx, h / 2, tz, R); ilMesh(new THREE.CircleGeometry(r * .9, 14), M('#5A3A2A', .9), tx, h - .03, tz, R, false).rotation.x = -Math.PI / 2; }
   // (the anemone, its arms swaying, and a clownfish going round over it)
   { const g = sea.anem = new THREE.Group(); g.position.set(-2.4, 0, -1.6); g.scale.setScalar(1.5); R.add(g); ilMesh(new THREE.CylinderGeometry(.2, .25, .2, 16), M('#FF6FA8', .6), 0, .1, 0, g); const tm = M('#C77DFF', .5), tip = M('#FFD1F0', .4);
     for (let k = 0; k < 22; k++) { const a = k * 2.4, rr = .05 + (k % 3) * .055, t = new THREE.Group(); t.position.set(Math.cos(a) * rr, .19, Math.sin(a) * rr); t.rotation.set(Math.sin(a) * .4, 0, -Math.cos(a) * .4); g.add(t);
       ilMesh(new THREE.CylinderGeometry(.018, .028, .32, 6), tm, 0, .16, 0, t, false); ilMesh(new THREE.SphereGeometry(.026, 8, 6), tip, 0, .32, 0, t, false); sea.tent.push({ o: t, x: t.rotation.x, z: t.rotation.z, k }); }
-    sea.clown = seaModelInto(new THREE.Group(), 'hav-klovnfisk', Math.PI / 2); R.add(sea.clown); }
+    seaPropInto(g, 'hav-anemone.glb', .62); sea.clown = seaModelInto(new THREE.Group(), 'hav-klovnfisk', Math.PI / 2); R.add(sea.clown); }
   // (a shoal of little fish passing far behind, now and then)
   sea.school = new THREE.Group(); R.add(sea.school); for (let k = 0; k < 11; k++) { const f = seaModelInto(new THREE.Group(), 'hav-blaafisk', Math.PI / 2); f.rotation.y = Math.PI; f.scale.setScalar(.7); f.userData.o = [(k % 4) * .38 + (k % 2) * .15, Math.floor(k / 4) * .3 - .3 + (k % 2) * .08, (k % 3) * .2]; sea.school.add(f); }
   // ---- the sunken ship: a wooden hull lying a little over on the bottom, planks, portholes (two still lit), a hole in the
@@ -6331,17 +6346,18 @@ function seaLooksBuild() { if (sea.looks) return; const L = sea.looks = { rev: n
     const mast = ilMesh(new THREE.CylinderGeometry(.08, .1, 1.7, 10), dark, .6, 2.05, 0, ship); mast.rotation.z = -.35; const sail = ilMesh(new THREE.PlaneGeometry(1, .75), new THREE.MeshStandardMaterial({ color: '#E9E2D0', roughness: .9, side: ds }), .95, 2.2, .06, ship, false); sail.rotation.set(.2, .3, -.6);
     ilMesh(new THREE.CylinderGeometry(.07, .08, 1.5, 10), dark, -3.5, .07, 1.2, ship).rotation.set(Math.PI / 2, 0, 1.1);
     for (const [x, y] of [[-1.9, .5], [.9, .2], [2.4, .9], [-.2, 1.25], [1.7, 1.25]]) ilMesh(new THREE.SphereGeometry(.14, 10, 8), M('#3E9A3A', .8), x, y, .7, ship, false).scale.set(1.4, .8, .5);
-    sea.shipGlow = glow; }
+    seaPropInto(ship, 'hav-skibsvrag.glb', 4.7, { by: 'w', turn: SEA_TURN.skib, glow: true }); sea.shipGlow = glow; }
   // (the anchor lying on the sand, its chain running off)
   { const a = new THREE.Group(), m = M('#5E6673', .6); a.position.set(-3.7, .1, -1.4); a.rotation.set(-Math.PI / 2 + .25, 0, .5); S.add(a); ilMesh(new THREE.CylinderGeometry(.055, .055, 1.1, 10), m, 0, .55, 0, a);
     ilMesh(new THREE.TorusGeometry(.11, .035, 8, 18), m, 0, 1.2, 0, a); ilMesh(new THREE.CylinderGeometry(.04, .04, .6, 8), m, 0, .95, 0, a).rotation.z = Math.PI / 2; ilMesh(new THREE.TorusGeometry(.38, .05, 8, 20, Math.PI), m, 0, .38, 0, a).rotation.z = Math.PI;
     for (const sd of [-1, 1]) ilMesh(new THREE.ConeGeometry(.11, .22, 4), m, sd * .38, .45, 0, a);
+    { const mk = new THREE.Group(); mk.position.set(-3.7, 0, -1.4); mk.rotation.y = .5 + SEA_TURN.anker; S.add(mk); seaPropInto(mk, 'hav-anker.glb', 1.3, { by: 'w', hide: [a] }); }
     for (let k = 0; k < 9; k++) ilMesh(new THREE.TorusGeometry(.06, .018, 6, 12), m, -3.7 + .35 + k * .12, .03, -1.4 - .55 - k * .05, S, false).rotation.set(k % 2 ? 0 : Math.PI / 2, .4, 0); }
   // (barrels, old jars and a chest standing open with gold in it)
   const barrel = (x, y, z, lie) => { const g = new THREE.Group(); g.position.set(x, y, z); if (lie) g.rotation.set(0, .6, Math.PI / 2); S.add(g); ilMesh(new THREE.CylinderGeometry(.24, .24, .58, 16), M('#8B5A2E', .85), 0, .29, 0, g);
-    ilMesh(new THREE.SphereGeometry(.27, 16, 10), M('#8B5A2E', .85), 0, .29, 0, g).scale.set(1, .85, 1); for (const y2 of [.08, .5]) ilMesh(new THREE.TorusGeometry(.25, .02, 6, 20), M('#5E6673', .5), 0, y2, 0, g, false).rotation.x = Math.PI / 2; };
+    ilMesh(new THREE.SphereGeometry(.27, 16, 10), M('#8B5A2E', .85), 0, .29, 0, g).scale.set(1, .85, 1); for (const y2 of [.08, .5]) ilMesh(new THREE.TorusGeometry(.25, .02, 6, 20), M('#5E6673', .5), 0, y2, 0, g, false).rotation.x = Math.PI / 2; seaPropInto(g, 'hav-toende.glb', .62); };
   barrel(-1.5, .25, -2.3, true); barrel(-.9, 0, -2.9, false); barrel(5.9, 0, -2.2, false);
-  const jar = (x, z, lie) => { const pts = [[.0, 0], [.12, .02], [.2, .15], [.22, .35], [.15, .55], [.07, .62], [.08, .72], [.11, .75]].map(([a, b]) => new THREE.Vector2(a, b)); const o = ilMesh(new THREE.LatheGeometry(pts, 16), new THREE.MeshStandardMaterial({ color: '#C96F3B', roughness: .8, side: ds }), x, lie ? .2 : 0, z, S); if (lie) o.rotation.set(0, .8, Math.PI / 2 - .1); };
+  const jar = (x, z, lie) => { const pts = [[.0, 0], [.12, .02], [.2, .15], [.22, .35], [.15, .55], [.07, .62], [.08, .72], [.11, .75]].map(([a, b]) => new THREE.Vector2(a, b)); const o = ilMesh(new THREE.LatheGeometry(pts, 16), new THREE.MeshStandardMaterial({ color: '#C96F3B', roughness: .8, side: ds }), x, lie ? .2 : 0, z, S); if (lie) o.rotation.set(0, .8, Math.PI / 2 - .1); const g = new THREE.Group(); g.position.copy(o.position); g.rotation.copy(o.rotation); S.add(g); seaPropInto(g, 'hav-krukke.glb', .8, { hide: [o] }); };
   jar(-5.6, -2.3, false); jar(-5.1, -2, true); jar(4.5, -1.3, false);
   { const g = new THREE.Group(); g.position.set(5.3, 0, -1.4); g.rotation.y = -.5; S.add(g); ilMesh(new THREE.BoxGeometry(.6, .34, .4), M('#8B5A2E', .8), 0, .17, 0, g);
     const lid = ilMesh(new THREE.CylinderGeometry(.2, .2, .6, 16, 1, false, 0, Math.PI), M('#7A4E2C', .8), 0, .5, -.3, g); lid.rotation.set(-1.9, 0, Math.PI / 2);
@@ -6368,7 +6384,7 @@ function seaLookTick(t, dt) { if (!sea.looks || !sea.look || sea.look === 'hav')
     const c = (t * .045) % 1; sea.school.position.set(b.edge + 3 - c * (2 * b.edge + 8), 1.9 + Math.sin(t * .4) * .3, -2.4); sea.school.children.forEach((f, k) => { const o = f.userData.o; f.position.set(o[0] + Math.sin(t * 2 + k) * .05, o[1] + Math.sin(t * 2.4 + k * 1.7) * .06, o[2]); }); }
   if (sea.look === 'skib' && sea.shipGlow) sea.shipGlow.emissiveIntensity = .75 + .25 * Math.sin(t * 2.2);
   // (the prize opening for a while and shutting again; reached while open - three stars, and it is empty a little while)
-  const sp = sea.special; if (!sp) return; const u = sp.userData; sp.position.x = Math.max(b.l + .2, Math.min(b.r - .2, u.x)); // (kept inside the picture as it is now)
+  const sp = sea.special; if (!sp) return; const u = sp.userData; { const px = Math.max(b.l + .2, Math.min(b.r - .2, u.x)); if (Number.isFinite(px)) sp.position.x = px; } // (kept inside the picture as it is now)
   u.cool = Math.max(0, u.cool - dt); u.t += dt; const want = !u.cool && (u.t % 5.5) < 3.2 ? 1 : 0; u.amt += (want - u.amt) * Math.min(1, dt * 5);
   u.hinge.rotation.x = -u.open * u.amt; u.gem.visible = !u.cool; u.gm.emissiveIntensity = .55 + .35 * Math.sin(t * 5);
   if (u.amt > .55 && !u.cool && Math.hypot(seaHips.x - sp.position.x, seaHips.y - (sea.ground.position.y + .3)) < .9) { u.cool = 7; sfx('ding'); sfx('ding', .12); sfx('ding', .24); addStars(3); } }
@@ -7234,6 +7250,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.15.0 (cceed59)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.15.0 (e817278)</div>
 </body>
 </html>
