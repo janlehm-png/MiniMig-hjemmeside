@@ -753,7 +753,7 @@ const EN = {
   'Intet dyr': 'No pet', 'Kat': 'Cat', 'Hund': 'Dog', 'Kanin': 'Rabbit', 'Halsbånd': 'Collar', 'Madskål': 'Food bowl', 'Legebold': 'Play ball',
   'Sol': 'Sun', 'Have': 'Garden', 'Strand': 'Beach', 'Skov': 'Forest', 'Slot': 'Palace', 'Ridderborg': 'Castle', 'Havbund': 'Ocean floor', 'Slikland': 'Candy world', 'Vinter': 'Winter', 'Rummet': 'Space', 'Fodboldbane': 'Soccer field', 'Gymnastiksal': 'Gym', 'Dansesal': 'Dance studio',
   // (movements, games)
-  'Hænder i siden': 'Hands on hips', 'Glad hop': 'Happy jump', 'Højt hop': 'High jump', 'Lille løbehop': 'Small leap', 'Langt løbehop': 'Long leap', 'Hiphop': 'Hip hop', 'Hiphop 2': 'Hip hop 2', 'Fjollet': 'Silly', 'Armdans': 'Arm dance', 'Sjovt løb': 'Funny run', 'Løb stærkt': 'Run fast',
+  'Hænder i siden': 'Hands on hips', 'Glad hop': 'Happy jump', 'Højt hop': 'High jump', 'Lille løbehop': 'Small leap', 'Langt løbehop': 'Long leap', 'Hiphop': 'Hip hop', 'Hiphop 2': 'Hip hop 2', 'Hiphop 3': 'Hip hop 3', 'Hiphop 4': 'Hip hop 4', 'Fjollet': 'Silly', 'Armdans': 'Arm dance', 'Sjovt løb': 'Funny run', 'Løb stærkt': 'Run fast',
   'Klap': 'Clap', 'Dyk og rul': 'Dive and roll', 'Snuble': 'Stumble', 'Falder på numsen': 'Fall on your bottom', 'Venstre fod': 'Left foot', 'Højre fod': 'Right foot',
   'Meget let': 'Very easy', 'Let': 'Easy', 'Mellem': 'Medium', 'Svær': 'Hard', 'Meget svær': 'Very hard', 'Fra siden': 'From the side', 'Bagfra': 'From behind', 'Forfra': 'From the front',
   '👈 Tryk i siden for at svinge 👉': '👈 Tap the side to turn 👉', '👆 Tryk hvor du vil gå hen': '👆 Tap where you want to go', '👆 Tryk eller træk – så svømmer du derhen': '👆 Tap or drag to swim there', '🔍 Hvor er jeg? Tryk på busken': '🔍 Where am I? Tap the bush', '👆 Tryk i målet, hvor bolden skal hen': '👆 Tap the goal where the ball should go', '👆 Tryk for at hoppe': '👆 Tap to jump',
@@ -7347,12 +7347,12 @@ let adventOpenNow = false;
 function adventOpened() { try { return +localStorage.getItem(ADVENT_KEY) || 0; } catch (e) { return 99; } }
 async function adventGive(id) { if (id.startsWith('hat-')) { await setGarment('hat', id); return; }
   if (id === 'bg-jul') { setBg('bg-jul'); return; }
-  if (id === 'pat-jul') { if (!GARMENTS.shirt.now && !GARMENTS.suit.now && !GARMENTS.dress.now) await setGarment('shirt', 'toej-haette'); patternNow.shirt = 'jul'; apply('shirt', '#C8102E'); } }
+  if (id === 'pat-jul') { if (!GARMENTS.shirt.now) await setGarment('shirt', 'toej-haette'); patternNow.shirt = 'jul'; apply('shirt', '#C8102E'); } }
 function adventCheck() { if (adventOpenNow || game.on || !glb || !hairBase?.whole) return; const n = Math.min(adventNow(), ADVENT_GIFTS.length), done = adventOpened(); if (done >= n) return;
-  if (document.querySelector('.sheet:not([hidden]), dialog[open]')) return;
+  if (document.querySelector('.sheet:not([hidden]), #pauseScreen:not([hidden])')) return;
   adventOpenNow = true; const k = done, [id, label, emo] = ADVENT_GIFTS[k], box = document.createElement('div');
   box.id = 'adventGift'; box.style.cssText = 'position:fixed;inset:0;z-index:998;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(20,24,60,.45);font:800 22px ui-rounded,"Arial Rounded MT Bold",system-ui,sans-serif;color:#fff;text-align:center;text-shadow:0 2px 6px rgba(0,0,0,.35)';
-  box.innerHTML = `<div style="margin-bottom:10px">${T(`${k + 1}. søndag i advent`, `Advent Sunday ${k + 1}`)}</div><button aria-label="${T('Åbn gaven', 'Open the gift')}" style="font-size:150px;line-height:1;background:none;border:0;cursor:pointer;animation:adventHop .9s ease-in-out infinite">🎁</button><div style="margin-top:10px">${T('Tryk for at åbne!', 'Tap to open!')}</div>`;
+  box.innerHTML = `<div style="margin-bottom:10px">${T(`${k + 1}. søndag i advent`, `${['1st', '2nd', '3rd', '4th'].at(k)} Sunday of Advent`)}</div><button aria-label="${T('Åbn gaven', 'Open the gift')}" style="font-size:150px;line-height:1;background:none;border:0;cursor:pointer;animation:adventHop .9s ease-in-out infinite">🎁</button><div style="margin-top:10px">${T('Tryk for at åbne!', 'Tap to open!')}</div>`;
   if (!document.getElementById('adventCss')) { const s = document.createElement('style'); s.id = 'adventCss'; s.textContent = '@keyframes adventHop{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-22px) rotate(4deg)}}'; document.head.append(s); }
   box.querySelector('button').onclick = async () => { try { localStorage.setItem(ADVENT_KEY, String(k + 1)); } catch (e) { }
     box.innerHTML = `<div style="font-size:120px;line-height:1">${emo}</div><div style="margin-top:12px">${T('Du fik', 'You got')}: ${tr(label === 'Julesweater' ? 'Julemønster' : label)}!</div>`;
@@ -7410,6 +7410,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { gearTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.16.0 (da67dda)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.16.0 (4bd0009)</div>
 </body>
 </html>
