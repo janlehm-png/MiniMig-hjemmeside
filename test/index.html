@@ -2471,6 +2471,10 @@ function hatHair() {
   const C = hat.geometry.attributes.position, crown = [], all = new Float32Array(24); let cx = 0, cz = 0;
   for (let i = 0; i < C.count; i++) { v.fromBufferAttribute(C, i).applyMatrix4(M); if (v.z < eyeZ - .1 * apart) { crown.push(v.x, v.y, v.z); cx += v.x; cz += v.z; } }
   cx /= crown.length / 3; cz /= crown.length / 3;
+  // (the Santa hat's tip flops far back: its middle then taken from its lowest part only, round the head - from all of it,
+  // the slices were counted from a point behind the head, and stripes of hair stood out through the hat)
+  if (opts.nisse) { let lo = Infinity, sx = 0, sz = 0, sn = 0; for (let i = 1; i < crown.length; i += 3) lo = Math.min(lo, crown[i]);
+    for (let i = 0; i < crown.length; i += 3) if (crown[i + 1] < lo + 1.3 * apart) { sx += crown[i]; sz += crown[i + 2]; sn++; } if (sn) { cx = sx / sn; cz = sz / sn; } }
   const N = 24, bin = (x, z) => Math.floor((Math.atan2(x - cx, z - cz) / (2 * Math.PI) + .5) * N) % N, rimY = new Float32Array(N).fill(Infinity), rimR = new Float32Array(N), n = new Float32Array(N);
   for (let i = 0; i < C.count; i++) { v.fromBufferAttribute(C, i).applyMatrix4(M); all[bin(v.x, v.z)]++; }
   for (let i = 0; i < crown.length; i += 3) { const b = bin(crown[i], crown[i + 2]); rimY[b] = Math.min(rimY[b], crown[i + 1]); n[b]++; }
@@ -2480,6 +2484,11 @@ function hatHair() {
   const whole = b => n[b] > .6 * all[b];
   for (let b = 0; b < N; b++) if (!whole(b)) { let a = b, c = b, da = 0, dc = 0; while (!whole(a) && da < N) { a = (a + N - 1) % N; da++; } while (!whole(c) && dc < N) { c = (c + 1) % N; dc++; }
     const t = da / (da + dc); rimY[b] = rimY[a] * (1 - t) + rimY[c] * t; rimR[b] = rimR[a] * (1 - t) + rimR[c] * t; }
+  // (the Santa hat's edge is a tilted ring: a slice whose edge came out too high - a stripe of hair stood out through the
+  // back of the hat - brought down to the ring's line, high in front and low behind, laid through the whole slices)
+  if (opts.nisse) { const ang = b => ((b + .5) / N - .5) * 2 * Math.PI; let m = 0, sc = 0, scc = 0, sy = 0, scy = 0;
+    for (let b = 0; b < N; b++) if (whole(b)) { const c = Math.cos(ang(b)); m++; sc += c; scc += c * c; sy += rimY[b]; scy += c * rimY[b]; }
+    const det = m * scc - sc * sc; if (m > 4 && Math.abs(det) > 1e-9) { const B = (m * scy - sc * sy) / det, A = (sy - B * sc) / m; for (let b = 0; b < N; b++) rimY[b] = Math.min(rimY[b], A + B * Math.cos(ang(b)) + .05 * apart); } }
   // (drawn in over half the eyes' distance below the edge, so it widens gently out from under the cap - over less,
   // it stood out from under it in a ledge)
   const band = .5 * apart, under = new Uint8Array(P.count);
@@ -2791,27 +2800,31 @@ async function makeSkiGoggles(name) { if (!hairBase?.whole) return null; const {
   geo.computeBoundingBox(); const b = geo.boundingBox.clone(), k = 2.45 * a / (b.max.x - b.min.x); geo.translate(-(b.min.x + b.max.x) / 2, -(b.min.y + b.max.y) / 2, -b.max.z); geo.scale(k, k, k); geo.translate(mid, eyeY + .04 * a, zf + .16 * a);
   const m = gearMesh([{ geo, w: () => [[hairBase.head, 1]], uv: true, back: hairBase.headBack }], new THREE.MeshStandardMaterial({ map, roughness: .3, metalness: 0, side: THREE.DoubleSide })); m.name = name; return m; }
 // (the head measured for a hat: its own points - those moving with the head - how wide and deep it is over the ears, and its top)
-function headSize() { const { pts } = hairBase.whole, [L, R] = hairBase.eyes, a = L.distanceTo(R), eyeY = (L.y + R.y) / 2, mid = (L.x + R.x) / 2, body = hairBase.body, bsi = body.geometry.attributes.skinIndex, bsw = body.geometry.attributes.skinWeight;
+function headSize(from = .75) { const { pts } = hairBase.whole, [L, R] = hairBase.eyes, a = L.distanceTo(R), eyeY = (L.y + R.y) / 2, mid = (L.x + R.x) / 2, body = hairBase.body, bsi = body.geometry.attributes.skinIndex, bsw = body.geometry.attributes.skinWeight;
   let top = -Infinity, hw = 0, z0 = Infinity, z1 = -Infinity; for (let j = 0; j < pts.length / 6; j++) { let w = 0; for (let c = 0; c < 4; c++) if (bsi.getComponent(j, c) === hairBase.head) w += bsw.getComponent(j, c); if (w <= .5) continue;
-    const x = pts[j * 6], y = pts[j * 6 + 1], z = pts[j * 6 + 2]; top = Math.max(top, y); if (y > eyeY + .75 * a) { hw = Math.max(hw, Math.abs(x - mid)); z0 = Math.min(z0, z); z1 = Math.max(z1, z); } }
+    const x = pts[j * 6], y = pts[j * 6 + 1], z = pts[j * 6 + 2]; top = Math.max(top, y); if (y > eyeY + from * a) { hw = Math.max(hw, Math.abs(x - mid)); z0 = Math.min(z0, z); z1 = Math.max(z1, z); } }
   return { a, eyeY, mid, top, hw, cz: (z0 + z1) / 2, hd: (z1 - z0) / 2 }; }
 // (the Santa hat - Advent gift 1, 21-11-2026: a soft red felt cone from a ring round the forehead, its tip flopping back and
 // a little to the side, a thick fluffy white band round the edge and a white bobble at the tip. Made here, no model; the
 // hair under it left out as under the cap - hatHair, cap)
-async function makeSantaHat(name) { if (!hairBase?.whole) return null; const { a, eyeY, mid, top, hw, cz, hd } = headSize(), V = (x, y, z) => new THREE.Vector3(x, y, z);
-  const rimY = eyeY + .8 * a, rx = hw * 1.22, rz = hd * 1.22, up = top - rimY + 1.15 * a, seg = 32, rings = 30;
+async function makeSantaHat(name) { if (!hairBase?.whole) return null; const { a, eyeY, mid, top, hw, cz, hd } = headSize(.3), V = (x, y, z) => new THREE.Vector3(x, y, z);
+  // (the user, 21-11-2026: further down over the head and further back - the edge sloping from the forehead down over the
+  // back of the head, and down to just over the ears. So the edge is a tilted ring: front high, back low, its middle moved
+  // back. window.__santa may change the numbers while trying them)
+  const S = Object.assign({ front: 1.05, back: -.05, shift: .08, wide: 1.24, bulge: 1.6, taper: 1 }, window.__santa), tilt = (S.front - S.back) / 2 * a, midY = eyeY + (S.front + S.back) / 2 * a, ccz = cz - S.shift * a;
+  const rimY = midY, rx = hw * S.wide, rz = hd * S.wide, up = top - rimY + 1.15 * a, seg = 32, rings = 30, edge = (be, t = 0) => tilt * Math.cos(be) * (1 - t) * (1 - t);
   // (the cone's middle line: up over the head, then over backwards and to the side)
-  const curve = new THREE.QuadraticBezierCurve3(V(mid, rimY, cz), V(mid, rimY + up * 1.05, cz - .1 * a), V(mid + .55 * a, rimY + up * .62, cz - 1.55 * a));
-  const P = [], I = []; for (let r = 0; r <= rings; r++) { const t = r / rings, c = curve.getPoint(t), s = Math.pow(1 - t, .85) * (1 - .06 * Math.sin(t * Math.PI));
-    for (let k = 0; k <= seg; k++) { const be = k / seg * Math.PI * 2, fold = 1 + .025 * Math.sin(be * 5 + t * 7) * (1 - t); P.push(c.x + Math.sin(be) * rx * s * fold, c.y, c.z + Math.cos(be) * rz * s * fold); } }
+  const curve = new THREE.QuadraticBezierCurve3(V(mid, rimY, ccz), V(mid, rimY + up * 1.05, ccz - .1 * a), V(mid + .55 * a, rimY + up * .62, ccz - 1.55 * a));
+  const P = [], I = []; for (let r = 0; r <= rings; r++) { const t = r / rings, c = curve.getPoint(t), s = Math.pow(1 - Math.pow(t, S.bulge), S.taper);
+    for (let k = 0; k <= seg; k++) { const be = k / seg * Math.PI * 2, fold = 1 + .025 * Math.sin(be * 5 + t * 7) * (1 - t); P.push(c.x + Math.sin(be) * rx * s * fold, c.y + edge(be, t), c.z + Math.cos(be) * rz * s * fold); } }
   for (let r = 0; r < rings; r++) for (let k = 0; k < seg; k++) { const i = r * (seg + 1) + k, j = i + seg + 1; I.push(i, j, i + 1, i + 1, j, j + 1); }
   const cone = new THREE.BufferGeometry(); cone.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); cone.setIndex(I); cone.computeVertexNormals();
   const onHead = () => [[hairBase.head, 1]], felt = new THREE.MeshStandardMaterial({ color: 0xD3232F, roughness: .88, metalness: 0, side: THREE.DoubleSide });
   const hat = gearMesh([{ geo: cone, w: onHead, back: hairBase.headBack }], felt); hat.name = name;
   // (the band: a thick soft tube round the edge, a little bumpy as fur is)
-  const ring = []; for (let k = 0; k < 64; k++) { const be = k / 64 * Math.PI * 2; ring.push(V(mid + Math.sin(be) * (rx + .07 * a), rimY + .02 * a, cz + Math.cos(be) * (rz + .07 * a))); }
+  const ring = []; for (let k = 0; k < 64; k++) { const be = k / 64 * Math.PI * 2; ring.push(V(mid + Math.sin(be) * (rx + .07 * a), rimY + edge(be) + .02 * a, ccz + Math.cos(be) * (rz + .07 * a))); }
   const band = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(ring, true), 128, .24 * a, 14, true), BP = band.attributes.position, q = new THREE.Vector3();
-  for (let i = 0; i < BP.count; i++) { q.fromBufferAttribute(BP, i); const f = 1 + .045 * Math.sin(q.x * 61 / a) * Math.sin(q.y * 53 / a + q.z * 47 / a); BP.setXYZ(i, mid + (q.x - mid) * (1 + (f - 1) * .25), rimY + .02 * a + (q.y - rimY - .02 * a) * f, cz + (q.z - cz) * (1 + (f - 1) * .25)); }
+  for (let i = 0; i < BP.count; i++) { q.fromBufferAttribute(BP, i); const f = 1 + .045 * Math.sin(q.x * 61 / a) * Math.sin(q.y * 53 / a + q.z * 47 / a); BP.setXYZ(i, mid + (q.x - mid) * (1 + (f - 1) * .25), q.y + (f - 1) * .1 * a, ccz + (q.z - ccz) * (1 + (f - 1) * .25)); }
   band.computeVertexNormals(); const fur = new THREE.MeshStandardMaterial({ color: 0xFAF7F2, roughness: 1, metalness: 0 });
   gearMesh([{ geo: band, w: onHead, back: hairBase.headBack }], fur, hat);
   const tip = curve.getPoint(1), ball = new THREE.IcosahedronGeometry(.36 * a, 3), QP = ball.attributes.position;
@@ -7334,6 +7347,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.16.0 (b131ca5)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.16.0 (614b970)</div>
 </body>
 </html>
