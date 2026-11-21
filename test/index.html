@@ -2811,19 +2811,29 @@ async function makeSantaHat(name) { if (!hairBase?.whole) return null; const { a
   // (the user, 21-11-2026: further down over the head and further back - the edge sloping from the forehead down over the
   // back of the head, and down to just over the ears. So the edge is a tilted ring: front high, back low, its middle moved
   // back. window.__santa may change the numbers while trying them)
-  const S = Object.assign({ front: 1.05, back: -.05, shift: .08, wide: 1.24, bulge: 1.6, taper: 1 }, window.__santa), tilt = (S.front - S.back) / 2 * a, midY = eyeY + (S.front + S.back) / 2 * a, ccz = cz - S.shift * a;
+  const S = Object.assign({ front: 1.05, back: -.05, shift: .08, wide: 1.1, bulge: 1.6, taper: 1, fit: 1.1 }, window.__santa), tilt = (S.front - S.back) / 2 * a, midY = eyeY + (S.front + S.back) / 2 * a, ccz = cz - S.shift * a;
   const rimY = midY, rx = hw * S.wide, rz = hd * S.wide, up = top - rimY + 1.15 * a, seg = 32, rings = 30, edge = (be, t = 0) => tilt * Math.cos(be) * (1 - t) * (1 - t);
+  // (the user, 21-11-2026: closer to the head - in front it floated over the forehead. The edge's ring is no longer an
+  // ellipse round the widest part of the head, but follows the head where the edge lies: in each direction from the
+  // hat's middle, how far out the head is at the edge's height there, a little more for the hair; smoothed round)
+  const reachAt = new Float32Array(seg + 1); { const { pts } = hairBase.whole, body = hairBase.body, bsi = body.geometry.attributes.skinIndex, bsw = body.geometry.attributes.skinWeight, far = new Float32Array(seg).fill(0);
+    for (let j = 0; j < pts.length / 6; j++) { let w = 0; for (let c = 0; c < 4; c++) if (bsi.getComponent(j, c) === hairBase.head) w += bsw.getComponent(j, c); if (w <= .5) continue;
+      const x = pts[j * 6] - mid, y = pts[j * 6 + 1], z = pts[j * 6 + 2] - ccz, be = Math.atan2(x, z), k = ((Math.round(be / (Math.PI * 2) * seg) % seg) + seg) % seg;
+      if (Math.abs(y - (rimY + edge(be))) < .22 * a) far[k] = Math.max(far[k], Math.hypot(x, z)); }
+    for (let k = 0; k < seg; k++) if (!far[k]) far[k] = Math.hypot(Math.sin(k / seg * Math.PI * 2) * hw, Math.cos(k / seg * Math.PI * 2) * hd);
+    for (let it = 0; it < 3; it++) { const w = far.slice(); for (let k = 0; k < seg; k++) far[k] = (w[(k + seg - 1) % seg] + 2 * w[k] + w[(k + 1) % seg]) / 4; }
+    for (let k = 0; k <= seg; k++) reachAt[k] = far[k % seg] * S.fit + .08 * a; }
   // (the cone's middle line: up over the head, then over backwards and to the side)
   const curve = new THREE.QuadraticBezierCurve3(V(mid, rimY, ccz), V(mid, rimY + up * 1.05, ccz - .1 * a), V(mid + .55 * a, rimY + up * .62, ccz - 1.55 * a));
   const P = [], I = []; for (let r = 0; r <= rings; r++) { const t = r / rings, c = curve.getPoint(t), s = Math.pow(1 - Math.pow(t, S.bulge), S.taper);
-    for (let k = 0; k <= seg; k++) { const be = k / seg * Math.PI * 2, fold = 1 + .025 * Math.sin(be * 5 + t * 7) * (1 - t); P.push(c.x + Math.sin(be) * rx * s * fold, c.y + edge(be, t), c.z + Math.cos(be) * rz * s * fold); } }
+    for (let k = 0; k <= seg; k++) { const be = k / seg * Math.PI * 2, fold = 1 + .025 * Math.sin(be * 5 + t * 7) * (1 - t); const R = reachAt[k] * (1 - t) + Math.hypot(Math.sin(be) * rx, Math.cos(be) * rz) * t; P.push(c.x + Math.sin(be) * R * s * fold, c.y + edge(be, t), c.z + Math.cos(be) * R * s * fold); } }
   for (let r = 0; r < rings; r++) for (let k = 0; k < seg; k++) { const i = r * (seg + 1) + k, j = i + seg + 1; I.push(i, j, i + 1, i + 1, j, j + 1); }
   const cone = new THREE.BufferGeometry(); cone.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); cone.setIndex(I); cone.computeVertexNormals();
   const onHead = () => [[hairBase.head, 1]], felt = new THREE.MeshStandardMaterial({ color: 0xD3232F, roughness: .88, metalness: 0, side: THREE.DoubleSide });
   const hat = gearMesh([{ geo: cone, w: onHead, back: hairBase.headBack }], felt); hat.name = name;
   // (the band: a thick soft tube round the edge, a little bumpy as fur is)
-  const ring = []; for (let k = 0; k < 64; k++) { const be = k / 64 * Math.PI * 2; ring.push(V(mid + Math.sin(be) * (rx + .07 * a), rimY + edge(be) + .02 * a, ccz + Math.cos(be) * (rz + .07 * a))); }
-  const band = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(ring, true), 128, .24 * a, 14, true), BP = band.attributes.position, q = new THREE.Vector3();
+  const ring = []; for (let k = 0; k < 64; k++) { const be = k / 64 * Math.PI * 2; const kk = k / 64 * seg, k0 = Math.floor(kk), R = reachAt[k0] + (reachAt[Math.min(seg, k0 + 1)] - reachAt[k0]) * (kk - k0) + .03 * a; ring.push(V(mid + Math.sin(be) * R, rimY + edge(be) + .02 * a, ccz + Math.cos(be) * R)); }
+  const band = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(ring, true), 128, .15 * a, 14, true), BP = band.attributes.position, q = new THREE.Vector3();
   for (let i = 0; i < BP.count; i++) { q.fromBufferAttribute(BP, i); const f = 1 + .045 * Math.sin(q.x * 61 / a) * Math.sin(q.y * 53 / a + q.z * 47 / a); BP.setXYZ(i, mid + (q.x - mid) * (1 + (f - 1) * .25), q.y + (f - 1) * .1 * a, ccz + (q.z - ccz) * (1 + (f - 1) * .25)); }
   band.computeVertexNormals(); const fur = new THREE.MeshStandardMaterial({ color: 0xFAF7F2, roughness: 1, metalness: 0 });
   gearMesh([{ geo: band, w: onHead, back: hairBase.headBack }], fur, hat);
@@ -7400,6 +7410,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { gearTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.16.0 (09e5b5e)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.16.0 (da67dda)</div>
 </body>
 </html>
