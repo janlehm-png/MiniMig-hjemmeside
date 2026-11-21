@@ -2811,7 +2811,7 @@ async function makeSantaHat(name) { if (!hairBase?.whole) return null; const { a
   // (the user, 21-11-2026: further down over the head and further back - the edge sloping from the forehead down over the
   // back of the head, and down to just over the ears. So the edge is a tilted ring: front high, back low, its middle moved
   // back. window.__santa may change the numbers while trying them)
-  const S = Object.assign({ front: 1.05, back: -.05, shift: .08, wide: 1.1, bulge: 1.6, taper: 1, fit: 1.1 }, window.__santa), tilt = (S.front - S.back) / 2 * a, midY = eyeY + (S.front + S.back) / 2 * a, ccz = cz - S.shift * a;
+  const S = Object.assign({ front: 1.05, back: -.05, shift: .08, wide: 1.04, bulge: 1.6, taper: 1, fit: 1.02 }, window.__santa), tilt = (S.front - S.back) / 2 * a, midY = eyeY + (S.front + S.back) / 2 * a, ccz = cz - S.shift * a;
   const rimY = midY, rx = hw * S.wide, rz = hd * S.wide, up = top - rimY + 1.15 * a, seg = 32, rings = 30, edge = (be, t = 0) => tilt * Math.cos(be) * (1 - t) * (1 - t);
   // (the user, 21-11-2026: closer to the head - in front it floated over the forehead. The edge's ring is no longer an
   // ellipse round the widest part of the head, but follows the head where the edge lies: in each direction from the
@@ -2822,7 +2822,7 @@ async function makeSantaHat(name) { if (!hairBase?.whole) return null; const { a
       if (Math.abs(y - (rimY + edge(be))) < .22 * a) far[k] = Math.max(far[k], Math.hypot(x, z)); }
     for (let k = 0; k < seg; k++) if (!far[k]) far[k] = Math.hypot(Math.sin(k / seg * Math.PI * 2) * hw, Math.cos(k / seg * Math.PI * 2) * hd);
     for (let it = 0; it < 3; it++) { const w = far.slice(); for (let k = 0; k < seg; k++) far[k] = (w[(k + seg - 1) % seg] + 2 * w[k] + w[(k + 1) % seg]) / 4; }
-    for (let k = 0; k <= seg; k++) reachAt[k] = far[k % seg] * S.fit + .08 * a; }
+    for (let k = 0; k <= seg; k++) reachAt[k] = far[k % seg] * S.fit + .04 * a; }
   // (the cone's middle line: up over the head, then over backwards and to the side)
   const curve = new THREE.QuadraticBezierCurve3(V(mid, rimY, ccz), V(mid, rimY + up * 1.05, ccz - .1 * a), V(mid + .55 * a, rimY + up * .62, ccz - 1.55 * a));
   const P = [], I = []; for (let r = 0; r <= rings; r++) { const t = r / rings, c = curve.getPoint(t), s = Math.pow(1 - Math.pow(t, S.bulge), S.taper);
@@ -2832,7 +2832,7 @@ async function makeSantaHat(name) { if (!hairBase?.whole) return null; const { a
   const onHead = () => [[hairBase.head, 1]], felt = new THREE.MeshStandardMaterial({ color: 0xD3232F, roughness: .88, metalness: 0, side: THREE.DoubleSide });
   const hat = gearMesh([{ geo: cone, w: onHead, back: hairBase.headBack }], felt); hat.name = name;
   // (the band: a thick soft tube round the edge, a little bumpy as fur is)
-  const ring = []; for (let k = 0; k < 64; k++) { const be = k / 64 * Math.PI * 2; const kk = k / 64 * seg, k0 = Math.floor(kk), R = reachAt[k0] + (reachAt[Math.min(seg, k0 + 1)] - reachAt[k0]) * (kk - k0) + .03 * a; ring.push(V(mid + Math.sin(be) * R, rimY + edge(be) + .02 * a, ccz + Math.cos(be) * R)); }
+  const ring = []; for (let k = 0; k < 64; k++) { const be = k / 64 * Math.PI * 2; const kk = k / 64 * seg, k0 = Math.floor(kk), R = reachAt[k0] + (reachAt[Math.min(seg, k0 + 1)] - reachAt[k0]) * (kk - k0) + .01 * a; ring.push(V(mid + Math.sin(be) * R, rimY + edge(be) + .02 * a, ccz + Math.cos(be) * R)); }
   const band = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(ring, true), 128, .15 * a, 14, true), BP = band.attributes.position, q = new THREE.Vector3();
   for (let i = 0; i < BP.count; i++) { q.fromBufferAttribute(BP, i); const f = 1 + .045 * Math.sin(q.x * 61 / a) * Math.sin(q.y * 53 / a + q.z * 47 / a); BP.setXYZ(i, mid + (q.x - mid) * (1 + (f - 1) * .25), q.y + (f - 1) * .1 * a, ccz + (q.z - ccz) * (1 + (f - 1) * .25)); }
   band.computeVertexNormals(); const fur = new THREE.MeshStandardMaterial({ color: 0xFAF7F2, roughness: 1, metalness: 0 });
@@ -2880,6 +2880,14 @@ function jingle(loud = .6) { const au = soundOut(); if (!au || !sound.sfx) retur
 // antlers, bells and holly - set across the top of the head as a hairband is, its band as wide as the head; then laid on
 // the hair under it as the bow is - wrapHat. Its own colours)
 async function makeAntlers(name) { if (!hairBase?.whole) return null; const { geo: src, map } = await readProp('hat-gevir.glb'), geo = src.clone(), { a, mid, top, hw, cz } = headSize();
+  // (the user, 21-11-2026: the red band in the hair much thinner. Its points found by their colour in the picture - red,
+  // not the brown antlers, the yellow bells or the green holly - and each drawn in towards the middle of the band there,
+  // the mean of the red points round it, to a little more than half its thickness)
+  try { const img = map.image, cv = document.createElement('canvas'); cv.width = img.width; cv.height = img.height; const g2 = cv.getContext('2d'); g2.drawImage(img, 0, 0); const px = g2.getImageData(0, 0, cv.width, cv.height).data;
+    const P = geo.attributes.position, U = geo.attributes.uv, red = []; for (let i = 0; i < P.count; i++) { const x = Math.min(cv.width - 1, Math.max(0, Math.floor(U.getX(i) * cv.width))), y = Math.min(cv.height - 1, Math.max(0, Math.floor(U.getY(i) * cv.height))), o = (y * cv.width + x) * 4, r = px[o], gg = px[o + 1], b = px[o + 2]; if (r > 120 && r > 2 * gg && r > 2 * b) red.push(i); }
+    if (red.length > 30) { let z0 = Infinity, z1 = -Infinity; for (const i of red) { z0 = Math.min(z0, P.getZ(i)); z1 = Math.max(z1, P.getZ(i)); } const reach = (z1 - z0) * .9, k = .5, W2 = red.map(i => [P.getX(i), P.getY(i), P.getZ(i)]), out = [];
+      for (let j = 0; j < red.length; j++) { const [x, y, z] = W2[j]; let sx = 0, sy = 0, sz = 0, n = 0; for (const [u, v, w] of W2) if (Math.abs(u - x) < reach && Math.abs(v - y) < reach && (u - x) ** 2 + (v - y) ** 2 + (w - z) ** 2 < reach * reach) { sx += u; sy += v; sz += w; n++; } out.push([sx / n + (x - sx / n) * k, sy / n + (y - sy / n) * k, sz / n + (z - sz / n) * k]); }
+      red.forEach((i, j) => P.setXYZ(i, ...out[j])); P.needsUpdate = true; geo.computeVertexNormals(); } } catch (e) { console.warn(e); }
   geo.computeBoundingBox(); const b = geo.boundingBox.clone(), k = 2 * hw * 1.12 / ((b.max.x - b.min.x) * .69), tall = (b.max.y - b.min.y) * k;
   geo.translate(-(b.min.x + b.max.x) / 2, -b.max.y, -(b.min.z + b.max.z) / 2); geo.scale(k, k, k); geo.translate(mid, top + .4 * tall + .05 * a, cz + .05 * a);
   const m = gearMesh([{ geo, w: () => [[hairBase.head, 1]], uv: true, back: hairBase.headBack }], new THREE.MeshStandardMaterial({ map, roughness: .55, metalness: 0, side: THREE.DoubleSide })); m.name = name; m.userData.bells = true; return m; }
@@ -7410,6 +7418,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { gearTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.16.0 (4bd0009)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.16.0 (251adf8)</div>
 </body>
 </html>
