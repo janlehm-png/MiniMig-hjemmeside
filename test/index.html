@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>MiniMig™ version 2</title>
-<meta name="minimig-version" content="0.15.0">
+<meta name="minimig-version" content="0.16.0">
 <!-- (the number of this version, shown under the i - see VERSIONER.md - raised for each package and each fix put out) -->
 <!-- (the same icon as version 1 on a home screen, under the name MiniMig 2 - the icons lie in the website's billeder/;
      the user, 03-11-2026, sharing version 2 with testers) -->
@@ -746,6 +746,7 @@ const EN = {
   'Undertrøje': 'Tank top', 'T-shirt': 'T-shirt', 'Hættetrøje': 'Hoodie', 'Fodboldtrøje': 'Soccer jersey', 'Undershorts': 'Underwear', 'Trusser': 'Briefs', 'Lange bukser': 'Long pants', 'Shorts': 'Shorts', 'Cowboyshorts': 'Denim shorts', 'Fodboldbukser': 'Soccer shorts',
   'Ingen kjole': 'No dress', 'Ingen dragt': 'No suit', 'Badedragt': 'Swimsuit', 'Badebukser': 'Swim trunks', 'Sommerkjole': 'Summer dress', 'Prinsessekjole': 'Princess dress', 'Havfruekjole': 'Mermaid dress', 'Ingen strømper': 'No socks', 'Ankelstrømper': 'Ankle socks', 'Almindelige strømper': 'Regular socks', 'Fodboldstrømper': 'Soccer socks', 'Knæstrømper': 'Knee socks',
   'Bare fødder': 'Bare feet', 'Sneakers': 'Sneakers', 'Fodboldstøvler': 'Soccer cleats', 'Gummistøvler': 'Rain boots', 'Balletsko': 'Ballet shoes', 'Højhælede': 'High heels',
+  'Nissehue': 'Santa hat', 'Rensdyrgevir': 'Reindeer antlers', 'Julemønster': 'Christmas pattern', 'Juleaften': 'Christmas Eve',
   'Ingen hat': 'No hat', 'Kasket': 'Cap', 'Krone': 'Crown', 'Kaninører': 'Bunny ears', 'Sløjfe': 'Bow', 'Ingen briller': 'No glasses', 'Svømmebriller': 'Swim goggles', 'Snorkel': 'Snorkel', 'Rumdragt': 'Space suit', 'Rumhjelm': 'Space helmet', 'Rumstøvler': 'Space boots', 'Sne': 'Snow', 'Skihop': 'Ski jump', 'Dansestudie': 'Dance studio', '▶ Vis dansen!': '▶ Show the dance!', '🎵 Sæt din dans sammen': '🎵 Put your dance together', 'Sjov': 'Fun', 'Kyllingedans': 'Chicken dance', 'Ned i gulvet': 'Down to the floor', 'Hurtigt ned': 'Quick drop', 'Håndstand-spin': 'Handstand spin', 'Op på hænder': 'Up on the hands', 'Bevægelser': 'Moves', 'Danse': 'Dances', '🎵 Vælg fire trin til din runde': '🎵 Pick four moves for your round', '👆 Tryk for at køre – og tryk igen ved kanten for at hoppe!': '👆 Tap to go – and tap again at the edge to jump!', 'Skidragt': 'Ski suit', 'Skihjelm': 'Ski helmet', 'Skibriller': 'Ski goggles', 'Skihandsker': 'Ski gloves', 'Skistøvler': 'Ski boots', 'Jetpack': 'Jetpack', 'Ingen jetpack': 'No jetpack', 'Rumrejse': 'Space trip', 'Rumrejse': 'Space trip', '👆 Tryk – så flyver du derhen. To hurtige tryk giver fart 🚀': '👆 Tap – and you fly there. Two quick taps give a boost 🚀', 'Skaterhjelm': 'Skate helmet', 'Knæbeskyttere': 'Knee pads', 'Albuebeskyttere': 'Elbow pads', 'Handsker': 'Gloves', 'Ingen knæbeskyttere': 'No knee pads', 'Ingen albuebeskyttere': 'No elbow pads', 'Ingen handsker': 'No gloves', 'Ansigt': 'Face', 'Tøj': 'Clothes', 'Mere': 'More', 'Svømning': 'Swimming', 'Start': 'Start', 'Ingen svømmebriller': 'No goggles', 'Runde': 'Round', 'Solbriller': 'Sunglasses', 'Hjerte': 'Heart',
   // (things, pets, backgrounds)
   'Ballon': 'Balloon', 'Bamse': 'Teddy bear', 'Tryllestav': 'Magic wand', 'Is': 'Ice cream', 'Blomst': 'Flower', 'Bold': 'Ball', 'Fodbold': 'Soccer ball', 'Hulahopring': 'Hula hoop',
@@ -916,8 +917,16 @@ const IS_APP = !!window.Capacitor?.isNativePlatform?.(), TEST_SITE = location.pa
 const FULL_KEY = 'minimig-test.hele', TRY_KEY = 'minimig-test.udgave';
 function fullOwned() { try { const t = TEST_SITE && localStorage.getItem(TRY_KEY); if (t) return t === 'hele'; return !IS_APP || localStorage.getItem(FULL_KEY) === '1'; } catch (e) { return !IS_APP; } }
 let fullNow = fullOwned();
-// (free: may this be shown - all of it with Hele MiniMig, in Basis what is not on the list)
-const free = n => fullNow || !FULL.has(n);
+// ---- Adventsgaverne (the user, 21-11-2026): a gift in the game every Advent Sunday, for every child - Basis and Hele
+// MiniMig alike, no lock and no price. Each is hidden until its Sunday, then a parcel waits to be opened; after Christmas
+// they all stay. On the test site a button moves the date on to the next Sunday (ADVENT_SKIP days ahead) ----
+const ADVENT = { 'hat-nisse': 1, 'pat-jul': 2, 'bg-jul': 3, 'hat-gevir': 4 }, ADVENT_DAYS = ['2026-11-29', '2026-12-06', '2026-12-13', '2026-12-20'];
+const ADVENT_KEY = 'minimig-test.advent', ADVENT_SKIP = 'minimig-test.adventSpol';
+function adventToday() { let d = new Date(); try { if (TEST_SITE) d = new Date(d.getTime() + (+localStorage.getItem(ADVENT_SKIP) || 0) * 864e5); } catch (e) { }
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
+const adventNow = () => { const s = adventToday(); return ADVENT_DAYS.filter(x => s >= x).length; };
+// (free: may this be shown - all of it with Hele MiniMig, in Basis what is not on the list; an Advent gift from its Sunday)
+const free = n => (!ADVENT[n] || ADVENT[n] <= adventNow()) && (fullNow || !FULL.has(n));
 // (a saved figure in Basis: what it wears from Hele MiniMig is taken off - the background back to the sun)
 const basisFigure = f => fullNow ? f : { ...f, wear: Object.fromEntries(Object.entries(f.wear || {}).map(([p, n]) => [p, free(n) ? n : ''])), item: free(f.item) ? f.item : '', pet: free(f.pet) ? f.pet : '', bg: free(f.bg) ? f.bg : 'bg-sol' };
 function owns(n) { if (!SHOP[n]) return true; try { return !!playerNow().score.owned?.includes(n); } catch (e) { return true; } }
@@ -2521,6 +2530,9 @@ const GARMENTS = {
   // (hats were made on a bald head: on top of hair they are raised - lift, in eyes' distances - or, a cap, made wider)
   hat: { items: [['', 'Ingen hat'], ['hat-kasket', 'Kasket', { grow: 1.12, lift: .1, cap: true }], ['hat-krone', 'Krone', { grow: 1.05, rest: .12 }], ['hat-kanin', 'Kaninører', { grow: 1.12, lift: .3, wrap: .03, ears: .45, thin: .35, scalp: true, flat: .3 }],
     ['hat-sloejfe', 'Sløjfe', { grow: 1.05, lift: .35, move: .02, size: .75 }],
+    // (Advent gifts, 21-11-2026: the Santa hat made here - makeSantaHat - and the reindeer antlers, a model from Meshy, laid
+    // on the hair as the bow is - makeAntlers)
+    ['hat-nisse', 'Nissehue', { nisse: true, cap: true }], ['hat-gevir', 'Rensdyrgevir', { gevir: true, wrap: .02 }],
     // (the skateboard helmet, a model from Meshy - see makeHelmet. The user, 12-11-2026)
     ['hat-skaterhjelm', 'Skaterhjelm', { helmet: true, cap: true, game: 'skate' }], ['hat-rumhjelm', 'Rumhjelm', { helmet: 'rum', game: 'space' }], ['hat-skihjelm', 'Skihjelm', { helmet: 'ski', cap: true, game: 'snow' }]], texs: [], head: true },
   glasses: { items: [['', 'Ingen briller'], ['briller-runde', 'Runde', { fwd: .12 }], ['briller-sol', 'Solbriller', { pale: .7, lens: .1, dark: true, cap: 1.15 }],
@@ -2584,7 +2596,7 @@ async function setGarment(part, name) { const G = GARMENTS[part], ask = ++dressi
   // (everything changed at once, when all of it is loaded - the underwear went skin coloured and the last dress stayed on
   // while a new one loaded; a choice made meanwhile wins)
   for (const [p, g] of Object.entries(GARMENTS)) if (g.now && !g.meshes[g.now]) { const n = g.now;
-    g.loading[n] ??= g.items.find(i => i[0] === n)?.[2]?.pack ? makePack(n) : g.items.find(i => i[0] === n)?.[2]?.skimask ? makeSkiGoggles(n) : g.items.find(i => i[0] === n)?.[2]?.helmet === 'rum' ? makeSpaceHelmet(n) : g.items.find(i => i[0] === n)?.[2]?.helmet ? makeHelmet(n, g.items.find(i => i[0] === n)[2].helmet === 'ski' ? 'udstyr-skihjelm.glb' : 'udstyr-skaterhjelm.glb') : g.items.find(i => i[0] === n)?.[2]?.pad ? Promise.resolve(makePads(n, g.items.find(i => i[0] === n)[2])) : g.items.find(i => i[0] === n)?.[2]?.goggles ? Promise.resolve(makeGoggles(n, p, g.items.find(i => i[0] === n)[2])) : g.head ? loadHair(n, g.texs, p, g.items.find(i => i[0] === n)?.[2] || {})
+    g.loading[n] ??= g.items.find(i => i[0] === n)?.[2]?.nisse ? makeSantaHat(n) : g.items.find(i => i[0] === n)?.[2]?.gevir ? makeAntlers(n) : g.items.find(i => i[0] === n)?.[2]?.pack ? makePack(n) : g.items.find(i => i[0] === n)?.[2]?.skimask ? makeSkiGoggles(n) : g.items.find(i => i[0] === n)?.[2]?.helmet === 'rum' ? makeSpaceHelmet(n) : g.items.find(i => i[0] === n)?.[2]?.helmet ? makeHelmet(n, g.items.find(i => i[0] === n)[2].helmet === 'ski' ? 'udstyr-skihjelm.glb' : 'udstyr-skaterhjelm.glb') : g.items.find(i => i[0] === n)?.[2]?.pad ? Promise.resolve(makePads(n, g.items.find(i => i[0] === n)[2])) : g.items.find(i => i[0] === n)?.[2]?.goggles ? Promise.resolve(makeGoggles(n, p, g.items.find(i => i[0] === n)[2])) : g.head ? loadHair(n, g.texs, p, g.items.find(i => i[0] === n)?.[2] || {})
       : g.items.find(i => i[0] === n)?.[2]?.made ? Promise.resolve(makeCloth(n, p, g.items.find(i => i[0] === n)[2])) : loadCloth(n, p);
     // (one that cannot come - no internet the first time - holds nothing else up, and is tried again the next time)
     g.meshes[n] = await g.loading[n].catch(() => null); if (!g.meshes[n]) { delete g.loading[n]; if (p === part && ask === dressing) toast(NO_NET); } }
@@ -2778,6 +2790,41 @@ async function makeSkiGoggles(name) { if (!hairBase?.whole) return null; const {
   let zf = -Infinity; for (let j = 0; j < pts.length; j += 6) if (Math.abs(pts[j] - mid) < .9 * a && Math.abs(pts[j + 1] - eyeY) < .3 * a) zf = Math.max(zf, pts[j + 2]);
   geo.computeBoundingBox(); const b = geo.boundingBox.clone(), k = 2.45 * a / (b.max.x - b.min.x); geo.translate(-(b.min.x + b.max.x) / 2, -(b.min.y + b.max.y) / 2, -b.max.z); geo.scale(k, k, k); geo.translate(mid, eyeY + .04 * a, zf + .16 * a);
   const m = gearMesh([{ geo, w: () => [[hairBase.head, 1]], uv: true, back: hairBase.headBack }], new THREE.MeshStandardMaterial({ map, roughness: .3, metalness: 0, side: THREE.DoubleSide })); m.name = name; return m; }
+// (the head measured for a hat: its own points - those moving with the head - how wide and deep it is over the ears, and its top)
+function headSize() { const { pts } = hairBase.whole, [L, R] = hairBase.eyes, a = L.distanceTo(R), eyeY = (L.y + R.y) / 2, mid = (L.x + R.x) / 2, body = hairBase.body, bsi = body.geometry.attributes.skinIndex, bsw = body.geometry.attributes.skinWeight;
+  let top = -Infinity, hw = 0, z0 = Infinity, z1 = -Infinity; for (let j = 0; j < pts.length / 6; j++) { let w = 0; for (let c = 0; c < 4; c++) if (bsi.getComponent(j, c) === hairBase.head) w += bsw.getComponent(j, c); if (w <= .5) continue;
+    const x = pts[j * 6], y = pts[j * 6 + 1], z = pts[j * 6 + 2]; top = Math.max(top, y); if (y > eyeY + .75 * a) { hw = Math.max(hw, Math.abs(x - mid)); z0 = Math.min(z0, z); z1 = Math.max(z1, z); } }
+  return { a, eyeY, mid, top, hw, cz: (z0 + z1) / 2, hd: (z1 - z0) / 2 }; }
+// (the Santa hat - Advent gift 1, 21-11-2026: a soft red felt cone from a ring round the forehead, its tip flopping back and
+// a little to the side, a thick fluffy white band round the edge and a white bobble at the tip. Made here, no model; the
+// hair under it left out as under the cap - hatHair, cap)
+async function makeSantaHat(name) { if (!hairBase?.whole) return null; const { a, eyeY, mid, top, hw, cz, hd } = headSize(), V = (x, y, z) => new THREE.Vector3(x, y, z);
+  const rimY = eyeY + .8 * a, rx = hw * 1.22, rz = hd * 1.22, up = top - rimY + 1.15 * a, seg = 32, rings = 30;
+  // (the cone's middle line: up over the head, then over backwards and to the side)
+  const curve = new THREE.QuadraticBezierCurve3(V(mid, rimY, cz), V(mid, rimY + up * 1.05, cz - .1 * a), V(mid + .55 * a, rimY + up * .62, cz - 1.55 * a));
+  const P = [], I = []; for (let r = 0; r <= rings; r++) { const t = r / rings, c = curve.getPoint(t), s = Math.pow(1 - t, .85) * (1 - .06 * Math.sin(t * Math.PI));
+    for (let k = 0; k <= seg; k++) { const be = k / seg * Math.PI * 2, fold = 1 + .025 * Math.sin(be * 5 + t * 7) * (1 - t); P.push(c.x + Math.sin(be) * rx * s * fold, c.y, c.z + Math.cos(be) * rz * s * fold); } }
+  for (let r = 0; r < rings; r++) for (let k = 0; k < seg; k++) { const i = r * (seg + 1) + k, j = i + seg + 1; I.push(i, j, i + 1, i + 1, j, j + 1); }
+  const cone = new THREE.BufferGeometry(); cone.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); cone.setIndex(I); cone.computeVertexNormals();
+  const onHead = () => [[hairBase.head, 1]], felt = new THREE.MeshStandardMaterial({ color: 0xD3232F, roughness: .88, metalness: 0, side: THREE.DoubleSide });
+  const hat = gearMesh([{ geo: cone, w: onHead, back: hairBase.headBack }], felt); hat.name = name;
+  // (the band: a thick soft tube round the edge, a little bumpy as fur is)
+  const ring = []; for (let k = 0; k < 64; k++) { const be = k / 64 * Math.PI * 2; ring.push(V(mid + Math.sin(be) * (rx + .07 * a), rimY + .02 * a, cz + Math.cos(be) * (rz + .07 * a))); }
+  const band = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(ring, true), 128, .24 * a, 14, true), BP = band.attributes.position, q = new THREE.Vector3();
+  for (let i = 0; i < BP.count; i++) { q.fromBufferAttribute(BP, i); const f = 1 + .045 * Math.sin(q.x * 61 / a) * Math.sin(q.y * 53 / a + q.z * 47 / a); BP.setXYZ(i, mid + (q.x - mid) * (1 + (f - 1) * .25), rimY + .02 * a + (q.y - rimY - .02 * a) * f, cz + (q.z - cz) * (1 + (f - 1) * .25)); }
+  band.computeVertexNormals(); const fur = new THREE.MeshStandardMaterial({ color: 0xFAF7F2, roughness: 1, metalness: 0 });
+  gearMesh([{ geo: band, w: onHead, back: hairBase.headBack }], fur, hat);
+  const tip = curve.getPoint(1), ball = new THREE.IcosahedronGeometry(.36 * a, 3), QP = ball.attributes.position;
+  for (let i = 0; i < QP.count; i++) { q.fromBufferAttribute(QP, i); q.multiplyScalar(1 + .06 * Math.sin(q.x * 90 / a) * Math.sin(q.y * 80 / a + q.z * 70 / a)); QP.setXYZ(i, q.x, q.y, q.z); }
+  ball.computeVertexNormals(); ball.translate(tip.x, tip.y - .12 * a, tip.z); gearMesh([{ geo: ball, w: onHead, back: hairBase.headBack }], fur, hat);
+  return hat; }
+// (the reindeer antlers - Advent gift 4, 21-11-2026: a model from Meshy - hat-gevir.glb, a red hairband with two brown
+// antlers, bells and holly - set across the top of the head as a hairband is, its band as wide as the head; then laid on
+// the hair under it as the bow is - wrapHat. Its own colours)
+async function makeAntlers(name) { if (!hairBase?.whole) return null; const { geo: src, map } = await readProp('hat-gevir.glb'), geo = src.clone(), { a, mid, top, hw, cz } = headSize();
+  geo.computeBoundingBox(); const b = geo.boundingBox.clone(), k = 2 * hw * 1.12 / ((b.max.x - b.min.x) * .69), tall = (b.max.y - b.min.y) * k;
+  geo.translate(-(b.min.x + b.max.x) / 2, -b.max.y, -(b.min.z + b.max.z) / 2); geo.scale(k, k, k); geo.translate(mid, top + .4 * tall + .05 * a, cz + .05 * a);
+  const m = gearMesh([{ geo, w: () => [[hairBase.head, 1]], uv: true, back: hairBase.headBack }], new THREE.MeshStandardMaterial({ map, roughness: .55, metalness: 0, side: THREE.DoubleSide })); m.name = name; return m; }
 async function makeHelmet(name, file = 'udstyr-skaterhjelm.glb') { if (!hairBase?.whole) return null; const { geo: src, map } = await readProp(file), geo = src.clone();
   const { pts } = hairBase.whole, [L, R] = hairBase.eyes, a = L.distanceTo(R), eyeY = (L.y + R.y) / 2, mid = (L.x + R.x) / 2, body = hairBase.body, bsi = body.geometry.attributes.skinIndex, bsw = body.geometry.attributes.skinWeight, V = (x, y, z) => new THREE.Vector3(x, y, z);
   // (the head's own points; over the ears: how wide and how deep it is, and its top)
@@ -3863,10 +3910,10 @@ function footballPrints() { if (!hairBase) return; const { H } = hairBase.whole,
 // garment knows where it sits on the body as made (height, side, front or back, how far it is arm), and the picture is
 // worked out for each dot of the screen from that. No real brand's marks - no three stripes, no swoosh
 var PATTERNS = {
-  shirt: [['', 'Ensfarvet'], ['striber', 'Striber'], ['kontrast', 'Kontrastærmer'], ['baand', 'Bånd'], ['lodret', 'Lodrette striber']],
+  shirt: [['', 'Ensfarvet'], ['striber', 'Striber'], ['kontrast', 'Kontrastærmer'], ['baand', 'Bånd'], ['lodret', 'Lodrette striber'], ['jul', 'Julemønster']],
   pants: [['', 'Ensfarvet'], ['sidestriber', 'Sidestriber'], ['knae', 'Knælapper'], ['opslag', 'Opslag']],
   shoe: [['', 'Ensfarvet'], ['stribe', 'Stribe'], ['taa', 'Tåkappe'], ['hael', 'Hælkappe']] };
-var PAT_ID = { striber: 1, kontrast: 2, baand: 3, lodret: 4, sidestriber: 11, knae: 12, opslag: 13, stribe: 21, taa: 22, hael: 23 };
+var PAT_ID = { striber: 1, kontrast: 2, baand: 3, lodret: 4, jul: 5, sidestriber: 11, knae: 12, opslag: 13, stribe: 21, taa: 22, hael: 23 };
 var patternNow = {}; // (var, all three: asked for before this line runs, they are just not there yet)
 // (which garments take a pattern: the tops, the trousers but the briefs, and the sneakers - football boots too)
 const patOk = (part, name) => !!name && (part === 'shoe' ? ['sko-sneakers', 'sko-fodbold'].includes(name) : part === 'pants' ? name !== 'bukser-trusser' : part === 'shirt');
@@ -3875,11 +3922,21 @@ uniform float mmPat; uniform vec3 mmCol2; uniform vec3 mmBase; uniform float mmN
 varying vec3 vMmRest; varying vec3 vMmNor; varying float vMmArm; varying float vMmLeg; varying float vMmFoot;
 float mmBand(float x, float a, float b) { float f = max(fwidth(x), 1e-4); return smoothstep(a - f, a + f, x) - smoothstep(b - f, b + f, x); }
 float mmStripe(float x) { float t = abs(fract(x) - .5) * 2.; float f = max(fwidth(t), 1e-4); return smoothstep(.5 - f, .5 + f, t); }
+// (the Christmas jumper - Advent gift 2, 21-11-2026: across the chest a band of snowflakes between two thin lines, a row
+// of little dots under it)
+float mmJul(vec3 r, float arm) { float y0 = mmNeck - .115, a = atan(r.x, r.z), u = a / 6.2832 * 15., v = (r.y - y0) / .043;
+  vec2 p = vec2((fract(u) - .5), v); float rr = length(p), th = atan(p.y, p.x);
+  float flake = (1. - smoothstep(.035, .07, abs(sin(3. * th)) * rr)) * (1. - smoothstep(.36, .4, rr)) + (1. - smoothstep(.07, .1, rr));
+  float tips = 0.; for (int i = 0; i < 6; i++) { float b = float(i) * 1.0472; vec2 c = vec2(cos(b), sin(b)) * .28; tips += 1. - smoothstep(.05, .08, length(p - c)); }
+  float lines = mmBand(r.y, y0 - .056, y0 - .048) + mmBand(r.y, y0 + .048, y0 + .056);
+  float dots = 1. - smoothstep(.14, .2, length(vec2(fract(u * 2.) - .5, (r.y - y0 + .085) / .022)));
+  return clamp(lines + (flake + tips) * step(abs(v), .5) + dots, 0., 1.) * (1. - arm); }
 float mmMask() { vec3 r = vMmRest; float nl = length(vMmNor); vec3 n = nl > .1 ? vMmNor / nl : vec3(0.); float arm = smoothstep(.35, .65, vMmArm), side = r.x < 0. ? -1. : 1.;
   if (mmPat < 1.5) return mmStripe(r.y / .045) * (1. - smoothstep(mmNeck - .03, mmNeck - .02, r.y));
   if (mmPat < 2.5) return arm;
   if (mmPat < 3.5) return mmBand(r.y, mmNeck - .2, mmNeck - .155) * (1. - arm);
   if (mmPat < 4.5) return mmStripe(r.x / .045 + .5) * (1. - arm) * (1. - smoothstep(mmNeck - .03, mmNeck - .02, r.y));
+  if (mmPat < 5.5) return mmJul(r, arm);
   if (mmPat < 11.5) { float a = atan(n.z, n.x * side); a = vMmLeg; return vMmLeg < -5. ? 0. : (mmBand(a, .05, .2) + mmBand(a, .32, .47)) * step(r.y, mmCrotch); }
   if (mmPat < 12.5) { vec2 k = side < 0. ? mmKnee.xy : mmKnee.zw; vec2 d = abs(r.xy - k); return mmBand(d.x, -1., .03) * mmBand(d.y, -1., .032) * smoothstep(.15, .35, n.z); }
   if (mmPat < 13.5) return 1. - smoothstep(mmHem + .018, mmHem + .023, r.y);
@@ -3934,13 +3991,13 @@ function paintAllPatterns() { if (PATTERNS) for (const p of Object.keys(PATTERNS
 // (the row of patterns under the colours: each a little picture of the pattern in the garment's colour and the second one)
 function patPreview(id, c, c2) { const g = (a, b) => `linear-gradient(${a}, ${b})`;
   return { '': c, striber: `repeating-linear-gradient(0deg, ${c} 0 6px, ${c2} 6px 11px)`, kontrast: g('90deg', `${c2} 0 26%, ${c} 26% 74%, ${c2} 74%`), baand: g('0deg', `${c} 0 38%, ${c2} 38% 62%, ${c} 62%`),
-    lodret: `repeating-linear-gradient(90deg, ${c} 0 6px, ${c2} 6px 11px)`, sidestriber: g('90deg', `${c} 0 62%, ${c2} 62% 70%, ${c} 70% 78%, ${c2} 78% 86%, ${c} 86%`),
+    lodret: `repeating-linear-gradient(90deg, ${c} 0 6px, ${c2} 6px 11px)`, jul: `radial-gradient(circle, ${c2} 0 3px, transparent 3.5px) 0 50% / 11px 11px repeat-x, ${g('0deg', `${c} 0 30%, ${c2} 30% 35%, ${c} 35% 65%, ${c2} 65% 70%, ${c} 70%`)}`, sidestriber: g('90deg', `${c} 0 62%, ${c2} 62% 70%, ${c} 70% 78%, ${c2} 78% 86%, ${c} 86%`),
     knae: `linear-gradient(${c2}, ${c2}) 22% 62% / 24% 26% no-repeat, linear-gradient(${c2}, ${c2}) 78% 62% / 24% 26% no-repeat, ${c}`, opslag: g('0deg', `${c2} 0 26%, ${c} 26%`),
     stribe: g('0deg', `${c} 0 40%, ${c2} 40% 58%, ${c} 58%`), taa: g('90deg', `${c} 0 62%, ${c2} 62%`), hael: g('90deg', `${c2} 0 32%, ${c} 32%`) }[id] || c; }
 function showPatterns(noColour) { const box = document.getElementById('patterns'); if (!box || !PATTERNS) return; const part = colourPart(), list = PATTERNS[part];
   const show = !noColour && list && typeof GARMENTS !== 'undefined' && patOk(part, GARMENTS[part]?.now); box.hidden = !show; box.innerHTML = ''; if (!show) return;
   const c = picked[part] || START[part], hsl = {}, cc = new THREE.Color().setStyle(c, THREE.SRGBColorSpace), s = {}; cc.getRGB(s, THREE.SRGBColorSpace); const c2 = .2126 * s.r + .7152 * s.g + .0722 * s.b > .6 ? '#2C3E8C' : '#FFFFFF';
-  for (const [id, label] of list) { const b = document.createElement('button'); b.style.background = patPreview(id, c, c2); b.setAttribute('aria-label', tr(label)); b.title = tr(label); b.classList.toggle('on', (patternNow[part] || '') === id);
+  for (const [id, label] of list) { if (id && !free('pat-' + id)) continue; const b = document.createElement('button'); b.style.background = patPreview(id, c, c2); b.setAttribute('aria-label', tr(label)); b.title = tr(label); b.classList.toggle('on', (patternNow[part] || '') === id);
     b.onclick = () => { if (id) patternNow[part] = id; else delete patternNow[part]; paintPatterns(part); box.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); }; box.append(b); } }
 
 // (the tab: a box to write the name in and the badges under it, in place of styles and colours)
@@ -4140,7 +4197,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') for (const s
 // (the picture behind the see-through 3D, filling the screen, its ground a little below the middle; the yellow disc under
 // the figure only on the sun - in a scene the figure stands on its ground, the shadow kept)
 const BGS = [['bg-sol', 'Sol'], ['bg-have', 'Have'], ['bg-strand', 'Strand'], ['bg-skov', 'Skov'], ['bg-slot', 'Slot'], ['bg-ridderborg', 'Ridderborg'], ['bg-havbund', 'Havbund'],
-  ['bg-slikland', 'Slikland'], ['bg-vinter', 'Vinter'], ['bg-rummet', 'Rummet'], ['bg-fodboldbane', 'Fodboldbane'], ['bg-gymnastiksal', 'Gymnastiksal'], ['bg-dansesal', 'Dansesal']];
+  ['bg-slikland', 'Slikland'], ['bg-vinter', 'Vinter'], ['bg-rummet', 'Rummet'], ['bg-fodboldbane', 'Fodboldbane'], ['bg-gymnastiksal', 'Gymnastiksal'], ['bg-dansesal', 'Dansesal'], ['bg-jul', 'Juleaften']];
 let bgNow = 'bg-sol'; const bgImgs = {};
 function setBg(name) { bgNow = BGS.some(b => b[0] === name) ? name : 'bg-sol'; const k = bgNow.slice(3);
   if (k !== 'sol' && !bgImgs[k]) { bgImgs[k] = new Image(); bgImgs[k].src = `baggrund/${k}.jpg`; }
@@ -7206,6 +7263,33 @@ if (location.pathname.includes('/test/')) { const b = document.createElement('bu
   // (and one with stars for the star jar of the world being played, to get on to the next world without riding it full - the user, 19-11-2026)
   const st = b.cloneNode(); st.textContent = '+100 ⭐'; st.style.left = 'calc(50% + 50px)'; st.onclick = () => { if (!game.on || !WORLDS[game.mode]) { toast('⭐ Start et spil med verdener først'); return; }
     const w = worldsOf(game.mode), i = worldNow(game.mode); jarGain(100); saveScore(); toast(`⭐ ${w.jar[i] || 0} / ${JAR}`); }; document.body.append(st); }
+// (the Advent parcel - the user, 21-11-2026: on a gift's Sunday, when the figure is there and no game runs, a parcel
+// with a bow bounces in the middle; tapped, it opens with confetti and a ta-da, and the gift goes on the figure. Several
+// waiting - the game not opened for a while - come one after the other. Remembered on this device: ADVENT_KEY)
+const ADVENT_GIFTS = [['hat-nisse', 'Nissehue', '🎅'], ['pat-jul', 'Julesweater', '🧶'], ['bg-jul', 'Juleaften', '🎄'], ['hat-gevir', 'Rensdyrgevir', '🦌']];
+let adventOpenNow = false;
+function adventOpened() { try { return +localStorage.getItem(ADVENT_KEY) || 0; } catch (e) { return 99; } }
+async function adventGive(id) { if (id.startsWith('hat-')) { await setGarment('hat', id); return; }
+  if (id === 'bg-jul') { setBg('bg-jul'); return; }
+  if (id === 'pat-jul') { if (!GARMENTS.shirt.now && !GARMENTS.suit.now && !GARMENTS.dress.now) await setGarment('shirt', 'toej-haette'); patternNow.shirt = 'jul'; apply('shirt', '#C8102E'); } }
+function adventCheck() { if (adventOpenNow || game.on || !glb || !hairBase?.whole) return; const n = Math.min(adventNow(), ADVENT_GIFTS.length), done = adventOpened(); if (done >= n) return;
+  if (document.querySelector('.sheet:not([hidden]), dialog[open]')) return;
+  adventOpenNow = true; const k = done, [id, label, emo] = ADVENT_GIFTS[k], box = document.createElement('div');
+  box.id = 'adventGift'; box.style.cssText = 'position:fixed;inset:0;z-index:998;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(20,24,60,.45);font:800 22px ui-rounded,"Arial Rounded MT Bold",system-ui,sans-serif;color:#fff;text-align:center;text-shadow:0 2px 6px rgba(0,0,0,.35)';
+  box.innerHTML = `<div style="margin-bottom:10px">${T(`${k + 1}. søndag i advent`, `Advent Sunday ${k + 1}`)}</div><button aria-label="${T('Åbn gaven', 'Open the gift')}" style="font-size:150px;line-height:1;background:none;border:0;cursor:pointer;animation:adventHop .9s ease-in-out infinite">🎁</button><div style="margin-top:10px">${T('Tryk for at åbne!', 'Tap to open!')}</div>`;
+  if (!document.getElementById('adventCss')) { const s = document.createElement('style'); s.id = 'adventCss'; s.textContent = '@keyframes adventHop{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-22px) rotate(4deg)}}'; document.head.append(s); }
+  box.querySelector('button').onclick = async () => { try { localStorage.setItem(ADVENT_KEY, String(k + 1)); } catch (e) { }
+    box.innerHTML = `<div style="font-size:120px;line-height:1">${emo}</div><div style="margin-top:12px">${T('Du fik', 'You got')}: ${tr(label === 'Julesweater' ? 'Julemønster' : label)}!</div>`;
+    celebrate(); try { await adventGive(id); renderStyles(); } catch (e) { console.warn(e); }
+    setTimeout(() => { box.remove(); adventOpenNow = false; adventCheck(); }, 2600); };
+  document.body.append(box); }
+setInterval(adventCheck, 2000);
+// (on the test site: move the date on to the next Advent Sunday, to see each gift come - the user, 21-11-2026)
+if (TEST_SITE) { const b = document.createElement('button'); b.textContent = '🎁 Næste søndag'; b.style.cssText = 'position:fixed;top:58px;left:50%;transform:translateX(-50%);z-index:999;background:#2FB872;color:#fff;border:0;border-radius:10px;padding:5px 12px;font:700 13px system-ui,sans-serif;cursor:pointer';
+  b.onclick = () => { const now = adventToday(), next = ADVENT_DAYS.find(x => x > now); if (!next) { try { localStorage.removeItem(ADVENT_SKIP); localStorage.removeItem(ADVENT_KEY); } catch (e) { } toast('🎁 Forfra: rigtig dato, ingen gaver åbnet'); renderStyles(); return; }
+    let skip = 0; try { skip = +localStorage.getItem(ADVENT_SKIP) || 0; } catch (e) { } const [y, m, d] = now.split('-').map(Number), [y2, m2, d2] = next.split('-').map(Number);
+    skip += Math.round((Date.UTC(y2, m2 - 1, d2) - Date.UTC(y, m - 1, d)) / 864e5); try { localStorage.setItem(ADVENT_SKIP, String(skip)); } catch (e) { } toast(`🎁 Nu er det ${next}`); renderStyles(); adventCheck(); };
+  document.body.append(b); }
 // (one more line while the child isn't saved with a name yet - the user, 04-11-2026: how to keep one's own player)
 const infoSave = document.createElement('span'); infoSave.innerHTML = T('<br>🙂 Gem dig selv som spiller: Byg din figur, og tryk på billedet nederst i højre hjørne. Vælg »Børn og spillere – for voksne«, og få en voksen til at løse regnestykket. Skriv navnet, og tryk 📷', '<br>🙂 Save yourself as a player: Build your figure and tap the picture in the bottom right corner. Choose “Children and players – for grown-ups” and get a grown-up to solve the math problem. Write the name and tap 📷');
 const infoVersion = document.createElement('small'); infoVersion.style.cssText = 'display:block;margin-top:6px;opacity:.65;font-weight:600'; infoVersion.textContent = 'Version ' + document.querySelector('meta[name="minimig-version"]').content;
@@ -7250,6 +7334,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.15.0 (e817278)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.16.0 (b131ca5)</div>
 </body>
 </html>
