@@ -5,7 +5,9 @@ $root = $PSScriptRoot
 # the shared app manifest, search metadata and the Til voksne dialog (pwa.js, opened from the game's own button)
 $gamePath = Join-Path $root 'bygogspil/index.html'
 $html = [IO.File]::ReadAllText($gamePath)
-$html = $html.Replace('<title>MiniMig version 2</title>', '<title>MiniMig &ndash; byg og spil</title>')
+# (the game's own title is "MiniMig(TM) version 2" since the TM came in - so the old plain Replace missed it and Google
+# showed "version 2" for the game page. SEO plan 21-11-2026: both spellings, and the title Google shows)
+$html = [regex]::Replace($html, '<title>MiniMig(™|&trade;)? version 2</title>', '<title>MiniMig&trade; &ndash; byg og spil i 3D</title>')
 $html = $html.Replace('<link rel="manifest" href="manifest.webmanifest">', '<link rel="manifest" href="../manifest.webmanifest">')
 $html = $html.Replace('<meta name="apple-mobile-web-app-title" content="MiniMig 2">', '<meta name="apple-mobile-web-app-title" content="MiniMig">')
 $html = [regex]::Replace($html, '<meta name="robots" content="noindex, nofollow">(<!--[^>]*-->)?', '')
@@ -30,7 +32,7 @@ $core = '^bygogspil/(index\.html|manifest\.webmanifest|three/.*|ikoner/.*|baggru
 $files = @(Get-ChildItem -LiteralPath $root -Recurse -File | Where-Object {
   $rel = $_.FullName.Substring($root.Length + 1).Replace('\', '/')
   $rel -notmatch '^(\.git|\.claude|tests|test|pwa-naeste|version1|version2|proev|3d-forsoeg)/' -and $_.Name -notin 'service-worker.js', 'precache-manifest.js' -and
-  ($rel -like 'bygogspil/*' -or $_.Extension -in '.html', '.css', '.png', '.jpg', '.webmanifest', '.js')
+  ($rel -like 'bygogspil/*' -or $_.Extension -in '.html', '.css', '.png', '.jpg', '.webp', '.webmanifest', '.js')
 } | Sort-Object FullName)
 $hashes = [ordered]@{}; $must = @(); $rest = @(); $mustSize = 0; $allSize = 0
 foreach ($f in $files) {
