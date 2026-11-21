@@ -47,7 +47,7 @@ panel.innerHTML = en ? `<button type="button" class="pwa-help">For grown-ups</bu
 <h3>Praise, complaints and good ideas</h3>
 <p>MiniMig is new, and we would love to hear from you – what your children like, what isn’t working and what you are missing. Write to <a href="mailto:supportogfeedback@minimig.dk">supportogfeedback@minimig.dk</a>.</p>
 <p><a class="pwa-support" target="_blank" rel="noopener">Help and support</a> · <a class="pwa-privacy" target="_blank" rel="noopener">Read about privacy</a></p>
-<p class="pwa-tm">MiniMig™ is a trademark of LEHCO ApS.</p>
+<p class="pwa-tm">MiniMig™ is a trademark of LehCo ApS.</p>
 <form method="dialog"><button>Close</button></form></dialog>` : `<button type="button" class="pwa-help">Til voksne</button>
 <dialog class="pwa-dialog" aria-labelledby="pwa-title">
 <h2 id="pwa-title" tabindex="-1" autofocus>Til voksne</h2>
@@ -86,7 +86,7 @@ panel.innerHTML = en ? `<button type="button" class="pwa-help">For grown-ups</bu
 <h3>Ros, ris og gode idéer</h3>
 <p>MiniMig er nyt, og vi vil meget gerne høre fra jer – hvad jeres børn kan lide, hvad der driller, og hvad I savner. Skriv til <a href="mailto:supportogfeedback@minimig.dk">supportogfeedback@minimig.dk</a>.</p>
 <p><a class="pwa-support" target="_blank" rel="noopener">Hjælp og support</a> · <a class="pwa-privacy" target="_blank" rel="noopener">Læs om privatliv</a></p>
-<p class="pwa-tm">MiniMig™ er et varemærke tilhørende LEHCO ApS.</p>
+<p class="pwa-tm">MiniMig™ er et varemærke tilhørende LehCo ApS.</p>
 <form method="dialog"><button>Luk</button></form></dialog>`;
 document.body.append(panel);
 const dialog = panel.querySelector('dialog'), status = panel.querySelector('.pwa-status');
