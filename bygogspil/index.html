@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>MiniMig&trade; &ndash; byg og spil i 3D</title>
-<meta name="minimig-version" content="0.16.0">
+<meta name="minimig-version" content="0.17.0">
 <!-- (the number of this version, shown under the i - see VERSIONER.md - raised for each package and each fix put out) -->
 <!-- (the same icon as version 1 on a home screen, under the name MiniMig 2 - the icons lie in the website's billeder/;
      the user, 03-11-2026, sharing version 2 with testers) -->
@@ -427,9 +427,8 @@
     color: var(--ink); font: 700 .95rem/1 system-ui, sans-serif; cursor: pointer; box-shadow: 0 2px 6px rgba(58, 46, 92, .2); }
   .del.armed { background: #E8384F; border-color: #E8384F; color: #fff; padding: 0 10px; }
   .empty { grid-column: 1 / -1; text-align: center; color: #6B6191; margin: 0; padding: 20px 8px; font: 600 1.05rem/1.4 system-ui, sans-serif; }</style>
-<link rel="canonical" href="https://minimig.dk/bygogspil/">
-<link rel="stylesheet" href="../pwa.css"><script src="../pwa.js" defer></script>
 <meta name="description" content="Spil MiniMig&trade; direkte i browseren: byg din egen figur i 3D, dans og spil sm&aring; spil. B&oslash;rnespil til 3&ndash;6 &aring;r &ndash; uden reklamer og uden konto.">
+<link rel="canonical" href="https://minimig.dk/bygogspil/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="MiniMig&trade;">
 <meta property="og:locale" content="da_DK">
@@ -440,6 +439,7 @@
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../pwa.css"><script src="../pwa.js" defer></script>
 </head>
 <body>
 <div class="main">
@@ -758,13 +758,14 @@ const EN = {
   'Undertrøje': 'Tank top', 'T-shirt': 'T-shirt', 'Hættetrøje': 'Hoodie', 'Fodboldtrøje': 'Soccer jersey', 'Undershorts': 'Underwear', 'Trusser': 'Briefs', 'Lange bukser': 'Long pants', 'Shorts': 'Shorts', 'Cowboyshorts': 'Denim shorts', 'Fodboldbukser': 'Soccer shorts',
   'Ingen kjole': 'No dress', 'Ingen dragt': 'No suit', 'Badedragt': 'Swimsuit', 'Badebukser': 'Swim trunks', 'Sommerkjole': 'Summer dress', 'Prinsessekjole': 'Princess dress', 'Havfruekjole': 'Mermaid dress', 'Ingen strømper': 'No socks', 'Ankelstrømper': 'Ankle socks', 'Almindelige strømper': 'Regular socks', 'Fodboldstrømper': 'Soccer socks', 'Knæstrømper': 'Knee socks',
   'Bare fødder': 'Bare feet', 'Sneakers': 'Sneakers', 'Fodboldstøvler': 'Soccer cleats', 'Gummistøvler': 'Rain boots', 'Balletsko': 'Ballet shoes', 'Højhælede': 'High heels',
+  'Nissehue': 'Santa hat', 'Rensdyrgevir': 'Reindeer antlers', 'Julemønster': 'Christmas pattern', 'Julemønster med rensdyr': 'Christmas pattern with reindeer', 'Juleaften': 'Christmas Eve',
   'Ingen hat': 'No hat', 'Kasket': 'Cap', 'Krone': 'Crown', 'Kaninører': 'Bunny ears', 'Sløjfe': 'Bow', 'Ingen briller': 'No glasses', 'Svømmebriller': 'Swim goggles', 'Snorkel': 'Snorkel', 'Rumdragt': 'Space suit', 'Rumhjelm': 'Space helmet', 'Rumstøvler': 'Space boots', 'Sne': 'Snow', 'Skihop': 'Ski jump', 'Dansestudie': 'Dance studio', '▶ Vis dansen!': '▶ Show the dance!', '🎵 Sæt din dans sammen': '🎵 Put your dance together', 'Sjov': 'Fun', 'Kyllingedans': 'Chicken dance', 'Ned i gulvet': 'Down to the floor', 'Hurtigt ned': 'Quick drop', 'Håndstand-spin': 'Handstand spin', 'Op på hænder': 'Up on the hands', 'Bevægelser': 'Moves', 'Danse': 'Dances', '🎵 Vælg fire trin til din runde': '🎵 Pick four moves for your round', '👆 Tryk for at køre – og tryk igen ved kanten for at hoppe!': '👆 Tap to go – and tap again at the edge to jump!', 'Skidragt': 'Ski suit', 'Skihjelm': 'Ski helmet', 'Skibriller': 'Ski goggles', 'Skihandsker': 'Ski gloves', 'Skistøvler': 'Ski boots', 'Jetpack': 'Jetpack', 'Ingen jetpack': 'No jetpack', 'Rumrejse': 'Space trip', 'Rumrejse': 'Space trip', '👆 Tryk – så flyver du derhen. To hurtige tryk giver fart 🚀': '👆 Tap – and you fly there. Two quick taps give a boost 🚀', 'Skaterhjelm': 'Skate helmet', 'Knæbeskyttere': 'Knee pads', 'Albuebeskyttere': 'Elbow pads', 'Handsker': 'Gloves', 'Ingen knæbeskyttere': 'No knee pads', 'Ingen albuebeskyttere': 'No elbow pads', 'Ingen handsker': 'No gloves', 'Ansigt': 'Face', 'Tøj': 'Clothes', 'Mere': 'More', 'Svømning': 'Swimming', 'Start': 'Start', 'Ingen svømmebriller': 'No goggles', 'Runde': 'Round', 'Solbriller': 'Sunglasses', 'Hjerte': 'Heart',
   // (things, pets, backgrounds)
   'Ballon': 'Balloon', 'Bamse': 'Teddy bear', 'Tryllestav': 'Magic wand', 'Is': 'Ice cream', 'Blomst': 'Flower', 'Bold': 'Ball', 'Fodbold': 'Soccer ball', 'Hulahopring': 'Hula hoop',
   'Intet dyr': 'No pet', 'Kat': 'Cat', 'Hund': 'Dog', 'Kanin': 'Rabbit', 'Halsbånd': 'Collar', 'Madskål': 'Food bowl', 'Legebold': 'Play ball',
   'Sol': 'Sun', 'Have': 'Garden', 'Strand': 'Beach', 'Skov': 'Forest', 'Slot': 'Palace', 'Ridderborg': 'Castle', 'Havbund': 'Ocean floor', 'Slikland': 'Candy world', 'Vinter': 'Winter', 'Rummet': 'Space', 'Fodboldbane': 'Soccer field', 'Gymnastiksal': 'Gym', 'Dansesal': 'Dance studio',
   // (movements, games)
-  'Hænder i siden': 'Hands on hips', 'Glad hop': 'Happy jump', 'Højt hop': 'High jump', 'Lille løbehop': 'Small leap', 'Langt løbehop': 'Long leap', 'Hiphop': 'Hip hop', 'Hiphop 2': 'Hip hop 2', 'Fjollet': 'Silly', 'Armdans': 'Arm dance', 'Sjovt løb': 'Funny run', 'Løb stærkt': 'Run fast',
+  'Hænder i siden': 'Hands on hips', 'Glad hop': 'Happy jump', 'Højt hop': 'High jump', 'Lille løbehop': 'Small leap', 'Langt løbehop': 'Long leap', 'Hiphop': 'Hip hop', 'Hiphop 2': 'Hip hop 2', 'Hiphop 3': 'Hip hop 3', 'Hiphop 4': 'Hip hop 4', 'Fjollet': 'Silly', 'Armdans': 'Arm dance', 'Sjovt løb': 'Funny run', 'Løb stærkt': 'Run fast',
   'Klap': 'Clap', 'Dyk og rul': 'Dive and roll', 'Snuble': 'Stumble', 'Falder på numsen': 'Fall on your bottom', 'Venstre fod': 'Left foot', 'Højre fod': 'Right foot',
   'Meget let': 'Very easy', 'Let': 'Easy', 'Mellem': 'Medium', 'Svær': 'Hard', 'Meget svær': 'Very hard', 'Fra siden': 'From the side', 'Bagfra': 'From behind', 'Forfra': 'From the front',
   '👈 Tryk i siden for at svinge 👉': '👈 Tap the side to turn 👉', '👆 Tryk hvor du vil gå hen': '👆 Tap where you want to go', '👆 Tryk eller træk – så svømmer du derhen': '👆 Tap or drag to swim there', '🔍 Hvor er jeg? Tryk på busken': '🔍 Where am I? Tap the bush', '👆 Tryk i målet, hvor bolden skal hen': '👆 Tap the goal where the ball should go', '👆 Tryk for at hoppe': '👆 Tap to jump',
@@ -928,8 +929,16 @@ const IS_APP = !!window.Capacitor?.isNativePlatform?.(), TEST_SITE = location.pa
 const FULL_KEY = 'minimig3d.hele', TRY_KEY = 'minimig3d.udgave';
 function fullOwned() { try { const t = TEST_SITE && localStorage.getItem(TRY_KEY); if (t) return t === 'hele'; return !IS_APP || localStorage.getItem(FULL_KEY) === '1'; } catch (e) { return !IS_APP; } }
 let fullNow = fullOwned();
-// (free: may this be shown - all of it with Hele MiniMig, in Basis what is not on the list)
-const free = n => fullNow || !FULL.has(n);
+// ---- Adventsgaverne (the user, 21-11-2026): a gift in the game every Advent Sunday, for every child - Basis and Hele
+// MiniMig alike, no lock and no price. Each is hidden until its Sunday, then a parcel waits to be opened; after Christmas
+// they all stay. On the test site a button moves the date on to the next Sunday (ADVENT_SKIP days ahead) ----
+const ADVENT = { 'hat-nisse': 1, 'pat-jul': 2, 'pat-julr': 2, 'bg-jul': 3, 'hat-gevir': 4 }, ADVENT_DAYS = ['2026-11-29', '2026-12-06', '2026-12-13', '2026-12-20'];
+const ADVENT_KEY = 'minimig3d.advent', ADVENT_SKIP = 'minimig3d.adventSpol';
+function adventToday() { let d = new Date(); try { if (TEST_SITE) d = new Date(d.getTime() + (+localStorage.getItem(ADVENT_SKIP) || 0) * 864e5); } catch (e) { }
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
+const adventNow = () => { const s = adventToday(); return ADVENT_DAYS.filter(x => s >= x).length; };
+// (free: may this be shown - all of it with Hele MiniMig, in Basis what is not on the list; an Advent gift from its Sunday)
+const free = n => (!ADVENT[n] || ADVENT[n] <= adventNow()) && (fullNow || !FULL.has(n));
 // (a saved figure in Basis: what it wears from Hele MiniMig is taken off - the background back to the sun)
 const basisFigure = f => fullNow ? f : { ...f, wear: Object.fromEntries(Object.entries(f.wear || {}).map(([p, n]) => [p, free(n) ? n : ''])), item: free(f.item) ? f.item : '', pet: free(f.pet) ? f.pet : '', bg: free(f.bg) ? f.bg : 'bg-sol' };
 function owns(n) { if (!SHOP[n]) return true; try { return !!playerNow().score.owned?.includes(n); } catch (e) { return true; } }
@@ -2474,6 +2483,10 @@ function hatHair() {
   const C = hat.geometry.attributes.position, crown = [], all = new Float32Array(24); let cx = 0, cz = 0;
   for (let i = 0; i < C.count; i++) { v.fromBufferAttribute(C, i).applyMatrix4(M); if (v.z < eyeZ - .1 * apart) { crown.push(v.x, v.y, v.z); cx += v.x; cz += v.z; } }
   cx /= crown.length / 3; cz /= crown.length / 3;
+  // (the Santa hat's tip flops far back: its middle then taken from its lowest part only, round the head - from all of it,
+  // the slices were counted from a point behind the head, and stripes of hair stood out through the hat)
+  if (opts.nisse) { let lo = Infinity, sx = 0, sz = 0, sn = 0; for (let i = 1; i < crown.length; i += 3) lo = Math.min(lo, crown[i]);
+    for (let i = 0; i < crown.length; i += 3) if (crown[i + 1] < lo + 1.3 * apart) { sx += crown[i]; sz += crown[i + 2]; sn++; } if (sn) { cx = sx / sn; cz = sz / sn; } }
   const N = 24, bin = (x, z) => Math.floor((Math.atan2(x - cx, z - cz) / (2 * Math.PI) + .5) * N) % N, rimY = new Float32Array(N).fill(Infinity), rimR = new Float32Array(N), n = new Float32Array(N);
   for (let i = 0; i < C.count; i++) { v.fromBufferAttribute(C, i).applyMatrix4(M); all[bin(v.x, v.z)]++; }
   for (let i = 0; i < crown.length; i += 3) { const b = bin(crown[i], crown[i + 2]); rimY[b] = Math.min(rimY[b], crown[i + 1]); n[b]++; }
@@ -2483,6 +2496,11 @@ function hatHair() {
   const whole = b => n[b] > .6 * all[b];
   for (let b = 0; b < N; b++) if (!whole(b)) { let a = b, c = b, da = 0, dc = 0; while (!whole(a) && da < N) { a = (a + N - 1) % N; da++; } while (!whole(c) && dc < N) { c = (c + 1) % N; dc++; }
     const t = da / (da + dc); rimY[b] = rimY[a] * (1 - t) + rimY[c] * t; rimR[b] = rimR[a] * (1 - t) + rimR[c] * t; }
+  // (the Santa hat's edge is a tilted ring: a slice whose edge came out too high - a stripe of hair stood out through the
+  // back of the hat - brought down to the ring's line, high in front and low behind, laid through the whole slices)
+  if (opts.nisse) { const ang = b => ((b + .5) / N - .5) * 2 * Math.PI; let m = 0, sc = 0, scc = 0, sy = 0, scy = 0;
+    for (let b = 0; b < N; b++) if (whole(b)) { const c = Math.cos(ang(b)); m++; sc += c; scc += c * c; sy += rimY[b]; scy += c * rimY[b]; }
+    const det = m * scc - sc * sc; if (m > 4 && Math.abs(det) > 1e-9) { const B = (m * scy - sc * sy) / det, A = (sy - B * sc) / m; for (let b = 0; b < N; b++) rimY[b] = Math.min(rimY[b], A + B * Math.cos(ang(b)) + .05 * apart); } }
   // (drawn in over half the eyes' distance below the edge, so it widens gently out from under the cap - over less,
   // it stood out from under it in a ledge)
   const band = .5 * apart, under = new Uint8Array(P.count);
@@ -2533,6 +2551,9 @@ const GARMENTS = {
   // (hats were made on a bald head: on top of hair they are raised - lift, in eyes' distances - or, a cap, made wider)
   hat: { items: [['', 'Ingen hat'], ['hat-kasket', 'Kasket', { grow: 1.12, lift: .1, cap: true }], ['hat-krone', 'Krone', { grow: 1.05, rest: .12 }], ['hat-kanin', 'Kaninører', { grow: 1.12, lift: .3, wrap: .03, ears: .45, thin: .35, scalp: true, flat: .3 }],
     ['hat-sloejfe', 'Sløjfe', { grow: 1.05, lift: .35, move: .02, size: .75 }],
+    // (Advent gifts, 21-11-2026: the Santa hat made here - makeSantaHat - and the reindeer antlers, a model from Meshy, laid
+    // on the hair as the bow is - makeAntlers)
+    ['hat-nisse', 'Nissehue', { nisse: true, cap: true }], ['hat-gevir', 'Rensdyrgevir', { gevir: true, wrap: .02 }],
     // (the skateboard helmet, a model from Meshy - see makeHelmet. The user, 12-11-2026)
     ['hat-skaterhjelm', 'Skaterhjelm', { helmet: true, cap: true, game: 'skate' }], ['hat-rumhjelm', 'Rumhjelm', { helmet: 'rum', game: 'space' }], ['hat-skihjelm', 'Skihjelm', { helmet: 'ski', cap: true, game: 'snow' }]], texs: [], head: true },
   glasses: { items: [['', 'Ingen briller'], ['briller-runde', 'Runde', { fwd: .12 }], ['briller-sol', 'Solbriller', { pale: .7, lens: .1, dark: true, cap: 1.15 }],
@@ -2596,7 +2617,7 @@ async function setGarment(part, name) { const G = GARMENTS[part], ask = ++dressi
   // (everything changed at once, when all of it is loaded - the underwear went skin coloured and the last dress stayed on
   // while a new one loaded; a choice made meanwhile wins)
   for (const [p, g] of Object.entries(GARMENTS)) if (g.now && !g.meshes[g.now]) { const n = g.now;
-    g.loading[n] ??= g.items.find(i => i[0] === n)?.[2]?.pack ? makePack(n) : g.items.find(i => i[0] === n)?.[2]?.skimask ? makeSkiGoggles(n) : g.items.find(i => i[0] === n)?.[2]?.helmet === 'rum' ? makeSpaceHelmet(n) : g.items.find(i => i[0] === n)?.[2]?.helmet ? makeHelmet(n, g.items.find(i => i[0] === n)[2].helmet === 'ski' ? 'udstyr-skihjelm.glb' : 'udstyr-skaterhjelm.glb') : g.items.find(i => i[0] === n)?.[2]?.pad ? Promise.resolve(makePads(n, g.items.find(i => i[0] === n)[2])) : g.items.find(i => i[0] === n)?.[2]?.goggles ? Promise.resolve(makeGoggles(n, p, g.items.find(i => i[0] === n)[2])) : g.head ? loadHair(n, g.texs, p, g.items.find(i => i[0] === n)?.[2] || {})
+    g.loading[n] ??= g.items.find(i => i[0] === n)?.[2]?.nisse ? makeSantaHat(n) : g.items.find(i => i[0] === n)?.[2]?.gevir ? makeAntlers(n) : g.items.find(i => i[0] === n)?.[2]?.pack ? makePack(n) : g.items.find(i => i[0] === n)?.[2]?.skimask ? makeSkiGoggles(n) : g.items.find(i => i[0] === n)?.[2]?.helmet === 'rum' ? makeSpaceHelmet(n) : g.items.find(i => i[0] === n)?.[2]?.helmet ? makeHelmet(n, g.items.find(i => i[0] === n)[2].helmet === 'ski' ? 'udstyr-skihjelm.glb' : 'udstyr-skaterhjelm.glb') : g.items.find(i => i[0] === n)?.[2]?.pad ? Promise.resolve(makePads(n, g.items.find(i => i[0] === n)[2])) : g.items.find(i => i[0] === n)?.[2]?.goggles ? Promise.resolve(makeGoggles(n, p, g.items.find(i => i[0] === n)[2])) : g.head ? loadHair(n, g.texs, p, g.items.find(i => i[0] === n)?.[2] || {})
       : g.items.find(i => i[0] === n)?.[2]?.made ? Promise.resolve(makeCloth(n, p, g.items.find(i => i[0] === n)[2])) : loadCloth(n, p);
     // (one that cannot come - no internet the first time - holds nothing else up, and is tried again the next time)
     g.meshes[n] = await g.loading[n].catch(() => null); if (!g.meshes[n]) { delete g.loading[n]; if (p === part && ask === dressing) toast(NO_NET); } }
@@ -2790,6 +2811,98 @@ async function makeSkiGoggles(name) { if (!hairBase?.whole) return null; const {
   let zf = -Infinity; for (let j = 0; j < pts.length; j += 6) if (Math.abs(pts[j] - mid) < .9 * a && Math.abs(pts[j + 1] - eyeY) < .3 * a) zf = Math.max(zf, pts[j + 2]);
   geo.computeBoundingBox(); const b = geo.boundingBox.clone(), k = 2.45 * a / (b.max.x - b.min.x); geo.translate(-(b.min.x + b.max.x) / 2, -(b.min.y + b.max.y) / 2, -b.max.z); geo.scale(k, k, k); geo.translate(mid, eyeY + .04 * a, zf + .16 * a);
   const m = gearMesh([{ geo, w: () => [[hairBase.head, 1]], uv: true, back: hairBase.headBack }], new THREE.MeshStandardMaterial({ map, roughness: .3, metalness: 0, side: THREE.DoubleSide })); m.name = name; return m; }
+// (the head measured for a hat: its own points - those moving with the head - how wide and deep it is over the ears, and its top)
+function headSize(from = .75) { const { pts } = hairBase.whole, [L, R] = hairBase.eyes, a = L.distanceTo(R), eyeY = (L.y + R.y) / 2, mid = (L.x + R.x) / 2, body = hairBase.body, bsi = body.geometry.attributes.skinIndex, bsw = body.geometry.attributes.skinWeight;
+  let top = -Infinity, hw = 0, z0 = Infinity, z1 = -Infinity; for (let j = 0; j < pts.length / 6; j++) { let w = 0; for (let c = 0; c < 4; c++) if (bsi.getComponent(j, c) === hairBase.head) w += bsw.getComponent(j, c); if (w <= .5) continue;
+    const x = pts[j * 6], y = pts[j * 6 + 1], z = pts[j * 6 + 2]; top = Math.max(top, y); if (y > eyeY + from * a) { hw = Math.max(hw, Math.abs(x - mid)); z0 = Math.min(z0, z); z1 = Math.max(z1, z); } }
+  return { a, eyeY, mid, top, hw, cz: (z0 + z1) / 2, hd: (z1 - z0) / 2 }; }
+// (the Santa hat - Advent gift 1, 21-11-2026: a soft red felt cone from a ring round the forehead, its tip flopping back and
+// a little to the side, a thick fluffy white band round the edge and a white bobble at the tip. Made here, no model; the
+// hair under it left out as under the cap - hatHair, cap)
+async function makeSantaHat(name) { if (!hairBase?.whole) return null; const { a, eyeY, mid, top, hw, cz, hd } = headSize(.3), V = (x, y, z) => new THREE.Vector3(x, y, z);
+  // (the user, 21-11-2026: further down over the head and further back - the edge sloping from the forehead down over the
+  // back of the head, and down to just over the ears. So the edge is a tilted ring: front high, back low, its middle moved
+  // back. window.__santa may change the numbers while trying them)
+  const S = Object.assign({ front: 1.05, back: -.05, shift: .08, wide: 1.04, bulge: 1.6, taper: 1, fit: 1.02 }, window.__santa), tilt = (S.front - S.back) / 2 * a, midY = eyeY + (S.front + S.back) / 2 * a, ccz = cz - S.shift * a;
+  const rimY = midY, rx = hw * S.wide, rz = hd * S.wide, up = top - rimY + 1.15 * a, seg = 32, rings = 30, edge = (be, t = 0) => tilt * Math.cos(be) * (1 - t) * (1 - t);
+  // (the user, 21-11-2026: closer to the head - in front it floated over the forehead. The edge's ring is no longer an
+  // ellipse round the widest part of the head, but follows the head where the edge lies: in each direction from the
+  // hat's middle, how far out the head is at the edge's height there, a little more for the hair; smoothed round)
+  const reachAt = new Float32Array(seg + 1); { const { pts } = hairBase.whole, body = hairBase.body, bsi = body.geometry.attributes.skinIndex, bsw = body.geometry.attributes.skinWeight, far = new Float32Array(seg).fill(0);
+    for (let j = 0; j < pts.length / 6; j++) { let w = 0; for (let c = 0; c < 4; c++) if (bsi.getComponent(j, c) === hairBase.head) w += bsw.getComponent(j, c); if (w <= .5) continue;
+      const x = pts[j * 6] - mid, y = pts[j * 6 + 1], z = pts[j * 6 + 2] - ccz, be = Math.atan2(x, z), k = ((Math.round(be / (Math.PI * 2) * seg) % seg) + seg) % seg;
+      if (Math.abs(y - (rimY + edge(be))) < .22 * a) far[k] = Math.max(far[k], Math.hypot(x, z)); }
+    for (let k = 0; k < seg; k++) if (!far[k]) far[k] = Math.hypot(Math.sin(k / seg * Math.PI * 2) * hw, Math.cos(k / seg * Math.PI * 2) * hd);
+    for (let it = 0; it < 3; it++) { const w = far.slice(); for (let k = 0; k < seg; k++) far[k] = (w[(k + seg - 1) % seg] + 2 * w[k] + w[(k + 1) % seg]) / 4; }
+    for (let k = 0; k <= seg; k++) reachAt[k] = far[k % seg] * S.fit + .04 * a; }
+  // (the cone's middle line: up over the head, then over backwards and to the side)
+  const curve = new THREE.QuadraticBezierCurve3(V(mid, rimY, ccz), V(mid, rimY + up * 1.05, ccz - .1 * a), V(mid + .55 * a, rimY + up * .62, ccz - 1.55 * a));
+  const P = [], I = []; for (let r = 0; r <= rings; r++) { const t = r / rings, c = curve.getPoint(t), s = Math.pow(1 - Math.pow(t, S.bulge), S.taper);
+    for (let k = 0; k <= seg; k++) { const be = k / seg * Math.PI * 2, fold = 1 + .025 * Math.sin(be * 5 + t * 7) * (1 - t); const R = reachAt[k] * (1 - t) + Math.hypot(Math.sin(be) * rx, Math.cos(be) * rz) * t; P.push(c.x + Math.sin(be) * R * s * fold, c.y + edge(be, t), c.z + Math.cos(be) * R * s * fold); } }
+  for (let r = 0; r < rings; r++) for (let k = 0; k < seg; k++) { const i = r * (seg + 1) + k, j = i + seg + 1; I.push(i, j, i + 1, i + 1, j, j + 1); }
+  const cone = new THREE.BufferGeometry(); cone.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); cone.setIndex(I); cone.computeVertexNormals();
+  const onHead = () => [[hairBase.head, 1]], felt = new THREE.MeshStandardMaterial({ color: 0xD3232F, roughness: .88, metalness: 0, side: THREE.DoubleSide });
+  const hat = gearMesh([{ geo: cone, w: onHead, back: hairBase.headBack }], felt); hat.name = name;
+  // (the band: a thick soft tube round the edge, a little bumpy as fur is)
+  const ring = []; for (let k = 0; k < 64; k++) { const be = k / 64 * Math.PI * 2; const kk = k / 64 * seg, k0 = Math.floor(kk), R = reachAt[k0] + (reachAt[Math.min(seg, k0 + 1)] - reachAt[k0]) * (kk - k0) + .01 * a; ring.push(V(mid + Math.sin(be) * R, rimY + edge(be) + .02 * a, ccz + Math.cos(be) * R)); }
+  const band = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(ring, true), 128, .15 * a, 14, true), BP = band.attributes.position, q = new THREE.Vector3();
+  for (let i = 0; i < BP.count; i++) { q.fromBufferAttribute(BP, i); const f = 1 + .045 * Math.sin(q.x * 61 / a) * Math.sin(q.y * 53 / a + q.z * 47 / a); BP.setXYZ(i, mid + (q.x - mid) * (1 + (f - 1) * .25), q.y + (f - 1) * .1 * a, ccz + (q.z - ccz) * (1 + (f - 1) * .25)); }
+  band.computeVertexNormals(); const fur = new THREE.MeshStandardMaterial({ color: 0xFAF7F2, roughness: 1, metalness: 0 });
+  gearMesh([{ geo: band, w: onHead, back: hairBase.headBack }], fur, hat);
+  const tip = curve.getPoint(1), ball = new THREE.IcosahedronGeometry(.36 * a, 3), QP = ball.attributes.position;
+  for (let i = 0; i < QP.count; i++) { q.fromBufferAttribute(QP, i); q.multiplyScalar(1 + .06 * Math.sin(q.x * 90 / a) * Math.sin(q.y * 80 / a + q.z * 70 / a)); QP.setXYZ(i, q.x, q.y, q.z); }
+  ball.computeVertexNormals(); ball.translate(tip.x, tip.y - .12 * a, tip.z); const bob = gearMesh([{ geo: ball, w: onHead, back: hairBase.headBack }], fur, hat);
+  // (the bobble dangles - the user, 21-11-2026: it follows the tip of the cone on a soft spring, so it swings when the
+  // figure moves - see gearTick. The point of the cone nearest its middle is where it hangs from)
+  { const B = bob.geometry.attributes.position, H = hat.geometry.attributes.position, c = new THREE.Vector3(), w = new THREE.Vector3(); for (let i = 0; i < B.count; i++) c.add(w.fromBufferAttribute(B, i)); c.divideScalar(B.count);
+    let best = Infinity, k = 0; for (let i = 0; i < H.count; i++) { const d = w.fromBufferAttribute(H, i).distanceToSquared(c); if (d < best) { best = d; k = i; } } Object.assign(hat.userData, { bobble: bob, tipK: k, reach: .5 * a }); }
+  return hat; }
+// (each frame, for the hat worn: the Santa hat's bobble follows the cone's tip on a soft spring and lags behind when the
+// head moves, so it swings and settles - moved by its own offset, on top of the skinning: bindMode detached, its
+// bind matrix the hat's. The reindeer antlers' bells ring when the head moves quickly - a dance, a jump, a turn)
+const dangle = { p: null, v: new THREE.Vector3() }, bells = { last: null, wait: 0, fast: false };
+function gearTick(dt) { if (typeof GARMENTS === 'undefined' || !hairBase?.whole) return; const G = GARMENTS.hat, hat = G.meshes[G.shown]; dt = Math.min(dt, .05);
+  if (!hat || !hat.visible || !hat.parent) { dangle.p = null; bells.last = null; return; } const ud = hat.userData;
+  if (ud.bobble) { hat.updateWorldMatrix(true, false); const w = new THREE.Vector3();
+    // (the first time: the skinned bobble made into a plain ball on the hat - its points where they are now, round their
+    // middle - and the skinned one hidden; the ball's middle kept as an offset from the cone's tip)
+    if (!ud.ball) { const B = ud.bobble, P = B.geometry.attributes.position, pts = new Float32Array(P.count * 3), c = new THREE.Vector3();
+      for (let i = 0; i < P.count; i++) { B.getVertexPosition(i, w); B.localToWorld(w); hat.worldToLocal(w); pts.set([w.x, w.y, w.z], i * 3); c.add(w); } c.divideScalar(P.count);
+      for (let i = 0; i < P.count; i++) { pts[i * 3] -= c.x; pts[i * 3 + 1] -= c.y; pts[i * 3 + 2] -= c.z; }
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pts, 3)); g.computeVertexNormals();
+      ud.ball = new THREE.Mesh(g, B.material); ud.ball.castShadow = true; hat.add(ud.ball); B.visible = false;
+      hat.getVertexPosition(ud.tipK, w); hat.localToWorld(w); hat.worldToLocal(w); ud.ballOff = c.clone().sub(w); }
+    const v = hat.getVertexPosition(ud.tipK, new THREE.Vector3()); hat.localToWorld(v); hat.worldToLocal(v); v.add(ud.ballOff); hat.localToWorld(v);
+    const s = new THREE.Vector3(); hat.getWorldScale(s); const reach = ud.reach * s.y;
+    if (!dangle.p || dangle.p.distanceTo(v) > 4 * reach) { dangle.p = v.clone(); dangle.v.set(0, 0, 0); }
+    const acc = v.clone().sub(dangle.p).multiplyScalar(70).addScaledVector(dangle.v, -6.5); dangle.v.addScaledVector(acc, dt); dangle.p.addScaledVector(dangle.v, dt);
+    const d = dangle.p.clone().sub(v); if (d.length() > reach) { d.setLength(reach); dangle.p.copy(v).add(d); }
+    ud.ball.position.copy(hat.worldToLocal(v.clone().add(d))); }
+  if (ud.bells) { const bone = hairBase.body.skeleton.bones[hairBase.head], p = new THREE.Vector3(); bone.getWorldPosition(p); const s = new THREE.Vector3(); hairBase.body.getWorldScale(s);
+    bells.wait -= dt; if (bells.last && dt > 0) { const speed = p.distanceTo(bells.last) / dt / (hairBase.whole.H * s.y), fast = speed > .4;
+      if (fast && (!bells.fast || bells.wait <= 0) && bells.wait <= 0) { jingle(Math.min(1, speed / 1.5)); bells.wait = .32; } bells.fast = fast; }
+    bells.last = p; } }
+// (two little sleigh bells: a few high, bright tones each, dying away quickly - made here, no sound file)
+function jingle(loud = .6) { const au = soundOut(); if (!au || !sound.sfx) return; au.resume(); const t0 = au.currentTime;
+  for (const [at, base] of [[0, 2960], [.045, 3320]]) for (const [m, g] of [[1, .05], [1.5, .03], [2.02, .022], [2.74, .012]]) {
+    const o = au.createOscillator(), e = au.createGain(); o.type = 'sine'; o.frequency.value = base * m * (1 + (Math.random() - .5) * .01);
+    e.gain.setValueAtTime(0, t0 + at); e.gain.linearRampToValueAtTime(g * loud, t0 + at + .004); e.gain.exponentialRampToValueAtTime(.0005, t0 + at + .45);
+    o.connect(e).connect(au.destination); o.start(t0 + at); o.stop(t0 + at + .5); } }
+// (the reindeer antlers - Advent gift 4, 21-11-2026: a model from Meshy - hat-gevir.glb, a red hairband with two brown
+// antlers, bells and holly - set across the top of the head as a hairband is, its band as wide as the head; then laid on
+// the hair under it as the bow is - wrapHat. Its own colours)
+async function makeAntlers(name) { if (!hairBase?.whole) return null; const { geo: src, map } = await readProp('hat-gevir.glb'), geo = src.clone(), { a, mid, top, hw, cz } = headSize();
+  // (the user, 21-11-2026: the red band in the hair much thinner. Its points found by their colour in the picture - red,
+  // not the brown antlers, the yellow bells or the green holly - and each drawn in towards the middle of the band there,
+  // the mean of the red points round it, to a little more than half its thickness)
+  try { const img = map.image, cv = document.createElement('canvas'); cv.width = img.width; cv.height = img.height; const g2 = cv.getContext('2d'); g2.drawImage(img, 0, 0); const px = g2.getImageData(0, 0, cv.width, cv.height).data;
+    const P = geo.attributes.position, U = geo.attributes.uv, red = []; for (let i = 0; i < P.count; i++) { const x = Math.min(cv.width - 1, Math.max(0, Math.floor(U.getX(i) * cv.width))), y = Math.min(cv.height - 1, Math.max(0, Math.floor(U.getY(i) * cv.height))), o = (y * cv.width + x) * 4, r = px[o], gg = px[o + 1], b = px[o + 2]; if (r > 120 && r > 2 * gg && r > 2 * b) red.push(i); }
+    if (red.length > 30) { let z0 = Infinity, z1 = -Infinity; for (const i of red) { z0 = Math.min(z0, P.getZ(i)); z1 = Math.max(z1, P.getZ(i)); } const reach = (z1 - z0) * .9, k = .5, W2 = red.map(i => [P.getX(i), P.getY(i), P.getZ(i)]), out = [];
+      for (let j = 0; j < red.length; j++) { const [x, y, z] = W2[j]; let sx = 0, sy = 0, sz = 0, n = 0; for (const [u, v, w] of W2) if (Math.abs(u - x) < reach && Math.abs(v - y) < reach && (u - x) ** 2 + (v - y) ** 2 + (w - z) ** 2 < reach * reach) { sx += u; sy += v; sz += w; n++; } out.push([sx / n + (x - sx / n) * k, sy / n + (y - sy / n) * k, sz / n + (z - sz / n) * k]); }
+      red.forEach((i, j) => P.setXYZ(i, ...out[j])); P.needsUpdate = true; geo.computeVertexNormals(); } } catch (e) { console.warn(e); }
+  geo.computeBoundingBox(); const b = geo.boundingBox.clone(), k = 2 * hw * 1.12 / ((b.max.x - b.min.x) * .69), tall = (b.max.y - b.min.y) * k;
+  geo.translate(-(b.min.x + b.max.x) / 2, -b.max.y, -(b.min.z + b.max.z) / 2); geo.scale(k, k, k); geo.translate(mid, top + .4 * tall + .05 * a, cz + .05 * a);
+  const m = gearMesh([{ geo, w: () => [[hairBase.head, 1]], uv: true, back: hairBase.headBack }], new THREE.MeshStandardMaterial({ map, roughness: .55, metalness: 0, side: THREE.DoubleSide })); m.name = name; m.userData.bells = true; return m; }
 async function makeHelmet(name, file = 'udstyr-skaterhjelm.glb') { if (!hairBase?.whole) return null; const { geo: src, map } = await readProp(file), geo = src.clone();
   const { pts } = hairBase.whole, [L, R] = hairBase.eyes, a = L.distanceTo(R), eyeY = (L.y + R.y) / 2, mid = (L.x + R.x) / 2, body = hairBase.body, bsi = body.geometry.attributes.skinIndex, bsw = body.geometry.attributes.skinWeight, V = (x, y, z) => new THREE.Vector3(x, y, z);
   // (the head's own points; over the ears: how wide and how deep it is, and its top)
@@ -3875,10 +3988,10 @@ function footballPrints() { if (!hairBase) return; const { H } = hairBase.whole,
 // garment knows where it sits on the body as made (height, side, front or back, how far it is arm), and the picture is
 // worked out for each dot of the screen from that. No real brand's marks - no three stripes, no swoosh
 var PATTERNS = {
-  shirt: [['', 'Ensfarvet'], ['striber', 'Striber'], ['kontrast', 'Kontrastærmer'], ['baand', 'Bånd'], ['lodret', 'Lodrette striber']],
+  shirt: [['', 'Ensfarvet'], ['striber', 'Striber'], ['kontrast', 'Kontrastærmer'], ['baand', 'Bånd'], ['lodret', 'Lodrette striber'], ['jul', 'Julemønster'], ['julr', 'Julemønster med rensdyr']],
   pants: [['', 'Ensfarvet'], ['sidestriber', 'Sidestriber'], ['knae', 'Knælapper'], ['opslag', 'Opslag']],
   shoe: [['', 'Ensfarvet'], ['stribe', 'Stribe'], ['taa', 'Tåkappe'], ['hael', 'Hælkappe']] };
-var PAT_ID = { striber: 1, kontrast: 2, baand: 3, lodret: 4, sidestriber: 11, knae: 12, opslag: 13, stribe: 21, taa: 22, hael: 23 };
+var PAT_ID = { striber: 1, kontrast: 2, baand: 3, lodret: 4, jul: 5, julr: 6, sidestriber: 11, knae: 12, opslag: 13, stribe: 21, taa: 22, hael: 23 };
 var patternNow = {}; // (var, all three: asked for before this line runs, they are just not there yet)
 // (which garments take a pattern: the tops, the trousers but the briefs, and the sneakers - football boots too)
 const patOk = (part, name) => !!name && (part === 'shoe' ? ['sko-sneakers', 'sko-fodbold'].includes(name) : part === 'pants' ? name !== 'bukser-trusser' : part === 'shirt');
@@ -3887,11 +4000,39 @@ uniform float mmPat; uniform vec3 mmCol2; uniform vec3 mmBase; uniform float mmN
 varying vec3 vMmRest; varying vec3 vMmNor; varying float vMmArm; varying float vMmLeg; varying float vMmFoot;
 float mmBand(float x, float a, float b) { float f = max(fwidth(x), 1e-4); return smoothstep(a - f, a + f, x) - smoothstep(b - f, b + f, x); }
 float mmStripe(float x) { float t = abs(fract(x) - .5) * 2.; float f = max(fwidth(t), 1e-4); return smoothstep(.5 - f, .5 + f, t); }
+// (the Christmas jumper - Advent gift 2, 21-11-2026: across the chest a band of snowflakes between two thin lines, a row
+// of little dots under it)
+// (a reindeer seen from the side, in a box of -1..1: body, neck, head with a snout, four legs, a little tail and two
+// branching antlers - each a soft-edged shape, joined)
+float mmSeg(vec2 p, vec2 a, vec2 b, float w) { vec2 pa = p - a, ba = b - a; float h = clamp(dot(pa, ba) / dot(ba, ba), 0., 1.); return length(pa - ba * h) - w; }
+float mmEll(vec2 p, vec2 c, vec2 r) { vec2 d = (p - c) / r; return (length(d) - 1.) * min(r.x, r.y); }
+float mmDeer(vec2 q) { float d = mmEll(q, vec2(-.05, -.08), vec2(.52, .25));
+  d = min(d, mmSeg(q, vec2(.32, .02), vec2(.5, .42), .11)); d = min(d, mmEll(q, vec2(.6, .5), vec2(.2, .13))); d = min(d, mmSeg(q, vec2(.62, .46), vec2(.82, .42), .07));
+  d = min(d, mmSeg(q, vec2(-.38, -.2), vec2(-.4, -.78), .06)); d = min(d, mmSeg(q, vec2(-.22, -.22), vec2(-.2, -.78), .06));
+  d = min(d, mmSeg(q, vec2(.2, -.22), vec2(.24, -.78), .06)); d = min(d, mmSeg(q, vec2(.34, -.2), vec2(.4, -.76), .06));
+  d = min(d, mmEll(q, vec2(-.56, .06), vec2(.09, .07)));
+  d = min(d, mmSeg(q, vec2(.54, .6), vec2(.44, .95), .035)); d = min(d, mmSeg(q, vec2(.49, .78), vec2(.33, .88), .03));
+  d = min(d, mmSeg(q, vec2(.66, .6), vec2(.76, .95), .035)); d = min(d, mmSeg(q, vec2(.71, .78), vec2(.86, .86), .03));
+  float f = max(fwidth(d), 1e-4); return 1. - smoothstep(-f, f, d); }
+float mmJulD(vec3 r, float arm, float deer) { float y0 = mmNeck - .115, a = atan(r.x, r.z), u = a / 6.2832 * 15., v = (r.y - y0) / .043;
+  vec2 p = vec2((fract(u) - .5), v); float rr = length(p), th = atan(p.y, p.x);
+  float flake = (1. - smoothstep(.035, .07, abs(sin(3. * th)) * rr)) * (1. - smoothstep(.36, .4, rr)) + (1. - smoothstep(.07, .1, rr));
+  float tips = 0.; for (int i = 0; i < 6; i++) { float b = float(i) * 1.0472; vec2 c = vec2(cos(b), sin(b)) * .28; tips += 1. - smoothstep(.05, .08, length(p - c)); }
+  float lines = mmBand(r.y, y0 - .056, y0 - .048) + mmBand(r.y, y0 + .048, y0 + .056);
+  float dots = 1. - smoothstep(.14, .2, length(vec2(fract(u * 2.) - .5, (r.y - y0 + .085) / .022)));
+  float front = deer > .5 ? (1. - smoothstep(.055, .07, abs(r.x))) * step(0., r.z) : 0.;
+  float m = clamp(lines + (flake + tips) * step(abs(v), .5) * (1. - front) + dots, 0., 1.);
+  if (deer > .5) m = max(m, mmDeer(vec2(-r.x, r.y - y0) / .046) * step(0., r.z));
+  return m * (1. - arm); }
+float mmJul(vec3 r, float arm) { return mmJulD(r, arm, 0.); }
+float mmJulR(vec3 r, float arm) { return mmJulD(r, arm, 1.); }
 float mmMask() { vec3 r = vMmRest; float nl = length(vMmNor); vec3 n = nl > .1 ? vMmNor / nl : vec3(0.); float arm = smoothstep(.35, .65, vMmArm), side = r.x < 0. ? -1. : 1.;
   if (mmPat < 1.5) return mmStripe(r.y / .045) * (1. - smoothstep(mmNeck - .03, mmNeck - .02, r.y));
   if (mmPat < 2.5) return arm;
   if (mmPat < 3.5) return mmBand(r.y, mmNeck - .2, mmNeck - .155) * (1. - arm);
   if (mmPat < 4.5) return mmStripe(r.x / .045 + .5) * (1. - arm) * (1. - smoothstep(mmNeck - .03, mmNeck - .02, r.y));
+  if (mmPat < 5.5) return mmJul(r, arm);
+  if (mmPat < 6.5) return mmJulR(r, arm);
   if (mmPat < 11.5) { float a = atan(n.z, n.x * side); a = vMmLeg; return vMmLeg < -5. ? 0. : (mmBand(a, .05, .2) + mmBand(a, .32, .47)) * step(r.y, mmCrotch); }
   if (mmPat < 12.5) { vec2 k = side < 0. ? mmKnee.xy : mmKnee.zw; vec2 d = abs(r.xy - k); return mmBand(d.x, -1., .03) * mmBand(d.y, -1., .032) * smoothstep(.15, .35, n.z); }
   if (mmPat < 13.5) return 1. - smoothstep(mmHem + .018, mmHem + .023, r.y);
@@ -3946,13 +4087,13 @@ function paintAllPatterns() { if (PATTERNS) for (const p of Object.keys(PATTERNS
 // (the row of patterns under the colours: each a little picture of the pattern in the garment's colour and the second one)
 function patPreview(id, c, c2) { const g = (a, b) => `linear-gradient(${a}, ${b})`;
   return { '': c, striber: `repeating-linear-gradient(0deg, ${c} 0 6px, ${c2} 6px 11px)`, kontrast: g('90deg', `${c2} 0 26%, ${c} 26% 74%, ${c2} 74%`), baand: g('0deg', `${c} 0 38%, ${c2} 38% 62%, ${c} 62%`),
-    lodret: `repeating-linear-gradient(90deg, ${c} 0 6px, ${c2} 6px 11px)`, sidestriber: g('90deg', `${c} 0 62%, ${c2} 62% 70%, ${c} 70% 78%, ${c2} 78% 86%, ${c} 86%`),
+    lodret: `repeating-linear-gradient(90deg, ${c} 0 6px, ${c2} 6px 11px)`, jul: `radial-gradient(circle, ${c2} 0 3px, transparent 3.5px) 0 50% / 11px 11px repeat-x, ${g('0deg', `${c} 0 30%, ${c2} 30% 35%, ${c} 35% 65%, ${c2} 65% 70%, ${c} 70%`)}`, julr: `radial-gradient(ellipse 9px 6px at 50% 52%, #8B5A2B 0 98%, transparent 100%), radial-gradient(circle, ${c2} 0 3px, transparent 3.5px) 0 50% / 11px 11px repeat-x, ${g('0deg', `${c} 0 30%, ${c2} 30% 35%, ${c} 35% 65%, ${c2} 65% 70%, ${c} 70%`)}`, sidestriber: g('90deg', `${c} 0 62%, ${c2} 62% 70%, ${c} 70% 78%, ${c2} 78% 86%, ${c} 86%`),
     knae: `linear-gradient(${c2}, ${c2}) 22% 62% / 24% 26% no-repeat, linear-gradient(${c2}, ${c2}) 78% 62% / 24% 26% no-repeat, ${c}`, opslag: g('0deg', `${c2} 0 26%, ${c} 26%`),
     stribe: g('0deg', `${c} 0 40%, ${c2} 40% 58%, ${c} 58%`), taa: g('90deg', `${c} 0 62%, ${c2} 62%`), hael: g('90deg', `${c2} 0 32%, ${c} 32%`) }[id] || c; }
 function showPatterns(noColour) { const box = document.getElementById('patterns'); if (!box || !PATTERNS) return; const part = colourPart(), list = PATTERNS[part];
   const show = !noColour && list && typeof GARMENTS !== 'undefined' && patOk(part, GARMENTS[part]?.now); box.hidden = !show; box.innerHTML = ''; if (!show) return;
   const c = picked[part] || START[part], hsl = {}, cc = new THREE.Color().setStyle(c, THREE.SRGBColorSpace), s = {}; cc.getRGB(s, THREE.SRGBColorSpace); const c2 = .2126 * s.r + .7152 * s.g + .0722 * s.b > .6 ? '#2C3E8C' : '#FFFFFF';
-  for (const [id, label] of list) { const b = document.createElement('button'); b.style.background = patPreview(id, c, c2); b.setAttribute('aria-label', tr(label)); b.title = tr(label); b.classList.toggle('on', (patternNow[part] || '') === id);
+  for (const [id, label] of list) { if (id && !free('pat-' + id)) continue; const b = document.createElement('button'); b.style.background = patPreview(id, c, c2); b.setAttribute('aria-label', tr(label)); b.title = tr(label); b.classList.toggle('on', (patternNow[part] || '') === id);
     b.onclick = () => { if (id) patternNow[part] = id; else delete patternNow[part]; paintPatterns(part); box.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); }; box.append(b); } }
 
 // (the tab: a box to write the name in and the badges under it, in place of styles and colours)
@@ -4152,7 +4293,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') for (const s
 // (the picture behind the see-through 3D, filling the screen, its ground a little below the middle; the yellow disc under
 // the figure only on the sun - in a scene the figure stands on its ground, the shadow kept)
 const BGS = [['bg-sol', 'Sol'], ['bg-have', 'Have'], ['bg-strand', 'Strand'], ['bg-skov', 'Skov'], ['bg-slot', 'Slot'], ['bg-ridderborg', 'Ridderborg'], ['bg-havbund', 'Havbund'],
-  ['bg-slikland', 'Slikland'], ['bg-vinter', 'Vinter'], ['bg-rummet', 'Rummet'], ['bg-fodboldbane', 'Fodboldbane'], ['bg-gymnastiksal', 'Gymnastiksal'], ['bg-dansesal', 'Dansesal']];
+  ['bg-slikland', 'Slikland'], ['bg-vinter', 'Vinter'], ['bg-rummet', 'Rummet'], ['bg-fodboldbane', 'Fodboldbane'], ['bg-gymnastiksal', 'Gymnastiksal'], ['bg-dansesal', 'Dansesal'], ['bg-jul', 'Juleaften']];
 let bgNow = 'bg-sol'; const bgImgs = {};
 function setBg(name) { bgNow = BGS.some(b => b[0] === name) ? name : 'bg-sol'; const k = bgNow.slice(3);
   if (k !== 'sol' && !bgImgs[k]) { bgImgs[k] = new Image(); bgImgs[k].src = `baggrund/${k}.jpg`; }
@@ -7218,11 +7359,38 @@ if (location.pathname.includes('/test/')) { const b = document.createElement('bu
   // (and one with stars for the star jar of the world being played, to get on to the next world without riding it full - the user, 19-11-2026)
   const st = b.cloneNode(); st.textContent = '+100 ⭐'; st.style.left = 'calc(50% + 50px)'; st.onclick = () => { if (!game.on || !WORLDS[game.mode]) { toast('⭐ Start et spil med verdener først'); return; }
     const w = worldsOf(game.mode), i = worldNow(game.mode); jarGain(100); saveScore(); toast(`⭐ ${w.jar[i] || 0} / ${JAR}`); }; document.body.append(st); }
+// (the Advent parcel - the user, 21-11-2026: on a gift's Sunday, when the figure is there and no game runs, a parcel
+// with a bow bounces in the middle; tapped, it opens with confetti and a ta-da, and the gift goes on the figure. Several
+// waiting - the game not opened for a while - come one after the other. Remembered on this device: ADVENT_KEY)
+const ADVENT_GIFTS = [['hat-nisse', 'Nissehue', '🎅'], ['pat-jul', 'Julesweater', '🧶'], ['bg-jul', 'Juleaften', '🎄'], ['hat-gevir', 'Rensdyrgevir', '🦌']];
+let adventOpenNow = false;
+function adventOpened() { try { return +localStorage.getItem(ADVENT_KEY) || 0; } catch (e) { return 99; } }
+async function adventGive(id) { if (id.startsWith('hat-')) { await setGarment('hat', id); return; }
+  if (id === 'bg-jul') { setBg('bg-jul'); return; }
+  if (id === 'pat-jul') { if (!GARMENTS.shirt.now) await setGarment('shirt', 'toej-haette'); patternNow.shirt = 'jul'; apply('shirt', '#C8102E'); } }
+function adventCheck() { if (adventOpenNow || game.on || !glb || !hairBase?.whole) return; const n = Math.min(adventNow(), ADVENT_GIFTS.length), done = adventOpened(); if (done >= n) return;
+  if (document.querySelector('.sheet:not([hidden]), #pauseScreen:not([hidden])')) return;
+  adventOpenNow = true; const k = done, [id, label, emo] = ADVENT_GIFTS[k], box = document.createElement('div');
+  box.id = 'adventGift'; box.style.cssText = 'position:fixed;inset:0;z-index:998;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(20,24,60,.45);font:800 22px ui-rounded,"Arial Rounded MT Bold",system-ui,sans-serif;color:#fff;text-align:center;text-shadow:0 2px 6px rgba(0,0,0,.35)';
+  box.innerHTML = `<div style="margin-bottom:10px">${T(`${k + 1}. søndag i advent`, `${['1st', '2nd', '3rd', '4th'].at(k)} Sunday of Advent`)}</div><button aria-label="${T('Åbn gaven', 'Open the gift')}" style="font-size:150px;line-height:1;background:none;border:0;cursor:pointer;animation:adventHop .9s ease-in-out infinite">🎁</button><div style="margin-top:10px">${T('Tryk for at åbne!', 'Tap to open!')}</div>`;
+  if (!document.getElementById('adventCss')) { const s = document.createElement('style'); s.id = 'adventCss'; s.textContent = '@keyframes adventHop{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-22px) rotate(4deg)}}'; document.head.append(s); }
+  box.querySelector('button').onclick = async () => { try { localStorage.setItem(ADVENT_KEY, String(k + 1)); } catch (e) { }
+    box.innerHTML = `<div style="font-size:120px;line-height:1">${emo}</div><div style="margin-top:12px">${T('Du fik', 'You got')}: ${tr(label === 'Julesweater' ? 'Julemønster' : label)}!</div>`;
+    celebrate(); try { await adventGive(id); renderStyles(); } catch (e) { console.warn(e); }
+    setTimeout(() => { box.remove(); adventOpenNow = false; adventCheck(); }, 2600); };
+  document.body.append(box); }
+setInterval(adventCheck, 2000);
+// (on the test site: move the date on to the next Advent Sunday, to see each gift come - the user, 21-11-2026)
+if (TEST_SITE) { const b = document.createElement('button'); b.textContent = '🎁 Næste søndag'; b.style.cssText = 'position:fixed;top:58px;left:50%;transform:translateX(-50%);z-index:999;background:#2FB872;color:#fff;border:0;border-radius:10px;padding:5px 12px;font:700 13px system-ui,sans-serif;cursor:pointer';
+  b.onclick = () => { const now = adventToday(), next = ADVENT_DAYS.find(x => x > now); if (!next) { try { localStorage.removeItem(ADVENT_SKIP); localStorage.removeItem(ADVENT_KEY); } catch (e) { } toast('🎁 Forfra: rigtig dato, ingen gaver åbnet'); renderStyles(); return; }
+    let skip = 0; try { skip = +localStorage.getItem(ADVENT_SKIP) || 0; } catch (e) { } const [y, m, d] = now.split('-').map(Number), [y2, m2, d2] = next.split('-').map(Number);
+    skip += Math.round((Date.UTC(y2, m2 - 1, d2) - Date.UTC(y, m - 1, d)) / 864e5); try { localStorage.setItem(ADVENT_SKIP, String(skip)); } catch (e) { } toast(`🎁 Nu er det ${next}`); renderStyles(); adventCheck(); };
+  document.body.append(b); }
 // (one more line while the child isn't saved with a name yet - the user, 04-11-2026: how to keep one's own player)
 const infoSave = document.createElement('span'); infoSave.innerHTML = T('<br>🙂 Gem dig selv som spiller: Byg din figur, og tryk på billedet nederst i højre hjørne. Vælg »Børn og spillere – for voksne«, og få en voksen til at løse regnestykket. Skriv navnet, og tryk 📷', '<br>🙂 Save yourself as a player: Build your figure and tap the picture in the bottom right corner. Choose “Children and players – for grown-ups” and get a grown-up to solve the math problem. Write the name and tap 📷');
 const infoVersion = document.createElement('small'); infoVersion.style.cssText = 'display:block;margin-top:6px;opacity:.65;font-weight:600'; infoVersion.textContent = 'Version ' + document.querySelector('meta[name="minimig-version"]').content;
 // (and the trademark under it - the user, 18-11-2026: ™ until a formal registration, never ®)
-const infoTm = document.createElement('small'); infoTm.style.cssText = 'display:block;margin-top:2px;opacity:.55;font-weight:600;font-size:.72em'; infoTm.textContent = T('MiniMig™ er et varemærke tilhørende LEHCO ApS.', 'MiniMig™ is a trademark of LEHCO ApS.');
+const infoTm = document.createElement('small'); infoTm.style.cssText = 'display:block;margin-top:2px;opacity:.55;font-weight:600;font-size:.72em'; infoTm.textContent = T('MiniMig™ er et varemærke tilhørende LehCo ApS.', 'MiniMig™ is a trademark of LehCo ApS.');
 infoBtn.onclick = () => { const p = playerNow(); infoSave.remove(); infoVersion.remove(); infoTm.remove(); if (!p.name || !p.fig) infoPop.append(infoSave); infoPop.append(infoVersion, infoTm); infoPop.hidden = !infoPop.hidden; infoBtn.setAttribute('aria-expanded', String(!infoPop.hidden)); clearTimeout(infoTimer); if (!infoPop.hidden) infoTimer = setTimeout(() => { infoPop.hidden = true; infoBtn.setAttribute('aria-expanded', 'false'); }, 16000); };
 // (the figure on the screen remembered on this device, and put on again when the game opens - the pages promised it, and
 // a new version comes in by itself when the game is put away; never while it is being put on, nor in a game. A child with
@@ -7261,6 +7429,6 @@ addEventListener('resize', resize); resize(); new ResizeObserver(resize).observe
 renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElapsedTime();
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
-  try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
+  try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { gearTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
 </body>
 </html>
