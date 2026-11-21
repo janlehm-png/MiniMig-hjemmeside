@@ -746,7 +746,7 @@ const EN = {
   'Undertrøje': 'Tank top', 'T-shirt': 'T-shirt', 'Hættetrøje': 'Hoodie', 'Fodboldtrøje': 'Soccer jersey', 'Undershorts': 'Underwear', 'Trusser': 'Briefs', 'Lange bukser': 'Long pants', 'Shorts': 'Shorts', 'Cowboyshorts': 'Denim shorts', 'Fodboldbukser': 'Soccer shorts',
   'Ingen kjole': 'No dress', 'Ingen dragt': 'No suit', 'Badedragt': 'Swimsuit', 'Badebukser': 'Swim trunks', 'Sommerkjole': 'Summer dress', 'Prinsessekjole': 'Princess dress', 'Havfruekjole': 'Mermaid dress', 'Ingen strømper': 'No socks', 'Ankelstrømper': 'Ankle socks', 'Almindelige strømper': 'Regular socks', 'Fodboldstrømper': 'Soccer socks', 'Knæstrømper': 'Knee socks',
   'Bare fødder': 'Bare feet', 'Sneakers': 'Sneakers', 'Fodboldstøvler': 'Soccer cleats', 'Gummistøvler': 'Rain boots', 'Balletsko': 'Ballet shoes', 'Højhælede': 'High heels',
-  'Nissehue': 'Santa hat', 'Rensdyrgevir': 'Reindeer antlers', 'Julemønster': 'Christmas pattern', 'Juleaften': 'Christmas Eve',
+  'Nissehue': 'Santa hat', 'Rensdyrgevir': 'Reindeer antlers', 'Julemønster': 'Christmas pattern', 'Julemønster med rensdyr': 'Christmas pattern with reindeer', 'Juleaften': 'Christmas Eve',
   'Ingen hat': 'No hat', 'Kasket': 'Cap', 'Krone': 'Crown', 'Kaninører': 'Bunny ears', 'Sløjfe': 'Bow', 'Ingen briller': 'No glasses', 'Svømmebriller': 'Swim goggles', 'Snorkel': 'Snorkel', 'Rumdragt': 'Space suit', 'Rumhjelm': 'Space helmet', 'Rumstøvler': 'Space boots', 'Sne': 'Snow', 'Skihop': 'Ski jump', 'Dansestudie': 'Dance studio', '▶ Vis dansen!': '▶ Show the dance!', '🎵 Sæt din dans sammen': '🎵 Put your dance together', 'Sjov': 'Fun', 'Kyllingedans': 'Chicken dance', 'Ned i gulvet': 'Down to the floor', 'Hurtigt ned': 'Quick drop', 'Håndstand-spin': 'Handstand spin', 'Op på hænder': 'Up on the hands', 'Bevægelser': 'Moves', 'Danse': 'Dances', '🎵 Vælg fire trin til din runde': '🎵 Pick four moves for your round', '👆 Tryk for at køre – og tryk igen ved kanten for at hoppe!': '👆 Tap to go – and tap again at the edge to jump!', 'Skidragt': 'Ski suit', 'Skihjelm': 'Ski helmet', 'Skibriller': 'Ski goggles', 'Skihandsker': 'Ski gloves', 'Skistøvler': 'Ski boots', 'Jetpack': 'Jetpack', 'Ingen jetpack': 'No jetpack', 'Rumrejse': 'Space trip', 'Rumrejse': 'Space trip', '👆 Tryk – så flyver du derhen. To hurtige tryk giver fart 🚀': '👆 Tap – and you fly there. Two quick taps give a boost 🚀', 'Skaterhjelm': 'Skate helmet', 'Knæbeskyttere': 'Knee pads', 'Albuebeskyttere': 'Elbow pads', 'Handsker': 'Gloves', 'Ingen knæbeskyttere': 'No knee pads', 'Ingen albuebeskyttere': 'No elbow pads', 'Ingen handsker': 'No gloves', 'Ansigt': 'Face', 'Tøj': 'Clothes', 'Mere': 'More', 'Svømning': 'Swimming', 'Start': 'Start', 'Ingen svømmebriller': 'No goggles', 'Runde': 'Round', 'Solbriller': 'Sunglasses', 'Hjerte': 'Heart',
   // (things, pets, backgrounds)
   'Ballon': 'Balloon', 'Bamse': 'Teddy bear', 'Tryllestav': 'Magic wand', 'Is': 'Ice cream', 'Blomst': 'Flower', 'Bold': 'Ball', 'Fodbold': 'Soccer ball', 'Hulahopring': 'Hula hoop',
@@ -920,7 +920,7 @@ let fullNow = fullOwned();
 // ---- Adventsgaverne (the user, 21-11-2026): a gift in the game every Advent Sunday, for every child - Basis and Hele
 // MiniMig alike, no lock and no price. Each is hidden until its Sunday, then a parcel waits to be opened; after Christmas
 // they all stay. On the test site a button moves the date on to the next Sunday (ADVENT_SKIP days ahead) ----
-const ADVENT = { 'hat-nisse': 1, 'pat-jul': 2, 'bg-jul': 3, 'hat-gevir': 4 }, ADVENT_DAYS = ['2026-11-29', '2026-12-06', '2026-12-13', '2026-12-20'];
+const ADVENT = { 'hat-nisse': 1, 'pat-jul': 2, 'pat-julr': 2, 'bg-jul': 3, 'hat-gevir': 4 }, ADVENT_DAYS = ['2026-11-29', '2026-12-06', '2026-12-13', '2026-12-20'];
 const ADVENT_KEY = 'minimig-test.advent', ADVENT_SKIP = 'minimig-test.adventSpol';
 function adventToday() { let d = new Date(); try { if (TEST_SITE) d = new Date(d.getTime() + (+localStorage.getItem(ADVENT_SKIP) || 0) * 864e5); } catch (e) { }
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
@@ -2829,15 +2829,50 @@ async function makeSantaHat(name) { if (!hairBase?.whole) return null; const { a
   gearMesh([{ geo: band, w: onHead, back: hairBase.headBack }], fur, hat);
   const tip = curve.getPoint(1), ball = new THREE.IcosahedronGeometry(.36 * a, 3), QP = ball.attributes.position;
   for (let i = 0; i < QP.count; i++) { q.fromBufferAttribute(QP, i); q.multiplyScalar(1 + .06 * Math.sin(q.x * 90 / a) * Math.sin(q.y * 80 / a + q.z * 70 / a)); QP.setXYZ(i, q.x, q.y, q.z); }
-  ball.computeVertexNormals(); ball.translate(tip.x, tip.y - .12 * a, tip.z); gearMesh([{ geo: ball, w: onHead, back: hairBase.headBack }], fur, hat);
+  ball.computeVertexNormals(); ball.translate(tip.x, tip.y - .12 * a, tip.z); const bob = gearMesh([{ geo: ball, w: onHead, back: hairBase.headBack }], fur, hat);
+  // (the bobble dangles - the user, 21-11-2026: it follows the tip of the cone on a soft spring, so it swings when the
+  // figure moves - see gearTick. The point of the cone nearest its middle is where it hangs from)
+  { const B = bob.geometry.attributes.position, H = hat.geometry.attributes.position, c = new THREE.Vector3(), w = new THREE.Vector3(); for (let i = 0; i < B.count; i++) c.add(w.fromBufferAttribute(B, i)); c.divideScalar(B.count);
+    let best = Infinity, k = 0; for (let i = 0; i < H.count; i++) { const d = w.fromBufferAttribute(H, i).distanceToSquared(c); if (d < best) { best = d; k = i; } } Object.assign(hat.userData, { bobble: bob, tipK: k, reach: .5 * a }); }
   return hat; }
+// (each frame, for the hat worn: the Santa hat's bobble follows the cone's tip on a soft spring and lags behind when the
+// head moves, so it swings and settles - moved by its own offset, on top of the skinning: bindMode detached, its
+// bind matrix the hat's. The reindeer antlers' bells ring when the head moves quickly - a dance, a jump, a turn)
+const dangle = { p: null, v: new THREE.Vector3() }, bells = { last: null, wait: 0, fast: false };
+function gearTick(dt) { if (typeof GARMENTS === 'undefined' || !hairBase?.whole) return; const G = GARMENTS.hat, hat = G.meshes[G.shown]; dt = Math.min(dt, .05);
+  if (!hat || !hat.visible || !hat.parent) { dangle.p = null; bells.last = null; return; } const ud = hat.userData;
+  if (ud.bobble) { hat.updateWorldMatrix(true, false); const w = new THREE.Vector3();
+    // (the first time: the skinned bobble made into a plain ball on the hat - its points where they are now, round their
+    // middle - and the skinned one hidden; the ball's middle kept as an offset from the cone's tip)
+    if (!ud.ball) { const B = ud.bobble, P = B.geometry.attributes.position, pts = new Float32Array(P.count * 3), c = new THREE.Vector3();
+      for (let i = 0; i < P.count; i++) { B.getVertexPosition(i, w); B.localToWorld(w); hat.worldToLocal(w); pts.set([w.x, w.y, w.z], i * 3); c.add(w); } c.divideScalar(P.count);
+      for (let i = 0; i < P.count; i++) { pts[i * 3] -= c.x; pts[i * 3 + 1] -= c.y; pts[i * 3 + 2] -= c.z; }
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pts, 3)); g.computeVertexNormals();
+      ud.ball = new THREE.Mesh(g, B.material); ud.ball.castShadow = true; hat.add(ud.ball); B.visible = false;
+      hat.getVertexPosition(ud.tipK, w); hat.localToWorld(w); hat.worldToLocal(w); ud.ballOff = c.clone().sub(w); }
+    const v = hat.getVertexPosition(ud.tipK, new THREE.Vector3()); hat.localToWorld(v); hat.worldToLocal(v); v.add(ud.ballOff); hat.localToWorld(v);
+    const s = new THREE.Vector3(); hat.getWorldScale(s); const reach = ud.reach * s.y;
+    if (!dangle.p || dangle.p.distanceTo(v) > 4 * reach) { dangle.p = v.clone(); dangle.v.set(0, 0, 0); }
+    const acc = v.clone().sub(dangle.p).multiplyScalar(70).addScaledVector(dangle.v, -6.5); dangle.v.addScaledVector(acc, dt); dangle.p.addScaledVector(dangle.v, dt);
+    const d = dangle.p.clone().sub(v); if (d.length() > reach) { d.setLength(reach); dangle.p.copy(v).add(d); }
+    ud.ball.position.copy(hat.worldToLocal(v.clone().add(d))); }
+  if (ud.bells) { const bone = hairBase.body.skeleton.bones[hairBase.head], p = new THREE.Vector3(); bone.getWorldPosition(p); const s = new THREE.Vector3(); hairBase.body.getWorldScale(s);
+    bells.wait -= dt; if (bells.last && dt > 0) { const speed = p.distanceTo(bells.last) / dt / (hairBase.whole.H * s.y), fast = speed > .4;
+      if (fast && (!bells.fast || bells.wait <= 0) && bells.wait <= 0) { jingle(Math.min(1, speed / 1.5)); bells.wait = .32; } bells.fast = fast; }
+    bells.last = p; } }
+// (two little sleigh bells: a few high, bright tones each, dying away quickly - made here, no sound file)
+function jingle(loud = .6) { const au = soundOut(); if (!au || !sound.sfx) return; au.resume(); const t0 = au.currentTime;
+  for (const [at, base] of [[0, 2960], [.045, 3320]]) for (const [m, g] of [[1, .05], [1.5, .03], [2.02, .022], [2.74, .012]]) {
+    const o = au.createOscillator(), e = au.createGain(); o.type = 'sine'; o.frequency.value = base * m * (1 + (Math.random() - .5) * .01);
+    e.gain.setValueAtTime(0, t0 + at); e.gain.linearRampToValueAtTime(g * loud, t0 + at + .004); e.gain.exponentialRampToValueAtTime(.0005, t0 + at + .45);
+    o.connect(e).connect(au.destination); o.start(t0 + at); o.stop(t0 + at + .5); } }
 // (the reindeer antlers - Advent gift 4, 21-11-2026: a model from Meshy - hat-gevir.glb, a red hairband with two brown
 // antlers, bells and holly - set across the top of the head as a hairband is, its band as wide as the head; then laid on
 // the hair under it as the bow is - wrapHat. Its own colours)
 async function makeAntlers(name) { if (!hairBase?.whole) return null; const { geo: src, map } = await readProp('hat-gevir.glb'), geo = src.clone(), { a, mid, top, hw, cz } = headSize();
   geo.computeBoundingBox(); const b = geo.boundingBox.clone(), k = 2 * hw * 1.12 / ((b.max.x - b.min.x) * .69), tall = (b.max.y - b.min.y) * k;
   geo.translate(-(b.min.x + b.max.x) / 2, -b.max.y, -(b.min.z + b.max.z) / 2); geo.scale(k, k, k); geo.translate(mid, top + .4 * tall + .05 * a, cz + .05 * a);
-  const m = gearMesh([{ geo, w: () => [[hairBase.head, 1]], uv: true, back: hairBase.headBack }], new THREE.MeshStandardMaterial({ map, roughness: .55, metalness: 0, side: THREE.DoubleSide })); m.name = name; return m; }
+  const m = gearMesh([{ geo, w: () => [[hairBase.head, 1]], uv: true, back: hairBase.headBack }], new THREE.MeshStandardMaterial({ map, roughness: .55, metalness: 0, side: THREE.DoubleSide })); m.name = name; m.userData.bells = true; return m; }
 async function makeHelmet(name, file = 'udstyr-skaterhjelm.glb') { if (!hairBase?.whole) return null; const { geo: src, map } = await readProp(file), geo = src.clone();
   const { pts } = hairBase.whole, [L, R] = hairBase.eyes, a = L.distanceTo(R), eyeY = (L.y + R.y) / 2, mid = (L.x + R.x) / 2, body = hairBase.body, bsi = body.geometry.attributes.skinIndex, bsw = body.geometry.attributes.skinWeight, V = (x, y, z) => new THREE.Vector3(x, y, z);
   // (the head's own points; over the ears: how wide and how deep it is, and its top)
@@ -3923,10 +3958,10 @@ function footballPrints() { if (!hairBase) return; const { H } = hairBase.whole,
 // garment knows where it sits on the body as made (height, side, front or back, how far it is arm), and the picture is
 // worked out for each dot of the screen from that. No real brand's marks - no three stripes, no swoosh
 var PATTERNS = {
-  shirt: [['', 'Ensfarvet'], ['striber', 'Striber'], ['kontrast', 'Kontrastærmer'], ['baand', 'Bånd'], ['lodret', 'Lodrette striber'], ['jul', 'Julemønster']],
+  shirt: [['', 'Ensfarvet'], ['striber', 'Striber'], ['kontrast', 'Kontrastærmer'], ['baand', 'Bånd'], ['lodret', 'Lodrette striber'], ['jul', 'Julemønster'], ['julr', 'Julemønster med rensdyr']],
   pants: [['', 'Ensfarvet'], ['sidestriber', 'Sidestriber'], ['knae', 'Knælapper'], ['opslag', 'Opslag']],
   shoe: [['', 'Ensfarvet'], ['stribe', 'Stribe'], ['taa', 'Tåkappe'], ['hael', 'Hælkappe']] };
-var PAT_ID = { striber: 1, kontrast: 2, baand: 3, lodret: 4, jul: 5, sidestriber: 11, knae: 12, opslag: 13, stribe: 21, taa: 22, hael: 23 };
+var PAT_ID = { striber: 1, kontrast: 2, baand: 3, lodret: 4, jul: 5, julr: 6, sidestriber: 11, knae: 12, opslag: 13, stribe: 21, taa: 22, hael: 23 };
 var patternNow = {}; // (var, all three: asked for before this line runs, they are just not there yet)
 // (which garments take a pattern: the tops, the trousers but the briefs, and the sneakers - football boots too)
 const patOk = (part, name) => !!name && (part === 'shoe' ? ['sko-sneakers', 'sko-fodbold'].includes(name) : part === 'pants' ? name !== 'bukser-trusser' : part === 'shirt');
@@ -3937,19 +3972,37 @@ float mmBand(float x, float a, float b) { float f = max(fwidth(x), 1e-4); return
 float mmStripe(float x) { float t = abs(fract(x) - .5) * 2.; float f = max(fwidth(t), 1e-4); return smoothstep(.5 - f, .5 + f, t); }
 // (the Christmas jumper - Advent gift 2, 21-11-2026: across the chest a band of snowflakes between two thin lines, a row
 // of little dots under it)
-float mmJul(vec3 r, float arm) { float y0 = mmNeck - .115, a = atan(r.x, r.z), u = a / 6.2832 * 15., v = (r.y - y0) / .043;
+// (a reindeer seen from the side, in a box of -1..1: body, neck, head with a snout, four legs, a little tail and two
+// branching antlers - each a soft-edged shape, joined)
+float mmSeg(vec2 p, vec2 a, vec2 b, float w) { vec2 pa = p - a, ba = b - a; float h = clamp(dot(pa, ba) / dot(ba, ba), 0., 1.); return length(pa - ba * h) - w; }
+float mmEll(vec2 p, vec2 c, vec2 r) { vec2 d = (p - c) / r; return (length(d) - 1.) * min(r.x, r.y); }
+float mmDeer(vec2 q) { float d = mmEll(q, vec2(-.05, -.08), vec2(.52, .25));
+  d = min(d, mmSeg(q, vec2(.32, .02), vec2(.5, .42), .11)); d = min(d, mmEll(q, vec2(.6, .5), vec2(.2, .13))); d = min(d, mmSeg(q, vec2(.62, .46), vec2(.82, .42), .07));
+  d = min(d, mmSeg(q, vec2(-.38, -.2), vec2(-.4, -.78), .06)); d = min(d, mmSeg(q, vec2(-.22, -.22), vec2(-.2, -.78), .06));
+  d = min(d, mmSeg(q, vec2(.2, -.22), vec2(.24, -.78), .06)); d = min(d, mmSeg(q, vec2(.34, -.2), vec2(.4, -.76), .06));
+  d = min(d, mmEll(q, vec2(-.56, .06), vec2(.09, .07)));
+  d = min(d, mmSeg(q, vec2(.54, .6), vec2(.44, .95), .035)); d = min(d, mmSeg(q, vec2(.49, .78), vec2(.33, .88), .03));
+  d = min(d, mmSeg(q, vec2(.66, .6), vec2(.76, .95), .035)); d = min(d, mmSeg(q, vec2(.71, .78), vec2(.86, .86), .03));
+  float f = max(fwidth(d), 1e-4); return 1. - smoothstep(-f, f, d); }
+float mmJulD(vec3 r, float arm, float deer) { float y0 = mmNeck - .115, a = atan(r.x, r.z), u = a / 6.2832 * 15., v = (r.y - y0) / .043;
   vec2 p = vec2((fract(u) - .5), v); float rr = length(p), th = atan(p.y, p.x);
   float flake = (1. - smoothstep(.035, .07, abs(sin(3. * th)) * rr)) * (1. - smoothstep(.36, .4, rr)) + (1. - smoothstep(.07, .1, rr));
   float tips = 0.; for (int i = 0; i < 6; i++) { float b = float(i) * 1.0472; vec2 c = vec2(cos(b), sin(b)) * .28; tips += 1. - smoothstep(.05, .08, length(p - c)); }
   float lines = mmBand(r.y, y0 - .056, y0 - .048) + mmBand(r.y, y0 + .048, y0 + .056);
   float dots = 1. - smoothstep(.14, .2, length(vec2(fract(u * 2.) - .5, (r.y - y0 + .085) / .022)));
-  return clamp(lines + (flake + tips) * step(abs(v), .5) + dots, 0., 1.) * (1. - arm); }
+  float front = deer > .5 ? (1. - smoothstep(.055, .07, abs(r.x))) * step(0., r.z) : 0.;
+  float m = clamp(lines + (flake + tips) * step(abs(v), .5) * (1. - front) + dots, 0., 1.);
+  if (deer > .5) m = max(m, mmDeer(vec2(-r.x, r.y - y0) / .046) * step(0., r.z));
+  return m * (1. - arm); }
+float mmJul(vec3 r, float arm) { return mmJulD(r, arm, 0.); }
+float mmJulR(vec3 r, float arm) { return mmJulD(r, arm, 1.); }
 float mmMask() { vec3 r = vMmRest; float nl = length(vMmNor); vec3 n = nl > .1 ? vMmNor / nl : vec3(0.); float arm = smoothstep(.35, .65, vMmArm), side = r.x < 0. ? -1. : 1.;
   if (mmPat < 1.5) return mmStripe(r.y / .045) * (1. - smoothstep(mmNeck - .03, mmNeck - .02, r.y));
   if (mmPat < 2.5) return arm;
   if (mmPat < 3.5) return mmBand(r.y, mmNeck - .2, mmNeck - .155) * (1. - arm);
   if (mmPat < 4.5) return mmStripe(r.x / .045 + .5) * (1. - arm) * (1. - smoothstep(mmNeck - .03, mmNeck - .02, r.y));
   if (mmPat < 5.5) return mmJul(r, arm);
+  if (mmPat < 6.5) return mmJulR(r, arm);
   if (mmPat < 11.5) { float a = atan(n.z, n.x * side); a = vMmLeg; return vMmLeg < -5. ? 0. : (mmBand(a, .05, .2) + mmBand(a, .32, .47)) * step(r.y, mmCrotch); }
   if (mmPat < 12.5) { vec2 k = side < 0. ? mmKnee.xy : mmKnee.zw; vec2 d = abs(r.xy - k); return mmBand(d.x, -1., .03) * mmBand(d.y, -1., .032) * smoothstep(.15, .35, n.z); }
   if (mmPat < 13.5) return 1. - smoothstep(mmHem + .018, mmHem + .023, r.y);
@@ -4004,7 +4057,7 @@ function paintAllPatterns() { if (PATTERNS) for (const p of Object.keys(PATTERNS
 // (the row of patterns under the colours: each a little picture of the pattern in the garment's colour and the second one)
 function patPreview(id, c, c2) { const g = (a, b) => `linear-gradient(${a}, ${b})`;
   return { '': c, striber: `repeating-linear-gradient(0deg, ${c} 0 6px, ${c2} 6px 11px)`, kontrast: g('90deg', `${c2} 0 26%, ${c} 26% 74%, ${c2} 74%`), baand: g('0deg', `${c} 0 38%, ${c2} 38% 62%, ${c} 62%`),
-    lodret: `repeating-linear-gradient(90deg, ${c} 0 6px, ${c2} 6px 11px)`, jul: `radial-gradient(circle, ${c2} 0 3px, transparent 3.5px) 0 50% / 11px 11px repeat-x, ${g('0deg', `${c} 0 30%, ${c2} 30% 35%, ${c} 35% 65%, ${c2} 65% 70%, ${c} 70%`)}`, sidestriber: g('90deg', `${c} 0 62%, ${c2} 62% 70%, ${c} 70% 78%, ${c2} 78% 86%, ${c} 86%`),
+    lodret: `repeating-linear-gradient(90deg, ${c} 0 6px, ${c2} 6px 11px)`, jul: `radial-gradient(circle, ${c2} 0 3px, transparent 3.5px) 0 50% / 11px 11px repeat-x, ${g('0deg', `${c} 0 30%, ${c2} 30% 35%, ${c} 35% 65%, ${c2} 65% 70%, ${c} 70%`)}`, julr: `radial-gradient(ellipse 9px 6px at 50% 52%, #8B5A2B 0 98%, transparent 100%), radial-gradient(circle, ${c2} 0 3px, transparent 3.5px) 0 50% / 11px 11px repeat-x, ${g('0deg', `${c} 0 30%, ${c2} 30% 35%, ${c} 35% 65%, ${c2} 65% 70%, ${c} 70%`)}`, sidestriber: g('90deg', `${c} 0 62%, ${c2} 62% 70%, ${c} 70% 78%, ${c2} 78% 86%, ${c} 86%`),
     knae: `linear-gradient(${c2}, ${c2}) 22% 62% / 24% 26% no-repeat, linear-gradient(${c2}, ${c2}) 78% 62% / 24% 26% no-repeat, ${c}`, opslag: g('0deg', `${c2} 0 26%, ${c} 26%`),
     stribe: g('0deg', `${c} 0 40%, ${c2} 40% 58%, ${c} 58%`), taa: g('90deg', `${c} 0 62%, ${c2} 62%`), hael: g('90deg', `${c2} 0 32%, ${c} 32%`) }[id] || c; }
 function showPatterns(noColour) { const box = document.getElementById('patterns'); if (!box || !PATTERNS) return; const part = colourPart(), list = PATTERNS[part];
@@ -7346,7 +7399,7 @@ addEventListener('resize', resize); resize(); new ResizeObserver(resize).observe
 renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElapsedTime();
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
-  try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.16.0 (614b970)</div>
+  try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { gearTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.16.0 (09e5b5e)</div>
 </body>
 </html>
