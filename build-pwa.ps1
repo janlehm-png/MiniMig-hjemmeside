@@ -11,11 +11,23 @@ $html = [regex]::Replace($html, '<title>MiniMig(™|&trade;)? version 2</title>'
 $html = $html.Replace('<link rel="manifest" href="manifest.webmanifest">', '<link rel="manifest" href="../manifest.webmanifest">')
 $html = $html.Replace('<meta name="apple-mobile-web-app-title" content="MiniMig 2">', '<meta name="apple-mobile-web-app-title" content="MiniMig">')
 $html = [regex]::Replace($html, '<meta name="robots" content="noindex, nofollow">(<!--[^>]*-->)?', '')
+# (SEO plan 21-11-2026: the words parents search for - boernespil, 3-6 aar, uden reklamer - and a share picture.
+# The older description is taken out first, so a game page built before then gets the new one too)
+$html = [regex]::Replace($html, '<meta name="description" content="Byg din egen MiniMig i 3D, dans og spil sm&aring; spil\. Til b&oslash;rn fra 3 &aring;r\. Ingen konto eller reklamer\.">\r?\n?', '')
+$desc = 'Spil MiniMig&trade; direkte i browseren: byg din egen figur i 3D, dans og spil sm&aring; spil. B&oslash;rnespil til 3&ndash;6 &aring;r &ndash; uden reklamer og uden konto.'
 if ($html -notmatch 'name="description"') {
-  $html = $html.Replace('</head>', '<meta name="description" content="Byg din egen MiniMig i 3D, dans og spil sm&aring; spil. Til b&oslash;rn fra 3 &aring;r. Ingen konto eller reklamer.">' + "`n</head>")
+  $html = $html.Replace('</head>', '<meta name="description" content="' + $desc + '">' + "`n</head>")
 }
 if ($html -notmatch 'rel="canonical"') {
   $html = $html.Replace('</head>', '<link rel="canonical" href="https://minimig.dk/bygogspil/">' + "`n</head>")
+}
+if ($html -notmatch 'property="og:title"') {
+  $html = $html.Replace('</head>', (@(
+    '<meta property="og:type" content="website">', '<meta property="og:site_name" content="MiniMig&trade;">',
+    '<meta property="og:locale" content="da_DK">', '<meta property="og:title" content="MiniMig&trade; &ndash; byg og spil i 3D">',
+    ('<meta property="og:description" content="' + $desc + '">'), '<meta property="og:url" content="https://minimig.dk/bygogspil/">',
+    '<meta property="og:image" content="https://minimig.dk/billeder/delebillede-da.jpg">', '<meta property="og:image:width" content="1200">',
+    '<meta property="og:image:height" content="630">', '<meta name="twitter:card" content="summary_large_image">') -join "`n") + "`n</head>")
 }
 if ($html -notmatch 'src="\.\./pwa\.js"') { # (the page's own comments speak of pwa.js too)
   $html = $html.Replace('</head>', '<link rel="stylesheet" href="../pwa.css"><script src="../pwa.js" defer></script>' + "`n</head>")
