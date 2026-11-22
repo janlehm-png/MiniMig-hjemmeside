@@ -180,8 +180,8 @@
   .trick-pop { position: absolute; left: 50%; top: 30%; z-index: 5; pointer-events: none; transform: translate(-50%, -50%); font: 900 2rem/1.1 system-ui, sans-serif; color: #FFFFFF; white-space: nowrap;
     text-shadow: 0 3px 0 #7C5CFF, 0 6px 16px rgba(0, 0, 0, .35); animation: trickIn 1.1s ease forwards; }
   @keyframes trickIn { 0% { opacity: 0; transform: translate(-50%, -30%) scale(.6); } 15% { opacity: 1; transform: translate(-50%, -50%) scale(1.15); } 30% { transform: translate(-50%, -50%) scale(1); } 75% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -85%) scale(1); } }
-  .lvl-chal { display: block; width: 100%; border: 0; border-radius: 16px; padding: 10px 14px; font: 800 1.05rem system-ui, sans-serif; background: linear-gradient(90deg, #FFD23F, #FF9F1C); color: #2B2153; cursor: pointer; }
-  .lvl-chal.on { background: #F4F0FF; }
+  .lvl-pop .lvl-chal { display: block; width: 100%; height: auto; border: 0; border-radius: 16px; padding: 10px 14px; font: 800 1.05rem system-ui, sans-serif; background: linear-gradient(90deg, #FFD23F, #FF9F1C); color: #2B2153; cursor: pointer; }
+  .lvl-pop .lvl-chal.on { background: #F4F0FF; }
   .ww-go { display: flex; flex-direction: column; gap: 8px; }
   .ww-go button { border: 0; border-radius: 16px; padding: 14px 18px; font: 800 1.1rem system-ui, sans-serif; cursor: pointer; }
   .ww-next { background: #2FB872; color: #FFFFFF; } .ww-next[hidden] { display: none; }
@@ -5168,6 +5168,8 @@ function gameTick(dt) { confettiTick(dt); if (!game.on || !glb) return; const r 
 const SKATE = { push: 'skate-4', lane: .75, deck: .12, from: 18, levels: { 'niveau-meget-let': [3, 2.7], 'niveau-let': [4, 2.2], 'niveau-mellem': [5.2, 1.75], 'niveau-svaer': [6.5, 1.4], 'niveau-meget-svaer': [8, 1.15] } };
 // (the snowboard run - the user, 14-11-2026 - is the skateboard game in another world: on a board, either of them)
 const onBoard = m => m === 'skate' || m === 'snow';
+// (Skate Adventure's first part - see »Stjerne-challenge and tricks« and »Skateparken« below. false: as before 22-11-2026)
+const SKATE_V11 = true;
 const skateLevel = () => { const [speed, gap] = SKATE.levels[game.level] || [4, 2.2]; return { speed, gap }; };
 const sk = { rig: null, board: null, road: null, roadTex: null, live: [], pools: {}, lane: 0, x: 0, lean: 0, slow: 0, wobble: 0, next: 0 };
 const skMat = (c, r = .6, e) => new THREE.MeshStandardMaterial({ color: c, roughness: r, ...(e ? { emissive: new THREE.Color(e), emissiveIntensity: .35 } : {}) });
@@ -5311,7 +5313,7 @@ function skWorldBuild() { if (sk.world) return; const w = sk.world = new THREE.G
 // the verge, bushes and trees further out, houses behind them, and now and then a tree far out in the meadow)
 function skSidePut(kind, u, x, rot = 0, size = 1) { const pool = sk.sidePools[kind] ??= []; let g = pool.find(p => !p.visible); if (!g) { g = SK_SIDE[kind](); pool.push(g); sk.ground.add(g); }
   g.visible = true; g.scale.setScalar(size); sk.side.push({ g, u, x, rot, kind }); }
-function skSideRow(u) { if (sk.look === 'by') return citySideRow(u); if (sk.look === 'strand') return strandSideRow(u); sk.rowN = (sk.rowN || 0) + 1;
+function skSideRow(u) { if (sk.look === 'skatepark') return parkSideRow(u); if (sk.look === 'by') return citySideRow(u); if (sk.look === 'strand') return strandSideRow(u); sk.rowN = (sk.rowN || 0) + 1;
   if (sk.snowLook === 'skov') return skovSideRow(u); if (sk.snowLook === 'isslot') return isSideRow(u);
   for (const s of [-1, 1]) { const E = SKW.edge, r = Math.random(), turn = s > 0 ? -Math.PI / 2 : Math.PI / 2;
     // (in the snow: firs only, some near the run and some far off)
@@ -5425,7 +5427,7 @@ function skTheme(snow, look = 'park') { sk.snow = !!snow; skWorldBuild(); skCity
     sk.pisteTex = tex(c => { c.fillStyle = '#E4EFFB'; c.fillRect(0, 0, 256, 256); c.fillStyle = 'rgba(150,185,225,.35)'; for (let x = 4; x < 256; x += 8) c.fillRect(x, 0, 2, 256);
       const rw = SKATE.lane * 3 + .3; c.fillStyle = 'rgba(90,140,205,.55)'; for (const q of [-1, 1]) c.fillRect((.5 + q * SKATE.lane / 2 / rw) * 256 - 2, 0, 4, 128); c.fillStyle = '#4F86D9'; c.fillRect(0, 0, 6, 256); c.fillRect(250, 0, 6, 256); }); sk.pisteTex.repeat.set(1, 20); }
   { const k = snow ? SNOW_SLOPE : 0; sk.ground.matrix.set(1, 0, 0, 0, 0, 1, k, 0, 0, 0, 1, 0, 0, 0, 0, 1); sk.ground.matrixWorldNeedsUpdate = true; sk.hills.position.y = snow ? (sk.snowLook === 'isslot' ? -19 : -11) : 0; }
-  sk.grass.material.map = snow ? sk.snowTex : sk.look === 'by' ? sk.tileTex : sk.look === 'strand' ? sk.sandTex : sk.grassTex; sk.grass.material.needsUpdate = true; sk.hills.visible = sk.look !== 'by' && sk.look !== 'strand'; sk.city.visible = sk.look === 'by'; sk.beach.visible = sk.beachFar.visible = sk.look === 'strand'; sk.road.material.map = snow ? sk.pisteTex : sk.look === 'strand' ? sk.boardTex : sk.roadTex; sk.road.material.needsUpdate = true;
+  if (sk.look === 'skatepark' && !sk.parkRoadTex) skParkTex(); sk.grass.material.map = snow ? sk.snowTex : sk.look === 'skatepark' ? sk.plazaTex : sk.look === 'by' ? sk.tileTex : sk.look === 'strand' ? sk.sandTex : sk.grassTex; sk.grass.material.needsUpdate = true; sk.hills.visible = sk.look !== 'by' && sk.look !== 'strand'; sk.city.visible = sk.look === 'by'; sk.beach.visible = sk.beachFar.visible = sk.look === 'strand'; sk.road.material.map = snow ? sk.pisteTex : sk.look === 'skatepark' ? sk.parkRoadTex : sk.look === 'strand' ? sk.boardTex : sk.roadTex; sk.road.material.needsUpdate = true;
   // (the snowboard in the skateboard's place)
   if (snow && !sk.snowBoard) { sk.snowBoard = new THREE.Group(); sk.snowBoard.position.y = .02; sk.board.add(sk.snowBoard); propInto(sk.snowBoard, 'udstyr-snowboard.glb', 1.3, SNOW_BOARD_TURN, [], 'w'); }
   for (const o of sk.boardParts || []) o.visible = !snow; if (sk.snowBoard) sk.snowBoard.visible = !!snow;
@@ -5443,11 +5445,14 @@ const WORLDS = { skate: [['park', 'Parken', 'the park', '🌳', '#5DBF55'], ['by
   sea: [['hav', 'Havet', 'the sea', '🐠', '#2FA3E0'], ['rev', 'Koralrevet', 'the coral reef', '🐚', '#FF6FA8'], ['skib', 'Det sunkne skib', 'the sunken ship', '⚓', '#1C5C99']] };
 // (250, every star counting 1 on every level - the user, 19-11-2026: worlds opened far too fast at 60 with Svær x3;
 // about 3-4 rides on Let, 1-2 on Svær, the harder levels faster only by more things on the road)
+// (Skateparken - the user, 22-11-2026: a fourth world, always open, not won by a jar)
+if (SKATE_V11) WORLDS.skate.push(['skatepark', 'Skateparken', 'the skate park', '🛹', '#8C93A8']);
+const worldAlways = (mode, i) => SKATE_V11 && mode === 'skate' && WORLDS.skate[i]?.[0] === 'skatepark';
 const JAR = 250, JAR_GAIN = { 'niveau-meget-let': 1, 'niveau-let': 1, 'niveau-mellem': 1, 'niveau-svaer': 1, 'niveau-meget-svaer': 1 };
 // (each child's own: the world played now, how full each jar is, how many are open, and those won - kept with the stars)
 function worldsOf(mode) { score.worlds ??= {}; const w = score.worlds[mode] ??= { now: 0, jar: [], open: 1, won: [] }; w.jar ??= []; w.won ??= []; return w; }
 const worldOk = (mode, i) => i < 2 || free('verden-' + (i + 1));
-function worldNow(mode) { if (!WORLDS[mode]) return 0; const w = worldsOf(mode); return Math.max(0, Math.min(w.now || 0, w.open - 1, WORLDS[mode].length - 1)); }
+function worldNow(mode) { if (!WORLDS[mode]) return 0; const w = worldsOf(mode); if (worldAlways(mode, w.now)) return w.now; return Math.max(0, Math.min(w.now || 0, w.open - 1, WORLDS[mode].length - 1)); }
 function showJar() { const el = document.getElementById('hudJar'); if (!el) return; const L = WORLDS[game.mode]; el.hidden = !L || !game.on; if (el.hidden) return;
   const i = worldNow(game.mode), v = worldsOf(game.mode).jar[i] || 0; el.style.setProperty('--f', Math.min(1, v / JAR).toFixed(3)); el.title = T(`Stjernekrukken i ${L[i][1]}`, `The star jar in ${L[i][2]}`); }
 function jarGain(n) { const L = WORLDS[game.mode]; if (!L || !game.on || n <= 0) return; const w = worldsOf(game.mode), i = worldNow(game.mode), was = w.jar[i] || 0;
@@ -5462,10 +5467,10 @@ function worldWin(i, next) { const L = WORLDS[game.mode], mode = game.mode; game
   stay.textContent = next > 0 ? T(`Bliv i ${L[i][1]}`, `Stay in ${L[i][2]}`) : T('Videre', 'Go on');
   const close = () => { document.getElementById('worldWin').hidden = true; game.paused = false; };
   go.onclick = () => { close(); setWorld(mode, next); }; stay.onclick = close; document.getElementById('worldWin').hidden = false; }
-function setWorld(mode, i) { const w = worldsOf(mode); if (i >= w.open) return; w.now = i; saveScore(); if (game.on && game.mode === mode) { stopGame(true); startGame(mode); } }
+function setWorld(mode, i) { const w = worldsOf(mode); if (i >= w.open && !worldAlways(mode, i)) return; w.now = i; saveScore(); if (game.on && game.mode === mode) { stopGame(true); startGame(mode); } }
 // (the worlds' row in the level box: a picture of each, its jar under it; one not open yet faded, and a tap on it does nothing)
 function worldRow() { const L = WORLDS[game.mode]; if (!L) return null; const w = worldsOf(game.mode), now = worldNow(game.mode), d = document.createElement('div'); d.className = 'worlds';
-  L.forEach(([id, da, en, sign, col], i) => { if (!worldOk(game.mode, i)) return; const b = document.createElement('button'), open = i < w.open; b.style.background = col; b.classList.toggle('on', i === now); b.classList.toggle('shut', !open);
+  L.forEach(([id, da, en, sign, col], i) => { if (!worldOk(game.mode, i)) return; const b = document.createElement('button'), open = i < w.open || worldAlways(game.mode, i); b.style.background = col; b.classList.toggle('on', i === now); b.classList.toggle('shut', !open);
     b.setAttribute('aria-label', T(da, en)); b.innerHTML = `<span>${sign}</span><b><i style="width:${Math.round(100 * Math.min(1, (w.jar[i] || 0) / JAR))}%"></i></b>`;
     b.onclick = () => { if (!open) { toast(T(`Fyld stjernekrukken for at komme til ${da}`, `Fill the star jar to get to ${en}`)); return; } lvlPop.hidden = true; if (i !== now) setWorld(game.mode, i); showLvl(); }; d.append(b); });
   return d; }
@@ -5669,6 +5674,8 @@ function skateThing(kind) { const pool = sk.pools[kind] ??= [], free = pool.find
   if (kind === 'kegle') { add(new THREE.BoxGeometry(.36, .04, .36), skMat('#FF7A2F', .5), 0, .02, 0); add(new THREE.ConeGeometry(.17, .46, 24), skMat('#FF7A2F', .5), 0, .27, 0); add(new THREE.CylinderGeometry(.1, .12, .07, 24), skMat('#FFFFFF', .5), 0, .26, 0); propInto(g, 'by-kegle.glb', .52); half = .2; len = .36; }
   if (kind === 'kasse') { add(new THREE.BoxGeometry(.62, .62, .62), skMat('#C98B4B', .85), 0, .31, 0); for (const y of [.12, .5]) add(new THREE.BoxGeometry(.64, .06, .64), skMat('#9C6630', .85), 0, y, 0); half = .32; len = .62; }
   if (kind === 'rail') { for (const z of [-1.2, 0, 1.2]) add(new THREE.BoxGeometry(.06, .45, .06), skMat('#E8384F', .4), 0, .225, z); for (let k = 0; k < 6; k++) add(new THREE.BoxGeometry(.08, .08, .4), skMat(k % 2 ? '#FFFFFF' : '#E8384F', .4), 0, .45, -1 + k * .4); half = .14; len = 2.6; }
+  if (kind === 'grind') { for (const z of [-.95, .95]) add(new THREE.BoxGeometry(.05, .22, .05), skMat('#5A5F6A', .4), 0, .11, z); const bar = add(new THREE.CylinderGeometry(.035, .035, 2.3, 12), skMat('#DDE3EC', .2), 0, .24, 0); bar.rotation.x = Math.PI / 2;
+    for (const z of [-1.15, 1.15]) add(new THREE.BoxGeometry(.09, .09, .09), skMat('#FFD23F', .4), 0, .24, z); half = .14; len = 2.4; }
   if (kind === 'bom') { for (const x of [-.85, .85]) add(new THREE.BoxGeometry(.08, .55, .08), skMat('#3A2E5C', .5), x, .275, 0); for (let k = 0; k < 8; k++) add(new THREE.BoxGeometry(.22, .14, .1), skMat(k % 2 ? '#FFFFFF' : '#E8384F', .4), -.77 + k * .22, .45, 0); half = .9; len = .3; }
   if (kind === 'stjerne') { const s = new THREE.Shape(); for (let k = 0; k < 10; k++) { const r = k % 2 ? .085 : .2, a = Math.PI / 2 + k * Math.PI / 5; k ? s.lineTo(r * Math.cos(a), r * Math.sin(a)) : s.moveTo(r * Math.cos(a), r * Math.sin(a)); }
     const geo = new THREE.ExtrudeGeometry(s, { depth: .05, bevelEnabled: true, bevelThickness: .03, bevelSize: .025, bevelSegments: 3 }); geo.translate(0, 0, -.025); add(geo, skMat('#FFC233', .25, '#A36A00'), 0, .75, 0); half = .25; len = .4; }
@@ -5832,7 +5839,7 @@ const SK_CITY = [[['kegle', 2.5], ['skrald', 2], ['fontaene', 2], ['rampe', 2], 
   [['kegle', 2], ['skrald', 2], ['afspaerring', 2.2], ['rail', 1.2], ['fontaene', 1.5], ['rampe', 2], ['duer', 1.4], ['dyr', 1.8], ['balloner', .8], ['bold', 1.4]]];
 // (a row of things far down the road: one thing - or a bar over two lanes - and, mostly, stars in a free lane; the
 // easiest levels only cones and crates)
-function skPut(it, x, u) { Object.assign(it, { x, u, hit: false, done: false, mine: false, dir: 0, vy: 0, pair: null, over: false }); { const ud = it.group.userData; if (ud.snow) { ud.snow.visible = !!sk.snow; for (const o of ud.wood) o.visible = !sk.snow; } } it.group.position.set(x, 0, -u); it.group.rotation.set(0, 0, 0); it.group.visible = true;
+function skPut(it, x, u) { if (it.hy) { it.group.position.y -= it.hy; it.hy = 0; } Object.assign(it, { x, u, hit: false, done: false, mine: false, dir: 0, vy: 0, pair: null, over: false }); { const ud = it.group.userData; if (ud.snow) { ud.snow.visible = !!sk.snow; for (const o of ud.wood) o.visible = !sk.snow; } } it.group.position.set(x, 0, -u); it.group.rotation.set(0, 0, 0); it.group.visible = true;
   if (it.lid) { it.lid.position.set(0, .4, 0); it.lid.rotation.set(0, 0, 0); it.lid.visible = true; } if (it.body) it.body.rotation.set(0, 0, 0); if (it.body) it.body.position.y = it.kind === 'bold' ? .26 : 0; it.reset?.(); sk.live.push(it); }
 function skateRow(from = SKATE.from) { const easy = ['niveau-meget-let', 'niveau-let'].includes(game.level), r = Math.random(), used = new Set();
   const put = skPut;
@@ -5844,7 +5851,7 @@ function skateRow(from = SKATE.from) { const easy = ['niveau-meget-let', 'niveau
   // and gone from the road five seconds' ride later)
   const rampNear = sk.rampWait > 0;
   const pets = skPetsIn();
-  const kind = pick((sk.snow && SK_SNOWW[sk.snowLook] ? SK_SNOWW[sk.snowLook][easy ? 0 : 1] : sk.look === 'by' ? SK_CITY[easy ? 0 : 1] : sk.look === 'strand' ? SK_STRAND[easy ? 0 : 1] : easy ? [['kegle', 3], ['kasse', 2], ['pyt', 2], ['rampe', 2], ['and', 1.2], ['dyr', 1.6], ['gave', .8], ['bold', 1]]
+  const kind = pick((sk.snow && SK_SNOWW[sk.snowLook] ? SK_SNOWW[sk.snowLook][easy ? 0 : 1] : sk.look === 'skatepark' ? SK_PARK[easy ? 0 : 1] : sk.look === 'by' ? SK_CITY[easy ? 0 : 1] : sk.look === 'strand' ? SK_STRAND[easy ? 0 : 1] : easy ? [['kegle', 3], ['kasse', 2], ['pyt', 2], ['rampe', 2], ['and', 1.2], ['dyr', 1.6], ['gave', .8], ['bold', 1]]
     : [['kegle', 2.5], ['kasse', 2], ['rail', 1.5], ['bom', 2], ['pyt', 1.5], ['rampe', 2], ['and', 1.2], ['dyr', 1.8], ['gave', .7], ['bold', 1.5]]).filter(([k]) => (k !== 'rampe' || !rampNear) && (k !== 'dyr' || pets.length) && !(sk.snow && ['pyt', 'and', 'bold', 'kasse', 'rail', 'bom'].includes(k))));
   if (kind === 'bom' || kind === 'afspaerring' || kind === 'surf') { const left = Math.random() < .5; put(skateThing(kind), (left ? -.5 : .5) * SKATE.lane, from); used.add(left ? -1 : 1); used.add(0); }
   // (the duck and the ball cross the road from one side to the other, timed to be in the middle about as they come by)
@@ -5859,7 +5866,7 @@ function skateRow(from = SKATE.from) { const easy = ['niveau-meget-let', 'niveau
   // (the stars never in the lane the figure rides in now - one has to steer to them, not just stand)
   if (Math.random() < (easy ? .9 : .7)) { const free = [-1, 0, 1].filter(l => !used.has(l) && l !== sk.lane); if (free.length) { const lane = free[Math.floor(Math.random() * free.length)], n = 1 + Math.floor(Math.random() * 3);
     if (skc.on) skc.possible += n; for (let k = 0; k < n; k++) put(skateThing('stjerne'), lane * SKATE.lane, from + (k - (n - 1) / 2) * 1.1); } } }
-function skateStart(snow) { skateBuild(); skTheme(snow, WORLDS[game.mode] ? WORLDS[game.mode][worldNow(game.mode)][0] : 'park'); Object.assign(sk, { lane: 0, x: 0, lean: 0, slow: 0, wobble: 0, next: .3, first: true, curve: 0, curveTo: 0, curveT: 3, jy: 0, jv: 0, spin: 0, rampWait: 0, fork: null, forkT: snow ? Infinity : 13, lastDir: 0 }); if (sk.forkG) sk.forkG.visible = false; for (const it of sk.live) it.group.visible = false; sk.live = [];
+function skateStart(snow) { skateBuild(); skTheme(snow, WORLDS[game.mode] ? WORLDS[game.mode][worldNow(game.mode)][0] : 'park'); Object.assign(sk, { lane: 0, x: 0, lean: 0, slow: 0, wobble: 0, next: .3, first: true, curve: 0, curveTo: 0, curveT: 3, jy: 0, jv: 0, spin: 0, rampWait: 0, fork: null, forkT: snow || sk.look === 'skatepark' ? Infinity : 13, lastDir: 0, trav: 0, humpS: 0, grind: null, gl: 0 }); if (sk.forkG) sk.forkG.visible = false; for (const it of sk.live) it.group.visible = false; sk.live = [];
   holder.add(sk.rig); sk.rig.position.set(0, 0, 0); sk.rig.rotation.set(0, 0, 0); sk.rig.add(glb); sk.ground.add(sk.road); skWorldStart();
   // (riding: the standing with the page's own pose, arms out - Mixamo's riding stood with a foot each side of our board,
   // the user said, 03-11-2026; it was made for a board pointing the way the figure faces. Its push off, Skateboarding
@@ -5876,10 +5883,9 @@ function skateStop() { skc.on = false; chalEl.hidden = true; if (!sk.rig?.parent
 // off every ramp one picked by the page - the spin as before, a kickflip, a shove-it, a flip, a double spin on the harder
 // levels - its name in the picture; a tap up in the air puts a kickflip (or a shove-it) on top, for two more stars.
 // Snowboarding stays as it was
-const SKATE_V11 = true;
-const SK_TRICKS = { spin: ['360 Spin', '360 Spin'], dobbelt: ['Dobbelt-spin', 'Double spin'], kickflip: ['Kickflip', 'Kickflip'], shuvit: ['Shove-it', 'Shove-it'], salto: ['Salto!', 'Flip!'] };
+const SK_TRICKS = { spin: ['360 Spin', '360 Spin'], dobbelt: ['Dobbelt-spin', 'Double spin'], kickflip: ['Kickflip', 'Kickflip'], shuvit: ['Shove-it', 'Shove-it'], salto: ['Salto!', 'Flip!'], grind: ['Grind!', 'Grind!'] };
 // (what each thing on the road can give - for the medal: the stars won against those there were to win)
-const SK_WORTH = { stjerne: 1, rampe: 2, gave: 3, pyt: 1, fontaene: 1, balloner: 2, skattekiste: 3, duer: 1, maager: 1, krystal: 3, snebunke: 1 };
+const SK_WORTH = { stjerne: 1, rampe: 2, gave: 3, pyt: 1, fontaene: 1, balloner: 2, skattekiste: 3, duer: 1, maager: 1, krystal: 3, snebunke: 1, grind: 2 };
 const skc = { want: false, on: false, dist: 0, goal: 1, possible: 0, tricks: {} };
 const chalEl = Object.assign(document.createElement('span'), { className: 'chal', id: 'hudChal', hidden: true, innerHTML: '<b><i></i></b>🏁' });
 document.querySelector('#hud .hud-left')?.append(chalEl);
@@ -5915,8 +5921,53 @@ function skChalEnd() { skc.on = false; chalEl.hidden = true; const n = game.star
   go.hidden = false; go.textContent = T('🔁 Prøv igen', '🔁 Try again'); stay.textContent = T('🛹 Kør frit', '🛹 Ride freely');
   go.onclick = () => { close(); stopGame(true); startGame('skate'); }; stay.onclick = () => { close(); skc.want = false; };
   document.getElementById('worldWin').hidden = false; }
+// ---- Skateparken (the user, 22-11-2026: "mere en skateboardbane" - not only the flat road with tricks on it). The
+// skateboard's fourth world, open from the start: grey concrete with painted edges in place of the asphalt, a plaza of
+// concrete slabs round it, quarter pipes and walls with paint on them beside it, trees further out. The road rolls in
+// soft bumps one rides up and over - a little hop off each top, a tap up there a kickflip - and bends more and more
+// often; grind rails lie in the lanes: ride onto one and the board slides along it, sparks flying ("Grind!"). The
+// ramps and their tricks as everywhere. No forks here
+SK_GOOD.add('grind');
+const SK_PARK = [[['kegle', 2], ['rampe', 2.6], ['grind', 2.2], ['gave', .8], ['dyr', 1], ['bold', .8]],
+  [['kegle', 2], ['kasse', 1.6], ['bom', 1.4], ['rampe', 2.6], ['grind', 2.2], ['gave', .7], ['dyr', 1.2], ['bold', 1.2]]];
+const PARK = { per: 8.5, len: 4.2, h: .5 };
+const skParkOn = () => SKATE_V11 && !sk.snow && sk.look === 'skatepark';
+// (the road's height u down it: a bump every eight and a half metres, four long, half a metre high; low at the road's edges, so it meets the plaza)
+function skHump(u) { if (!skParkOn()) return 0; const q = (((u + (sk.trav || 0)) % PARK.per) + PARK.per) % PARK.per; return q > PARK.len ? 0 : PARK.h * .5 * (1 - Math.cos(2 * Math.PI * q / PARK.len)); }
+function skEdge(x) { const t = Math.max(0, Math.min(1, (1.28 - Math.abs(x)) / .33)); return t * t * (3 - 2 * t); }
+// (along the track; over a bump's top a little hop - higher the faster - no trick of its own, steering still allowed)
+function skParkRide(dt, v) { if (!skParkOn()) return; sk.trav = (sk.trav || 0) + v * dt; const q = ((sk.trav % PARK.per) + PARK.per) % PARK.per, top = PARK.len / 2;
+  if (sk.humpS < top && q >= top && !(sk.jy > 0) && !sk.gl) { const H = .06 + .025 * v, g = 9.8 * .8; sk.jv = Math.sqrt(2 * g * H); sk.jg = g; sk.jt = 2 * sk.jv / g; sk.jy = .001; sk.spin = 0; sk.trick = 'none'; sk.extra = null; }
+  sk.humpS = q; }
+// (on a grind rail: up on it, sliding along, sparks; off at its end)
+function skGrindLift(dt) { const r = sk.grind; let want = 0; if (r && r.group.visible && r.u > -r.len / 2 - .1 && Math.abs(sk.x - r.x) < .3) want = .3; else sk.grind = null;
+  sk.gl = (sk.gl || 0) + (want - (sk.gl || 0)) * Math.min(1, dt * 14); if (sk.gl < .01) sk.gl = 0; if (want && Math.random() < .12) skateBits('guld', sk.x, .3 + skHump(0), 0, 1); return sk.gl; }
+function skParkTex() { const R = Math.random, tex = (draw, rx, ry) => { const cv = document.createElement('canvas'); cv.width = cv.height = 256; draw(cv.getContext('2d')); const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, ry); t.anisotropy = 4; return t; };
+  const grit = (c, n) => { for (let i = 0; i < n; i++) { c.fillStyle = `rgba(${R() < .5 ? '255,255,255' : '60,62,70'},${(R() * .18).toFixed(3)})`; c.fillRect(R() * 256, R() * 256, 1 + R() * 2, 1 + R() * 2); } };
+  // (the track: light grey concrete, a joint across every few metres, white lines between the lanes, pink and yellow edges)
+  sk.parkRoadTex = tex(c => { c.fillStyle = '#AEB3BD'; c.fillRect(0, 0, 256, 256); grit(c, 1600); c.fillStyle = 'rgba(70,72,82,.35)'; for (const y of [0, 128]) c.fillRect(0, y, 256, 2);
+    const rw = SKATE.lane * 3 + .3; c.fillStyle = '#FFFFFF'; for (const q of [-1, 1]) c.fillRect((.5 + q * SKATE.lane / 2 / rw) * 256 - 3, 20, 6, 88);
+    c.fillStyle = '#FF6FB1'; c.fillRect(0, 0, 10, 256); c.fillRect(246, 0, 10, 256); c.fillStyle = '#FFD23F'; c.fillRect(10, 0, 5, 256); c.fillRect(241, 0, 5, 256); }, 1, 20);
+  // (the plaza: paler slabs, their joints, a few faded painted spots)
+  sk.plazaTex = tex(c => { c.fillStyle = '#C2C6CE'; c.fillRect(0, 0, 256, 256); grit(c, 1400); c.fillStyle = 'rgba(80,84,96,.28)'; c.fillRect(0, 0, 256, 2); c.fillRect(0, 0, 2, 256); c.fillRect(0, 128, 256, 1.5); c.fillRect(128, 0, 1.5, 256);
+    for (let k = 0; k < 3; k++) { c.fillStyle = ['rgba(255,111,177,.22)', 'rgba(61,139,255,.2)', 'rgba(255,210,63,.25)'][k]; c.beginPath(); c.arc(30 + R() * 196, 30 + R() * 196, 10 + R() * 22, 0, 7); c.fill(); } }, 30, 20); }
+// (a quarter pipe: its low edge towards the road, curving up to a metal coping and a painted deck)
+SK_SIDE.qp = () => { const r = 1.1, sh = new THREE.Shape(); sh.moveTo(-r, 0); for (let k = 1; k <= 12; k++) { const a = k / 12 * Math.PI / 2; sh.lineTo(-r + r * Math.sin(a), r - r * Math.cos(a)); } sh.lineTo(.5, r); sh.lineTo(.5, 0); sh.closePath();
+  const geo = new THREE.ExtrudeGeometry(sh, { depth: 2.6, bevelEnabled: false }); geo.translate(0, 0, -1.3); const g = new THREE.Group(), m = new THREE.Mesh(geo, skMat('#9AA1AE', .85)); m.castShadow = m.receiveShadow = true; g.add(m);
+  const cope = new THREE.Mesh(new THREE.CylinderGeometry(.045, .045, 2.6, 10), skMat('#E8ECF2', .3)); cope.rotation.x = Math.PI / 2; cope.position.set(0, r, 0); g.add(cope);
+  const deck = new THREE.Mesh(new THREE.BoxGeometry(.5, .02, 2.6), skMat(['#FF6FB1', '#3D8BFF', '#FFD23F', '#2FB872'][Math.floor(Math.random() * 4)], .6)); deck.position.set(.25, r + .011, 0); g.add(deck); return g; };
+// (a low wall with blobs of paint on the side towards the road)
+SK_SIDE.mur = () => { const G = SK_SIDE.geo, R = Math.random, cols = ['#FF6FB1', '#3D8BFF', '#FFD23F', '#2FB872', '#9B6BFF', '#FF8A3D'], parts = [[G.box, '#E6E1D6', 0, .7, 0, .22, 1.4, 2.6], [G.box, '#BDB7AA', 0, 1.42, 0, .26, .06, 2.65]];
+  for (let k = 0; k < 7; k++) parts.push([G.ball, cols[Math.floor(R() * cols.length)], -.12, .3 + R() * .9, (R() - .5) * 2.1, .02, .12 + R() * .25, .2 + R() * .45]); return skPiece(parts); };
+function parkSideRow(u) { sk.rowN = (sk.rowN || 0) + 1; const E = SKW.edge, n = sk.rowN;
+  for (const s of [-1, 1]) { const out = s > 0 ? 0 : Math.PI;
+    if (n % 9 === (s > 0 ? 0 : 4)) skSidePut('lygte', u, s * (E + .45), out);
+    if (n % 4 === (s > 0 ? 1 : 3)) skSidePut('qp', u, s * (E + 2.2), out);
+    else if (n % 7 === (s > 0 ? 3 : 5)) skSidePut('mur', u, s * (E + 2.6), out);
+    else if (Math.random() < .12) skSidePut('baenk', u, s * (E + 1.2), out);
+    if (Math.random() < .55) skSidePut(Math.random() < .5 ? 'trae' : 'gran', u + Math.random(), s * (E + 6 + Math.random() * 8), 0, .9 + Math.random() * .5); } }
 // (not up in the air off a ramp - only once landed again, the user said 10-11-2026)
-function steer(dir) { if (!game.on || !onBoard(game.mode) || sk.jy > 0) return; let lane = Math.max(-1, Math.min(1, sk.lane + dir));
+function steer(dir) { if (!game.on || !onBoard(game.mode) || (sk.jy > 0 && sk.trick !== 'none')) return; let lane = Math.max(-1, Math.min(1, sk.lane + dir));
   // (at a fork there is no middle: before the island the other side is chosen in one go; beside it one stays on one's side)
   if (lane === 0 && skForkShut()) { if (sk.fork.u < 1.2) return; lane = dir; }
   if (lane === sk.lane) return; sk.lane = lane; sk.lastDir = dir; game.hint = 0; sfx('swish'); }
@@ -5952,17 +6003,19 @@ function skateTick(dt) { dt = Math.min(dt, .1); // (never a long jump after a pa
   // (slower while pushing off, faster with each push)
   const v = L.speed * (sk.slow > 0 ? .45 : 1) * (sk.push && pa ? .45 + .55 * pa.time / pa.getClip().duration : 1);
   // (the lane: glided over, leaning into the turn; a wobble after hitting a thing)
+  skParkRide(dt, v);
   const dx = sk.lane * SKATE.lane - sk.x; sk.x += dx * Math.min(1, dt * 9); sk.lean += (-dx * .45 - sk.lean) * Math.min(1, dt * 10);
   // (out on one side of a fork the picture follows half the way, so the figure is not at its edge)
   { const pan = skShift(sk.x, 0) * .5; camera.position.x += pan; controls.target.x += pan; camera.lookAt(controls.target); }
   sk.rig.position.x = sk.x + skShift(sk.x, 0); sk.rig.rotation.z = sk.lean + (sk.wobble > 0 ? Math.sin(sk.wobble * 30) * .14 * sk.wobble : 0);
   // (off a ramp: up in the air, round once, and down on the board again)
   if (sk.jy > 0 || sk.jv > 0) { sk.jv -= sk.jg * dt; sk.jy = Math.max(0, sk.jy + sk.jv * dt); sk.spin = Math.min(Math.PI * 2, sk.spin + dt * Math.PI * 2 / sk.jt); if (!sk.jy) { sk.jv = 0; sk.spin = 0; sk.trick = null; sk.extra = null; } }
-  const trick = SKATE_V11 && !sk.snow ? sk.trick : null; sk.rig.position.y = sk.jy; sk.rig.rotation.y = !trick || trick === 'spin' ? sk.spin : trick === 'dobbelt' ? 2 * sk.spin : 0; sk.rig.rotation.x = sk.snow ? -Math.atan(SNOW_SLOPE) * .7 : 0; // (leaning down the hill with the board)
+  const trick = SKATE_V11 && !sk.snow ? sk.trick : null; sk.rig.position.y = sk.jy + skHump(0) + skGrindLift(dt); sk.rig.rotation.y = !trick || trick === 'spin' ? sk.spin : trick === 'dobbelt' ? 2 * sk.spin : 0; sk.rig.rotation.x = sk.snow ? -Math.atan(SNOW_SLOPE) * .7 : Math.atan((skHump(.15) - skHump(-.15)) / .3) * .8; // (leaning down the hill with the board)
   // (the bend: a new way every few seconds, eased into)
-  if ((sk.curveT -= dt) <= 0) { sk.curveTo = Math.random() < .25 ? 0 : (Math.random() < .5 ? -1 : 1) * (.5 + Math.random() * .5); sk.curveT = 4 + Math.random() * 4; }
+  if ((sk.curveT -= dt) <= 0) { const pk = skParkOn(); sk.curveTo = Math.random() < (pk ? .1 : .25) ? 0 : (Math.random() < .5 ? -1 : 1) * (.5 + Math.random() * .5) * (pk ? 1.6 : 1); sk.curveT = pk ? 2.5 + Math.random() * 3 : 4 + Math.random() * 4; }
   sk.curve += (sk.curveTo - sk.curve) * Math.min(1, dt * .35);
-  { const P = sk.road.geometry.attributes.position; for (let i = 0; i < P.count; i++) P.setX(i, sk.roadX[i] + skBend(26 + P.getY(i)) + skShift(sk.roadX[i], 26 + P.getY(i))); P.needsUpdate = true; }
+  { const P = sk.road.geometry.attributes.position, pk = skParkOn(); for (let i = 0; i < P.count; i++) { P.setX(i, sk.roadX[i] + skBend(26 + P.getY(i)) + skShift(sk.roadX[i], 26 + P.getY(i))); if (pk) P.setZ(i, skHump(26 + P.getY(i)) * skEdge(sk.roadX[i])); else if (sk.roadBumped) P.setZ(i, 0); }
+    P.needsUpdate = true; if (pk || sk.roadBumped) { sk.road.geometry.computeVertexNormals(); sk.roadBumped = pk; } }
   for (const b of sk.bits) if (b.mesh.visible) { b.v.y -= 9.8 * dt; b.mesh.position.addScaledVector(b.v, dt); if ((b.life -= dt) <= 0 || b.mesh.position.y < 0) b.mesh.visible = false; }
   { const rt = sk.road.material.map; rt.offset.y = (rt.offset.y + v * dt / 3) % 1; } skForkTick(dt, v); skWorldTick(dt, v); skatePose(); skTrickPose(); skChalTick(dt, v);
   // (the first row near: down the far end of the road it took 7 seconds on the easiest level before anything happened, the
@@ -5971,7 +6024,7 @@ function skateTick(dt) { dt = Math.min(dt, .1); // (never a long jump after a pa
   if ((sk.next -= dt) <= 0 && sk.fork && SKATE.from > sk.fork.u - 7 && SKATE.from < sk.fork.u + SK_FORK.len + 3) sk.next = .25;
   if (sk.next <= 0) { skateRow(sk.first ? Math.min(SKATE.from, L.speed * 3) : SKATE.from); sk.first = false; sk.next = L.gap * (.85 + Math.random() * .4) - Math.min(.3, game.stars * .008); }
   const now = performance.now() / 1000;
-  for (const it of [...sk.live]) { it.u -= v * dt; const g = it.group, k = it.kind, star = k === 'stjerne', good = SK_GOOD.has(k);
+  for (const it of [...sk.live]) { it.u -= v * dt; const g = it.group, k = it.kind, star = k === 'stjerne', good = SK_GOOD.has(k); if (it.hy) g.position.y -= it.hy;
     if (star) { g.rotation.y += dt * 3; g.position.y = .06 * Math.sin(now * 3.3 + it.x * 3); }
     // (the duck waddles, the ball bounces - both across the road, and on out of it)
     if (k === 'and' && it.body.userData.walker) it.body.userData.walker.mixer.update(dt * (it.hit ? 2.4 : 1.5));
@@ -5986,6 +6039,7 @@ function skateTick(dt) { dt = Math.min(dt, .1); // (never a long jump after a pa
     if (k === 'gave' && it.hit) { it.lid.position.y += (it.vy -= 9.8 * dt) * dt; it.lid.rotation.x += dt * 7; if (it.lid.position.y < -1) it.lid.visible = false; }
     // (on the bend: across with the road, and turned along it)
     g.position.x = it.x + skBend(it.u) + skShift(it.x, it.u); g.position.z = -it.u; g.rotation.y = star ? now * 3 : -Math.atan(skSlope(it.u)) + (k === 'and' && it.dir < 0 ? Math.PI : 0) + (SK_PETS[k] ? it.dir * Math.PI / 2 : 0);
+    it.hy = skHump(it.u); g.position.y += it.hy;
     const near = Math.abs(sk.x - it.x) < it.half + .18 && Math.abs(it.u) < it.len / 2 + .22, up = sk.jy > 0;
     // (a thing gives a star only when it was coming straight at the figure and it moved out of the way - standing still
     // in one lane while things went by in the others gave stars for nothing, the user said 03-11-2026)
@@ -6004,6 +6058,7 @@ function skateTick(dt) { dt = Math.min(dt, .1); // (never a long jump after a pa
         // (each thing under the high middle of the jump - its far end by 70 % of it, where the board is still well over a
         // crate; and anything within one and a half seconds' ride past the landing jumped too: too near to steer from after coming down)
         const T = Math.min(1.6, Math.max(.3, land / 2 / vv)); sk.jv = 2.1 / T; sk.jg = 2.1 / (T * T); sk.jt = 2 * T; sk.jy = .001; addStars(2); sfx('boing'); if (SKATE_V11 && !sk.snow) { sk.trick = skTrickPick(T); sk.extra = null; skTrickDone(sk.trick); } }
+      else if (k === 'grind') { sk.grind = it; addStars(2); sfx('swish'); sfx('ding', .1); if (SKATE_V11) skTrickDone('grind'); }
       else if (k === 'gave') { it.hit = true; it.vy = 4; it.lid.visible = true; skateBits('guld', g.position.x, .5, g.position.z, 26); addStars(3); for (const t of [0, .12, .24]) sfx('ding', t); }
       else if (k === 'fontaene') { it.hit = true; skateBits('vand', sk.x, .3, 0, 30); addStars(1); sfx('plask'); }
       else if (k === 'balloner') { it.hit = true; skateBits('guld', g.position.x, .9, g.position.z, 20); addStars(2); sfx('ding'); sfx('ding', .14); }
@@ -7525,6 +7580,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { gearTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.17.0 (751f22e)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.17.0 (c8af2f0)</div>
 </body>
 </html>
