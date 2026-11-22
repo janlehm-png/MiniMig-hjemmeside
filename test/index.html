@@ -45,7 +45,7 @@
   .tabgroup button[hidden], .tabgroup[hidden] { display: none; }
   #mains button { width: 76px; font-size: 12px; } #mains button img { width: 44px; height: 44px; }
   #subs { background: #FFF6DA; } #subs button[data-part^="gear-"] { width: 82px; }
-  .choices button.todo { animation: dressPulse 1.1s ease-in-out infinite; }
+  .choices button.todo, #mains button.todo { animation: dressPulse 1.1s ease-in-out infinite; }
   .choices button.gear-go { background: #2FB457; border-color: #2FB457; color: #fff; font: 800 34px/1 system-ui, sans-serif; justify-content: center; min-height: 84px; animation: dressPulse 1.1s ease-in-out infinite; }
   .choices button.gear-go:disabled { background: #D5D5DD; border-color: #D5D5DD; animation: none; }
   /* the tabs, smaller than before, in three groups as in the app: the body and face, the clothes, the rest */
@@ -4263,14 +4263,22 @@ document.getElementById('keepChoice').addEventListener('click', e => { const c =
 const newFig = kind => ({ picked: {}, hair: kind === 'pige' ? 'haar-fletninger' : 'haar-kort',
   eyes: 'oejne-naturlige', brows: 'bryn-naturlige', mouth: 'mund-smil', nose: 'naese-naturlig', pynt: [], wear: Object.fromEntries(Object.keys(GARMENTS).map(p => [p, ''])), name: '', badge: 'ingen', item: '', pet: '', petToys: [], ears: 'oerer-naturlig', earrings: '', bg: 'bg-sol' });
 const sameFig = (a, b) => !!a && !!b && JSON.stringify(a) === JSON.stringify(b);
-document.getElementById('newBtn').addEventListener('click', () => { document.getElementById('newChoice').hidden = false; });
+document.getElementById('newBtn').addEventListener('click', () => { welcomeNow = false; newChoiceWords(); document.getElementById('newChoice').hidden = false; });
+// (the very first time on a device - nothing remembered, no saved figure, no child's MiniMig: a welcome with Dreng and Pige
+// instead of the boy in his vest, so a girl sees at once the game is hers too - the user, 22-11-2026; then the Tøj tab
+// bounces until it is tapped, to show that the figure is to be dressed next)
+let welcomeNow = false;
+function newChoiceWords() { document.getElementById('newChoiceTitle').textContent = welcomeNow ? T('Velkommen! Vælg din MiniMig', 'Welcome! Choose your MiniMig') : tr('Ny MiniMig');
+  const n = document.querySelector('#newChoice .note'); if (n) n.hidden = welcomeNow; }
+function showWelcome() { welcomeNow = true; newChoiceWords(); document.getElementById('newChoice').hidden = false; }
 document.getElementById('newChoice').addEventListener('click', async e => { const b = e.target.closest('[data-new]'); if (!b || !hairBase) return;
   document.getElementById('newChoice').hidden = true; if (game.on) { toast('Stop spillet først'); return; }
   // (the figure there was first goes into Mine figurer, so it is never lost - not when it is already the newest one
   // there, or a new figure nobody has changed yet)
-  const now = figureNow(), l = savedFigs();
-  if (![l[0]?.fig, newFig('dreng'), newFig('pige')].some(f => sameFig(f, now))) keepFig('hel', figurePicture('hel', .5));
-  await wearFigure(newFig(b.dataset.new)); toast('✨ Ny MiniMig!'); });
+  const now = figureNow(), l = savedFigs(), first = welcomeNow; welcomeNow = false;
+  if (!first && ![l[0]?.fig, newFig('dreng'), newFig('pige')].some(f => sameFig(f, now))) keepFig('hel', figurePicture('hel', .5));
+  await wearFigure(newFig(b.dataset.new)); toast('✨ Ny MiniMig!'); newChoiceWords();
+  if (first) { const t = document.querySelector('#mains [data-main="wear"]'); if (t) { t.classList.add('todo'); t.addEventListener('click', () => t.classList.remove('todo'), { once: true }); } } });
 function renderGallery() { const l = savedFigs(), el = document.getElementById('gallery'); renderKids();
   el.innerHTML = l.length ? l.map((s, i) => `<div class="saved"><button class="load" data-load="${i}" aria-label="${T('Brug figur', 'Use figure')} ${i + 1}"><img src="${s.pic}" alt=""></button><button class="del" data-del="${i}" aria-label="${T('Slet figur', 'Delete figure')} ${i + 1}">✕</button></div>`).join('')
     : T('<p class="empty">Ingen figurer endnu.<br>Tryk på ⭐ for at gemme din figur her.</p>', '<p class="empty">No figures yet.<br>Tap ⭐ to save your figure here.</p>'); }
@@ -7397,7 +7405,8 @@ async function wearLast() { let f = null; try { f = JSON.parse(localStorage.getI
 loadFbx().then(async ok => { const tag = document.getElementById('tag'); if (!ok) { tag.textContent = tr('Figuren kunne ikke hentes'); return; }
   // (on a computer too, since 03-11-2026 - the user wanted it the same everywhere - in words for the mouse)
   if (matchMedia('(hover: hover) and (pointer: fine)').matches) infoPop.innerHTML = T('🖱️ Træk for at dreje figuren<br>🔍 Rul med musen for at zoome<br>👕 Klik på navnet på trøjen, så siger figuren det – med din egen indtalte stemme, hvis du har indtalt en', '🖱️ Drag to turn the figure<br>🔍 Scroll with the mouse to zoom<br>👕 Click the name on the top and the figure says it – in your own recorded voice, if you have recorded one');
-  await wearLast(); lastOn = true;
+  let first = false; try { first = !localStorage.getItem(LAST_KEY) && !playerNow().fig && !savedFigs().length; } catch (e) { }
+  await wearLast(); lastOn = true; if (first && !game.on) showWelcome();
   tag.textContent = ''; infoBtn.hidden = false; }).catch(() => { document.getElementById('tag').textContent = tr('Figuren kunne ikke hentes'); }); // (a dropped connection said "Henter figuren" for ever)
 
 // ---- render loop ----
@@ -7427,6 +7436,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { gearTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.17.0 (52ccc88)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.17.0 (f5df38d)</div>
 </body>
 </html>
