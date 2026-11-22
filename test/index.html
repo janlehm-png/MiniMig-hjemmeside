@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>MiniMig™ version 2</title>
-<meta name="minimig-version" content="0.16.0">
+<meta name="minimig-version" content="0.17.0">
 <!-- (the number of this version, shown under the i - see VERSIONER.md - raised for each package and each fix put out) -->
 <!-- (the same icon as version 1 on a home screen, under the name MiniMig 2 - the icons lie in the website's billeder/;
      the user, 03-11-2026, sharing version 2 with testers) -->
@@ -66,8 +66,10 @@
   @media (max-aspect-ratio: 4/5) {
     .main { flex-direction: column; gap: 8px; }
     .stage { height: 46dvh; width: 100%; aspect-ratio: auto; max-width: none; border-radius: 22px; }
-    .parts { flex-direction: row; overflow-x: auto; flex: none; scrollbar-width: none; }
-    .tabgroup { flex-wrap: nowrap; flex: none; }
+    /* (align-items: start - the user, 22-11-2026: on an iPhone turned from sideways to upright the tabs stood half the
+       screen high until a tab was tapped; Safari kept the row's old height, and the tabs stretched to fill it) */
+    .parts { flex-direction: row; overflow-x: auto; flex: none; scrollbar-width: none; align-items: flex-start; }
+    .tabgroup { flex-wrap: nowrap; flex: none; align-items: flex-start; }
     .tabgroup button { width: 54px; flex: none; }
   }
   /* the name tab: the name written in a box, the badges as round buttons under it (as in the app) */
@@ -915,7 +917,10 @@ const FULL = new Set([
   'players', 'verden-3']);
 const IS_APP = !!window.Capacitor?.isNativePlatform?.(), TEST_SITE = location.pathname.includes('/test/') || /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
 const FULL_KEY = 'minimig-test.hele', TRY_KEY = 'minimig-test.udgave';
-function fullOwned() { try { const t = TEST_SITE && localStorage.getItem(TRY_KEY); if (t) return t === 'hele'; return !IS_APP || localStorage.getItem(FULL_KEY) === '1'; } catch (e) { return !IS_APP; } }
+// (all of MiniMig open in the app, the purchase hidden - set by the app's build script, never on the website: the TestFlight
+// build before the purchase exists, and Plan B1, free with everything open at Christmas - the user, 22-11-2026)
+const ALL_OPEN = window.MINIMIG_ALL_OPEN === true;
+function fullOwned() { if (ALL_OPEN) return true; try { const t = TEST_SITE && localStorage.getItem(TRY_KEY); if (t) return t === 'hele'; return !IS_APP || localStorage.getItem(FULL_KEY) === '1'; } catch (e) { return !IS_APP; } }
 let fullNow = fullOwned();
 // ---- Adventsgaverne (the user, 21-11-2026): a gift in the game every Advent Sunday, for every child - Basis and Hele
 // MiniMig alike, no lock and no price. Each is hidden until its Sunday, then a parcel waits to be opened; after Christmas
@@ -7412,12 +7417,16 @@ const stage = document.getElementById('stage');
 function resize() { const w = stage.clientWidth, h = stage.clientHeight; renderer.setSize(w, h, false); camera.aspect = w / h;
   farZ = w < h * .8 ? 6.6 : 7; if (!closeUp) camera.position.z = farZ; camera.updateProjectionMatrix(); bgShown = ''; }
 addEventListener('resize', resize); resize(); new ResizeObserver(resize).observe(stage);
+// (and the page laid out afresh when the device is turned - an iPhone turned upright again kept the tabs' sideways
+// height until something was tapped, the user 22-11-2026)
+{ const relay = () => { const p = document.querySelector('.panel'); if (!p) return; p.style.display = 'none'; void p.offsetHeight; p.style.display = ''; };
+  addEventListener('orientationchange', () => { relay(); setTimeout(relay, 300); }); matchMedia('(max-aspect-ratio: 4/5)').addEventListener?.('change', () => setTimeout(relay, 50)); }
 // (the game and the kick's ball each in a guard: an error in one of them must never stop the picture - three.js asks for
 // the next frame only after this one, so one error froze the figure for good)
 renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElapsedTime();
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { gearTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.16.0 (06db36a)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.17.0 (52ccc88)</div>
 </body>
 </html>
