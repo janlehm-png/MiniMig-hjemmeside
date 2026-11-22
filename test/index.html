@@ -7133,9 +7133,37 @@ function showFull() { const box = document.getElementById('fullShow'), label = {
   document.getElementById('fullOwn').hidden = !fullNow; document.getElementById('fullBuyRow').hidden = fullNow;
   const test = document.getElementById('fullTest'); test.hidden = !TEST_SITE; for (const b of test.querySelectorAll('[data-edition]')) b.classList.toggle('on', (b.dataset.edition === 'hele') === fullNow); }
 document.getElementById('fullBtn').onclick = () => askGrownUp(() => { showFull(); document.getElementById('fullSheet').hidden = false; });
-// (the purchase itself comes with Apple's in the app - phase 2; till then it says so)
-async function buyFull() { toast(T('Købet kommer, når appen er klar', 'The purchase comes when the app is ready')); }
-async function restoreFull() { toast(T('Købet kommer, når appen er klar', 'The purchase comes when the app is ready')); }
+// ---- Købet (fase 2, 22-11-2026): ét engangskøb »Hele MiniMig« gennem Apples egen App Store (StoreKit 2, via
+// @capgo/native-purchases i appen) - ingen server, ingen konto, intet sendt nogen steder hen; Apple husker købet, og
+// Familiedeling gælder. Købet huskes også på enheden (FULL_KEY), så spillet virker uden internet. »Gendan køb« spørger
+// Apple igen. På hjemmesiden findes intet køb; på testsiden kan det prøves med et prøvekøb, der ikke koster noget ----
+const PRODUCT_ID = 'minimig-test.hele';
+const IAP = IS_APP && !ALL_OPEN && window.Capacitor?.registerPlugin ? window.Capacitor.registerPlugin('NativePurchases') : null;
+let iapBusy = false;
+function grantFull(how) { try { if (IAP) localStorage.setItem(FULL_KEY, '1'); else localStorage.setItem(TRY_KEY, 'hele'); } catch (e) { }
+  fullNow = true; applyEdition(); showFull(); renderStyles(); celebrate();
+  toast(how === 'restore' ? T('✓ Købet er gendannet', '✓ Purchase restored') : T('🎉 Tak! Hele MiniMig er låst op', '🎉 Thank you! All of MiniMig is unlocked')); }
+async function iapOwned() { if (!IAP) return false; const { purchases = [] } = await IAP.getPurchases({ productType: 'inapp' }); return purchases.some(t => t.productIdentifier === PRODUCT_ID); }
+// (the price as Apple shows it in the child's country - on the buy button, so the grown-up sees it before Apple's own sheet)
+async function iapPrice() { if (!IAP) return; try { const { products = [] } = await IAP.getProducts({ productIdentifiers: [PRODUCT_ID], productType: 'inapp' });
+  const p = products.find(x => x.identifier === PRODUCT_ID) || products[0]; if (p?.priceString) document.getElementById('fullBuy').textContent = T(`Køb Hele MiniMig – ${p.priceString}`, `Buy the full MiniMig – ${p.priceString}`); } catch (e) { } }
+async function buyFull() { if (iapBusy) return; iapBusy = true; const b = document.getElementById('fullBuy'); b.disabled = true;
+  try {
+    if (IAP) { const r = await IAP.purchaseProduct({ productIdentifier: PRODUCT_ID, productType: 'inapp', quantity: 1 }); if (r?.transactionId || await iapOwned()) grantFull('buy'); }
+    else if (TEST_SITE) { if (confirm(T('PRØVEKØB – kun på testsiden, koster intet.\n\nKøb Hele MiniMig for 79 kr.?', 'TEST PURCHASE – test site only, costs nothing.\n\nBuy the full MiniMig for 79 kr.?'))) grantFull('buy'); }
+    else toast(T('Hele MiniMig købes i appen', 'The full MiniMig is bought in the app'));
+  } catch (e) { const m = String(e?.message || e); if (!/cancel|annull/i.test(m)) toast(T('Købet blev ikke gennemført. Prøv igen senere.', 'The purchase did not go through. Please try again later.')); }
+  finally { iapBusy = false; b.disabled = false; } }
+async function restoreFull() { if (iapBusy) return; iapBusy = true; const b = document.getElementById('fullRestore'); b.disabled = true;
+  try {
+    if (IAP) { await IAP.restorePurchases(); if (await iapOwned()) grantFull('restore'); else toast(T('Der blev ikke fundet noget køb på dette Apple-ID', 'No purchase was found for this Apple ID')); }
+    else if (TEST_SITE) { let t = ''; try { t = localStorage.getItem(TRY_KEY); } catch (e) { } if (t === 'hele') grantFull('restore'); else toast(T('Prøvekøb: der er intet køb at gendanne', 'Test purchase: there is nothing to restore')); }
+    else toast(T('Hele MiniMig købes i appen', 'The full MiniMig is bought in the app'));
+  } catch (e) { toast(T('Apple kunne ikke nås. Prøv igen senere.', 'Apple could not be reached. Please try again later.')); }
+  finally { iapBusy = false; b.disabled = false; } }
+// (on opening the app: is it bought - on this device, or by someone in the family with Family Sharing? Quietly, and
+// only to unlock: no answer from Apple never locks what was bought before)
+if (IAP) setTimeout(async () => { try { if (!fullNow && await iapOwned()) { try { localStorage.setItem(FULL_KEY, '1'); } catch (e) { } fullNow = true; applyEdition(); renderStyles(); } } catch (e) { } iapPrice(); }, 1500);
 document.getElementById('fullBuy').onclick = buyFull; document.getElementById('fullRestore').onclick = restoreFull;
 // (the test site's switch: Basis or Hele MiniMig, remembered on this device; the figure takes off what Basis has not)
 document.getElementById('fullTest').addEventListener('click', async e => { const b = e.target.closest('[data-edition]'); if (!b) return; try { localStorage.setItem(TRY_KEY, b.dataset.edition); } catch (er) {}
@@ -7436,6 +7464,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { gearTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.17.0 (f5df38d)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.17.0 (1d5fb6e)</div>
 </body>
 </html>
