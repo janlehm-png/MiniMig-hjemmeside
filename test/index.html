@@ -5981,6 +5981,19 @@ function skParkRide(dt, v) { if (!skBumpy()) return; sk.trav = (sk.trav || 0) + 
 function skSnowTrick() { const list = ['spin', 'spin', 'salto']; if (!['niveau-meget-let', 'niveau-let'].includes(game.level)) list.push('dobbelt'); let k; do k = list[Math.floor(Math.random() * list.length)]; while (k === sk.lastTrick && Math.random() < .6); return sk.lastTrick = k; }
 // (the road's corners whiter where it lies flat, a soft blue shade where it slopes: the bumps stand out from the stripes)
 function skShade(on) { const g = sk.road.geometry, N = g.attributes.normal, C = g.attributes.color; for (let i = 0; i < C.count; i++) { const k = on ? Math.pow(Math.max(0, N.getZ(i)), 14) : 1; C.setXYZ(i, .66 + .34 * k, .76 + .24 * k, .9 + .1 * k); } C.needsUpdate = true; }
+// ---- A taste of the skate park's camera (the user, 22-11-2026: "prøv en smagsprøve"): in Skateparken, up in the air off a
+// ramp with a trick, or sliding along a grind rail, the picture glides out to the side of the figure - low, so the jump
+// and the trick are seen from beside - a touch of slow motion, and back behind it on landing. SKATE_CAM = false: as before
+const SKATE_CAM = true;
+function skCamCut(dt) { const want = SKATE_CAM && skParkOn() && ((sk.jy > 0 && sk.trick && sk.trick !== 'none') || sk.gl > .1) ? 1 : 0;
+  if (want && !sk.camWas) sk.camSide = sk.x > .2 ? -1 : sk.x < -.2 ? 1 : Math.random() < .5 ? -1 : 1; sk.camWas = want;
+  sk.camK = (sk.camK || 0) + (want - (sk.camK || 0)) * Math.min(1, dt * (want ? 3.5 : 2.2)); if (sk.camK < .002) { sk.camK = 0; return; }
+  const k = sk.camK * sk.camK * (3 - 2 * sk.camK), x = sk.rig.position.x, y = sk.rig.position.y, sd = sk.camSide || 1;
+  // (round the figure in an arc: from behind it to mostly beside it, at its own distance and height - it stays in the middle)
+  const F = skCamT.set(x, .75 + y * .9, 0), v = skCamP.subVectors(camera.position, F), ab = Math.atan2(v.x, v.z), db = Math.hypot(v.x, v.z), as = sd * (Math.PI / 2 - .3),
+    a = ab + (as - ab) * k, d = db + (5.8 - db) * k, h = v.y + (1.2 - v.y) * k;
+  camera.position.set(F.x + Math.sin(a) * d, F.y + h, F.z + Math.cos(a) * d); controls.target.lerp(F, Math.min(1, k * 1.6)); camera.lookAt(controls.target); }
+const skCamP = new THREE.Vector3(), skCamT = new THREE.Vector3();
 function skPetFiles(kind) { if (kind !== 'dyr-snehare') return Promise.resolve([kind + '.glb', kind + '.jpg']);
   return sk.hareTex ??= new Promise((ok, bad) => { const im = new Image(); im.onerror = bad; im.onload = () => { const cv = document.createElement('canvas'); cv.width = im.width; cv.height = im.height; const c = cv.getContext('2d'); c.drawImage(im, 0, 0);
     const d = c.getImageData(0, 0, cv.width, cv.height), a = d.data; for (let i = 0; i < a.length; i += 4) { const l = .3 * a[i] + .59 * a[i + 1] + .11 * a[i + 2], w = l < 55 ? l : 240 - (255 - l) * .45; a[i] = w; a[i + 1] = w + 3; a[i + 2] = Math.min(255, w + 10); }
@@ -6035,7 +6048,8 @@ function skateOwnPose(fwd, right, up, w = 1) {
   glb.updateMatrixWorld(true); for (const n of ['LeftLeg', 'RightLeg']) turnBone(n, right, -.85 * w); glb.updateMatrixWorld(true); for (const n of ['LeftFoot', 'RightFoot']) turnBone(n, right, .38 * w);
   for (const [n, s] of [['LeftArm', 1], ['RightArm', -1]]) turnBone(n, fwd, (s * 1.05 + (sk.arm || 0)) * w); glb.updateMatrixWorld(true); for (const [n, s] of [['LeftForeArm', 1], ['RightForeArm', -1]]) turnBone(n, fwd, s * .25 * w);
   turnBone('Spine', right, -.12 * w); turnBone('Spine2', up, .35 * w); glb.updateMatrixWorld(true); turnBone('Neck', up, .4 * w); glb.updateMatrixWorld(true); turnBone('Head', up, .45 * w); glb.updateMatrixWorld(true); }
-function skateTick(dt) { dt = Math.min(dt, .1); // (never a long jump after a pause: everything by the road was passed at once and it lay bare for a while)
+function skateTick(dt) { dt = Math.min(dt, .1) * (1 - .3 * (sk.camK || 0)); // (a little slow motion while the camera is out at the side)
+  // (never a long jump after a pause: everything by the road was passed at once and it lay bare for a while)
   seaT.value = performance.now() / 1000; const L = skateLevel(); sk.slow = Math.max(0, sk.slow - dt); sk.wobble = Math.max(0, sk.wobble - dt); sk.rampWait = Math.max(0, (sk.rampWait || 0) - dt); sk.wallT = Math.max(0, (sk.wallT || 0) - dt);
   // (the push: through - then riding off, the pose growing in as it turns; after a hit, a push again once the wobble is over)
   const pa = glbActions[SKATE.push]; if (sk.push && (!pa?.isRunning() || pa.time >= pa.getClip().duration - .06)) { sk.push = false; runAnim('staa'); }
@@ -6063,7 +6077,7 @@ function skateTick(dt) { dt = Math.min(dt, .1); // (never a long jump after a pa
   { const P = sk.road.geometry.attributes.position, pk = skBumpy(); for (let i = 0; i < P.count; i++) { P.setX(i, sk.roadX[i] + skBend(26 + P.getY(i)) + skShift(sk.roadX[i], 26 + P.getY(i))); if (pk) P.setZ(i, skHump(26 + P.getY(i), sk.roadX[i] * sk.road.scale.x) * skEdge(sk.roadX[i])); else if (sk.roadBumped) P.setZ(i, 0); }
     P.needsUpdate = true; if (pk || sk.roadBumped) { sk.road.geometry.computeVertexNormals(); skShade(pk); sk.roadBumped = pk; } }
   for (const b of sk.bits) if (b.mesh.visible) { b.v.y -= 9.8 * dt; b.mesh.position.addScaledVector(b.v, dt); if ((b.life -= dt) <= 0 || b.mesh.position.y < 0) b.mesh.visible = false; }
-  { const rt = sk.road.material.map; rt.offset.y = (rt.offset.y + v * dt / 3) % 1; } skForkTick(dt, v); skWorldTick(dt, v); skatePose(); skTrickPose(); skChalTick(dt, v);
+  { const rt = sk.road.material.map; rt.offset.y = (rt.offset.y + v * dt / 3) % 1; } skForkTick(dt, v); skWorldTick(dt, v); skatePose(); skTrickPose(); skChalTick(dt, v); skCamCut(dt);
   // (the first row near: down the far end of the road it took 7 seconds on the easiest level before anything happened, the
   // user 05-11-2026)
   // (no row of things where a fork's island is: the fork has its own)
@@ -7627,6 +7641,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { gearTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.17.0 (c5568e1)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.17.0 (8549a49)</div>
 </body>
 </html>
