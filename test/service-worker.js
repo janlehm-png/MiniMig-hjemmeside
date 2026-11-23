@@ -1,5 +1,5 @@
 'use strict';
-importScripts('./precache-manifest.js?v=00D2BDCB03819B70');
+importScripts('./precache-manifest.js?v=82771F136D634489');
 const PREFIX = 'minimig-' + encodeURIComponent(self.registration.scope) + '-';
 // One cache for all versions. Each file is kept under its own hash, so a new version fetches only the files that changed
 // (each new version used to throw away everything, so what had been played with no longer worked without internet).
