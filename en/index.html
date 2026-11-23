@@ -29,7 +29,7 @@
 <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://lehco.dk/#organisation","name":"LehCo ApS","url":"https://lehco.dk/"},{"@type":"WebSite","@id":"https://minimig.dk/#website","name":"MiniMig","url":"https://minimig.dk/","inLanguage":["da","en"],"publisher":{"@id":"https://lehco.dk/#organisation"}},{"@type":"VideoGame","@id":"https://minimig.dk/#spil","name":"MiniMig","url":"https://minimig.dk/bygogspil/","description":"Kids’ game where children build their own 3D figure, dress it up, dance and play little games that teach counting.","image":"https://minimig.dk/billeder/delebillede-en.jpg","genre":["Kids’ game","Creative game","Educational game"],"gamePlatform":"Web browser","applicationCategory":"GameApplication","operatingSystem":"Web browser","inLanguage":["da","en"],"isFamilyFriendly":true,"typicalAgeRange":"3-6","audience":{"@type":"PeopleAudience","suggestedMinAge":3,"suggestedMaxAge":6},"offers":{"@type":"Offer","price":"0","priceCurrency":"DKK"},"publisher":{"@id":"https://lehco.dk/#organisation"}}]}</script>
 </head>
 <body>
-<div class="dev-note" role="note"><p>🛠️ <strong>MiniMig<sup class="tm">™</sup> is a work in progress.</strong> Thank you for helping us test! <a href="https://www.facebook.com/groups/minimigtestfamilier" target="_blank" rel="noopener">Join our test families on Facebook</a>. MiniMig is coming soon as an app for iPad and iPhone, with a free basic version and a one-time purchase for the whole game. Until then, you can play all of it for free here.</p></div>
+<div class="dev-note" role="note"><p>🧪 <strong>MiniMig<sup class="tm">™</sup> is in testing</strong> – try the whole app free through TestFlight. The App Store version comes in January. <a href="#test-version">Try the test version</a></p></div>
 <div class="wrap">
   <header class="top">
     <a class="brand" href="./"><img src="../billeder/ikon-96.webp" width="96" height="96" alt=""><span class="logo"><span>M</span><span>i</span><span>n</span><span>i</span><span>M</span><span>i</span><span>g</span><sup class="tm">™</sup></span><span class="test-tag">Test version</span></a>
@@ -40,7 +40,8 @@
     <div>
       <h1>MiniMig<sup class="tm">™</sup> – build your own figure and play with it</h1>
       <p class="lead">Build a MiniMig in 3D that looks like you, a friend or something completely made up. Breakdance on the street corner, put your own show together in the dance studio – and play little games you can’t lose. Along the way, children practise counting and logical thinking. A safe kids’ game for ages 3–6 – with no ads.</p>
-      <div class="badges"><a class="badge" href="../bygogspil/?lang=en"><span>Build and play MiniMig<small>Best on an iPad, tablet or computer</small></span></a><span class="badge soon" aria-disabled="true"><span>📱 Coming soon<small>As an app for iPad and iPhone</small></span></span></div>
+      <div class="badges"><a class="badge" href="../bygogspil/?lang=en"><span>Build and play MiniMig<small>Best on an iPad, tablet or computer</small></span></a><a class="badge" href="#test-version"><span>🧪 Try the test version<small>Free on iPhone and iPad through TestFlight</small></span></a></div>
+      <p class="tf-note">The basic version stays free. The full version will be a one-time purchase at launch.</p>
       <p class="first-time">It takes a little longer the first time, because the game has to download to your device. Wi-Fi is a good idea.</p>
     </div>
     <div class="pic"><img src="../billeder/figur.webp" width="800" height="600" alt="A happy boy and girl from MiniMig, waving"></div>
@@ -56,6 +57,30 @@
     <figure><img src="../billeder/spil-rum.jpg" width="360" height="540" alt="A boy in a red space suit and space helmet flying with a jetpack among stars, a ringed planet, a space station and a little green alien" loading="lazy"><figcaption>Space trip</figcaption></figure>
     <figure><img src="../billeder/spil-straffe.jpg" width="360" height="540" alt="A boy in a yellow soccer jersey kicking a ball at the goal, where a silly monkey with big gloves dives for it" loading="lazy"><figcaption>Penalty kick</figcaption></figure>
     <figure><img src="../billeder/spil-gemmeleg.jpg" width="360" height="540" alt="A girl jumping out from behind a bush on an island with palm trees" loading="lazy"><figcaption>Hide and seek</figcaption></figure>
+  </section>
+
+  <!-- (Plan C, 23-11-2026: tested through TestFlight over Christmas; App Store version expected January 2027) -->
+  <section class="group tf" id="test-version">
+    <div class="ico" aria-hidden="true">🧪</div>
+    <div>
+      <h2>Try the test version on iPhone and iPad</h2>
+      <p>MiniMig is in testing. Get it free through TestFlight and play with the whole app – including the Christmas edition with Advent presents. When MiniMig comes to the App Store (expected January 2027), the basic version will still be free, and the full version will be a one-time purchase. Thank you for testing and telling us what you think.</p>
+      <ol class="tf-steps"><li>Get the free <strong>TestFlight</strong> app from the App Store.</li><li>Tap the button below on your iPhone or iPad.</li><li>Tap <strong>Accept</strong> and <strong>Install</strong>.</li></ol>
+      <p><span class="badge soon" id="tfBtn" aria-disabled="true" data-href="https://testflight.apple.com/join/SUvxdtq2"><span>🧪 The test version opens soon<small>The link works as soon as Apple has approved the test version</small></span></span></p>
+      <p class="tf-note">The basic version stays free. The full version will be a one-time purchase at launch.</p>
+    </div>
+  </section>
+
+  <section class="faq" aria-labelledby="faq-h">
+    <h2 id="faq-h">Questions about the test version</h2>
+    <details><summary>What is TestFlight?</summary><p>Apple’s own programme for testing apps before they come to the App Store. Get the free TestFlight app from the App Store, then open our link.</p></details>
+    <details><summary>Does it cost anything?</summary><p>No, not during the test period. The whole app is open.</p></details>
+    <details><summary>What happens when MiniMig comes to the App Store?</summary><p>The basic version is still free. The full version will be a one-time purchase. We will let you know when the App Store version is ready.</p></details>
+    <details><summary>When will it be in the App Store?</summary><p>We expect January 2027. The exact date depends on the last approvals.</p></details>
+    <details><summary>Will my child’s figures be kept?</summary><p>That is our aim. We will test it before the launch and tell you if you need to do anything.</p></details>
+    <details><summary>Why does the test version stop?</summary><p>Apple lets a test version run for 90 days. When a new one comes, TestFlight updates it.</p></details>
+    <details><summary>Where do I send feedback?</summary><p>Take a screenshot in the app and send it through TestFlight, or write in the test group or on the Facebook page.</p></details>
+    <details><summary>What about my child’s data?</summary><p>MiniMig only keeps data on the device. Nothing is sent to us.</p></details>
   </section>
 
   <section class="group">
@@ -97,7 +122,7 @@
     <div class="card"><div class="ico">🛡️</div><h3>Safe for children</h3><p>No ads, no account and no data collection. Everything is kept on the device only – nothing is sent to us.</p></div>
   </section>
 
-  <footer>© 2026 MiniMig™ · <a href="parents/">For parents</a> · <a href="support/">Support</a> · <a href="privacy/">Privacy policy</a><p class="maker">MiniMig is developed and published by LehCo ApS · CVR [number] · <a href="https://lehco.dk">lehco.dk</a></p><p class="maker tm-note">MiniMig™ is a trademark of LehCo ApS.</p></footer>
+  <footer>© 2026 MiniMig™ · <a href="parents/">For parents</a> · <a href="support/">Support</a> · <a href="privacy/">Privacy policy</a><p class="maker">MiniMig is in testing through Apple’s TestFlight · <a href="https://lehco.dk">lehco.dk</a></p><p class="maker tm-note">MiniMig™ is a trademark of LehCo ApS.</p></footer>
 </div>
 </body>
 </html>
