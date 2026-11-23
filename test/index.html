@@ -62,6 +62,11 @@
   .choices button { padding: 5px 4px 7px; font-size: 12px; display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; }
   .choices button img { width: 100%; max-width: 64px; aspect-ratio: 1; border-radius: 10px; object-fit: cover; }
   .choices button span { max-width: 100%; text-align: center; overflow-wrap: break-word; }
+  /* (the face's choices shown close up - Trine, 23-11-2026: Ebba, 5, could not see what was different between the mouths or
+     the earrings. The picture at its own size in the little window, so it is twice as near, centred on what changes) */
+  #styles[data-part="mouth"] img, #styles[data-part="eyes"] img, #styles[data-part="brows"] img, #styles[data-part="nose"] img, #styles2[data-part="row2-oerering"] img { object-fit: none; }
+  #styles[data-part="mouth"] img { object-position: 55% 66%; } #styles[data-part="eyes"] img { object-position: 24% 70%; } #styles[data-part="brows"] img { object-position: 24% 52%; }
+  #styles[data-part="nose"] img { object-position: 52% 86%; } #styles2[data-part="row2-oerering"] img { object-position: 4% 50%; }
   /* a phone held upright: the figure on top, a little under half the height; the tab groups in one sideways row */
   @media (max-aspect-ratio: 4/5) {
     .main { flex-direction: column; gap: 8px; }
@@ -93,7 +98,10 @@
   .sliders[hidden] { display: none; }
   .swatches { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
   .swatches[hidden] { display: none; }
-  .panel .swatches button { width: 38px; height: 38px; padding: 0; border-radius: 50%; border: 3px solid #FFFFFF; box-shadow: 0 0 0 2px var(--line); }
+  /* (bigger, to tap with a small finger - Trine, 23-11-2026: Ebba, 5, never used the colour sliders; they now wait behind 🎨 ＋ for the grown-ups) */
+  .more-col { display: block; margin: 4px auto 0; padding: 4px 12px; border-radius: 999px; font: 800 13px/1.2 system-ui, sans-serif; background: #FFFFFF; border: 2px solid var(--line); color: #6B6191; }
+  .more-col.on { border-color: var(--accent); color: var(--ink); }
+  .panel .swatches button { width: 48px; height: 48px; padding: 0; border-radius: 50%; border: 3px solid #FFFFFF; box-shadow: 0 0 0 2px var(--line); }
   .panel .swatches button.on { box-shadow: 0 0 0 3px var(--accent); }
   /* (the patterns: rounded squares under the round colours, each a little picture of the pattern) */
   .patterns { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 10px; }
@@ -461,6 +469,10 @@
   .saved { position: relative; min-width: 0; }
   .saved .load { width: 100%; padding: 4px; border: 2px solid var(--line); background: #FFF8E1; border-radius: 14px; cursor: pointer; display: block; }
   .saved .load img { width: 100%; display: block; border-radius: 10px; }
+  /* (the figure on the screen now, first, with a big plus: tapped, it is kept here - Trine, 23-11-2026) */
+  .saved.add .load { border: 3px dashed #2FB457; background: #ECFBEF; }
+  .saved.add .plus { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 54px; height: 54px; border-radius: 50%; background: #2FB457; color: #FFFFFF; font: 900 40px/54px system-ui, sans-serif; text-align: center; box-shadow: 0 3px 10px rgba(47,180,87,.4); pointer-events: none; }
+  .saved.now .load { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent); }
   .del { position: absolute; top: -6px; right: -6px; min-width: 34px; height: 34px; border-radius: 999px; border: 2px solid var(--line); background: var(--tile);
     color: var(--ink); font: 700 .95rem/1 system-ui, sans-serif; cursor: pointer; box-shadow: 0 2px 6px rgba(58, 46, 92, .2); }
   .del.armed { background: #E8384F; border-color: #E8384F; color: #fff; padding: 0 10px; }
@@ -572,6 +584,7 @@
     <div class="swatches" id="swatches"></div>
     <!-- (the patterns under the colours - the user, 18-11-2026) -->
     <div class="patterns" id="patterns" hidden></div>
+    <button class="more-col" id="moreCol" type="button" aria-label="Flere farver">🎨 ＋</button>
     <div class="sliders" id="sliders">
       <label>Farve <input type="range" id="s-h" min="0" max="360" step="1"></label>
       <label>Styrke <input type="range" id="s-s" min="0" max="100" step="1"></label>
@@ -782,7 +795,7 @@ const EN = {
   'Små': 'Small', 'Store': 'Big', 'Udstående': 'Sticking out', 'Alfeører': 'Elf ears', 'Perler': 'Pearls', 'Guldringe': 'Gold rings',
   // (clothes)
   'Undertrøje': 'Tank top', 'T-shirt': 'T-shirt', 'Hættetrøje': 'Hoodie', 'Fodboldtrøje': 'Soccer jersey', 'Undershorts': 'Underwear', 'Trusser': 'Briefs', 'Lange bukser': 'Long pants', 'Shorts': 'Shorts', 'Cowboyshorts': 'Denim shorts', 'Fodboldbukser': 'Soccer shorts',
-  'Ingen kjole': 'No dress', 'Ingen dragt': 'No suit', 'Badedragt': 'Swimsuit', 'Badebukser': 'Swim trunks', 'Sommerkjole': 'Summer dress', 'Prinsessekjole': 'Princess dress', 'Havfruekjole': 'Mermaid dress', 'Ingen strømper': 'No socks', 'Ankelstrømper': 'Ankle socks', 'Almindelige strømper': 'Regular socks', 'Fodboldstrømper': 'Soccer socks', 'Knæstrømper': 'Knee socks',
+  'Strømpebukser': 'Tights', 'Nederdel': 'Skirt', 'Prinsessenederdel': 'Princess skirt', 'Ingen kjole': 'No dress', 'Ingen dragt': 'No suit', 'Badedragt': 'Swimsuit', 'Badebukser': 'Swim trunks', 'Sommerkjole': 'Summer dress', 'Prinsessekjole': 'Princess dress', 'Havfruekjole': 'Mermaid dress', 'Ingen strømper': 'No socks', 'Ankelstrømper': 'Ankle socks', 'Almindelige strømper': 'Regular socks', 'Fodboldstrømper': 'Soccer socks', 'Knæstrømper': 'Knee socks',
   'Bare fødder': 'Bare feet', 'Sneakers': 'Sneakers', 'Fodboldstøvler': 'Soccer cleats', 'Gummistøvler': 'Rain boots', 'Balletsko': 'Ballet shoes', 'Højhælede': 'High heels',
   'Nissehue': 'Santa hat', 'Rensdyrgevir': 'Reindeer antlers', 'Julemønster': 'Christmas pattern', 'Julemønster med rensdyr': 'Christmas pattern with reindeer', 'Juleaften': 'Christmas Eve',
   'Ingen hat': 'No hat', 'Kasket': 'Cap', 'Krone': 'Crown', 'Kaninører': 'Bunny ears', 'Sløjfe': 'Bow', 'Ingen briller': 'No glasses', 'Svømmebriller': 'Swim goggles', 'Snorkel': 'Snorkel', 'Rumdragt': 'Space suit', 'Rumhjelm': 'Space helmet', 'Rumstøvler': 'Space boots', 'Sne': 'Snow', 'Skihop': 'Ski jump', 'Dansestudie': 'Dance studio', '▶ Vis dansen!': '▶ Show the dance!', '🎵 Sæt din dans sammen': '🎵 Put your dance together', 'Sjov': 'Fun', 'Kyllingedans': 'Chicken dance', 'Ned i gulvet': 'Down to the floor', 'Hurtigt ned': 'Quick drop', 'Håndstand-spin': 'Handstand spin', 'Op på hænder': 'Up on the hands', 'Bevægelser': 'Moves', 'Danse': 'Dances', '🎵 Vælg fire trin til din runde': '🎵 Pick four moves for your round', '👆 Tryk for at køre – og tryk igen ved kanten for at hoppe!': '👆 Tap to go – and tap again at the edge to jump!', 'Skidragt': 'Ski suit', 'Skihjelm': 'Ski helmet', 'Skibriller': 'Ski goggles', 'Skihandsker': 'Ski gloves', 'Skistøvler': 'Ski boots', 'Jetpack': 'Jetpack', 'Ingen jetpack': 'No jetpack', 'Rumrejse': 'Space trip', 'Rumrejse': 'Space trip', '👆 Tryk – så flyver du derhen. To hurtige tryk giver fart 🚀': '👆 Tap – and you fly there. Two quick taps give a boost 🚀', 'Skaterhjelm': 'Skate helmet', 'Knæbeskyttere': 'Knee pads', 'Albuebeskyttere': 'Elbow pads', 'Handsker': 'Gloves', 'Ingen knæbeskyttere': 'No knee pads', 'Ingen albuebeskyttere': 'No elbow pads', 'Ingen handsker': 'No gloves', 'Ansigt': 'Face', 'Tøj': 'Clothes', 'Mere': 'More', 'Svømning': 'Swimming', 'Start': 'Start', 'Ingen svømmebriller': 'No goggles', 'Runde': 'Round', 'Solbriller': 'Sunglasses', 'Hjerte': 'Heart',
@@ -867,6 +880,8 @@ const PALETTES = { skin: ['#F6D0AE', '#EDB98A', '#D9965F', '#B5713F', '#8D5530',
   eyes: ['#9C5A1E', '#6B3A1A', '#4A2814', '#2E1A10', '#1A110C', '#3B7BD4', '#3E9A5C', '#A0763A', '#7D8A99', '#8A5CE6'],
   cloth: ['#E8384F', '#FF7A2F', '#FFC233', '#2FB872', '#13BFA6', '#3D8BFF', '#46699E', '#7A4DFF', '#FF6FB1', '#F4F1EA', '#3A3550'] };
 PALETTES.brows = PALETTES.hair;
+// (lip colours - Trine, 23-11-2026: Ebba, 5, wanted colour on the lips. The first is the lips' own, as the skin makes them)
+PALETTES.mouth = ['#C98A7A', '#E8577A', '#FF6FB1', '#D7263D', '#B0306A', '#9B59D0', '#FF8A65'];
 // (the nose, the mouth and Pynt have no colour of their own, as in the app: no sliders under them - nor the movements)
 var briefsOn = false; // (the briefs are always white: no colours under them)
 var petPick = false; // (a pet tapped last under Ting: its colours can't be changed, so no colours show until a thing is tapped)
@@ -887,8 +902,8 @@ function tapMain(id) { foldNow = ''; showFold(); if (mainNow === id) { mainNow =
 function showSwatches() { const move = /^(move|game)-/.test(partNow); if (!move) slidersFrom(picked[colourPart()] || START[colourPart()]);
   { const mo = mainOf(partNow); if (mo && boxOpen) { mainNow = mo; lastSub[mo] = partNow; } else if (move && boxOpen) mainNow = ''; if (!partNow.startsWith('gear-')) { dressWant = ''; dressSnap = null; }
     const subs = document.getElementById('subs'); if (subs) { subs.hidden = !mainNow; for (const b of subs.children) b.hidden = mainOf(b.dataset.part) !== mainNow || !free(b.dataset.part); for (const b of document.querySelectorAll('#mains [data-main]')) b.classList.toggle('on', b.dataset.main === mainNow); } }
-  const noColour = move || ['nose', 'mouth', 'pynt', 'name', 'ears', 'bg'].includes(partNow) || partNow === 'pants' && briefsOn || partNow === 'item' && petPick;
-  document.getElementById('sliders').style.display = noColour ? 'none' : '';
+  const noColour = move || ['nose', 'pynt', 'name', 'ears', 'bg'].includes(partNow) || partNow === 'pants' && briefsOn || partNow === 'item' && petPick;
+  document.getElementById('sliders').style.display = noColour || !moreCol.classList.contains('on') ? 'none' : ''; moreCol.style.display = noColour ? 'none' : '';
   // (the fixed colours of the app over the sliders: skin, hair - the brows too - eyes, and the clothes' colours for the rest)
   const sw = document.getElementById('swatches'), list = noColour ? [] : PALETTES[colourPart()] || PALETTES.cloth; sw.hidden = !list.length; sw.innerHTML = '';
   for (const c of list) { const b = document.createElement('button'); b.style.background = c; b.setAttribute('aria-label', c); b.classList.toggle('on', (picked[colourPart()] || START[colourPart()] || '').toLowerCase() === c.toLowerCase());
@@ -897,6 +912,7 @@ function showSwatches() { const move = /^(move|game)-/.test(partNow); if (!move)
   document.getElementById('nameBox').hidden = partNow !== 'name'; document.getElementById('myDance').hidden = partNow !== 'move-mindans';
   document.querySelectorAll('#subs [data-part]').forEach(b => b.classList.toggle('on', b.dataset.part === partNow && boxOpen));
   renderStyles(); placeBox(); }
+const moreCol = document.getElementById('moreCol'); moreCol.onclick = () => { moreCol.classList.toggle('on'); showSwatches(); };
 // (the choices and colours open right under the group of the tab tapped, and shut again with another tap on it - the user,
 // 04-11-2026: far down under all the groups there was too much scrolling. A phone held upright keeps its sideways row of
 // tabs, with the box under it)
@@ -915,7 +931,7 @@ function tapTab(part, then) { if (boxOpen && partNow === part) { boxOpen = false
 // (a second row in the same tab, as the app's earrings under the ears: a fourth entry, [items, now, set, ingen-name])
 function renderStyles() { const all = typeof styleLists === 'undefined' ? null : styleLists()[partNow], second = all?.[3], third = second?.[4];
   for (const [id, list, none] of [['styles', all, partNow], ['styles2', second, second?.[3]], ['styles3', third, 'dyr-ting']]) { const box = document.getElementById(id);
-  box.innerHTML = ''; box.hidden = !list || !hairBase;
+  box.innerHTML = ''; box.hidden = !list || !hairBase; box.dataset.part = id === 'styles' ? partNow : id === 'styles2' && second?.[3] ? 'row2-' + second[3] : '';
   if (box.hidden) continue; const [items, now, set] = list;
   // (now: the chosen one - or, for Pynt, the list of all chosen, Ingen lit when it is empty)
   // (no »Ingen« to choose any more - Trine, 23-11-2026, testing with Ebba, 5: it was not clear; the one chosen tapped again
@@ -935,7 +951,9 @@ function renderStyles() { const all = typeof styleLists === 'undefined' ? null :
 // (prices in kroner since 04-11-2026, paid in coins - see askBuy; the child's account: score.kr, the stars won become
 // kroner by the level - starWorth - and what there was before, one krone to a star)
 const SHOP = { 'hat-krone': 40, 'kjole-prinsesse': 60, 'kjole-havfrue': 60, 'sko-hoej': 30, 'briller-hjerte': 20, 'briller-stjerne': 20,
-  'ting-tryllestav': 30, 'bg-slot': 30, 'bg-slikland': 40, 'bg-rummet': 40, 'dyr-kat': 100, 'dyr-hund': 100, 'dyr-kanin': 100, 'dyr-halsbaand': 30, 'dyr-skaal': 40, 'dyr-bold': 40 };
+  'ting-tryllestav': 30, 'bg-slot': 30, 'bg-slikland': 40, 'bg-rummet': 40, 'dyr-kat': 100, 'dyr-hund': 100, 'dyr-kanin': 100, 'dyr-halsbaand': 30, 'dyr-skaal': 40, 'dyr-bold': 40,
+  // (the new ones after Trine's test, 23-11-2026 - something more to save the coins for)
+  'nederdel-prinsesse': 40, 'stroemper-strompebukser': 20 };
 const krOf = s => s.kr ??= Math.max(0, (s.total || 0) - (s.spent || 0));
 // ---- Basis and Hele MiniMig (the user, 17-11-2026): the app is free, with one purchase - Hele MiniMig. What is not in
 // the free Basis is hidden from the children - no locks, no "buy" - and shown to the grown-ups under Hele MiniMig, behind
@@ -1467,7 +1485,9 @@ function drawMouth(o) {
   // (as the user's reference: lips discreet, close to the skin; inside a deep warm red, the tongue a lighter pink-red)
   // (lips nearly the skin's own colour, a little deeper and warmer - between the figure's own smile and red lips; Kys
   // keeps its pinker lips)
-  const kissLip = mix(skin, { r: .74, g: .29, b: .34 }, .5), lipC = mix(mix(skin, { r: .62, g: .3, b: .27 }, .3), skin, .15), seamC = { r: .36, g: .12, b: .12 }, insideC = { r: .48, g: .13, b: .13 },
+  // (a lip colour picked: the lips that colour, a little of the skin's in it; the first in the row is the lips' own)
+  const lipPick = picked.mouth && picked.mouth.toUpperCase() !== PALETTES.mouth[0] ? (n => ({ r: (n >> 16 & 255) / 255, g: (n >> 8 & 255) / 255, b: (n & 255) / 255 }))(parseInt(picked.mouth.slice(1), 16)) : null;
+  const kissLip = lipPick ? mix(skin, lipPick, .92) : mix(skin, { r: .74, g: .29, b: .34 }, .5), lipC = lipPick ? mix(skin, lipPick, .9) : mix(mix(skin, { r: .62, g: .3, b: .27 }, .3), skin, .15), seamC = { r: .36, g: .12, b: .12 }, insideC = { r: .48, g: .13, b: .13 },
     teethC = { r: .98, g: .97, b: .94 }, tongueC = { r: .9, g: .42, b: .44 }, kissC = mix(skin, { r: .78, g: .3, b: .36 }, .8);
   const cov = d => Math.max(0, Math.min(1, d / edge + .5)), cl = v => Math.max(0, Math.min(1, v)), put = (i, c, k, a) => { if (a <= 0) return;
     o[i] = o[i] * (1 - a) + Math.min(255, c.r * 255 * k) * a; o[i + 1] = o[i + 1] * (1 - a) + Math.min(255, c.g * 255 * k) * a; o[i + 2] = o[i + 2] * (1 - a) + Math.min(255, c.b * 255 * k) * a; };
@@ -1736,7 +1756,7 @@ function recolourHair(hexColour, list = hairTexs) {
     const k0 = (.3 * s[i] + .59 * s[i + 1] + .11 * s[i + 2]) / hairTex.mid, k = Math.min(hairTex.cap ?? Infinity, hairTex.flat ? 1 + (k0 - 1) * hairTex.flat : k0); for (let j = 0; j < 3; j++) o[i + j] = Math.min(255, c[j] * k); }
   hairTex.ctx.putImageData(out, 0, 0); hairTex.texture.needsUpdate = true; } }
 function recolour(part, hexColour) {
-  if (part === 'socks') return paintSocks(); if (part === 'item') return paintItem();
+  if (part === 'socks') return paintSocks(); if (part === 'item') return paintItem(); if (part === 'mouth') return redrawBody();
   // (all the shoes, the ones not on too: back in the high heels after the sneakers had a new colour, they had the old one)
   if (part === 'shoe' && typeof GARMENTS !== 'undefined') { paintSocks(); paintHeels(); recolourHair(hexColour, GARMENTS.shoe.texs); return; }
   if (part === 'hair') recolourHair(hexColour); if (typeof GARMENTS !== 'undefined' && GARMENTS[part]) recolourHair(hexColour, GARMENTS[part].texs); if (part === 'suit' && gearTexs) recolourHair(hexColour, gearTexs); // (the goggles and snorkel in the suit's colour: one tab, one colour)
@@ -1849,7 +1869,7 @@ function buildSolid(M, o) { M.solid = M.solid || []; const fz = faceHeight(M), a
     holdByHead(M, g, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: o.o ? .9 : .5, side: THREE.DoubleSide, transparent: true })).castShadow = false; } }
 // (the lips' colour from the skin's: the skin's own at the outer edge, so they melt into the face; deeper, warmer in the middle)
 function colourLips(M, o) { const skin = tex.colours[PARTS.skin] || tex.skin, T = M.texels; let k = 0, c = 0; for (let j = 0; j < T.length; j += 4) if (Math.hypot(T[j + 1], (T[j + 2] - M.my) / .8) < .45) { k += T[j + 3]; c++; } k = c ? k / c : 1;
-  const mix = (a, b, t) => ({ r: a.r * (1 - t) + b.r * t, g: a.g * (1 - t) + b.g * t, b: a.b * (1 - t) + b.b * t }), lip = mix(skin, { r: .78, g: .32, b: .36 }, o.lipTint || .36), S = linear(Math.min(1, skin.r * k), Math.min(1, skin.g * k), Math.min(1, skin.b * k)), Lp = linear(lip.r, lip.g, lip.b), rim = o.pout ? linear(lip.r * .32, lip.g * .2, lip.b * .2) : o.closed ? linear(lip.r * .55, lip.g * .4, lip.b * .4) : linear(lip.r * .3, lip.g * .17, lip.b * .17), kl = mix(skin, { r: .72, g: .34, b: .4 }, .5), kd = mix(kl, { r: .4, g: .12, b: .14 }, .62), KL = linear(kl.r, kl.g, kl.b), KD = linear(kd.r, kd.g, kd.b), KH = linear(1, .88, .88);
+  const mix = (a, b, t) => ({ r: a.r * (1 - t) + b.r * t, g: a.g * (1 - t) + b.g * t, b: a.b * (1 - t) + b.b * t }), pick = picked.mouth && picked.mouth.toUpperCase() !== PALETTES.mouth[0] ? (n => ({ r: (n >> 16 & 255) / 255, g: (n >> 8 & 255) / 255, b: (n & 255) / 255 }))(parseInt(picked.mouth.slice(1), 16)) : null, lip = pick ? mix(skin, pick, .92) : mix(skin, { r: .78, g: .32, b: .36 }, o.lipTint || .36), S = linear(Math.min(1, skin.r * k), Math.min(1, skin.g * k), Math.min(1, skin.b * k)), Lp = linear(lip.r, lip.g, lip.b), rim = o.pout ? linear(lip.r * .32, lip.g * .2, lip.b * .2) : o.closed ? linear(lip.r * .55, lip.g * .4, lip.b * .4) : linear(lip.r * .3, lip.g * .17, lip.b * .17), kl = mix(skin, { r: .72, g: .34, b: .4 }, .5), kd = mix(kl, { r: .4, g: .12, b: .14 }, .62), KL = linear(kl.r, kl.g, kl.b), KD = linear(kd.r, kd.g, kd.b), KH = linear(1, .88, .88);
   for (const g of M.lipT) { const C = g.attributes.color; for (let i = 0; i <= 22; i++) { const a = i / 22, t = a * 1.3 - .3, col = t < .2 ? rim.clone().lerp(Lp, Math.max(0, (t + .3) / .5)) : Lp.clone().lerp(S, Math.min(1, Math.max(0, (t - .55) / .45)) ** 1.3); for (let j = 0; j <= 64; j++) { const sm = v => { v = Math.min(1, Math.max(0, v)); return v * v * (3 - 2 * v); }, au = Math.abs(j / 32 - 1), at = (i * 65 + j) * 4;
         if (o.kiss) { const an = j / 32 * Math.PI, sx = a * Math.cos(an), sy = a * Math.sin(an), seam = sm((.05 - Math.abs(sy)) / .045) * sm((.97 - Math.abs(sx)) / .2), shine = Math.exp(-(((sy + .5) / .22) ** 2 + (sx / .45) ** 2)); KL.clone().lerp(KH, .38 * shine).lerp(KD, Math.max(.8 * seam, .3 * sm((a - .72) / .28))).toArray(C.array, at); C.array[at + 3] = 1 - sm((a - .86) / .14); continue; }
         col.toArray(C.array, at); const pu = o.pout ? Math.exp(-(((j / 32 - 1) * .995 / o.pout.w) ** 2)) : 0; if (pu) { col.clone().lerp(S, pu * sm((t - .02) / .3)).toArray(C.array, at); } C.array[at + 3] = (1 - (o.o ? sm((t - .62) / .38) : sm((t - .4) / .55) * (1 - pu) + sm((t - .78) / .22) * pu)) * (o.hw ? 1 - (o.closed ? sm((au - .5) / .42) : sm((au - .93) / .065)) : 1); } } C.needsUpdate = true; } }
@@ -2576,7 +2596,9 @@ const GARMENTS = {
   // (the folds lower than at first - the user - and the long trousers turned up a little too)
   pants: { items: [['', 'Undershorts'], ['bukser-trusser', 'Trusser', { made: true, hem: .41, brief: .07, under: .012, rise: .012, noBand: true, white: true }], ['bukser-lange', 'Lange bukser', { made: true, hem: .06, loose: .004, cuff: .014 }], ['bukser-shorts', 'Shorts', { made: true, hem: .3, cuff: .018 }],
     ['bukser-cowboy', 'Cowboyshorts', { made: true, hem: .24, cuff: .02, cloth: 'denim' }], ['bukser-fodbold', 'Fodboldbukser', { made: true, hem: .295, loose: .004, loops: false, cloth: 'smooth', game: 'pk', keep: true }]], texs: [], waist: true },
-  dress: { items: [['', 'Ingen kjole'], ['kjole-sommer', 'Sommerkjole'], ['kjole-prinsesse', 'Prinsessekjole', { hang: .5, armsOut: 12 }], ['kjole-havfrue', 'Havfruekjole', { skirt: false, margin: .012, reach: 8, tail: true, snug: .2, waist: .15 }]], texs: [], skirt: true, noArms: true },
+  dress: { items: [['', 'Ingen kjole'], ['kjole-sommer', 'Sommerkjole'], ['kjole-prinsesse', 'Prinsessekjole', { hang: .5, armsOut: 12 }], ['kjole-havfrue', 'Havfruekjole', { skirt: false, margin: .012, reach: 8, tail: true, snug: .2, waist: .15 }],
+    // (skirts - Trine, 23-11-2026: Ebba, 5, asked for skirts. The dresses' skirts, cut off at the waist: worn with a top, instead of trousers)
+    ['nederdel-sommer', 'Nederdel', { file: 'kjole-sommer', waistCut: .065 }], ['nederdel-prinsesse', 'Prinsessenederdel', { file: 'kjole-prinsesse', hang: .5, waistCut: .065 }]], texs: [], skirt: true, noArms: true },
   // (suits, worn instead of a top and trousers - or a dress - as a dress is: the swimsuit and swim trunks for the swim
   // world first; ski, space and motocross suits to come. The user, 11-11-2026. Made from the body, as the tops are)
   suit: { items: [['', 'Ingen dragt'], ['dragt-bade', 'Badedragt', { made: true, swim: true, brief: .065, relief: 'bade', cloth: 'smooth', game: 'sea' }],
@@ -2589,7 +2611,9 @@ const GARMENTS = {
   socks: { items: [['', 'Ingen strømper'], ['stroemper-ankel', 'Ankelstrømper', { made: true, top: .045, cloth: 'knit' }],
     // (ordinary socks, halfway between the ankle socks and the football socks - the user, 11-11-2026)
     ['stroemper-almindelige', 'Almindelige strømper', { made: true, top: .13, cloth: 'knit' }],
-    ['stroemper-fodbold', 'Fodboldstrømper', { made: true, top: .2, stripe: [.012, .026], cloth: 'knit', game: 'pk', keep: true }], ['stroemper-hoeje', 'Knæstrømper', { made: true, top: .24, cloth: 'knit' }]], texs: [] },
+    ['stroemper-fodbold', 'Fodboldstrømper', { made: true, top: .2, stripe: [.012, .026], cloth: 'knit', game: 'pk', keep: true }], ['stroemper-hoeje', 'Knæstrømper', { made: true, top: .24, cloth: 'knit' }],
+    // (tights - Trine, 23-11-2026: Ebba, 5, asked for tights and skirts. The socks made right up to the waist)
+    ['stroemper-strompebukser', 'Strømpebukser', { made: true, top: .56, cloth: 'knit' }]], texs: [] },
   shoe: { items: [['', 'Bare fødder'], ['sko-sneakers', 'Sneakers', { sole: .02 }], ['sko-fodbold', 'Fodboldstøvler', { file: 'sko-sneakers', sole: .02, studs: true, game: 'pk', keep: true }], ['sko-gummi', 'Gummistøvler', { pale: .9, paleTop: .015 }], ['sko-ballet', 'Balletsko', { paleFrom: .06, flat: .35, solid: .03 }],
     // (high heels, for the dresses - the user, 03-11-2026: made from the feet as the socks are, a shiny shell, the heels
     // raised and a thin heel under each - see heelsTick)
@@ -2660,6 +2684,7 @@ function busyOn() { busyN++; clearTimeout(busyT); busyEl.hidden = !!document.que
 function busyOff() { busyN = Math.max(0, busyN - 1); clearTimeout(busyT); if (!busyN) busyT = setTimeout(() => { if (!busyN) busyEl.hidden = true; }, 150); }
 // (a picture drawn first - the star on the screen - before the page goes on; not waited for longer than a moment when hidden)
 const nextPaint = () => new Promise(ok => { let done = false; const go = () => { if (!done) { done = true; ok(); } }; requestAnimationFrame(() => requestAnimationFrame(go)); setTimeout(go, 150); });
+const isSkirt = n => !!GARMENTS.dress.items.find(i => i[0] === n)?.[2]?.waistCut;
 async function setGarment(part, name) { const G = GARMENTS[part], ask = ++dressing;
   // (a dress is worn instead of a top and trousers, and the other way round; taking the dress off puts back the top and
   // trousers worn before it - the white vest came back instead)
@@ -2667,9 +2692,10 @@ async function setGarment(part, name) { const G = GARMENTS[part], ask = ++dressi
   const S = GARMENTS.suit;
   if (name && part === 'suit') { if (!G.now) G.before = GARMENTS.dress.now ? { dress: GARMENTS.dress.now } : { shirt: GARMENTS.shirt.now, pants: GARMENTS.pants.now }; GARMENTS.shirt.now = GARMENTS.pants.now = GARMENTS.dress.now = ''; }
   if (!name && part === 'suit' && G.now && G.before) { for (const [p, n] of Object.entries(G.before)) GARMENTS[p].now = n; }
-  if (name && part === 'dress') { if (!G.now) G.before = S.now && S.before ? { shirt: S.before.shirt || '', pants: S.before.pants || '' } : { shirt: GARMENTS.shirt.now, pants: GARMENTS.pants.now }; GARMENTS.shirt.now = GARMENTS.pants.now = ''; }
-  if (!name && part === 'dress' && G.now && G.before) { GARMENTS.shirt.now = G.before.shirt; GARMENTS.pants.now = G.before.pants; }
-  if (name && (part === 'shirt' || part === 'pants')) GARMENTS.dress.now = '';
+  // (a skirt takes the trousers' place only - the top stays on; a dress both)
+  if (name && part === 'dress') { if (!G.now) G.before = S.now && S.before ? { shirt: S.before.shirt || '', pants: S.before.pants || '' } : { shirt: GARMENTS.shirt.now, pants: GARMENTS.pants.now }; if (!isSkirt(name)) GARMENTS.shirt.now = ''; else if (!G.now || !isSkirt(G.now)) GARMENTS.shirt.now = G.before.shirt || ''; GARMENTS.pants.now = ''; }
+  if (!name && part === 'dress' && G.now && G.before) { if (!isSkirt(G.now)) GARMENTS.shirt.now = G.before.shirt; GARMENTS.pants.now = G.before.pants; }
+  if (name && (part === 'pants' || part === 'shirt' && !isSkirt(GARMENTS.dress.now))) GARMENTS.dress.now = '';
   if (name && part !== 'suit' && ['shirt', 'pants', 'dress'].includes(part)) { S.now = ''; S.before = null; }
   G.now = name; briefsOn = GARMENTS.pants.now === 'bukser-trusser'; if (part === 'pants') showSwatches(); else renderStyles();
   // (everything changed at once, when all of it is loaded - the underwear went skin coloured and the last dress stayed on
@@ -2685,7 +2711,7 @@ async function setGarment(part, name) { const G = GARMENTS[part], ask = ++dressi
   if (ask !== dressing) return;
   for (const g of Object.values(GARMENTS)) g.shown = g.now;
   { const sn = !!GARMENTS.glasses.items.find(i => i[0] === GARMENTS.glasses.shown)?.[2]?.snorkel; if (sn !== snorkelOn) { snorkelOn = sn; redrawBody(); } }
-  const shirt = !!(GARMENTS.dress.now || GARMENTS.shirt.now || GARMENTS.suit.now), pants = !!(GARMENTS.dress.now || GARMENTS.pants.now || GARMENTS.suit.now);
+  const shirt = !!(GARMENTS.dress.now && !isSkirt(GARMENTS.dress.now) || GARMENTS.shirt.now || GARMENTS.suit.now), pants = !!(GARMENTS.dress.now || GARMENTS.pants.now || GARMENTS.suit.now);
   if (tex && (!!tex.covered[PARTS.shirt] !== shirt || !!tex.covered[PARTS.pants] !== pants)) { tex.covered = { [PARTS.shirt]: shirt, [PARTS.pants]: pants }; redrawBody(); }
   for (const g of Object.values(GARMENTS)) for (const [n, m] of Object.entries(g.meshes)) if (m) m.visible = n === g.shown;
   wearUnder(); hideBody(); layer(); tuckIn(); hatHair(); chestName(); try { paintAllPatterns(); } catch (e) { console.warn(e); } if (part === 'shirt' || part === 'pants' || part === 'shoe') showPatterns(false); }
@@ -3675,6 +3701,8 @@ async function loadCloth(name, part) {
     const hem = []; for (let i = 0; i < P.count; i++) if (raw[i * 3 + 1] < lo + .25 * (hi - lo) && rim.has(spot(i)) && (G.waist || opts.skirt === false || apart(raw[i * 3], raw[i * 3 + 1], raw[i * 3 + 2]))) hem.push(raw[i * 3 + 1]);
     hem.sort((a, b) => a - b); const hemY = hem[Math.floor(hem.length * (G.waist ? .75 : .25))]; if (hem.length) clipAbove(g, (hemY - off.y) / s, true);
     if (isFinite(cutTop)) clipAbove(g, (cutTop - off.y) / s);
+    // (a skirt: the dress cut off at the waist)
+    if (opts.waistCut) clipAbove(g, (hairBase.hipY + opts.waistCut * hairBase.whole.H - off.y) / s);
     // (trousers drawn up to just under the navel - by the Spine bone - Meshy's sat low on the hips: from just under the
     // crotch upwards stretched to it)
     if (G.waist && isFinite(cutTop)) { const bs = hairBase.body.skeleton.bones, up = bs[Math.max(0, bs.findIndex(b => /Spine$/.test(b.name)))].getWorldPosition(new THREE.Vector3()).y,
@@ -4005,7 +4033,7 @@ function clothColour(part, mesh) { const c = new THREE.Color(); if (!part) retur
 const lightCloth = (part, mesh) => { const c = clothColour(part, mesh); return .2126 * c.r + .7152 * c.g + .0722 * c.b > .223; };
 function chestName() { if (!hairBase) return;
   const name = nameNow.trim().slice(0, 10), badge = (BADGES.find(b => b[0] === badgeNow) || ['', ''])[1];
-  const { H } = hairBase.whole, K = clothMarks(), dress = GARMENTS.dress.meshes[GARMENTS.dress.shown], shirt = GARMENTS.shirt.meshes[GARMENTS.shirt.shown];
+  const { H } = hairBase.whole, K = clothMarks(), dress = isSkirt(GARMENTS.dress.shown) ? null : GARMENTS.dress.meshes[GARMENTS.dress.shown], shirt = GARMENTS.shirt.meshes[GARMENTS.shirt.shown];
   // (on a dress lower down: the dresses have no shoulders, and the badge sat on their top edge)
   const light = lightCloth(dress ? 'dress' : shirt ? 'shirt' : '', dress || shirt);
   // (the picture: the badge over the name - the name alone in the middle, smaller as it gets longer, as in the app)
@@ -4351,10 +4379,14 @@ document.getElementById('newChoice').addEventListener('click', async e => { cons
   await wearFigure(newFig(b.dataset.new)); toast('✨ Ny MiniMig!'); newChoiceWords();
   if (first) { const t = document.querySelector('#mains [data-main="wear"]'); if (t) { t.classList.add('todo'); t.addEventListener('click', () => t.classList.remove('todo'), { once: true }); } } });
 function renderGallery() { const l = savedFigs(), el = document.getElementById('gallery'); renderKids();
-  el.innerHTML = l.length ? l.map((s, i) => `<div class="saved"><button class="load" data-load="${i}" aria-label="${T('Brug figur', 'Use figure')} ${i + 1}"><img src="${s.pic}" alt=""></button><button class="del" data-del="${i}" aria-label="${T('Slet figur', 'Delete figure')} ${i + 1}">✕</button></div>`).join('')
-    : T('<p class="empty">Ingen figurer endnu.<br>Tryk på ⭐ for at gemme din figur her.</p>', '<p class="empty">No figures yet.<br>Tap ⭐ to save your figure here.</p>'); }
+  // (first the figure as it is now with ➕, unless it is already here; the one worn now framed)
+  let now = null, pic = ''; try { if (hairBase && !game.on) { now = figureNow(); pic = l.some(s => sameFig(s.fig, now)) ? '' : thumb(figurePicture('hel', .3)); } } catch (e) {}
+  const add = pic ? `<div class="saved add"><button class="load" data-keepnow aria-label="${T('Gem figuren', 'Save the figure')}"><img src="${pic}" alt=""></button><span class="plus">＋</span></div>` : '';
+  el.innerHTML = add + (l.length ? l.map((s, i) => `<div class="saved${now && sameFig(s.fig, now) ? ' now' : ''}"><button class="load" data-load="${i}" aria-label="${T('Brug figur', 'Use figure')} ${i + 1}"><img src="${s.pic}" alt=""></button><button class="del" data-del="${i}" aria-label="${T('Slet figur', 'Delete figure')} ${i + 1}">✕</button></div>`).join('')
+    : add ? '' : T('<p class="empty">Ingen figurer endnu.<br>Tryk på ⭐ for at gemme din figur her.</p>', '<p class="empty">No figures yet.<br>Tap ⭐ to save your figure here.</p>')); }
 document.getElementById('figsBtn').addEventListener('click', () => { document.getElementById('figSheet').hidden = false; renderGallery(); });
 document.getElementById('gallery').addEventListener('click', e => { const load = e.target.closest('[data-load]'), del = e.target.closest('[data-del]'), l = savedFigs();
+  if (e.target.closest('[data-keepnow]')) { if (!hairBase || game.on) return; if (keepFig('hel', figurePicture('hel', .5))) { toast('⭐ Gemt!'); celebrate(); } renderGallery(); return; }
   if (load) { const s = l[+load.dataset.load]; if (!s || !hairBase) return; if (game.on) { toast('Stop spillet først'); return; } document.getElementById('figSheet').hidden = true; wearFigure(s.fig); }
   else if (del) { // (a first tap asks "Slet?", only a second one deletes, so a figure is not lost by a stray tap)
     if (!del.classList.contains('armed')) { del.classList.add('armed'); del.textContent = tr('Slet?'); setTimeout(() => { del.classList.remove('armed'); del.textContent = '✕'; }, 2500); return; }
@@ -7862,6 +7894,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { gearTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.18.0 (213fed1)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.18.0 (d8bd973)</div>
 </body>
 </html>
