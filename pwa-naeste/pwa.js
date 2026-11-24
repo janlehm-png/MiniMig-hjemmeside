@@ -13,6 +13,7 @@ panel.innerHTML = en ? `<button type="button" class="pwa-help">For grown-ups</bu
 <dialog class="pwa-dialog" aria-labelledby="pwa-title">
 <h2 id="pwa-title" tabindex="-1" autofocus>For grown-ups</h2>
 <p>No account and no ads.</p>
+<p>The buttons are pictograms in the simple style children know from kindergarten, so MiniMig works before a child can read – at home and in daycare. Small learning elements are built into the play: your child counts coins, practises rhythm and order in the dance and writes their own name.</p>
 <h3>MiniMig keeps getting better</h3>
 <p>MiniMig is new, and we keep fixing and improving the game. Every so often we gather the improvements into a new version. It comes to minimig.dk first and to TestFlight a little later, because Apple has to approve each version.</p>
 <p>If you have an iPad or iPhone, you can get MiniMig as an app through TestFlight:</p>
@@ -56,6 +57,7 @@ panel.innerHTML = en ? `<button type="button" class="pwa-help">For grown-ups</bu
 <dialog class="pwa-dialog" aria-labelledby="pwa-title">
 <h2 id="pwa-title" tabindex="-1" autofocus>Til voksne</h2>
 <p>Uden konto og uden reklamer.</p>
+<p>Knapperne er piktogrammer i den enkle stil, børn kender fra børnehaven, så MiniMig kan bruges, før barnet kan læse – både derhjemme og i institutionen. I legen er der små læringselementer: barnet tæller med mønterne, øver rytme og rækkefølge i dansen og skriver sit eget navn.</p>
 <h3>MiniMig bliver bedre hele tiden</h3>
 <p>MiniMig er ny, og vi retter og udvikler spillet løbende. Med jævne mellemrum samler vi forbedringerne i en ny udgave. Den kommer først her på minimig.dk og lidt senere i TestFlight, fordi Apple skal godkende hver udgave.</p>
 <p>Har I en iPad eller iPhone, kan I få MiniMig som app gennem TestFlight:</p>
