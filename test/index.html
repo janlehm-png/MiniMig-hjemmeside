@@ -161,6 +161,9 @@
   .stage.playing .hud { top: max(12px, env(safe-area-inset-top)); left: max(12px, env(safe-area-inset-left)); right: max(12px, env(safe-area-inset-right)); }
   .stage.playing .game-x { width: 58px; height: 58px; font-size: 26px; }
   .hud-right { display: flex; align-items: center; gap: 8px; }
+  /* (the test site's own buttons and its TEST mark, up in the right corner: in a game they go down under the level button and
+     the big red cross - they lay over them, the user 24-11-2026) */
+  html:has(#stage.playing) .test-w, html:has(#stage.playing) body > div[style*="#E8384F"] { margin-top: 74px; }
   .game-lvl { padding: 0; display: grid; place-items: center; } .game-lvl img { width: 44px; height: 44px; object-fit: contain; pointer-events: none; }
   .lvl-pop { position: absolute; z-index: 4; top: calc(max(12px, env(safe-area-inset-top)) + 64px); right: max(12px, env(safe-area-inset-right)); display: flex; flex-direction: column; gap: 6px; padding: 8px; border-radius: 20px; background: var(--tile); box-shadow: 0 6px 22px rgba(58, 46, 92, .28); }
   .lvl-pop[hidden] { display: none; }
@@ -206,6 +209,11 @@
   .hand.sides { animation: hand-sides 2.6s ease-in-out infinite; }
   @keyframes hand-sides { 0%, 100% { left: 22%; transform: translate(-50%, 0); } 15% { left: 22%; transform: translate(-50%, 14px) scale(.82); } 30% { left: 22%; transform: translate(-50%, 0); } 50% { left: 78%; transform: translate(-50%, 0); } 65% { left: 78%; transform: translate(-50%, 14px) scale(.82); } 80% { left: 78%; transform: translate(-50%, 0); } }
   .hand.drag { animation: hand-drag 2.8s ease-in-out infinite; }
+  /* (Rumrejse's boost: two quick taps, and a rocket at each - the user, 24-11-2026) */
+  .hand.double { top: 50%; animation: hand-double 1.6s ease-in-out infinite; }
+  .hand.double b { position: absolute; left: 70%; top: -30%; font-size: 40px; opacity: 0; animation: hand-rocket 1.6s ease-out infinite; }
+  @keyframes hand-double { 0%, 40%, 100% { transform: translate(-50%, 0) scale(1); } 10%, 30% { transform: translate(-50%, 14px) scale(.82); } 20% { transform: translate(-50%, 0) scale(1); } }
+  @keyframes hand-rocket { 0%, 25% { opacity: 0; transform: translate(0, 10px) scale(.6); } 35% { opacity: 1; transform: translate(0, 0) scale(1.1); } 70% { opacity: 1; transform: translate(26px, -26px) scale(1); } 85%, 100% { opacity: 0; transform: translate(40px, -40px) scale(.9); } }
   /* (the scroll hand: over the part that can be scrolled, sweeping the way to scroll) */
   .scroll-hand { position: fixed; z-index: 70; font-size: 56px; line-height: 1; pointer-events: none; filter: drop-shadow(0 4px 6px rgba(0,0,0,.3)); }
   .scroll-hand[hidden] { display: none; }
@@ -5261,13 +5269,15 @@ function startGame(mode = game.mode) { if (game.on || !glb) return; if (!game.ag
   // (the same way in the three games where the figure is led about - Skattejagt, Svømmeverden, Rumrejse: tap where it is to go,
   // or hold the finger down and drag it along - Trine, 23-11-2026: Ebba dragged in one game and tapped in another)
   showHand(onBoard(mode) ? (hpp.on ? 'tap' : 'sides') : ['island', 'sea', 'space'].includes(mode) ? 'drag' : ['cypher', 'studio'].includes(mode) ? '' : 'tap');
+  // (in Rumrejse, after the drag: two quick taps give the rocket's boost - shown the same way, the user 24-11-2026)
+  if (mode === 'space') setTimeout(() => { if (game.on && game.mode === 'space') showHand('double', 4800); }, 5400);
   hud.hidden = false; hintEl.hidden = mode === 'cypher' || mode === 'studio'; try { showLvl(); showJar(); } catch (e) {} document.querySelector('.top').hidden = true; document.getElementById('stage').classList.add('playing'); showStars(); showRecord();
   if (MODES[mode].from) game.hopWay = mode; // (the way last chosen in Hop over bolden)
   document.querySelectorAll('[data-game]').forEach(b => b.classList.toggle('on', b.dataset.game === mode || b.dataset.game === 'hop' && !!MODES[mode].from)); prepScene(); }
 // (again: only stopped to start once more - at another level or in another way - the figure's own setting not put back)
 const handEl = Object.assign(document.createElement('div'), { className: 'hand', hidden: true, textContent: '👆' }); document.getElementById('stage').append(handEl);
 // (pinch: two fingers going apart and together - zoom; the others one finger)
-let handT = 0; function showHand(kind, ms = 5200) { clearTimeout(handT); handEl.style.left = handEl.style.top = ''; handEl.className = 'hand ' + kind; if (kind === 'pinch') handEl.innerHTML = '<i>👆</i><i>👆</i>'; else handEl.textContent = '👆'; handEl.hidden = !kind; if (kind) handT = setTimeout(() => { handEl.hidden = true; }, ms); }
+let handT = 0; function showHand(kind, ms = 5200) { clearTimeout(handT); handEl.style.left = handEl.style.top = ''; handEl.className = 'hand ' + kind; if (kind === 'pinch') handEl.innerHTML = '<i>👆</i><i>👆</i>'; else if (kind === 'double') handEl.innerHTML = '👆<b>🚀</b>'; else handEl.textContent = '👆'; handEl.hidden = !kind; if (kind) handT = setTimeout(() => { handEl.hidden = true; }, ms); }
 document.getElementById('stage').addEventListener('pointerdown', () => { if (game.on && !handEl.hidden) setTimeout(() => { handEl.hidden = true; }, 400); });
 // (the figure too - the user, 24-11-2026: how to turn it round, and zoom in and out. Shown a moment after the figure is
 // there and nothing is open, first one finger dragging sideways (turn), then two fingers apart (zoom) - until the child
@@ -7911,7 +7921,7 @@ const infoBtn = document.getElementById('infoBtn'), infoPop = document.getElemen
   last = e.timeStamp; }, { passive: false });
   document.addEventListener('dblclick', e => e.preventDefault(), { passive: false }); }
 // (on the test page only: a button with kroner, to try the shop without playing for them - the user, 04-11-2026)
-if (location.pathname.includes('/test/')) { const b = document.createElement('button'); b.textContent = '+100 💰'; b.style.cssText = 'position:fixed;top:26px;right:6px;z-index:999;background:#FFC233;color:#5A3A00;border:0;border-radius:9px;padding:3px 8px;font:700 11px system-ui,sans-serif;cursor:pointer;opacity:.85'; /* (test site only: up in the right corner, under the TEST mark - the user, 24-11-2026: in the middle they hid the four buttons at the top) */ b.onclick = () => { krOf(score); score.kr += 100; saveScore(); showRecord(); toast(`💰 ${score.kr}`); if (!document.getElementById('starSheet').hidden) showStarSheet(); }; document.body.append(b); 
+if (location.pathname.includes('/test/')) { const b = document.createElement('button'); b.className = 'test-w'; b.textContent = '+100 💰'; b.style.cssText = 'position:fixed;top:26px;right:6px;z-index:999;background:#FFC233;color:#5A3A00;border:0;border-radius:9px;padding:3px 8px;font:700 11px system-ui,sans-serif;cursor:pointer;opacity:.85'; /* (test site only: up in the right corner, under the TEST mark - the user, 24-11-2026: in the middle they hid the four buttons at the top) */ b.onclick = () => { krOf(score); score.kr += 100; saveScore(); showRecord(); toast(`💰 ${score.kr}`); if (!document.getElementById('starSheet').hidden) showStarSheet(); }; document.body.append(b); 
   // (and one with stars for the star jar of the world being played, to get on to the next world without riding it full - the user, 19-11-2026)
   const st = b.cloneNode(); st.textContent = '+100 ⭐'; st.style.top = '50px'; st.onclick = () => { if (!game.on || !WORLDS[game.mode]) { toast('⭐ Start et spil med verdener først'); return; }
     const w = worldsOf(game.mode), i = worldNow(game.mode); jarGain(100); saveScore(); toast(`⭐ ${w.jar[i] || 0} / ${JAR}`); }; document.body.append(st); }
@@ -7937,7 +7947,7 @@ function adventCheck() { if (adventOpenNow || game.on || !glb || !hairBase?.whol
   document.body.append(box); }
 setInterval(adventCheck, 2000);
 // (on the test site: move the date on to the next Advent Sunday, to see each gift come - the user, 21-11-2026)
-if (TEST_SITE) { const b = document.createElement('button'); b.textContent = '🎁 Næste søndag'; b.style.cssText = 'position:fixed;top:74px;right:6px;z-index:999;background:#2FB872;color:#fff;border:0;border-radius:9px;padding:3px 8px;font:700 11px system-ui,sans-serif;cursor:pointer;opacity:.85';
+if (TEST_SITE) { const b = document.createElement('button'); b.className = 'test-w'; b.textContent = '🎁 Næste søndag'; b.style.cssText = 'position:fixed;top:74px;right:6px;z-index:999;background:#2FB872;color:#fff;border:0;border-radius:9px;padding:3px 8px;font:700 11px system-ui,sans-serif;cursor:pointer;opacity:.85';
   b.onclick = () => { const now = adventToday(), next = ADVENT_DAYS.find(x => x > now); if (!next) { try { localStorage.removeItem(ADVENT_SKIP); localStorage.removeItem(ADVENT_KEY); } catch (e) { } toast('🎁 Forfra: rigtig dato, ingen gaver åbnet'); renderStyles(); return; }
     let skip = 0; try { skip = +localStorage.getItem(ADVENT_SKIP) || 0; } catch (e) { } const [y, m, d] = now.split('-').map(Number), [y2, m2, d2] = next.split('-').map(Number);
     skip += Math.round((Date.UTC(y2, m2 - 1, d2) - Date.UTC(y, m - 1, d)) / 864e5); try { localStorage.setItem(ADVENT_SKIP, String(skip)); } catch (e) { } toast(`🎁 Nu er det ${next}`); renderStyles(); adventCheck(); };
@@ -8030,6 +8040,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); headShape(); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { gearTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;right:6px;z-index:999;background:#E8384F;color:#fff;font:700 11px system-ui,sans-serif;padding:2px 8px;border-radius:9px;pointer-events:none;opacity:.85">TEST 0.19.0 (7667720)</div>
+<div style="position:fixed;top:4px;right:6px;z-index:999;background:#E8384F;color:#fff;font:700 11px system-ui,sans-serif;padding:2px 8px;border-radius:9px;pointer-events:none;opacity:.85">TEST 0.19.0 (d0a5964)</div>
 </body>
 </html>
