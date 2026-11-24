@@ -59,6 +59,9 @@
   .tabgroup button img { width: var(--ico); height: var(--ico); object-fit: contain; }
   .no-words .tabgroup button > span:not(.price):not(.lock-badge):not(.emo), .no-words .choices button > span:not(.price) { display: none; }
   .no-words .tabgroup button { width: 64px; padding: 6px 2px; }
+  /* (the buy window without the thing's name over it - the picture says what it is, the user 24-11-2026: »der behøver ikke
+     at stå hund«. Kept for screen readers, only not shown) */
+  .no-words #buyTitle { visibility: hidden; }
   #games button { width: 80px; padding: 6px 4px; } #games button img { width: var(--ico-game); height: var(--ico-game); } #games button span { display: none; }
   /* the choices and colours for the tab chosen, in a white box under the tabs */
   .box[hidden] { display: none; }
@@ -8087,6 +8090,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); headShape(); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { gearTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;right:6px;z-index:999;background:#E8384F;color:#fff;font:700 11px system-ui,sans-serif;padding:2px 8px;border-radius:9px;pointer-events:none;opacity:.85">TEST 0.19.0 (0545211)</div>
+<div style="position:fixed;top:4px;right:6px;z-index:999;background:#E8384F;color:#fff;font:700 11px system-ui,sans-serif;padding:2px 8px;border-radius:9px;pointer-events:none;opacity:.85">TEST 0.19.0 (e5d718d)</div>
 </body>
 </html>
