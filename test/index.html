@@ -57,6 +57,8 @@
   .tabgroup button { width: 70px; padding: 4px 2px 5px; font-size: 11px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
   /* (each part and each choice with its picture over its name, as in the app - the children cannot read yet) */
   .tabgroup button img { width: var(--ico); height: var(--ico); object-fit: contain; }
+  .no-words .tabgroup button:not(.grown) > span:not(.price):not(.lock-badge), .no-words .choices button > span:not(.price) { display: none; }
+  .no-words .tabgroup button:not(.grown) { width: 64px; padding: 6px 2px; }
   #games button { width: 80px; padding: 6px 4px; } #games button img { width: var(--ico-game); height: var(--ico-game); } #games button span { display: none; }
   /* the choices and colours for the tab chosen, in a white box under the tabs */
   .box[hidden] { display: none; }
@@ -896,7 +898,10 @@ const CHOICES = [['skin', 'Hud', 'hud'], ['head', 'Hoved', 'hoved'], ['hair', 'H
 const picked = {}, START = { skin: '#EDB98A', hair: '#4A2C1D', eyes: '#7A4220', brows: '#4A2C1D', mouth: '#C0505A', pynt: '#FF5A6E', nose: '#EDB98A', shirt: '#FF7A2F', pants: '#2C3E8C', dress: '#3D8BFF', suit: '#3D8BFF', socks: '#3D8BFF', item: '#E8384F', shoe: '#3D8BFF', hat: '#3D8BFF', glasses: '#3D8BFF' }; let partNow = 'shirt';
 const apply = (part, c) => { picked[part] = c; recolour(part, c); if (part === 'shirt' || part === 'dress') chestName(); if (typeof paintPatterns === 'function') { paintPatterns(part); showPatterns(false); } };
 const iconButton = (src, label) => { const b = document.createElement('button'), i = new Image(); i.src = src; i.alt = ''; i.onerror = () => i.remove();
-  const s = document.createElement('span'); s.textContent = tr(label); b.append(i, s); return b; };
+  const s = document.createElement('span'); s.textContent = tr(label); b.append(i, s); b.setAttribute('aria-label', tr(label)); b.title = tr(label); return b; };
+// (the children's icons without words - the user, 24-11-2026: a test of the pictures alone; the grown-ups' buttons keep
+// theirs. KID_WORDS = true: the words back under every icon. The names stay for screen readers and as a tip on a computer)
+const KID_WORDS = false; if (!KID_WORDS) document.documentElement.classList.add('no-words');
 // (the app's colours, as in version 2.5D)
 const PALETTES = { skin: ['#F6D0AE', '#EDB98A', '#D9965F', '#B5713F', '#8D5530', '#5A3520'], hair: ['#2A1C17', '#4A2C1D', '#7A4428', '#A8582E', '#D9A55C', '#F0D9A0', '#FF7EBB', '#5AA9FF'],
   eyes: ['#9C5A1E', '#6B3A1A', '#4A2814', '#2E1A10', '#1A110C', '#3B7BD4', '#3E9A5C', '#A0763A', '#7D8A99', '#8A5CE6'],
@@ -5228,7 +5233,7 @@ function startGame(mode = game.mode) { if (game.on || !glb) return; if (!game.ag
 // (again: only stopped to start once more - at another level or in another way - the figure's own setting not put back)
 const handEl = Object.assign(document.createElement('div'), { className: 'hand', hidden: true, textContent: '👆' }); document.getElementById('stage').append(handEl);
 // (pinch: two fingers going apart and together - zoom; the others one finger)
-let handT = 0; function showHand(kind, ms = 5200) { clearTimeout(handT); handEl.className = 'hand ' + kind; if (kind === 'pinch') handEl.innerHTML = '<i>👆</i><i>👆</i>'; else handEl.textContent = '👆'; handEl.hidden = !kind; if (kind) handT = setTimeout(() => { handEl.hidden = true; }, ms); }
+let handT = 0; function showHand(kind, ms = 5200) { clearTimeout(handT); handEl.style.left = handEl.style.top = ''; handEl.className = 'hand ' + kind; if (kind === 'pinch') handEl.innerHTML = '<i>👆</i><i>👆</i>'; else handEl.textContent = '👆'; handEl.hidden = !kind; if (kind) handT = setTimeout(() => { handEl.hidden = true; }, ms); }
 document.getElementById('stage').addEventListener('pointerdown', () => { if (game.on && !handEl.hidden) setTimeout(() => { handEl.hidden = true; }, 400); });
 // (the figure too - the user, 24-11-2026: how to turn it round, and zoom in and out. Shown a moment after the figure is
 // there and nothing is open, first one finger dragging sideways (turn), then two fingers apart (zoom) - until the child
@@ -6363,7 +6368,7 @@ function hpStart() { hpBuild(); Object.assign(sk, { snow: false, look: 'halfpipe
   hpp.world.add(sk.hills); sk.hills.position.set(0, 0, 8); for (const h of sk.hills.children.slice(1)) if (h.userData.green) h.material.color.copy(h.userData.green);
   scene.fog = new THREE.Fog(0xCDEBFF, 40, 95); floor.visible = false; disc.visible = false; for (const el of [bgNear, bgFar, bgNear2]) el.hidden = true; stage.classList.add('street'); controls.maxDistance = 40;
   ilShadow(true); Object.assign(key.shadow.camera, { left: -6.5, right: 6.5, top: 6.5, bottom: -3, far: 30 }); key.shadow.camera.updateProjectionMatrix(); key.position.set(3, 10, 7); key.target.position.set(0, 1.5, 0); key.target.updateMatrixWorld();
-  Object.assign(hpp, { phase: 'wait', wait: 1.2, s: 0, dir: 1, h: 0, vy: 0, tapped: false, q: 0, hops: 0, possible: 0, camK: 0, camX: 0, free: false, ending: false, hop: 0, x: -hpLip() - .45, y: HP.R, th: 0 });
+  Object.assign(hpp, { guide: 4, guided: false, phase: 'wait', wait: 1.2, s: 0, dir: 1, h: 0, vy: 0, tapped: false, q: 0, hops: 0, possible: 0, camK: 0, camX: 0, free: false, ending: false, hop: 0, x: -hpLip() - .45, y: HP.R, th: 0 });
   for (const m of hpp.stars) m.visible = false; hpHang(1); hpHang(-1); hpp.petG.position.set(-hpLip() - HP.deck + .35, HP.R, -1.2); hpPet();
   chalEl.hidden = false; chalEl.style.setProperty('--f', 0); toast(T('🛹 8 ture frem og tilbage!', '🛹 8 times to and fro!'));
   Promise.all(['staa', SKATE.push].map(loadMove)).then(() => { if (hpp.on) runAnim('staa'); }); }
@@ -6374,6 +6379,12 @@ const hpQ = err => { const win = (HP.levels[game.level] || HP.levels['niveau-let
 function hpTrick(q) { const list = q >= .8 ? ['salto', 'dobbelt', 'salto'] : q >= .5 ? ['kickflip', 'shuvit', 'spin'] : ['spin', 'shuvit']; let k; do k = list[Math.floor(Math.random() * list.length)]; while (k === sk.lastTrick && Math.random() < .7);
   sk.lastTrick = k; sk.trick = k; sk.extra = null; const n = q >= .8 ? 3 : q >= .5 ? 2 : 1; addStars(n); sfx('swish'); sfx('ding', .08); if (n > 2) sfx('ding', .2);
   skc.tricks[k] = (skc.tricks[k] || 0) + 1; trickPop((q >= .8 ? T('Perfekt! ', 'Perfect! ') : '') + skTrickName(k) + `  ⭐+${n}`); }
+// (the show-me hand at the edge - the user, 24-11-2026: show when and where to tap. On the first rides up a wall, until the
+// child gets a perfect one, the hand taps right at the edge on the screen at the right moment - as the edge glows)
+const hpGuideV = new THREE.Vector3();
+function hpGuide(side) { hpp.guided = true; const st = document.getElementById('stage'); hpGuideV.set(side * (hpLip() - .1), HP.R + .25, 0).project(camera);
+  handEl.style.left = ((hpGuideV.x + 1) / 2 * st.clientWidth) + 'px'; handEl.style.top = ((1 - hpGuideV.y) / 2 * st.clientHeight) + 'px';
+  clearTimeout(handT); handEl.className = 'hand tap'; handEl.textContent = '👆'; handEl.hidden = false; handT = setTimeout(() => { handEl.hidden = true; }, 1100); }
 function hpTap() { if (!game.audio) try { game.audio = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { game.audio = null; } game.audio?.resume?.();
   if (!hpp.on || game.paused) return; game.hint = 0; const g = (HP.levels[game.level] || HP.levels['niveau-let'])[0], win = (HP.levels[game.level] || HP.levels['niveau-let'])[1];
   if (hpp.phase === 'wait') { hpp.wait = 0; return; }
@@ -6402,10 +6413,11 @@ function hpTick(dt) { dt = Math.min(dt, .05) * (1 - .25 * hpp.camK); const [g, w
     hpp.v = Math.max(.9, Math.sqrt(Math.max(0, 2 * g * (E - y0)))); const was = hpp.s; hpp.s += hpp.dir * hpp.v * dt;
     if (hpp.ending && (was - Lt / 2) * (hpp.s - Lt / 2) <= 0) { hpEnd(); }
     if (hpp.s >= Lt || hpp.s <= 0) { const side = hpp.dir; hpp.s = side > 0 ? Lt : 0; Object.assign(hpp, { phase: 'air', side, at: 0, h: 0 }); hpp.x = side * (lip - .12); hpp.y = HP.R; hpp.th = side * Math.PI / 2;
-      hpp.air = hpp.tapped ? .45 + 1.35 * hpp.q : HP.base; hpp.vy = Math.sqrt(2 * g * hpp.air); sfx('boing'); if (hpp.tapped) hpTrick(hpp.q); }
+      hpp.air = hpp.tapped ? .45 + 1.35 * hpp.q : HP.base; hpp.vy = Math.sqrt(2 * g * hpp.air); sfx('boing'); if (hpp.tapped) hpTrick(hpp.q);
+      if (hpp.guided) { hpp.guided = false; hpp.guide--; } if (hpp.tapped && hpp.q >= .8) hpp.guide = 0; }
     else { const [x, y, th] = hpAt(hpp.s); hpp.x = x; hpp.y = y; hpp.th = th;
       // (the edge ahead glows as the moment to tap comes near)
-      if (!hpp.tapped && !hpp.ending) { const dist = hpp.dir > 0 ? Lt - hpp.s : hpp.s, vl = Math.sqrt(2 * g * HP.base), t = dist / Math.max(.5, (hpp.v + vl) / 2); glow[hpp.dir > 0 ? 1 : 0] = Math.max(0, 1 - Math.abs(t - .08) / win); } } }
+      if (!hpp.tapped && !hpp.ending) { const dist = hpp.dir > 0 ? Lt - hpp.s : hpp.s, vl = Math.sqrt(2 * g * HP.base), t = dist / Math.max(.5, (hpp.v + vl) / 2); glow[hpp.dir > 0 ? 1 : 0] = Math.max(0, 1 - Math.abs(t - .08) / win); if (hpp.guide > 0 && !hpp.guided && t < .4) hpGuide(hpp.dir); } } }
   else if (hpp.phase === 'air') { hpp.at += dt; hpp.vy -= g * dt; hpp.h += hpp.vy * dt;
     const rem = (hpp.vy + Math.sqrt(Math.max(0, hpp.vy * hpp.vy + 2 * g * Math.max(0, hpp.h)))) / g, prog = Math.min(1, hpp.at / Math.max(.01, hpp.at + rem));
     hpp.x = hpp.side * (lip - .12); hpp.y = HP.R + Math.max(0, hpp.h); hpp.th = hpp.side * Math.PI / 2 * (1 - Math.pow(Math.sin(Math.PI * prog), .8));
@@ -7680,7 +7692,8 @@ lvlBtn.onclick = () => showLvl(lvlPop.hidden);
 // (no menu from a long press anywhere but in the name box)
 document.querySelector('.main').addEventListener('contextmenu', e => { if (e.target.tagName !== 'INPUT') e.preventDefault(); });
 // (the game's tab starts it and shows its levels in the box, as a movement's tab shows its kinds)
-// (the games' names kept for screen readers and as a tip on a computer, now they are not shown)
+// (the games' names kept for screen readers and as a tip on a computer, now they are not shown - every icon button the same)
+document.querySelectorAll('.tabgroup button').forEach(b => { if (b.getAttribute('aria-label')) return; const t = b.querySelector('span:not(.price):not(.lock-badge)')?.textContent.replace(/­/g, '').trim(); if (t) { b.setAttribute('aria-label', tr(t)); b.title = tr(t); } });
 document.querySelectorAll('#games [data-game]').forEach(b => { const t = b.querySelector('span')?.textContent.replace(/­/g, ''); if (t) { b.setAttribute('aria-label', tr(t)); b.title = tr(t); } });
 document.querySelectorAll('[data-game]').forEach(b => b.onclick = () => { soundOut()?.resume(); askWho(() => { boxOpen = true; stopGame(true); startGame(b.dataset.game === 'hop' ? game.hopWay || 'side' : b.dataset.game); if (!dressWant) { partNow = 'game-hop'; showSwatches(); } }); });
 // (Hop over bolden: under the levels the three ways to see it, each with its picture)
@@ -7975,6 +7988,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); headShape(); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { gearTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.18.0 (8366b25)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.18.0 (e6625f3)</div>
 </body>
 </html>
