@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>MiniMig™ version 2</title>
-<meta name="minimig-version" content="0.18.0">
+<meta name="minimig-version" content="0.19.0">
 <!-- (the number of this version, shown under the i - see VERSIONER.md - raised for each package and each fix put out) -->
 <!-- (the same icon as version 1 on a home screen, under the name MiniMig 2 - the icons lie in the website's billeder/;
      the user, 03-11-2026, sharing version 2 with testers) -->
@@ -847,7 +847,7 @@ const EN = {
   'Hænder i siden': 'Hands on hips', 'Glad hop': 'Happy jump', 'Højt hop': 'High jump', 'Lille løbehop': 'Small leap', 'Langt løbehop': 'Long leap', 'Hiphop': 'Hip hop', 'Hiphop 2': 'Hip hop 2', 'Hiphop 3': 'Hip hop 3', 'Hiphop 4': 'Hip hop 4', 'Fjollet': 'Silly', 'Armdans': 'Arm dance', 'Sjovt løb': 'Funny run', 'Løb stærkt': 'Run fast',
   'Klap': 'Clap', 'Dyk og rul': 'Dive and roll', 'Snuble': 'Stumble', 'Falder på numsen': 'Fall on your bottom', 'Venstre fod': 'Left foot', 'Højre fod': 'Right foot',
   'Meget let': 'Very easy', 'Let': 'Easy', 'Mellem': 'Medium', 'Svær': 'Hard', 'Meget svær': 'Very hard', 'Fra siden': 'From the side', 'Bagfra': 'From behind', 'Forfra': 'From the front',
-  '👈 Tryk i siden for at svinge 👉': '👈 Tap the side to turn 👉', '👆 Tryk hvor du vil gå hen': '👆 Tap where you want to go', '👆 Tryk eller træk – så svømmer du derhen': '👆 Tap or drag to swim there', '🔍 Hvor er jeg? Tryk på busken': '🔍 Where am I? Tap the bush', '👆 Tryk i målet, hvor bolden skal hen': '👆 Tap the goal where the ball should go', '👆 Tryk for at hoppe': '👆 Tap to jump',
+  '👈 Tryk i siden for at svinge 👉': '👈 Tap the side to turn 👉', '👆 Tryk hvor du vil gå hen': '👆 Tap where you want to go', '👆 Tryk eller træk – så går du derhen': '👆 Tap or drag – and you walk there', '👆 Tryk eller træk – så svømmer du derhen': '👆 Tap or drag to swim there', '🔍 Hvor er jeg? Tryk på busken': '🔍 Where am I? Tap the bush', '👆 Tryk i målet, hvor bolden skal hen': '👆 Tap the goal where the ball should go', '👆 Tryk for at hoppe': '👆 Tap to jump',
   '🏆 Ny rekord!': '🏆 New record!', 'Din rekord': 'Your record', 'Stop spillet': 'Stop the game', 'Sværhedsgrad': 'Level', 'Stop spillet først': 'Stop the game first',
   // (messages)
   'Henter figuren …': 'Loading the figure …', 'Figuren kunne ikke hentes': 'The figure could not be loaded', 'Det kan ikke hentes lige nu 📶': 'That can’t be loaded right now 📶',
@@ -5254,11 +5254,13 @@ function startGame(mode = game.mode) { if (game.on || !glb) return; if (!game.ag
     useGameBall(BALL_ITEMS.includes(itemNow) ? itemNow : ''); hopWorldStart(mode);
     game.bigPool ??= [goldBall(), goldBall()]; Object.assign(game, { dive: false, sinceBig: 0 });
     const run = levelNow().run; Promise.all([run, GAME.jump, GAME.trip, GAME.cheer, GAME.dive].map(loadMove)).then(() => { if (game.on) runAnim(run); }); }
-  hintEl.textContent = tr(onBoard(mode) ? '👈 Tryk i siden for at svinge 👉' : mode === 'island' ? '👆 Tryk hvor du vil gå hen' : mode === 'space' ? '👆 Tryk – så flyver du derhen. To hurtige tryk giver fart 🚀' : mode === 'sea' ? '👆 Tryk eller træk – så svømmer du derhen' : mode === 'hide' ? '🔍 Hvor er jeg? Tryk på busken' : mode === 'skihop' ? '👆 Tryk for at køre – og tryk igen ved kanten for at hoppe!' : mode === 'cypher' ? '🎵 Vælg fire trin til din runde' : mode === 'studio' ? '🎵 Sæt din dans sammen' : mode === 'pk' ? '👆 Tryk i målet, hvor bolden skal hen' : '👆 Tryk for at hoppe');
+  hintEl.textContent = tr(onBoard(mode) ? '👈 Tryk i siden for at svinge 👉' : mode === 'island' ? '👆 Tryk eller træk – så går du derhen' : mode === 'space' ? '👆 Tryk – så flyver du derhen. To hurtige tryk giver fart 🚀' : mode === 'sea' ? '👆 Tryk eller træk – så svømmer du derhen' : mode === 'hide' ? '🔍 Hvor er jeg? Tryk på busken' : mode === 'skihop' ? '👆 Tryk for at køre – og tryk igen ved kanten for at hoppe!' : mode === 'cypher' ? '🎵 Vælg fire trin til din runde' : mode === 'studio' ? '🎵 Sæt din dans sammen' : mode === 'pk' ? '👆 Tryk i målet, hvor bolden skal hen' : '👆 Tryk for at hoppe');
   if (hpp.on) hintEl.textContent = T('👆 Tryk, når du når kanten – så hopper du højere!', '👆 Tap as you reach the edge – and jump higher!');
   // (a hand showing how - Trine, 23-11-2026: Ebba, 5, cannot read, and could not tell how some games were played: tap in the
   // sides to steer, tap, or drag. Gone at the first tap or after a few seconds)
-  showHand(onBoard(mode) ? (hpp.on ? 'tap' : 'sides') : mode === 'sea' ? 'drag' : ['cypher', 'studio'].includes(mode) ? '' : 'tap');
+  // (the same way in the three games where the figure is led about - Skattejagt, Svømmeverden, Rumrejse: tap where it is to go,
+  // or hold the finger down and drag it along - Trine, 23-11-2026: Ebba dragged in one game and tapped in another)
+  showHand(onBoard(mode) ? (hpp.on ? 'tap' : 'sides') : ['island', 'sea', 'space'].includes(mode) ? 'drag' : ['cypher', 'studio'].includes(mode) ? '' : 'tap');
   hud.hidden = false; hintEl.hidden = mode === 'cypher' || mode === 'studio'; try { showLvl(); showJar(); } catch (e) {} document.querySelector('.top').hidden = true; document.getElementById('stage').classList.add('playing'); showStars(); showRecord();
   if (MODES[mode].from) game.hopWay = mode; // (the way last chosen in Hop over bolden)
   document.querySelectorAll('[data-game]').forEach(b => b.classList.toggle('on', b.dataset.game === mode || b.dataset.game === 'hop' && !!MODES[mode].from)); prepScene(); }
@@ -7063,7 +7065,10 @@ function seaLookTick(t, dt) { if (!sea.looks || !sea.look || sea.look === 'hav')
 // jumps out and cheers, and hides again. spots: how many of the places it may choose, the nearest first
 const HIDE = { levels: { 'niveau-meget-let': { watch: true, spots: 3, hint: 2 }, 'niveau-let': { watch: true, spots: 5, hint: 4 }, 'niveau-mellem': { watch: false, spots: 6, hint: 6 },
   'niveau-svaer': { watch: false, spots: 8, hint: 9 }, 'niveau-meget-svaer': { watch: false, spots: 99, hint: 14 } },
-  bushes: [[-3, 1.8], [0, -2.6], [3, -.2], [-1, 1.1], [2.6, 1.6], [-2.6, -1.4]], start: [0, 0, 3.4], half: 4.6 };
+  bushes: [[-3, 1.8], [0, -2.6], [3, -.2], [-1, 1.1], [2.6, 1.6], [-2.6, -1.4]], start: [0, 0, 3.4], half: 4.6,
+  // (more things to hide behind - Trine, 23-11-2026: Ebba wanted more places to hide in): the models from Strandpromenaden and
+  // the sea - [model, x, z, height, a simple shape seen until the model is there, its colour]
+  things: [['strand-badehus.glb', 1.5, -3.7, 2.2, 'hut', '#E86A5A'], ['hav-toende.glb', .9, 0, 1.05, 'barrel', '#8B5A2E'], ['strand-sandslot.glb', 4.2, -1.7, 1.2, 'castle', '#E9C77B'], ['oe-sten.glb', -1.9, 2.6, 1.15, 'rock', '#9A97A8']] };
 const hd = { group: null, spots: [], at: null, phase: '', t: 0, tries: 0, wait: 0, ring: 0, pop: 1, to: new THREE.Vector3(), face: 0 }, hv = new THREE.Vector3();
 const hideLevel = () => HIDE.levels[game.level] || HIDE.levels['niveau-let'];
 function hideBuild() { if (hd.group) return; const g = hd.group = new THREE.Group();
@@ -7072,6 +7077,9 @@ function hideBuild() { if (hd.group) return; const g = hd.group = new THREE.Grou
     for (const [dx, dz, r, y] of [[0, 0, .72, .55], [-.5, .18, .5, .36], [.5, .12, .55, .4]]) ilMesh(new THREE.SphereGeometry(r, 18, 14), ilM('#3FA03A', .85), dx, y, dz, b).scale.y = .85;
     for (let k = 0; k < 7; k++) ilMesh(new THREE.SphereGeometry(.07, 8, 6), ilM(['#FF6FB1', '#FFC233', '#FFFFFF'][k % 3], .4), Math.cos(k * 1.9) * .6, .45 + (k % 3) * .2, Math.sin(k * 1.9) * .25 + .4, b, false);
     propInto(b, 'oe-busk.glb', 2.1, 0, undefined, 'w'); hd.spots.push({ obj: b, x, z }); }
+  for (const [url, x, z, h, kind, col] of HIDE.things) { const t = new THREE.Group(); t.position.set(x, 0, z); g.add(t);
+    const geo = kind === 'barrel' ? new THREE.CylinderGeometry(.42, .42, h, 16) : kind === 'rock' ? new THREE.DodecahedronGeometry(h * .6, 0) : new THREE.BoxGeometry(kind === 'hut' ? 1.4 : 1.2, h, kind === 'hut' ? 1.2 : .9);
+    ilMesh(geo, ilM(col, .85), 0, kind === 'rock' ? h * .45 : h / 2, 0, t); propInto(t, url, h); hd.spots.push({ obj: t, x, z }); }
   // (and the island's own round bushes in the middle part - the picture shows that part - and the treasure chest)
   for (const m of il.bushes) if (Math.abs(m.position.x) < 3.3 && Math.abs(m.position.z) < 3.4) hd.spots.push({ obj: m, x: m.position.x, z: m.position.z });
   hd.spots.push({ obj: il.chest, x: il.chest.position.x, z: il.chest.position.z }); }
@@ -7701,10 +7709,10 @@ document.getElementById('kidList').addEventListener('click', e => { const b = e.
 showPlayer();
 function showRecord() { const el = document.getElementById('record'); el.textContent = '🏆 ' + bestNow(); el.classList.toggle('beaten', !!game.record); document.getElementById('hudKr').textContent = `💰 ${krOf(score)}`; }
 document.getElementById('stage').addEventListener('pointerdown', e => { if (!game.on || e.target.closest('button')) return; e.preventDefault();
-  if (onBoard(game.mode)) { if (hpp.on) { hpTap(); return; } if (sk.jy > 0 && skAirTap()) return; const r = e.currentTarget.getBoundingClientRect(); steer(e.clientX < r.left + r.width / 2 ? -1 : 1); } else if (game.mode === 'island') islandTap(e); else if (game.mode === 'sea') { sea.held = true; seaTap(e); } else if (game.mode === 'space') { sp.held = true; spaceTap(e, true); } else if (game.mode === 'hide') hideTap(e); else if (game.mode === 'pk') pkTap(e); else if (game.mode === 'skihop') sjTap(); else if (game.mode === 'cypher' || game.mode === 'studio') {} else jump(); });
+  if (onBoard(game.mode)) { if (hpp.on) { hpTap(); return; } if (sk.jy > 0 && skAirTap()) return; const r = e.currentTarget.getBoundingClientRect(); steer(e.clientX < r.left + r.width / 2 ? -1 : 1); } else if (game.mode === 'island') { il.held = true; islandTap(e); } else if (game.mode === 'sea') { sea.held = true; seaTap(e); } else if (game.mode === 'space') { sp.held = true; spaceTap(e, true); } else if (game.mode === 'hide') hideTap(e); else if (game.mode === 'pk') pkTap(e); else if (game.mode === 'skihop') sjTap(); else if (game.mode === 'cypher' || game.mode === 'studio') {} else jump(); });
 // (under the sea a finger held down and moved leads the figure along)
-document.getElementById('stage').addEventListener('pointermove', e => { if (game.on && game.mode === 'sea' && sea.held) seaTap(e); if (game.on && game.mode === 'space' && sp.held) spaceTap(e); });
-for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) document.getElementById('stage').addEventListener(ev, () => { sea.held = false; sp.held = false; });
+document.getElementById('stage').addEventListener('pointermove', e => { if (game.on && game.mode === 'sea' && sea.held) seaTap(e); if (game.on && game.mode === 'space' && sp.held) spaceTap(e); if (game.on && game.mode === 'island' && il.held) islandTap(e); });
+for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) document.getElementById('stage').addEventListener(ev, () => { sea.held = false; sp.held = false; il.held = false; });
 addEventListener('keydown', e => { if (!game.on || /INPUT/.test(e.target.tagName)) return;
   if (onBoard(game.mode) && (e.code === 'ArrowLeft' || e.code === 'ArrowRight')) { e.preventDefault(); steer(e.code === 'ArrowLeft' ? -1 : 1); }
   else if (onBoard(game.mode) && (e.code === 'Space' || e.code === 'ArrowUp')) { e.preventDefault(); if (hpp.on) hpTap(); else skAirTap(); }
@@ -8022,6 +8030,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); headShape(); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { gearTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;right:6px;z-index:999;background:#E8384F;color:#fff;font:700 11px system-ui,sans-serif;padding:2px 8px;border-radius:9px;pointer-events:none;opacity:.85">TEST 0.18.0 (54911d5)</div>
+<div style="position:fixed;top:4px;right:6px;z-index:999;background:#E8384F;color:#fff;font:700 11px system-ui,sans-serif;padding:2px 8px;border-radius:9px;pointer-events:none;opacity:.85">TEST 0.19.0 (7667720)</div>
 </body>
 </html>
