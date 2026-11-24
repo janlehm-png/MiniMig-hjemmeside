@@ -929,6 +929,10 @@ function tapFold(id) { foldNow = foldNow === id ? '' : id; if (mainNow || (/^mov
 // (the colour of a game's gear is the suits' colour - and the skateboard helmet's with it)
 function colourPart() { return partNow === 'gear-pk' ? 'shirt' : partNow.startsWith('gear-') ? 'suit' : partNow; } // (the football kit's colour is the shirt's)
 function applyTab(c) { apply(colourPart(), c); if (partNow.startsWith('gear-') && typeof GARMENTS !== 'undefined' && GARMENTS.hat.now === 'hat-skaterhjelm') apply('hat', c); }
+// (a tap on the empty yellow beside the buttons shuts what is open - the user, 24-11-2026: he kept tapping there to close a
+// row of tabs; a tab tapped again does it too, as before. Not a tap in the white box of choices, nor on any button)
+document.querySelector('.panel').addEventListener('click', e => { if (e.target.closest('button, input, label, a, .box, .sheet, .md-name')) return;
+  if (!mainNow && !boxOpen && !foldNow) return; mainNow = ''; boxOpen = false; foldNow = ''; showFold(); showSwatches(); });
 function tapMain(id) { foldNow = ''; showFold(); if (mainNow === id) { mainNow = ''; boxOpen = false; showSwatches(); return; } mainNow = id; boxOpen = true; partNow = lastSub[id] || MAIN.find(m => m[0] === id)[3][0]; showSwatches(); lookFor(partNow); }
 function showSwatches() { const move = /^(move|game)-/.test(partNow); if (!move) slidersFrom(picked[colourPart()] || START[colourPart()]);
   { const mo = mainOf(partNow); if (mo && boxOpen) { mainNow = mo; lastSub[mo] = partNow; } else if (move && boxOpen) mainNow = ''; if (!partNow.startsWith('gear-')) { dressWant = ''; dressSnap = null; }
@@ -7992,6 +7996,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); headShape(); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { gearTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.18.0 (1ce3708)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.18.0 (0768877)</div>
 </body>
 </html>
