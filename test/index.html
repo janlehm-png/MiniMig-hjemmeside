@@ -329,7 +329,16 @@
   .shop button { position: relative; }
   .buy-pic { display: grid; place-items: center; }
   .buy-pic img { width: 150px; height: 150px; border-radius: 18px; object-fit: cover; background: #FFF8E1; }
-  .buy-price { text-align: center; font: 800 2.2rem/1.1 system-ui, sans-serif; }
+  .buy-price { text-align: center; font: 800 2.2rem/1.1 system-ui, sans-serif; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  /* (a coin as a picture: gold, with a ring - in place of the word »mønter«) */
+  .coin-sym { display: inline-block; width: 1em; height: 1em; border-radius: 50%; border: .09em solid #B8860B; background: radial-gradient(circle at 35% 30%, #FFF4B8, #F5C842 55%, #C9962A); box-shadow: inset 0 0 0 .12em rgba(255,255,255,.35); vertical-align: -.15em; }
+  #buyNote { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .coin-bar { display: block; width: min(240px, 80%); height: 14px; border-radius: 8px; background: #EEE7D2; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,.15); }
+  .coin-bar b { display: block; height: 100%; background: linear-gradient(90deg, #F5C842, #FFB020); border-radius: 8px; }
+  .coin-have { font: 800 1.2rem/1 system-ui, sans-serif; color: #3A3550; display: flex; align-items: center; gap: 6px; }
+  .earn { display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 16px; border: 3px solid #2FB457; background: #ECFBEF; font: 800 1.6rem/1 system-ui, sans-serif; color: #2FB457; cursor: pointer; animation: dressPulse 1.4s ease-in-out infinite; }
+  .earn img { width: 48px; height: 48px; } .earn .coin-sym { font-size: 1.4rem; }
+  #games.todo { animation: dressPulse 1.1s ease-in-out 3; }
   .buy-yes { justify-self: center; font: 800 1.3rem/1.2 system-ui, sans-serif; padding: 12px 30px; border-radius: 16px; background: #2FB872; color: #fff; border: 0; }
   .buy-yes[disabled] { background: #C9C2E0; }
   /* Min dans: the row of five places, the one dancing now ringed in yellow; a ✕ on each to take it out */
@@ -1051,8 +1060,15 @@ function coinPlace(v, from) { const i = slots.findIndex(c => !c.on && c.v === v)
 function askBuy(n, who) { if (who) setPlayer(who); else if (players.list.length > 1) { document.getElementById('whoTitle').textContent = tr('Hvem køber?'); askWho(() => askBuy(n, players.now)); return; }
   const have = krOf(playerNow().score), price = SHOP[n]; buying = n; slots = coinsFor(price).map(v => ({ v, on: false })); soundOut()?.resume();
   document.getElementById('buyImg').src = `ikoner/valg-${n}.png`; document.getElementById('buyTitle').textContent = tr(shopThing(n).label);
-  document.getElementById('buyPrice').textContent = krTxt(price);
-  document.getElementById('buyNote').textContent = have >= price ? T(`Du har ${have} mønter`, `You have ${have} coins in your account`) : T(`Du har ${have} mønter – du mangler ${price - have}. Spil et spil, og saml flere stjerner!`, `You have ${have} coins – you need ${price - have} more. Play a game and collect more stars!`);
+  // (numbers and a coin, not words - the user, 24-11-2026: the children cannot read »30 mønter« or »du mangler 8 - spil et
+  // spil«. The price as 30 and a coin; what the child has as a bar of coins filling up to the price; not enough: a game,
+  // a star and a coin with arrows between - play, get stars, they become coins - and a tap on the game goes to the games)
+  const coin = '<i class="coin-sym" aria-hidden="true"></i>';
+  document.getElementById('buyPrice').innerHTML = `${price} ${coin}`; document.getElementById('buyPrice').setAttribute('aria-label', krTxt(price));
+  const note = document.getElementById('buyNote'); note.setAttribute('aria-label', have >= price ? T(`Du har ${have} mønter`, `You have ${have} coins`) : T(`Du har ${have} mønter – du mangler ${price - have}. Spil et spil, og saml flere stjerner!`, `You have ${have} coins – you need ${price - have} more. Play a game and collect more stars!`));
+  note.innerHTML = have >= price ? `<span class="coin-have">${coin} ${have}</span>` : `<span class="coin-bar"><b style="width:${Math.round(100 * have / price)}%"></b></span><span class="coin-have">${coin} ${have} / ${price}</span>`
+    + (have >= price ? '' : `<button class="earn" type="button"><img src="ikoner/spil-hop.png" alt=""><span>➜</span><span class="earn-star">⭐</span><span>➜</span>${coin}</button>`);
+  note.querySelector('.earn')?.addEventListener('click', () => { document.getElementById('buySheet').hidden = true; const g = document.getElementById('games'); g.scrollIntoView({ block: 'center', behavior: 'smooth' }); g.classList.add('todo'); setTimeout(() => g.classList.remove('todo'), 3000); });
   document.getElementById('coinPay').hidden = have < price; showCoins(); document.getElementById('buySheet').hidden = false; }
 // (a coin from the tray: dragged with the finger onto the counter, or just tapped - it flies to its place there)
 { const tray = document.getElementById('coinTray'); let drag = null;
@@ -7972,7 +7988,9 @@ const scrollHand = Object.assign(document.createElement('div'), { className: 'sc
 var scrollSeen = new WeakSet(), scrollT = 0, scrollOff = 0, userAt = 0; // (var: scrollHint may be called before this line runs)
 for (const ev of ['wheel', 'touchmove', 'keydown']) addEventListener(ev, () => { userAt = Date.now(); }, { passive: true, capture: true });
 function scrollHint() { clearTimeout(scrollT); scrollT = setTimeout(() => { if (typeof game !== 'undefined' && game.on) return;
-  const list = [...document.querySelectorAll('.sheet:not([hidden]) .sheet-card'), ...document.querySelectorAll('.panel, .parts, .ds-opts')].filter(el => el.offsetParent && !scrollSeen.has(el));
+  // (a window open: only it - not the panel behind it)
+  const open = [...document.querySelectorAll('.sheet:not([hidden]) .sheet-card')], list = (open.length ? open : [...document.querySelectorAll('.panel, .parts, .ds-opts')]).filter(el => el.offsetParent && !scrollSeen.has(el));
+  if (!open.length && document.querySelector('.sheet:not([hidden])')) { scrollHand.hidden = true; return; }
   for (const el of list) { const cs = getComputedStyle(el), r = el.getBoundingClientRect(); if (r.width < 60 || r.height < 60) continue;
     const vert = /auto|scroll/.test(cs.overflowY), down = vert && el.scrollHeight - el.clientHeight - el.scrollTop > 40, above = vert && el.scrollTop > 40, side = /auto|scroll/.test(cs.overflowX) && el.scrollWidth - el.clientWidth - el.scrollLeft > 40;
     if (!down && !above && !side) continue;
@@ -7996,6 +8014,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); headShape(); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { gearTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;right:6px;z-index:999;background:#E8384F;color:#fff;font:700 11px system-ui,sans-serif;padding:2px 8px;border-radius:9px;pointer-events:none;opacity:.85">TEST 0.18.0 (d89418b)</div>
+<div style="position:fixed;top:4px;right:6px;z-index:999;background:#E8384F;color:#fff;font:700 11px system-ui,sans-serif;padding:2px 8px;border-radius:9px;pointer-events:none;opacity:.85">TEST 0.18.0 (bb01623)</div>
 </body>
 </html>
