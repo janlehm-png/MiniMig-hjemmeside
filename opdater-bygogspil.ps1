@@ -52,7 +52,7 @@ try {
     if ($html -notmatch 'name="robots"') { $html = $html.Replace('</head>', '<meta name="robots" content="noindex, nofollow">' + "`n</head>") }
     $kort = & $git -C $App log -1 --format='%h' $Ref
     $tal = [regex]::Match($html, 'name="minimig-version" content="([^"]+)"').Groups[1].Value
-    $html = $html.Replace('</body>', "<div style=`"position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none`">TEST $tal ($kort)</div>`n</body>")
+    $html = $html.Replace('</body>', "<div style=`"position:fixed;top:4px;right:6px;z-index:999;background:#E8384F;color:#fff;font:700 11px system-ui,sans-serif;padding:2px 8px;border-radius:9px;pointer-events:none;opacity:.85`">TEST $tal ($kort)</div>`n</body>")
     [IO.File]::WriteAllText($side, $html, (New-Object Text.UTF8Encoding $false))
     & (Join-Path $PSScriptRoot 'build-pwa-test.ps1')
     Write-Host "test/ opdateret: $version ($($filer.Count + 1) filer)"

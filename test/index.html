@@ -7879,9 +7879,9 @@ const infoBtn = document.getElementById('infoBtn'), infoPop = document.getElemen
   last = e.timeStamp; }, { passive: false });
   document.addEventListener('dblclick', e => e.preventDefault(), { passive: false }); }
 // (on the test page only: a button with kroner, to try the shop without playing for them - the user, 04-11-2026)
-if (location.pathname.includes('/test/')) { const b = document.createElement('button'); b.textContent = '+100 💰'; b.style.cssText = 'position:fixed;top:28px;left:calc(50% - 50px);transform:translateX(-50%);z-index:999;background:#FFC233;color:#5A3A00;border:0;border-radius:10px;padding:5px 12px;font:700 13px system-ui,sans-serif;cursor:pointer'; b.onclick = () => { krOf(score); score.kr += 100; saveScore(); showRecord(); toast(`💰 ${score.kr}`); if (!document.getElementById('starSheet').hidden) showStarSheet(); }; document.body.append(b); 
+if (location.pathname.includes('/test/')) { const b = document.createElement('button'); b.textContent = '+100 💰'; b.style.cssText = 'position:fixed;top:26px;right:6px;z-index:999;background:#FFC233;color:#5A3A00;border:0;border-radius:9px;padding:3px 8px;font:700 11px system-ui,sans-serif;cursor:pointer;opacity:.85'; // (test site only: up in the right corner, under the TEST mark - the user, 24-11-2026: in the middle they hid the four buttons at the top) b.onclick = () => { krOf(score); score.kr += 100; saveScore(); showRecord(); toast(`💰 ${score.kr}`); if (!document.getElementById('starSheet').hidden) showStarSheet(); }; document.body.append(b); 
   // (and one with stars for the star jar of the world being played, to get on to the next world without riding it full - the user, 19-11-2026)
-  const st = b.cloneNode(); st.textContent = '+100 ⭐'; st.style.left = 'calc(50% + 50px)'; st.onclick = () => { if (!game.on || !WORLDS[game.mode]) { toast('⭐ Start et spil med verdener først'); return; }
+  const st = b.cloneNode(); st.textContent = '+100 ⭐'; st.style.top = '50px'; st.onclick = () => { if (!game.on || !WORLDS[game.mode]) { toast('⭐ Start et spil med verdener først'); return; }
     const w = worldsOf(game.mode), i = worldNow(game.mode); jarGain(100); saveScore(); toast(`⭐ ${w.jar[i] || 0} / ${JAR}`); }; document.body.append(st); }
 // (the Advent parcel - the user, 21-11-2026: on a gift's Sunday, when the figure is there and no game runs, a parcel
 // with a bow bounces in the middle; tapped, it opens with confetti and a ta-da, and the gift goes on the figure. Several
@@ -7905,7 +7905,7 @@ function adventCheck() { if (adventOpenNow || game.on || !glb || !hairBase?.whol
   document.body.append(box); }
 setInterval(adventCheck, 2000);
 // (on the test site: move the date on to the next Advent Sunday, to see each gift come - the user, 21-11-2026)
-if (TEST_SITE) { const b = document.createElement('button'); b.textContent = '🎁 Næste søndag'; b.style.cssText = 'position:fixed;top:58px;left:50%;transform:translateX(-50%);z-index:999;background:#2FB872;color:#fff;border:0;border-radius:10px;padding:5px 12px;font:700 13px system-ui,sans-serif;cursor:pointer';
+if (TEST_SITE) { const b = document.createElement('button'); b.textContent = '🎁 Næste søndag'; b.style.cssText = 'position:fixed;top:74px;right:6px;z-index:999;background:#2FB872;color:#fff;border:0;border-radius:9px;padding:3px 8px;font:700 11px system-ui,sans-serif;cursor:pointer;opacity:.85';
   b.onclick = () => { const now = adventToday(), next = ADVENT_DAYS.find(x => x > now); if (!next) { try { localStorage.removeItem(ADVENT_SKIP); localStorage.removeItem(ADVENT_KEY); } catch (e) { } toast('🎁 Forfra: rigtig dato, ingen gaver åbnet'); renderStyles(); return; }
     let skip = 0; try { skip = +localStorage.getItem(ADVENT_SKIP) || 0; } catch (e) { } const [y, m, d] = now.split('-').map(Number), [y2, m2, d2] = next.split('-').map(Number);
     skip += Math.round((Date.UTC(y2, m2 - 1, d2) - Date.UTC(y, m - 1, d)) / 864e5); try { localStorage.setItem(ADVENT_SKIP, String(skip)); } catch (e) { } toast(`🎁 Nu er det ${next}`); renderStyles(); adventCheck(); };
@@ -7996,6 +7996,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); headShape(); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { gearTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.18.0 (0768877)</div>
+<div style="position:fixed;top:4px;right:6px;z-index:999;background:#E8384F;color:#fff;font:700 11px system-ui,sans-serif;padding:2px 8px;border-radius:9px;pointer-events:none;opacity:.85">TEST 0.18.0 (56fce50)</div>
 </body>
 </html>
