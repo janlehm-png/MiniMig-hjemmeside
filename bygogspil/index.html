@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>MiniMig&trade; &ndash; byg og spil i 3D</title>
-<meta name="minimig-version" content="0.18.0">
+<meta name="minimig-version" content="0.19.0">
 <!-- (the number of this version, shown under the i - see VERSIONER.md - raised for each package and each fix put out) -->
 <!-- (the same icon as version 1 on a home screen, under the name MiniMig 2 - the icons lie in the website's billeder/;
      the user, 03-11-2026, sharing version 2 with testers) -->
@@ -43,7 +43,10 @@
   /* the movements: a fourth group of tabs on the right, as the others (the user, 03-11-2026), each with a little picture
      of the figure doing it; a movement chosen stays lit beside the tab chosen in the other groups */
   .tabgroup button[hidden], .tabgroup[hidden] { display: none; }
-  #mains button { width: 76px; font-size: 12px; } #mains button img { width: 44px; height: 44px; }
+  /* (one size for every icon - the user, 24-11-2026: the main tabs, the tabs under them, the games, the movements, the dances and
+     the buttons were all different sizes. --ico for all of them; the games bigger still and without words, the picture says it) */
+  :root { --ico: 52px; --ico-game: 64px; }
+  #mains button { width: 76px; font-size: 12px; } #mains button img { width: var(--ico); height: var(--ico); }
   #subs { background: #FFF6DA; } #subs button[data-part^="gear-"] { width: 82px; }
   .choices button.todo, #mains button.todo { animation: dressPulse 1.1s ease-in-out infinite; }
   .choices button.gear-go { background: #2FB457; border-color: #2FB457; color: #fff; font: 800 34px/1 system-ui, sans-serif; justify-content: center; min-height: 84px; animation: dressPulse 1.1s ease-in-out infinite; }
@@ -51,17 +54,27 @@
   /* the tabs, smaller than before, in three groups as in the app: the body and face, the clothes, the rest */
   .parts { display: flex; flex-direction: column; gap: 8px; }
   .tabgroup { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px; border-radius: 18px; background: #FFEDBB; }
-  .tabgroup button { width: 60px; padding: 4px 2px 5px; font-size: 11px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .tabgroup button { width: 70px; padding: 4px 2px 5px; font-size: 11px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
   /* (each part and each choice with its picture over its name, as in the app - the children cannot read yet) */
-  .tabgroup button img { width: 32px; height: 32px; object-fit: contain; }
+  .tabgroup button img { width: var(--ico); height: var(--ico); object-fit: contain; }
+  .no-words .tabgroup button > span:not(.price):not(.lock-badge):not(.emo), .no-words .choices button > span:not(.price) { display: none; }
+  .no-words .tabgroup button { width: 64px; padding: 6px 2px; }
+  #games button { width: 80px; padding: 6px 4px; } #games button img { width: var(--ico-game); height: var(--ico-game); } #games button span { display: none; }
   /* the choices and colours for the tab chosen, in a white box under the tabs */
   .box[hidden] { display: none; }
   .box { background: var(--tile); border-radius: 20px; padding: 12px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 4px 16px rgba(58, 46, 92, .1); }
-  .choices { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; }
+  /* (the choices as compact as the tabs - the user, 24-11-2026: the backgrounds and other choices had much air round them;
+     each button now the size of the icons, --ico and a little edge, not stretched across the box) */
+  .choices { display: grid; grid-template-columns: repeat(auto-fill, calc(var(--ico) + 14px)); gap: 6px; justify-content: start; }
   .choices[hidden] { display: none; }
   .choices button { padding: 5px 4px 7px; font-size: 12px; display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; }
-  .choices button img { width: 100%; max-width: 64px; aspect-ratio: 1; border-radius: 10px; object-fit: cover; }
+  .choices button img { width: 100%; max-width: var(--ico); aspect-ratio: 1; border-radius: 10px; object-fit: cover; }
   .choices button span { max-width: 100%; text-align: center; overflow-wrap: break-word; }
+  /* (the face's choices shown close up - Trine, 23-11-2026: Ebba, 5, could not see what was different between the mouths or
+     the earrings. The picture at its own size in the little window, so it is twice as near, centred on what changes) */
+  #styles[data-part="mouth"] img, #styles[data-part="eyes"] img, #styles[data-part="brows"] img, #styles[data-part="nose"] img, #styles2[data-part="row2-oerering"] img { object-fit: none; }
+  #styles[data-part="mouth"] img { object-position: 55% 66%; } #styles[data-part="eyes"] img { object-position: 24% 70%; } #styles[data-part="brows"] img { object-position: 24% 52%; }
+  #styles[data-part="nose"] img { object-position: 52% 86%; } #styles2[data-part="row2-oerering"] img { object-position: 4% 50%; }
   /* a phone held upright: the figure on top, a little under half the height; the tab groups in one sideways row */
   @media (max-aspect-ratio: 4/5) {
     .main { flex-direction: column; gap: 8px; }
@@ -93,7 +106,10 @@
   .sliders[hidden] { display: none; }
   .swatches { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
   .swatches[hidden] { display: none; }
-  .panel .swatches button { width: 38px; height: 38px; padding: 0; border-radius: 50%; border: 3px solid #FFFFFF; box-shadow: 0 0 0 2px var(--line); }
+  /* (bigger, to tap with a small finger - Trine, 23-11-2026: Ebba, 5, never used the colour sliders; they now wait behind 🎨 ＋ for the grown-ups) */
+  .more-col { display: block; margin: 4px auto 0; padding: 4px 12px; border-radius: 999px; font: 800 13px/1.2 system-ui, sans-serif; background: #FFFFFF; border: 2px solid var(--line); color: #6B6191; }
+  .more-col.on { border-color: var(--accent); color: var(--ink); }
+  .panel .swatches button { width: 48px; height: 48px; padding: 0; border-radius: 50%; border: 3px solid #FFFFFF; box-shadow: 0 0 0 2px var(--line); }
   .panel .swatches button.on { box-shadow: 0 0 0 3px var(--accent); }
   /* (the patterns: rounded squares under the round colours, each a little picture of the pattern) */
   .patterns { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 10px; }
@@ -143,9 +159,9 @@
      it - only the stars and the cross that stops the game left; kept clear of an iPad's rounded corners and bars) */
   .stage.playing { position: fixed; inset: 0; z-index: 40; width: 100%; height: 100%; max-width: none; aspect-ratio: auto; border-radius: 0; }
   .stage.playing .hud { top: max(12px, env(safe-area-inset-top)); left: max(12px, env(safe-area-inset-left)); right: max(12px, env(safe-area-inset-right)); }
-  .stage.playing .game-x { width: 54px; height: 54px; font-size: 24px; }
+  .stage.playing .game-x { width: 58px; height: 58px; font-size: 26px; }
   .hud-right { display: flex; align-items: center; gap: 8px; }
-  .game-lvl { padding: 0; display: grid; place-items: center; } .game-lvl img { width: 40px; height: 40px; object-fit: contain; pointer-events: none; }
+  .game-lvl { padding: 0; display: grid; place-items: center; } .game-lvl img { width: 44px; height: 44px; object-fit: contain; pointer-events: none; }
   .lvl-pop { position: absolute; z-index: 4; top: calc(max(12px, env(safe-area-inset-top)) + 64px); right: max(12px, env(safe-area-inset-right)); display: flex; flex-direction: column; gap: 6px; padding: 8px; border-radius: 20px; background: var(--tile); box-shadow: 0 6px 22px rgba(58, 46, 92, .28); }
   .lvl-pop[hidden] { display: none; }
   .lvl-pop div { display: flex; gap: 6px; justify-content: flex-end; }
@@ -177,11 +193,51 @@
   .chal[hidden] { display: none; }
   .chal b { position: relative; display: block; width: 84px; height: 10px; border-radius: 6px; background: #E9E3FF; overflow: hidden; }
   .chal i { position: absolute; left: 0; top: 0; bottom: 0; width: calc(var(--f, 0) * 100%); background: linear-gradient(90deg, #7C5CFF, #FF6FB1); border-radius: 6px; }
+  /* (the busy star: shown at once when something takes a while to make - it turns on the GPU, so it keeps turning while the page works) */
+  .busy { position: absolute; left: 50%; top: 50%; z-index: 8; width: 64px; height: 64px; margin: -32px 0 0 -32px; border-radius: 50%; background: rgba(255,255,255,.92); box-shadow: 0 6px 24px rgba(58,46,92,.25); display: grid; place-items: center; pointer-events: none; }
+  .busy[hidden] { display: none; }
+  .busy span { font-size: 36px; line-height: 1; animation: busy-spin 1s linear infinite; will-change: transform; }
+  @keyframes busy-spin { to { transform: rotate(360deg); } }
+  /* (the show-me hand at a game's start: how it is played, without words) */
+  .hand { position: absolute; left: 50%; top: 60%; z-index: 6; font-size: 68px; line-height: 1; pointer-events: none; transform: translate(-50%, 0); filter: drop-shadow(0 4px 6px rgba(0,0,0,.3)); }
+  .hand[hidden] { display: none; }
+  .hand.tap { animation: hand-tap 1.1s ease-in-out infinite; }
+  @keyframes hand-tap { 0%, 100% { transform: translate(-50%, 0) scale(1); } 45% { transform: translate(-50%, 14px) scale(.82); } }
+  .hand.sides { animation: hand-sides 2.6s ease-in-out infinite; }
+  @keyframes hand-sides { 0%, 100% { left: 22%; transform: translate(-50%, 0); } 15% { left: 22%; transform: translate(-50%, 14px) scale(.82); } 30% { left: 22%; transform: translate(-50%, 0); } 50% { left: 78%; transform: translate(-50%, 0); } 65% { left: 78%; transform: translate(-50%, 14px) scale(.82); } 80% { left: 78%; transform: translate(-50%, 0); } }
+  .hand.drag { animation: hand-drag 2.8s ease-in-out infinite; }
+  /* (the scroll hand: over the part that can be scrolled, sweeping the way to scroll) */
+  .scroll-hand { position: fixed; z-index: 70; font-size: 56px; line-height: 1; pointer-events: none; filter: drop-shadow(0 4px 6px rgba(0,0,0,.3)); }
+  .scroll-hand[hidden] { display: none; }
+  .scroll-hand.up { animation: scroll-up 1.4s ease-in-out infinite; }
+  .scroll-hand.left { animation: scroll-left 1.4s ease-in-out infinite; }
+  .scroll-hand.down { animation: scroll-down 1.4s ease-in-out infinite; }
+  @keyframes scroll-down { 0% { transform: translateY(-30px) rotate(180deg); opacity: 0; } 20% { opacity: 1; } 80% { opacity: 1; } 100% { transform: translateY(60px) rotate(180deg); opacity: 0; } }
+  @keyframes scroll-up { 0% { transform: translateY(30px); opacity: 0; } 20% { opacity: 1; } 80% { opacity: 1; } 100% { transform: translateY(-60px); opacity: 0; } }
+  @keyframes scroll-left { 0% { transform: translateX(30px) rotate(-90deg); opacity: 0; } 20% { opacity: 1; } 80% { opacity: 1; } 100% { transform: translateX(-70px) rotate(-90deg); opacity: 0; } }
+  .hand.rotate { top: 46%; animation: hand-rot 2.1s ease-in-out infinite; }
+  @keyframes hand-rot { 0%, 100% { left: 34%; } 50% { left: 66%; } }
+  .hand.pinch { top: 44%; display: flex; gap: 0; }
+  .hand.pinch i { font-style: normal; display: inline-block; animation: hand-pinch-l 1.8s ease-in-out infinite; }
+  .hand.pinch i + i { animation-name: hand-pinch-r; }
+  @keyframes hand-pinch-l { 0%, 100% { transform: translateX(10px) rotate(-20deg); } 50% { transform: translateX(-34px) rotate(-20deg); } }
+  @keyframes hand-pinch-r { 0%, 100% { transform: translateX(-10px) rotate(20deg); } 50% { transform: translateX(34px) rotate(20deg); } }
+  /* (every button pressed in at a touch - the user, 24-11-2026: a fixed rule, so a tap is always seen) */
+  button:not(:disabled):not(.coin):active { transform: scale(.94); transition: transform .05s; }
+  @keyframes hand-drag { 0%, 100% { left: 30%; top: 65%; } 25% { left: 60%; top: 45%; } 50% { left: 72%; top: 62%; } 75% { left: 45%; top: 40%; } }
+  /* (a picture of the figure from last time, while the real one is fetched) */
+  .fig-ghost { position: absolute; left: 50%; bottom: 4%; height: 84%; transform: translateX(-50%); pointer-events: none; transition: opacity .5s; -webkit-mask-image: radial-gradient(ellipse 46% 50% at 50% 50%, #000 62%, transparent 100%); mask-image: radial-gradient(ellipse 46% 50% at 50% 50%, #000 62%, transparent 100%); }
+  /* (a tap seen at once: the picture on the button pressed in - Trine, 23-11-2026: some buttons seemed not to answer) */
+  #parts button:active img, #styles button:active img, #styles2 button:active img, #styles3 button:active img, [data-game]:active img { transform: scale(.86); transition: transform .05s; }
   .trick-pop { position: absolute; left: 50%; top: 30%; z-index: 5; pointer-events: none; transform: translate(-50%, -50%); font: 900 2rem/1.1 system-ui, sans-serif; color: #FFFFFF; white-space: nowrap;
     text-shadow: 0 3px 0 #7C5CFF, 0 6px 16px rgba(0, 0, 0, .35); animation: trickIn 1.1s ease forwards; }
   @keyframes trickIn { 0% { opacity: 0; transform: translate(-50%, -30%) scale(.6); } 15% { opacity: 1; transform: translate(-50%, -50%) scale(1.15); } 30% { transform: translate(-50%, -50%) scale(1); } 75% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -85%) scale(1); } }
   .lvl-pop .lvl-chal { display: block; width: 100%; height: auto; border: 0; border-radius: 16px; padding: 10px 14px; font: 800 1.05rem system-ui, sans-serif; background: linear-gradient(90deg, #FFD23F, #FF9F1C); color: #2B2153; cursor: pointer; }
   .lvl-pop .lvl-chal.on { background: #F4F0FF; }
+  /* (the TestFlight build's note - Plan C, 23-11-2026: only in builds made for TestFlight, never in the App Store's) */
+  .tf-pill { position: absolute; top: max(10px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); z-index: 3; pointer-events: none; white-space: nowrap;
+    background: rgba(255, 255, 255, .92); color: #2B2153; border-radius: 999px; padding: 5px 12px; font: 700 .8rem/1.2 system-ui, sans-serif; box-shadow: 0 2px 10px rgba(58, 46, 92, .18); }
+  .stage.playing .tf-pill { display: none; }
   .ww-go { display: flex; flex-direction: column; gap: 8px; }
   .ww-go button { border: 0; border-radius: 16px; padding: 14px 18px; font: 800 1.1rem system-ui, sans-serif; cursor: pointer; }
   .ww-next { background: #2FB872; color: #FFFFFF; } .ww-next[hidden] { display: none; }
@@ -195,7 +251,7 @@
      one row a game, a place for each world - the cup gold when won, a pale one and the jar's progress when not yet) */
   .shelf { display: grid; gap: 14px; margin: 6px 0 4px; }
   .shelf-row h4 { margin: 0 0 4px; font: 800 .95rem/1.2 system-ui, sans-serif; color: #2B2153; }
-  .shelf-cups { display: flex; justify-content: space-around; align-items: flex-end; gap: 6px; padding: 8px 6px 0; border-radius: 16px 16px 0 0; background: linear-gradient(#F6F1FF, #EDE5FF); }
+  .shelf-cups { display: flex; flex-wrap: wrap; justify-content: space-around; align-items: flex-end; gap: 6px; /* (five cups since Halfpipe: onto a second row rather than wider than the window, its cross pushed out of sight) */ padding: 8px 6px 0; border-radius: 16px 16px 0 0; background: linear-gradient(#F6F1FF, #EDE5FF); }
   .shelf-plank { height: 14px; border-radius: 4px; background: linear-gradient(#C98B4E, #9A6332); box-shadow: 0 4px 8px rgba(90, 55, 20, .3); }
   .cup { display: flex; flex-direction: column; align-items: center; width: 88px; text-align: center; font: 700 .8rem/1.15 system-ui, sans-serif; color: #2B2153; }
   .cup svg { width: 64px; height: 76px; display: block; }
@@ -232,6 +288,9 @@
   .coin.c10, .coin.c20 { border-color: #B8860B; background: radial-gradient(circle at 35% 30%, #FFF4B8, #F5C842 55%, #C9962A); color: #5A3A00; }
   .coin[disabled] { opacity: .3; cursor: default; }
   .coin-disk { min-height: 74px; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; justify-content: center; padding: 6px; border-radius: 16px; border: 2px dashed #C9C2E0; background: #FFF8E1; }
+  .coin.slot { opacity: .35; border-style: dashed; filter: grayscale(.3); }
+  .coin.need { animation: coin-need 1.2s ease-in-out infinite; } @keyframes coin-need { 50% { transform: scale(1.12); box-shadow: 0 0 0 6px rgba(255, 194, 51, .45); } }
+  .coin-tray .coin { touch-action: none; }
   .coin-disk:empty::before { content: "👇 Tryk på mønterne"; color: #6B6191; font: 700 .9rem/1.2 system-ui, sans-serif; }
   html[lang="en"] .coin-disk:empty::before { content: "👇 Tap the coins"; }
   .coin-sum { text-align: center; font: 800 1.15rem/1.2 system-ui, sans-serif; }
@@ -262,13 +321,24 @@
   /* the star shop (the user, 03-11-2026): a special thing shows a lock and its price in stars until the child buys it */
   .choices button.locked { position: relative; }
   .choices button.locked img { filter: saturate(.35) brightness(.92); }
-  .choices .price { position: absolute; top: 2px; right: 2px; padding: 2px 6px; border-radius: 10px; background: #FFC233; color: #3A2E5C;
-    font: 800 .72rem/1.2 system-ui, sans-serif; box-shadow: 0 1px 4px rgba(58, 46, 92, .25); }
+  /* (just a small yellow padlock in the corner - the user, 24-11-2026: the price and »mønter« over the picture took too much room;
+     the price is shown when it is tapped, in the shop) */
+  .choices .price { position: absolute; top: 3px; right: 3px; width: 22px; height: 22px; padding: 0; border-radius: 50%; background: #FFC233; color: #3A2E5C; display: grid; place-items: center;
+    font: 800 12px/1 system-ui, sans-serif; box-shadow: 0 1px 4px rgba(58, 46, 92, .3); pointer-events: none; }
   .choices .price.own { background: #2FB872; color: #fff; }
   .shop button { position: relative; }
   .buy-pic { display: grid; place-items: center; }
   .buy-pic img { width: 150px; height: 150px; border-radius: 18px; object-fit: cover; background: #FFF8E1; }
-  .buy-price { text-align: center; font: 800 2.2rem/1.1 system-ui, sans-serif; }
+  .buy-price { text-align: center; font: 800 2.2rem/1.1 system-ui, sans-serif; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  /* (a coin as a picture: gold, with a ring - in place of the word »mønter«) */
+  .coin-sym { display: inline-block; width: 1em; height: 1em; border-radius: 50%; border: .09em solid #B8860B; background: radial-gradient(circle at 35% 30%, #FFF4B8, #F5C842 55%, #C9962A); box-shadow: inset 0 0 0 .12em rgba(255,255,255,.35); vertical-align: -.15em; }
+  #buyNote { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .coin-bar { display: block; width: min(240px, 80%); height: 14px; border-radius: 8px; background: #EEE7D2; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,.15); }
+  .coin-bar b { display: block; height: 100%; background: linear-gradient(90deg, #F5C842, #FFB020); border-radius: 8px; }
+  .coin-have { font: 800 1.2rem/1 system-ui, sans-serif; color: #3A3550; display: flex; align-items: center; gap: 6px; }
+  .earn { display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 16px; border: 3px solid #2FB457; background: #ECFBEF; font: 800 1.6rem/1 system-ui, sans-serif; color: #2FB457; cursor: pointer; animation: dressPulse 1.4s ease-in-out infinite; }
+  .earn img { width: 48px; height: 48px; } .earn .coin-sym { font-size: 1.4rem; }
+  #games.todo { animation: dressPulse 1.1s ease-in-out 3; }
   .buy-yes { justify-self: center; font: 800 1.3rem/1.2 system-ui, sans-serif; padding: 12px 30px; border-radius: 16px; background: #2FB872; color: #fff; border: 0; }
   .buy-yes[disabled] { background: #C9C2E0; }
   /* Min dans: the row of five places, the one dancing now ringed in yellow; a ✕ on each to take it out */
@@ -347,7 +417,7 @@
   .quest .q-shell.got { opacity: 1; filter: none; transform: scale(1.15); }
   .quest .q-chest, .quest .q-arrow { animation: questPulse 1s ease-in-out infinite alternate; }
   @keyframes questPulse { to { transform: scale(1.2); } }
-  .game-x { pointer-events: auto; width: 46px; height: 46px; border-radius: 50%; border: 0; background: var(--tile); color: var(--ink); font: 700 20px/1 system-ui, sans-serif; cursor: pointer; box-shadow: 0 2px 10px rgba(58, 46, 92, .2); }
+  .game-x { pointer-events: auto; width: 46px; height: 46px; border-radius: 50%; border: 3px solid #FFFFFF; background: #F0465A; color: #FFFFFF; font: 900 22px/1 system-ui, sans-serif; cursor: pointer; box-shadow: 0 2px 10px rgba(58, 46, 92, .2); }
   .tap-hint { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); white-space: nowrap; pointer-events: none; z-index: 2;
     background: var(--tile); border-radius: 999px; padding: 8px 16px; font: 700 18px/1.2 system-ui, sans-serif; box-shadow: 0 2px 10px rgba(58, 46, 92, .2); }
   @media (prefers-reduced-motion: no-preference) { .tap-hint { animation: nudge 1s ease-in-out infinite alternate; } }
@@ -392,11 +462,14 @@
     display: grid; gap: 12px; box-shadow: 0 10px 30px rgba(58, 46, 92, .3); }
   .sheet-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
   .sheet-head h2 { margin: 0; font: 700 1.3rem/1.1 system-ui, sans-serif; }
-  .sheet-x { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--line); background: #FFF8E1; color: var(--ink); font-size: 1.1rem; cursor: pointer; }
+  /* (the crosses bigger and red with a white cross - Trine, 23-11-2026: Ebba, 5, often needed help to close a window or a game) */
+  .sheet-x { width: 52px; height: 52px; flex: none; border-radius: 50%; border: 3px solid #FFFFFF; background: #F0465A; color: #FFFFFF; font: 900 1.5rem/1 system-ui, sans-serif; cursor: pointer; box-shadow: 0 3px 10px rgba(240, 70, 90, .35); }
   .pic-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: end; }
   .pic-opt { border: 2px solid var(--line); background: #FFF8E1; color: var(--ink); border-radius: 18px; padding: 8px 8px 10px; cursor: pointer;
     display: grid; gap: 6px; justify-items: center; font: 600 1rem/1.1 system-ui, sans-serif; min-width: 0; }
   .pic-opt canvas, .pic-opt img { width: 100%; height: auto; border-radius: 12px; }
+  /* (Dreng and Pige need no words - the pictures say it; the user, 24-11-2026) */
+  #newChoice .pic-opt span, .no-pic-words .pic-opt span { display: none; } .title-pic { width: 56px; height: 56px; display: block; }
   .note { margin: 0; font-size: .9rem; color: #6B6191; text-align: center; }
   .gate-q { margin: 0; font: 700 1.5rem/1.2 system-ui, sans-serif; text-align: center; }
   .gate-a { min-height: 2.2rem; font: 700 1.8rem/1.2 system-ui, sans-serif; text-align: center; color: var(--accent); }
@@ -430,11 +503,15 @@
   .share-choices small { display: block; font-weight: 600; font-size: .8rem; color: #6B6191; }
   .toast { position: fixed; left: 50%; top: max(24px, env(safe-area-inset-top, 0px)); transform: translateX(-50%); z-index: 60; pointer-events: none;
     background: var(--tile); color: var(--ink); border-radius: 999px; padding: 10px 20px; box-shadow: 0 6px 20px rgba(58, 46, 92, .25); font: 700 1.2rem/1.2 system-ui, sans-serif; }
-  .fig-card { width: min(640px, 100%); }
+  .fig-card { width: min(960px, 100%); }
   .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 12px; padding: 8px 8px 0 0; align-items: start; }
   .saved { position: relative; min-width: 0; }
   .saved .load { width: 100%; padding: 4px; border: 2px solid var(--line); background: #FFF8E1; border-radius: 14px; cursor: pointer; display: block; }
   .saved .load img { width: 100%; display: block; border-radius: 10px; }
+  /* (the figure on the screen now, first, with a big plus: tapped, it is kept here - Trine, 23-11-2026) */
+  .saved.add .load { border: 3px dashed #2FB457; background: #ECFBEF; }
+  .saved.add .plus { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 54px; height: 54px; border-radius: 50%; background: #2FB457; color: #FFFFFF; font: 900 40px/54px system-ui, sans-serif; text-align: center; box-shadow: 0 3px 10px rgba(47,180,87,.4); pointer-events: none; }
+  .saved.now .load { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent); }
   .del { position: absolute; top: -6px; right: -6px; min-width: 34px; height: 34px; border-radius: 999px; border: 2px solid var(--line); background: var(--tile);
     color: var(--ink); font: 700 .95rem/1 system-ui, sans-serif; cursor: pointer; box-shadow: 0 2px 6px rgba(58, 46, 92, .2); }
   .del.armed { background: #E8384F; border-color: #E8384F; color: #fff; padding: 0 10px; }
@@ -458,10 +535,10 @@
 <div class="stage" id="stage">
 <div id="bgFar" hidden></div><div id="bgNear" hidden></div><div id="bgNear2" hidden></div>
 <canvas id="scene"></canvas>
-<div class="top"><span class="tag" id="tag">Henter figuren …</span></div>
+<div class="top"><span class="tag" id="tag"></span></div>
 <!-- (on an iPad or a phone the hint as a small i in the top right corner, opened with a tap - the user, 03-11-2026) -->
 <button class="info-btn" id="infoBtn" aria-label="Sådan gør du" aria-expanded="false" hidden>i</button>
-<div class="info-pop" id="infoPop" hidden>👆 Træk for at dreje figuren<br>🤏 Knib for at zoome<br>👕 Tryk på navnet på trøjen, så siger figuren det – med din egen indtalte stemme, hvis du har indtalt en</div>
+<div class="info-pop" id="infoPop" hidden>👕 Tryk på navnet på trøjen, så siger figuren det – med din egen indtalte stemme, hvis du har indtalt en</div>
 <!-- Hop over bolden: the stars won, and the cross that ends the game; a hint at the start -->
 <div class="hud" id="hud" hidden><span class="hud-left"><span class="hud-face" id="hudFace" hidden></span><span class="stars" id="stars">⭐ 0</span><span class="record" id="record" title="Din rekord">🏆 0</span><span class="record" id="hudKr" title="Dine mønter">💰 0</span><span class="jar" id="hudJar" hidden title="Stjernekrukken"><svg viewBox="0 0 30 38" aria-hidden="true"><defs><clipPath id="jarIn"><path d="M8 11h14v2c3 1 5 3.5 5 7v11a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5V20c0-3.5 2-6 5-7z"/></clipPath><linearGradient id="jarGold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFE27A"/><stop offset="1" stop-color="#FFA81F"/></linearGradient></defs><path d="M8 11h14v2c3 1 5 3.5 5 7v11a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5V20c0-3.5 2-6 5-7z" fill="#DDF0FF"/><g clip-path="url(#jarIn)"><rect class="jar-gold" x="0" y="11" width="30" height="27" fill="url(#jarGold)"/></g><path d="M15 19.5l1.6 3.3 3.6.5-2.6 2.5.6 3.6-3.2-1.7-3.2 1.7.6-3.6-2.6-2.5 3.6-.5z" fill="#FFFFFF" stroke="#E89A10" stroke-width="1" stroke-linejoin="round"/><path d="M8 11h14v2c3 1 5 3.5 5 7v11a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5V20c0-3.5 2-6 5-7z" fill="none" stroke="#5FA8E0" stroke-width="2" stroke-linejoin="round"/><path d="M6.5 20c0-2 1-3.4 2.4-4.2M6.5 23v6" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity=".9"/><rect x="6" y="3" width="18" height="8" rx="3" fill="#E8384F"/><rect x="6" y="7.5" width="18" height="2" fill="#B8243A" opacity=".6"/><rect x="8" y="4.3" width="6" height="1.6" rx=".8" fill="#FFFFFF" opacity=".55"/></svg></span></span><span class="hud-right"><button class="game-x game-lvl" id="gameLvl" aria-label="Sværhedsgrad" aria-expanded="false"><img alt=""></button><button class="game-x" id="gameExit" aria-label="Stop spillet">✕</button></span></div>
 <!-- (the levels - and in Hop over bolden the three ways to play - chosen without leaving the game: the user, 11-11-2026) -->
@@ -501,11 +578,13 @@
     <button id="starBtn"><img src="ikoner/knap-stjerner.png" alt=""><span>Stjerner og mønter</span></button>
     <!-- (the language: a globe and the other language's name - no flag, English being spoken under many - the user, 04-11-2026) -->
     <!-- (Hele MiniMig, for grown-ups: in the app and on the test site only - on the website all of it is free) -->
-    <button id="fullBtn" class="grown" hidden><span class="emo" aria-hidden="true">🎁</span><span>Hele MiniMig</span></button>
+    <!-- (the children and players, for grown-ups behind the sum: moved here from Mine figurer - the user, 24-11-2026) -->
+    <button id="playersBtn" class="grown"><img src="ikoner/knap-spillere.png" alt=""><span>Børn og spillere</span></button>
+    <button id="fullBtn" class="grown" hidden><img src="ikoner/knap-hele.png" alt=""><span>Hele MiniMig</span></button>
     <button id="langBtn" class="grown"><span class="emo" aria-hidden="true"></span><span></span></button>
     <!-- (on minimig.dk only: the website's "Til voksne" - home screen, offline, privacy - from its pwa.js) -->
     <!-- (drawn here: an iPad shows the family emoji as a grey outline - the user, 04-11-2026) -->
-    <button id="adultBtn" hidden><img src="ikoner/knap-voksne.png" alt=""><span>Til voksne</span></button>
+    <button id="adultBtn" class="grown" hidden><img src="ikoner/knap-voksne.png" alt=""><span>Til voksne</span></button>
   </div>
   <!-- (the movements' group, put after the other three groups by the page) -->
   <div class="tabgroup" id="moves">
@@ -558,6 +637,7 @@
     <div class="swatches" id="swatches"></div>
     <!-- (the patterns under the colours - the user, 18-11-2026) -->
     <div class="patterns" id="patterns" hidden></div>
+    <button class="more-col" id="moreCol" type="button" aria-label="Flere farver">🎨 ＋</button>
     <div class="sliders" id="sliders">
       <label>Farve <input type="range" id="s-h" min="0" max="360" step="1"></label>
       <label>Styrke <input type="range" id="s-s" min="0" max="100" step="1"></label>
@@ -632,7 +712,7 @@
       <div class="coin-disk" id="coinDisk" aria-label="Mønterne på disken"></div>
       <div class="coin-sum" id="coinSum" role="status"></div>
       <div class="coin-tray" id="coinTray"></div>
-      <div class="buy-go"><button class="share-off" id="coinHelp">🤝 Hjælp</button><button class="buy-yes" id="buyYes">Betal ✓</button></div>
+      
     </div>
   </div>
 </div>
@@ -696,12 +776,12 @@
   </div>
 </div>
 <!-- the star: save the whole figure or its profile picture in Mine figurer (stays on the device, so no grown-up needed) -->
-<div class="sheet" id="keepChoice" hidden>
+<div class="sheet no-pic-words" id="keepChoice" hidden>
   <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="keepChoiceTitle">
-    <div class="sheet-head"><h2 id="keepChoiceTitle">Gem i Mine figurer</h2><button class="sheet-x" data-close aria-label="Luk">✕</button></div>
+    <div class="sheet-head"><h2 id="keepChoiceTitle"><img class="title-pic" src="ikoner/knap-gem.png" alt="Gem i Mine figurer"></h2><button class="sheet-x" data-close aria-label="Luk">✕</button></div>
     <div class="pic-opts">
-      <button class="pic-opt" data-pic="hel"><canvas width="200" height="300"></canvas><span>Hele figuren</span></button>
-      <button class="pic-opt" data-pic="profil"><canvas width="300" height="300"></canvas><span>Profilbillede</span></button>
+      <button class="pic-opt" data-pic="hel" aria-label="Hele figuren"><canvas width="200" height="300"></canvas><span>Hele figuren</span></button>
+      <button class="pic-opt" data-pic="profil" aria-label="Profilbillede"><canvas width="300" height="300"></canvas><span>Profilbillede</span></button>
     </div>
   </div>
 </div>
@@ -710,8 +790,8 @@
   <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="newChoiceTitle">
     <div class="sheet-head"><h2 id="newChoiceTitle">Ny MiniMig</h2><button class="sheet-x" data-close aria-label="Luk">✕</button></div>
     <div class="pic-opts">
-      <button class="pic-opt" data-new="dreng"><img src="ikoner/ny-dreng.jpg" alt=""><span>Dreng</span></button>
-      <button class="pic-opt" data-new="pige"><img src="ikoner/ny-pige.jpg" alt=""><span>Pige</span></button>
+      <button class="pic-opt" data-new="dreng" aria-label="Dreng"><img src="ikoner/ny-dreng.jpg" alt=""><span>Dreng</span></button>
+      <button class="pic-opt" data-new="pige" aria-label="Pige"><img src="ikoner/ny-pige.jpg" alt=""><span>Pige</span></button>
     </div>
     <p class="note">Den figur, du har nu, bliver gemt i Mine figurer 🖼️.</p>
   </div>
@@ -724,7 +804,6 @@
          grown-ups' players belonged here with the figures, not under the stars) -->
     <div class="kids" id="figKids"><h3>Børn</h3><div class="who who-small" id="kidList"></div><h3>🖼️ Gemte figurer</h3></div>
     <div class="gallery" id="gallery"></div>
-    <button class="share-off players-btn grown" id="playersBtn">Børn og spillere – for voksne</button>
   </div>
 </div>
 <div class="sheet" id="picSheet" hidden>
@@ -755,12 +834,12 @@ const LANG = (() => { let l = new URLSearchParams(location.search).get('lang'); 
 const T = (da, en) => LANG === 'en' ? en : da, krTxt = n => T(n == 1 ? '1 mønt' : `${n} mønter`, n == 1 ? '1 coin' : `${n} coins`);
 const EN = {
   // (the tabs)
-  'Hud': 'Skin', 'Hår': 'Hair', 'Øjne': 'Eyes', 'Bryn': 'Brows', 'Næse': 'Nose', 'Mund': 'Mouth', 'Ører': 'Ears', 'Pynt': 'Face art', 'Trøje': 'Top', 'Bukser': 'Pants', 'Kjole': 'Dress', 'Udstyr': 'Gear', 'Strømper': 'Socks', 'Sko': 'Shoes', 'Hat': 'Hat', 'Briller': 'Glasses', 'Ting': 'Things', 'Navn': 'Name', 'Baggrund': 'Back­ground',
+  'Hud': 'Skin', 'Hoved': 'Head', 'Rund': 'Round', 'Aflang': 'Long', 'Bred': 'Wide', 'Lille': 'Small', 'Hår': 'Hair', 'Øjne': 'Eyes', 'Bryn': 'Brows', 'Næse': 'Nose', 'Mund': 'Mouth', 'Ører': 'Ears', 'Pynt': 'Face art', 'Trøje': 'Top', 'Bukser': 'Pants', 'Kjole': 'Dress', 'Udstyr': 'Gear', 'Strømper': 'Socks', 'Sko': 'Shoes', 'Hat': 'Hat', 'Briller': 'Glasses', 'Ting': 'Things', 'Navn': 'Name', 'Baggrund': 'Back­ground',
   'Gem': 'Save', 'Mine figurer': 'My figures', 'Ny figur': 'New figure', 'Send foto': 'Send photo', 'Lyd': 'Sound', 'Stjerner og mønter': 'Stars and coins', 'Til voksne': 'For grown-ups',
   'Stå': 'Stand', 'Vink': 'Wave', 'Hop': 'Jump', 'Dans': 'Dance', 'Løb': 'Run', 'Jubel': 'Cheer', 'Kolbøtte': 'Roll', 'Spark': 'Kick', 'Drej rundt': 'Spin', 'Min dans': 'My dance',
   'Hop over bolden': 'Jump the ball', 'Skateboard': 'Skate­board', 'Skattejagt': 'Treasure hunt', 'Svømmeverden': 'Swim world', 'Gemmeleg': 'Hide and seek', 'Straffespark': 'Penalty kick',
   // (hair, face)
-  'Kort': 'Short', 'Krøller': 'Curls', 'Bølger': 'Waves', 'Strit': 'Spiky', 'Fletninger': 'Braids', 'Fletning': 'Braid',
+  'Kort': 'Short', 'Krøller': 'Curls', 'Hestehale': 'Ponytail', 'Knold': 'Bun', 'Langt hår': 'Long hair', 'Bølger': 'Waves', 'Strit': 'Spiky', 'Fletninger': 'Braids', 'Fletning': 'Braid',
   'Naturlige': 'Natural', 'Tynde': 'Thin', 'Tykke': 'Thick', 'Høje': 'High', 'Sure': 'Angry', 'Triste': 'Sad', 'Ingen': 'None', 'Glade': 'Happy', 'Blink': 'Wink', 'Vipper': 'Lashes', 'Stjerner': 'Stars', 'Hjerter': 'Hearts',
   'Smil': 'Smile', 'Grin': 'Grin', 'Tunge': 'Tongue', 'Åh': 'Oh', 'Kys': 'Kiss', 'Trist': 'Sad',
   'Røde kinder': 'Rosy cheeks', 'Fregner': 'Freckles', 'Stjerne': 'Star', 'Glimmer': 'Glitter', 'Regnbue': 'Rainbow', 'Plaster': 'Bandage', 'Skønhedsplet': 'Beauty mark',
@@ -768,12 +847,12 @@ const EN = {
   'Små': 'Small', 'Store': 'Big', 'Udstående': 'Sticking out', 'Alfeører': 'Elf ears', 'Perler': 'Pearls', 'Guldringe': 'Gold rings',
   // (clothes)
   'Undertrøje': 'Tank top', 'T-shirt': 'T-shirt', 'Hættetrøje': 'Hoodie', 'Fodboldtrøje': 'Soccer jersey', 'Undershorts': 'Underwear', 'Trusser': 'Briefs', 'Lange bukser': 'Long pants', 'Shorts': 'Shorts', 'Cowboyshorts': 'Denim shorts', 'Fodboldbukser': 'Soccer shorts',
-  'Ingen kjole': 'No dress', 'Ingen dragt': 'No suit', 'Badedragt': 'Swimsuit', 'Badebukser': 'Swim trunks', 'Sommerkjole': 'Summer dress', 'Prinsessekjole': 'Princess dress', 'Havfruekjole': 'Mermaid dress', 'Ingen strømper': 'No socks', 'Ankelstrømper': 'Ankle socks', 'Almindelige strømper': 'Regular socks', 'Fodboldstrømper': 'Soccer socks', 'Knæstrømper': 'Knee socks',
+  'Strømpebukser': 'Tights', 'Nederdel': 'Skirt', 'Prinsessenederdel': 'Princess skirt', 'Ingen kjole': 'No dress', 'Ingen dragt': 'No suit', 'Badedragt': 'Swimsuit', 'Badebukser': 'Swim trunks', 'Sommerkjole': 'Summer dress', 'Prinsessekjole': 'Princess dress', 'Havfruekjole': 'Mermaid dress', 'Ingen strømper': 'No socks', 'Ankelstrømper': 'Ankle socks', 'Almindelige strømper': 'Regular socks', 'Fodboldstrømper': 'Soccer socks', 'Knæstrømper': 'Knee socks',
   'Bare fødder': 'Bare feet', 'Sneakers': 'Sneakers', 'Fodboldstøvler': 'Soccer cleats', 'Gummistøvler': 'Rain boots', 'Balletsko': 'Ballet shoes', 'Højhælede': 'High heels',
   'Nissehue': 'Santa hat', 'Rensdyrgevir': 'Reindeer antlers', 'Julemønster': 'Christmas pattern', 'Julemønster med rensdyr': 'Christmas pattern with reindeer', 'Juleaften': 'Christmas Eve',
   'Ingen hat': 'No hat', 'Kasket': 'Cap', 'Krone': 'Crown', 'Kaninører': 'Bunny ears', 'Sløjfe': 'Bow', 'Ingen briller': 'No glasses', 'Svømmebriller': 'Swim goggles', 'Snorkel': 'Snorkel', 'Rumdragt': 'Space suit', 'Rumhjelm': 'Space helmet', 'Rumstøvler': 'Space boots', 'Sne': 'Snow', 'Skihop': 'Ski jump', 'Dansestudie': 'Dance studio', '▶ Vis dansen!': '▶ Show the dance!', '🎵 Sæt din dans sammen': '🎵 Put your dance together', 'Sjov': 'Fun', 'Kyllingedans': 'Chicken dance', 'Ned i gulvet': 'Down to the floor', 'Hurtigt ned': 'Quick drop', 'Håndstand-spin': 'Handstand spin', 'Op på hænder': 'Up on the hands', 'Bevægelser': 'Moves', 'Danse': 'Dances', '🎵 Vælg fire trin til din runde': '🎵 Pick four moves for your round', '👆 Tryk for at køre – og tryk igen ved kanten for at hoppe!': '👆 Tap to go – and tap again at the edge to jump!', 'Skidragt': 'Ski suit', 'Skihjelm': 'Ski helmet', 'Skibriller': 'Ski goggles', 'Skihandsker': 'Ski gloves', 'Skistøvler': 'Ski boots', 'Jetpack': 'Jetpack', 'Ingen jetpack': 'No jetpack', 'Rumrejse': 'Space trip', 'Rumrejse': 'Space trip', '👆 Tryk – så flyver du derhen. To hurtige tryk giver fart 🚀': '👆 Tap – and you fly there. Two quick taps give a boost 🚀', 'Skaterhjelm': 'Skate helmet', 'Knæbeskyttere': 'Knee pads', 'Albuebeskyttere': 'Elbow pads', 'Handsker': 'Gloves', 'Ingen knæbeskyttere': 'No knee pads', 'Ingen albuebeskyttere': 'No elbow pads', 'Ingen handsker': 'No gloves', 'Ansigt': 'Face', 'Tøj': 'Clothes', 'Mere': 'More', 'Svømning': 'Swimming', 'Start': 'Start', 'Ingen svømmebriller': 'No goggles', 'Runde': 'Round', 'Solbriller': 'Sunglasses', 'Hjerte': 'Heart',
   // (things, pets, backgrounds)
-  'Ballon': 'Balloon', 'Bamse': 'Teddy bear', 'Tryllestav': 'Magic wand', 'Is': 'Ice cream', 'Blomst': 'Flower', 'Bold': 'Ball', 'Fodbold': 'Soccer ball', 'Hulahopring': 'Hula hoop',
+  'Ballon': 'Balloon', 'Bamse': 'Teddy bear', 'Dinosaur': 'Dinosaur', 'Enhjørning': 'Unicorn', 'Dukke': 'Doll', 'Legetøjsbil': 'Toy car', 'Tryllestav': 'Magic wand', 'Is': 'Ice cream', 'Blomst': 'Flower', 'Bold': 'Ball', 'Fodbold': 'Soccer ball', 'Hulahopring': 'Hula hoop',
   'Intet dyr': 'No pet', 'Kat': 'Cat', 'Hund': 'Dog', 'Kanin': 'Rabbit', 'Halsbånd': 'Collar', 'Madskål': 'Food bowl', 'Legebold': 'Play ball',
   'Sol': 'Sun', 'Have': 'Garden', 'Strand': 'Beach', 'Skov': 'Forest', 'Slot': 'Palace', 'Ridderborg': 'Castle', 'Havbund': 'Ocean floor', 'Slikland': 'Candy world', 'Vinter': 'Winter', 'Rummet': 'Space', 'Fodboldbane': 'Soccer field', 'Gymnastiksal': 'Gym', 'Dansesal': 'Dance studio',
   // (movements, games)
@@ -842,17 +921,22 @@ disc.rotation.x = -Math.PI / 2; disc.position.y = .001; scene.add(disc);
 
 // ---- colours: the figure's painted texture, recoloured (below) ----
 // (the parts, each with the app's icon for its tab, in ikoner/; the fixed colours are gone - the sliders alone)
-const CHOICES = [['skin', 'Hud', 'hud'], ['hair', 'Hår', 'haar'], ['eyes', 'Øjne', 'oejne'], ['brows', 'Bryn', 'bryn'], ['nose', 'Næse', 'naese'], ['mouth', 'Mund', 'mund'], ['ears', 'Ører', 'oerer'], ['pynt', 'Pynt', 'kinder'], ['shirt', 'Trøje', 'troeje'], ['pants', 'Bukser', 'bukser'], ['dress', 'Kjole', 'kjoler'], ['gear-skate', 'Skateboard', 'fane-skate'], ['gear-sea', 'Svømning', 'fane-svoem'], ['gear-space', 'Rumrejse', 'fane-rum'], ['gear-pk', 'Straffespark', 'fane-straffe'], ['gear-snow', 'Sne', 'fane-snow'],
+const CHOICES = [['skin', 'Hud', 'hud'], ['head', 'Hoved', 'hoved'], ['hair', 'Hår', 'haar'], ['eyes', 'Øjne', 'oejne'], ['brows', 'Bryn', 'bryn'], ['nose', 'Næse', 'naese'], ['mouth', 'Mund', 'mund'], ['ears', 'Ører', 'oerer'], ['pynt', 'Pynt', 'kinder'], ['shirt', 'Trøje', 'troeje'], ['pants', 'Bukser', 'bukser'], ['dress', 'Kjole', 'kjoler'], ['gear-skate', 'Skateboard', 'fane-skate'], ['gear-sea', 'Svømning', 'fane-svoem'], ['gear-space', 'Rumrejse', 'fane-rum'], ['gear-pk', 'Straffespark', 'fane-straffe'], ['gear-snow', 'Sne', 'fane-snow'],
   ['socks', 'Strømper', 'stroemper'], ['shoe', 'Sko', 'sko'], ['hat', 'Hat', 'hat'], ['glasses', 'Briller', 'briller'], ['item', 'Ting', 'ting'], ['name', 'Navn', 'navn'], ['bg', 'Baggrund', 'baggrund']];
 const picked = {}, START = { skin: '#EDB98A', hair: '#4A2C1D', eyes: '#7A4220', brows: '#4A2C1D', mouth: '#C0505A', pynt: '#FF5A6E', nose: '#EDB98A', shirt: '#FF7A2F', pants: '#2C3E8C', dress: '#3D8BFF', suit: '#3D8BFF', socks: '#3D8BFF', item: '#E8384F', shoe: '#3D8BFF', hat: '#3D8BFF', glasses: '#3D8BFF' }; let partNow = 'shirt';
 const apply = (part, c) => { picked[part] = c; recolour(part, c); if (part === 'shirt' || part === 'dress') chestName(); if (typeof paintPatterns === 'function') { paintPatterns(part); showPatterns(false); } };
 const iconButton = (src, label) => { const b = document.createElement('button'), i = new Image(); i.src = src; i.alt = ''; i.onerror = () => i.remove();
-  const s = document.createElement('span'); s.textContent = tr(label); b.append(i, s); return b; };
+  const s = document.createElement('span'); s.textContent = tr(label); b.append(i, s); b.setAttribute('aria-label', tr(label)); b.title = tr(label); return b; };
+// (the icons without words - the user, 24-11-2026: a test of the pictures alone, the children's and then the grown-ups'
+// buttons too. KID_WORDS = true: the words back under every icon. The names stay for screen readers and as a tip on a computer)
+const KID_WORDS = false; if (!KID_WORDS) document.documentElement.classList.add('no-words');
 // (the app's colours, as in version 2.5D)
 const PALETTES = { skin: ['#F6D0AE', '#EDB98A', '#D9965F', '#B5713F', '#8D5530', '#5A3520'], hair: ['#2A1C17', '#4A2C1D', '#7A4428', '#A8582E', '#D9A55C', '#F0D9A0', '#FF7EBB', '#5AA9FF'],
   eyes: ['#9C5A1E', '#6B3A1A', '#4A2814', '#2E1A10', '#1A110C', '#3B7BD4', '#3E9A5C', '#A0763A', '#7D8A99', '#8A5CE6'],
   cloth: ['#E8384F', '#FF7A2F', '#FFC233', '#2FB872', '#13BFA6', '#3D8BFF', '#46699E', '#7A4DFF', '#FF6FB1', '#F4F1EA', '#3A3550'] };
 PALETTES.brows = PALETTES.hair;
+// (lip colours - Trine, 23-11-2026: Ebba, 5, wanted colour on the lips. The first is the lips' own, as the skin makes them)
+PALETTES.mouth = ['#C98A7A', '#E8577A', '#FF6FB1', '#D7263D', '#B0306A', '#9B59D0', '#FF8A65'];
 // (the nose, the mouth and Pynt have no colour of their own, as in the app: no sliders under them - nor the movements)
 var briefsOn = false; // (the briefs are always white: no colours under them)
 var petPick = false; // (a pet tapped last under Ting: its colours can't be changed, so no colours show until a thing is tapped)
@@ -860,21 +944,25 @@ var petPick = false; // (a pet tapped last under Ting: its colours can't be chan
 // a tap on one shows its own tabs in a row under it - the one last used there opened - and under them the choices.
 // Udstyr has a tab for each game with gear: all that game's things together, with the gear's colour, and a green
 // button that starts the game once all of it is on)
-const MAIN = [['face', 'Ansigt', 'gruppe-ansigt', ['skin', 'hair', 'eyes', 'brows', 'nose', 'mouth', 'ears', 'glasses', 'pynt']], ['wear', 'Tøj', 'gruppe-toej', ['shirt', 'pants', 'dress', 'socks', 'shoe', 'hat']],
+const MAIN = [['face', 'Ansigt', 'gruppe-ansigt', ['skin', 'head', 'hair', 'eyes', 'brows', 'nose', 'mouth', 'ears', 'glasses', 'pynt']], ['wear', 'Tøj', 'gruppe-toej', ['shirt', 'pants', 'dress', 'socks', 'shoe', 'hat']],
   ['gear', 'Udstyr', 'gruppe-udstyr', ['gear-skate', 'gear-snow', 'gear-sea', 'gear-space', 'gear-pk']], ['more', 'Mere', 'gruppe-mere', ['item', 'name', 'bg']]], mainOf = part => MAIN.find(m => m[3].includes(part))?.[0] || '', lastSub = {};
 var mainNow = '', dressSnap = null, dressWant = '', foldNow = '';
 const FOLDS = [['moves', 'Bevægelser', 'gruppe-bevaegelse'], ['dance', 'Dans', 'gruppe-dans']];
-function showFold() { for (const [id] of FOLDS) { const el = document.getElementById(id); if (el) el.hidden = foldNow !== id; } for (const b of document.querySelectorAll('#mains [data-fold]')) b.classList.toggle('on', b.dataset.fold === foldNow); }
+function showFold() { scrollHint(); for (const [id] of FOLDS) { const el = document.getElementById(id); if (el) el.hidden = foldNow !== id; } for (const b of document.querySelectorAll('#mains [data-fold]')) b.classList.toggle('on', b.dataset.fold === foldNow); }
 function tapFold(id) { foldNow = foldNow === id ? '' : id; if (mainNow || (/^move-/.test(partNow) && boxOpen)) { mainNow = ''; boxOpen = false; showSwatches(); } showFold(); }
 // (the colour of a game's gear is the suits' colour - and the skateboard helmet's with it)
 function colourPart() { return partNow === 'gear-pk' ? 'shirt' : partNow.startsWith('gear-') ? 'suit' : partNow; } // (the football kit's colour is the shirt's)
 function applyTab(c) { apply(colourPart(), c); if (partNow.startsWith('gear-') && typeof GARMENTS !== 'undefined' && GARMENTS.hat.now === 'hat-skaterhjelm') apply('hat', c); }
+// (a tap on the empty yellow beside the buttons shuts what is open - the user, 24-11-2026: he kept tapping there to close a
+// row of tabs; a tab tapped again does it too, as before. Not a tap in the white box of choices, nor on any button)
+document.querySelector('.panel').addEventListener('click', e => { if (e.target.closest('button, input, label, a, .box, .sheet, .md-name')) return;
+  if (!mainNow && !boxOpen && !foldNow) return; mainNow = ''; boxOpen = false; foldNow = ''; showFold(); showSwatches(); });
 function tapMain(id) { foldNow = ''; showFold(); if (mainNow === id) { mainNow = ''; boxOpen = false; showSwatches(); return; } mainNow = id; boxOpen = true; partNow = lastSub[id] || MAIN.find(m => m[0] === id)[3][0]; showSwatches(); lookFor(partNow); }
 function showSwatches() { const move = /^(move|game)-/.test(partNow); if (!move) slidersFrom(picked[colourPart()] || START[colourPart()]);
   { const mo = mainOf(partNow); if (mo && boxOpen) { mainNow = mo; lastSub[mo] = partNow; } else if (move && boxOpen) mainNow = ''; if (!partNow.startsWith('gear-')) { dressWant = ''; dressSnap = null; }
     const subs = document.getElementById('subs'); if (subs) { subs.hidden = !mainNow; for (const b of subs.children) b.hidden = mainOf(b.dataset.part) !== mainNow || !free(b.dataset.part); for (const b of document.querySelectorAll('#mains [data-main]')) b.classList.toggle('on', b.dataset.main === mainNow); } }
-  const noColour = move || ['nose', 'mouth', 'pynt', 'name', 'ears', 'bg'].includes(partNow) || partNow === 'pants' && briefsOn || partNow === 'item' && petPick;
-  document.getElementById('sliders').style.display = noColour ? 'none' : '';
+  const noColour = move || ['head', 'nose', 'pynt', 'name', 'ears', 'bg'].includes(partNow) || partNow === 'pants' && briefsOn || partNow === 'item' && petPick;
+  document.getElementById('sliders').style.display = noColour || !moreCol.classList.contains('on') ? 'none' : ''; moreCol.style.display = noColour ? 'none' : '';
   // (the fixed colours of the app over the sliders: skin, hair - the brows too - eyes, and the clothes' colours for the rest)
   const sw = document.getElementById('swatches'), list = noColour ? [] : PALETTES[colourPart()] || PALETTES.cloth; sw.hidden = !list.length; sw.innerHTML = '';
   for (const c of list) { const b = document.createElement('button'); b.style.background = c; b.setAttribute('aria-label', c); b.classList.toggle('on', (picked[colourPart()] || START[colourPart()] || '').toLowerCase() === c.toLowerCase());
@@ -882,7 +970,8 @@ function showSwatches() { const move = /^(move|game)-/.test(partNow); if (!move)
   try { showPatterns(noColour); } catch (e) {}
   document.getElementById('nameBox').hidden = partNow !== 'name'; document.getElementById('myDance').hidden = partNow !== 'move-mindans';
   document.querySelectorAll('#subs [data-part]').forEach(b => b.classList.toggle('on', b.dataset.part === partNow && boxOpen));
-  renderStyles(); placeBox(); }
+  renderStyles(); placeBox(); scrollHint(); }
+const moreCol = document.getElementById('moreCol'); moreCol.onclick = () => { moreCol.classList.toggle('on'); showSwatches(); };
 // (the choices and colours open right under the group of the tab tapped, and shut again with another tap on it - the user,
 // 04-11-2026: far down under all the groups there was too much scrolling. A phone held upright keeps its sideways row of
 // tabs, with the box under it)
@@ -901,12 +990,15 @@ function tapTab(part, then) { if (boxOpen && partNow === part) { boxOpen = false
 // (a second row in the same tab, as the app's earrings under the ears: a fourth entry, [items, now, set, ingen-name])
 function renderStyles() { const all = typeof styleLists === 'undefined' ? null : styleLists()[partNow], second = all?.[3], third = second?.[4];
   for (const [id, list, none] of [['styles', all, partNow], ['styles2', second, second?.[3]], ['styles3', third, 'dyr-ting']]) { const box = document.getElementById(id);
-  box.innerHTML = ''; box.hidden = !list || !hairBase;
+  box.innerHTML = ''; box.hidden = !list || !hairBase; box.dataset.part = id === 'styles' ? partNow : id === 'styles2' && second?.[3] ? 'row2-' + second[3] : '';
   if (box.hidden) continue; const [items, now, set] = list;
   // (now: the chosen one - or, for Pynt, the list of all chosen, Ingen lit when it is empty)
-  for (const [n, label] of items) { if (!free(n)) continue; const b = iconButton(`ikoner/valg-${n || 'ingen-' + none}.png`, label), locked = !owns(n);
-    if (locked) { b.classList.add('locked'); b.append(Object.assign(document.createElement('span'), { className: 'price', textContent: `🔒 ${krTxt(SHOP[n])}` })); }
-    b.classList.toggle('on', Array.isArray(now) ? (n.endsWith('-ingen') ? !now.length : now.includes(n)) : n === now); b.onclick = () => locked ? askBuy(n) : set(n); b.dataset.n = n; box.append(b); } }
+  // (no »Ingen« to choose any more - Trine, 23-11-2026, testing with Ebba, 5: it was not clear; the one chosen tapped again
+  // takes it off, a lollipop or a hat - in every row, as the gear and Pynt did already)
+  const off = items.find(([n]) => n === '' || n.endsWith('-ingen'))?.[0];
+  for (const [n, label] of items) { if (!free(n) || n === off) continue; const b = iconButton(`ikoner/valg-${n || 'ingen-' + none}.png`, label), locked = !owns(n);
+    if (locked) { b.classList.add('locked'); b.append(Object.assign(document.createElement('span'), { className: 'price', textContent: '🔒' })); }
+    b.classList.toggle('on', Array.isArray(now) ? (n.endsWith('-ingen') ? !now.length : now.includes(n)) : n === now); b.onclick = () => locked ? askBuy(n) : b.classList.contains('on') && off !== undefined && !Array.isArray(now) ? set(off) : set(n); b.dataset.n = n; box.append(b); } }
   // (a game's gear: what is still to be put on moves a little once the game was asked for, and last in the row the green
   // start button, which works when all of it is on - swim goggles and snorkel are free to leave off)
   if (partNow.startsWith('gear-') && hairBase && typeof dressNeeds !== 'undefined') { const g = partNow.slice(5), box = document.getElementById('styles'), needs = dressNeeds(g).filter(([p]) => p !== 'glasses'), ok = needs.every(([p, l]) => l.some(i => i[0] === GARMENTS[p].now));
@@ -918,7 +1010,9 @@ function renderStyles() { const all = typeof styleLists === 'undefined' ? null :
 // (prices in kroner since 04-11-2026, paid in coins - see askBuy; the child's account: score.kr, the stars won become
 // kroner by the level - starWorth - and what there was before, one krone to a star)
 const SHOP = { 'hat-krone': 40, 'kjole-prinsesse': 60, 'kjole-havfrue': 60, 'sko-hoej': 30, 'briller-hjerte': 20, 'briller-stjerne': 20,
-  'ting-tryllestav': 30, 'bg-slot': 30, 'bg-slikland': 40, 'bg-rummet': 40, 'dyr-kat': 100, 'dyr-hund': 100, 'dyr-kanin': 100, 'dyr-halsbaand': 30, 'dyr-skaal': 40, 'dyr-bold': 40 };
+  'ting-tryllestav': 30, 'bg-slot': 30, 'bg-slikland': 40, 'bg-rummet': 40, 'dyr-kat': 100, 'dyr-hund': 100, 'dyr-kanin': 100, 'dyr-halsbaand': 30, 'dyr-skaal': 40, 'dyr-bold': 40,
+  // (the new ones after Trine's test, 23-11-2026 - something more to save the coins for)
+  'nederdel-prinsesse': 40, 'stroemper-strompebukser': 20, 'ting-dino': 30, 'ting-enhjoerning': 40, 'ting-dukke': 30, 'ting-bil': 30 };
 const krOf = s => s.kr ??= Math.max(0, (s.total || 0) - (s.spent || 0));
 // ---- Basis and Hele MiniMig (the user, 17-11-2026): the app is free, with one purchase - Hele MiniMig. What is not in
 // the free Basis is hidden from the children - no locks, no "buy" - and shown to the grown-ups under Hele MiniMig, behind
@@ -964,23 +1058,47 @@ function shopThing(n) { for (const top of Object.values(styleLists())) for (cons
 // account changes money by itself: any coin may be used as long as the kroner are there. 🤝 lays them out for the
 // youngest. Paid: confetti, it goes on, and it is written in the child's list; not enough: how many are missing)
 const COINS = [1, 2, 5, 10, 20], coinHtml = v => `<button class="coin c${v}" data-coin="${v}" aria-label="${v} mønter">${v}</button>`;
-let buying = null, onDisk = [];
-function showCoins() { const s = playerNow().score, have = krOf(s), price = SHOP[buying], sum = onDisk.reduce((a, b) => a + b, 0), out = document.getElementById('coinSum'), rest = have - sum;
-  document.getElementById('coinDisk').innerHTML = onDisk.map(coinHtml).join('');
-  document.getElementById('coinTray').innerHTML = COINS.map(coinHtml).join(''); document.querySelectorAll('#coinTray .coin').forEach(b => { b.disabled = +b.dataset.coin > rest; });
-  out.textContent = sum > price ? T(`${sum} kr – det er for meget! Tryk på en mønt for at tage den af`, `${sum} coins – that is too much! Tap a coin to take it off`) : T(`${sum} af ${price} mønter`, `${sum} of ${price} coins`); out.className = 'coin-sum' + (sum === price ? ' ok' : sum > price ? ' over' : '');
-  document.getElementById('buyYes').disabled = sum !== price; }
+// (the price as the coins to lay out - Trine, 23-11-2026, testing with Ebba, 5: help to choose the coins, and to find the
+// green button. Now the right coins are shown as shadows on their places on the counter; the child drags - or taps - the
+// same coins up from the tray onto them, a wrong one hops back, and when all are in place the thing is bought at once, no
+// button to pay with. A coin on the counter tapped goes back. The fewest coins that make the price)
+let buying = null, slots = [];
+const coinsFor = p => { const o = []; for (const v of [...COINS].reverse()) while (p >= v) { o.push(v); p -= v; } return o; };
+function showCoins() { const price = SHOP[buying], sum = slots.filter(c => c.on).reduce((a, c) => a + c.v, 0), out = document.getElementById('coinSum'), next = slots.find(c => !c.on)?.v;
+  document.getElementById('coinDisk').innerHTML = slots.map((c, i) => `<button class="coin c${c.v}${c.on ? '' : ' slot'}" data-slot="${i}" aria-label="${c.v}">${c.v}</button>`).join('');
+  document.getElementById('coinTray').innerHTML = COINS.map(coinHtml).join(''); document.querySelectorAll('#coinTray .coin').forEach(b => b.classList.toggle('need', +b.dataset.coin === next));
+  out.textContent = `${sum} / ${price}`; out.className = 'coin-sum' + (sum === price ? ' ok' : ''); }
+function coinPlace(v, from) { const i = slots.findIndex(c => !c.on && c.v === v);
+  if (i < 0) { from?.animate?.([{ transform: 'translateX(0)' }, { transform: 'translateX(-9px)' }, { transform: 'translateX(9px)' }, { transform: 'translateX(0)' }], { duration: 320 }); sfx('boing'); return; }
+  slots[i].on = true; sfx('ding'); showCoins(); document.querySelector(`#coinDisk [data-slot="${i}"]`)?.animate?.([{ transform: 'scale(1.35)' }, { transform: 'scale(1)' }], { duration: 260 });
+  if (slots.every(c => c.on)) setTimeout(buyDone, 500); }
 function askBuy(n, who) { if (who) setPlayer(who); else if (players.list.length > 1) { document.getElementById('whoTitle').textContent = tr('Hvem køber?'); askWho(() => askBuy(n, players.now)); return; }
-  const have = krOf(playerNow().score), price = SHOP[n]; buying = n; onDisk = []; soundOut()?.resume();
+  const have = krOf(playerNow().score), price = SHOP[n]; buying = n; slots = coinsFor(price).map(v => ({ v, on: false })); soundOut()?.resume();
   document.getElementById('buyImg').src = `ikoner/valg-${n}.png`; document.getElementById('buyTitle').textContent = tr(shopThing(n).label);
-  document.getElementById('buyPrice').textContent = krTxt(price);
-  document.getElementById('buyNote').textContent = have >= price ? T(`Du har ${have} mønter`, `You have ${have} coins in your account`) : T(`Du har ${have} mønter – du mangler ${price - have}. Spil et spil, og saml flere stjerner!`, `You have ${have} coins – you need ${price - have} more. Play a game and collect more stars!`);
+  // (numbers and a coin, not words - the user, 24-11-2026: the children cannot read »30 mønter« or »du mangler 8 - spil et
+  // spil«. The price as 30 and a coin; what the child has as a bar of coins filling up to the price; not enough: a game,
+  // a star and a coin with arrows between - play, get stars, they become coins - and a tap on the game goes to the games)
+  const coin = '<i class="coin-sym" aria-hidden="true"></i>';
+  document.getElementById('buyPrice').innerHTML = `${price} ${coin}`; document.getElementById('buyPrice').setAttribute('aria-label', krTxt(price));
+  const note = document.getElementById('buyNote'); note.setAttribute('aria-label', have >= price ? T(`Du har ${have} mønter`, `You have ${have} coins`) : T(`Du har ${have} mønter – du mangler ${price - have}. Spil et spil, og saml flere stjerner!`, `You have ${have} coins – you need ${price - have} more. Play a game and collect more stars!`));
+  note.innerHTML = have >= price ? `<span class="coin-have">${coin} ${have}</span>` : `<span class="coin-bar"><b style="width:${Math.round(100 * have / price)}%"></b></span><span class="coin-have">${coin} ${have} / ${price}</span>`
+    + (have >= price ? '' : `<button class="earn" type="button"><img src="ikoner/spil-hop.png" alt=""><span>➜</span><span class="earn-star">⭐</span><span>➜</span>${coin}</button>`);
+  note.querySelector('.earn')?.addEventListener('click', () => { document.getElementById('buySheet').hidden = true; const g = document.getElementById('games'); g.scrollIntoView({ block: 'center', behavior: 'smooth' }); g.classList.add('todo'); setTimeout(() => g.classList.remove('todo'), 3000); });
   document.getElementById('coinPay').hidden = have < price; showCoins(); document.getElementById('buySheet').hidden = false; }
-document.getElementById('coinTray').addEventListener('click', e => { const b = e.target.closest('[data-coin]'); if (!b || b.disabled) return; onDisk.push(+b.dataset.coin); sfx('ding'); showCoins(); });
-document.getElementById('coinDisk').addEventListener('click', e => { const b = e.target.closest('[data-coin]'); if (!b) return; onDisk.splice(onDisk.indexOf(+b.dataset.coin), 1); sfx('swish'); showCoins(); });
-// (help: the price in as few coins as can be)
-document.getElementById('coinHelp').onclick = () => { onDisk = []; let left = SHOP[buying]; for (const v of [...COINS].reverse()) while (left >= v) { onDisk.push(v); left -= v; } sfx('ding'); showCoins(); };
-document.getElementById('buyYes').onclick = () => { const s = playerNow().score, price = SHOP[buying]; if (!buying || onDisk.reduce((a, b) => a + b, 0) !== price || krOf(s) < price) return;
+// (a coin from the tray: dragged with the finger onto the counter, or just tapped - it flies to its place there)
+{ const tray = document.getElementById('coinTray'); let drag = null;
+  tray.addEventListener('pointerdown', e => { const b = e.target.closest('[data-coin]'); if (!b) return; e.preventDefault(); const r = b.getBoundingClientRect(), g = b.cloneNode(true); g.classList.remove('need');
+    Object.assign(g.style, { position: 'fixed', left: r.left + 'px', top: r.top + 'px', zIndex: 99, pointerEvents: 'none', margin: 0 }); document.body.append(g); b.style.visibility = 'hidden';
+    drag = { b, g, x0: e.clientX, y0: e.clientY, moved: false }; });
+  addEventListener('pointermove', e => { if (!drag) return; const dx = e.clientX - drag.x0, dy = e.clientY - drag.y0; if (Math.hypot(dx, dy) > 8) drag.moved = true; drag.g.style.transform = `translate(${dx}px, ${dy}px) scale(1.15)`; });
+  const drop = e => { if (!drag) return; const { b, g, moved } = drag, d = document.getElementById('coinDisk').getBoundingClientRect(); drag = null;
+    const over = e.clientX >= d.left - 20 && e.clientX <= d.right + 20 && e.clientY >= d.top - 30 && e.clientY <= d.bottom + 30;
+    if (!moved || over) { g.remove(); b.style.visibility = ''; coinPlace(+b.dataset.coin, b); return; }
+    g.style.transition = 'transform .25s'; g.style.transform = ''; setTimeout(() => { g.remove(); b.style.visibility = ''; }, 260); sfx('swish'); };
+  addEventListener('pointerup', drop); addEventListener('pointercancel', drop); }
+document.getElementById('coinDisk').addEventListener('click', e => { const b = e.target.closest('[data-slot]'); if (!b || !slots[+b.dataset.slot]?.on) return; slots[+b.dataset.slot].on = false; sfx('swish'); showCoins(); });
+// (all the coins in place: bought - confetti, it goes on, and it is written in the child's list)
+function buyDone() { const s = playerNow().score, price = SHOP[buying]; if (!buying || !slots.length || !slots.every(c => c.on) || krOf(s) < price || document.getElementById('buySheet').hidden) return;
   s.kr -= price; (s.owned ??= []).push(buying); (s.history ??= []).unshift({ n: buying, kr: price, at: Date.now() }); savePlayers(); document.getElementById('buySheet').hidden = true; celebrate();
   const n = buying; buying = null; if (hairBase && !game.on) shopThing(n).set?.(n); renderStyles(); if (!document.getElementById('starSheet').hidden) showStarSheet(); };
 document.getElementById('whoSheet').addEventListener('click', () => setTimeout(() => { if (document.getElementById('whoSheet').hidden) document.getElementById('whoTitle').textContent = tr('Hvem spiller?'); }, 0));
@@ -1433,8 +1551,10 @@ function drawMouth(o) {
   // (as the user's reference: lips discreet, close to the skin; inside a deep warm red, the tongue a lighter pink-red)
   // (lips nearly the skin's own colour, a little deeper and warmer - between the figure's own smile and red lips; Kys
   // keeps its pinker lips)
-  const kissLip = mix(skin, { r: .74, g: .29, b: .34 }, .5), lipC = mix(mix(skin, { r: .62, g: .3, b: .27 }, .3), skin, .15), seamC = { r: .36, g: .12, b: .12 }, insideC = { r: .48, g: .13, b: .13 },
-    teethC = { r: .98, g: .97, b: .94 }, tongueC = { r: .9, g: .42, b: .44 }, kissC = mix(skin, { r: .78, g: .3, b: .36 }, .8);
+  // (a lip colour picked: the lips that colour, a little of the skin's in it; the first in the row is the lips' own)
+  const lipPick = picked.mouth && picked.mouth.toUpperCase() !== PALETTES.mouth[0] ? (n => ({ r: (n >> 16 & 255) / 255, g: (n >> 8 & 255) / 255, b: (n & 255) / 255 }))(parseInt(picked.mouth.slice(1), 16)) : null;
+  const kissLip = lipPick ? mix(skin, lipPick, .92) : mix(skin, { r: .74, g: .29, b: .34 }, .5), lipC = lipPick ? mix(skin, lipPick, .9) : mix(mix(skin, { r: .62, g: .3, b: .27 }, .3), skin, .15), seamC = { r: .36, g: .12, b: .12 }, insideC = { r: .48, g: .13, b: .13 },
+    teethC = { r: .98, g: .97, b: .94 }, tongueC = { r: .9, g: .42, b: .44 }, kissC = lipPick ? mix(skin, lipPick, .92) : mix(skin, { r: .78, g: .3, b: .36 }, .8); // (the kiss in the lip colour picked too - the user, 24-11-2026)
   const cov = d => Math.max(0, Math.min(1, d / edge + .5)), cl = v => Math.max(0, Math.min(1, v)), put = (i, c, k, a) => { if (a <= 0) return;
     o[i] = o[i] * (1 - a) + Math.min(255, c.r * 255 * k) * a; o[i + 1] = o[i + 1] * (1 - a) + Math.min(255, c.g * 255 * k) * a; o[i + 2] = o[i + 2] * (1 - a) + Math.min(255, c.b * 255 * k) * a; };
   // (a lip between its inner edge and its outer: fullest in its middle, a little darker at its rim; the lower one with a
@@ -1702,7 +1822,7 @@ function recolourHair(hexColour, list = hairTexs) {
     const k0 = (.3 * s[i] + .59 * s[i + 1] + .11 * s[i + 2]) / hairTex.mid, k = Math.min(hairTex.cap ?? Infinity, hairTex.flat ? 1 + (k0 - 1) * hairTex.flat : k0); for (let j = 0; j < 3; j++) o[i + j] = Math.min(255, c[j] * k); }
   hairTex.ctx.putImageData(out, 0, 0); hairTex.texture.needsUpdate = true; } }
 function recolour(part, hexColour) {
-  if (part === 'socks') return paintSocks(); if (part === 'item') return paintItem();
+  if (part === 'socks') return paintSocks(); if (part === 'item') return paintItem(); if (part === 'mouth') return redrawBody();
   // (all the shoes, the ones not on too: back in the high heels after the sneakers had a new colour, they had the old one)
   if (part === 'shoe' && typeof GARMENTS !== 'undefined') { paintSocks(); paintHeels(); recolourHair(hexColour, GARMENTS.shoe.texs); return; }
   if (part === 'hair') recolourHair(hexColour); if (typeof GARMENTS !== 'undefined' && GARMENTS[part]) recolourHair(hexColour, GARMENTS[part].texs); if (part === 'suit' && gearTexs) recolourHair(hexColour, gearTexs); // (the goggles and snorkel in the suit's colour: one tab, one colour)
@@ -1815,7 +1935,7 @@ function buildSolid(M, o) { M.solid = M.solid || []; const fz = faceHeight(M), a
     holdByHead(M, g, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: o.o ? .9 : .5, side: THREE.DoubleSide, transparent: true })).castShadow = false; } }
 // (the lips' colour from the skin's: the skin's own at the outer edge, so they melt into the face; deeper, warmer in the middle)
 function colourLips(M, o) { const skin = tex.colours[PARTS.skin] || tex.skin, T = M.texels; let k = 0, c = 0; for (let j = 0; j < T.length; j += 4) if (Math.hypot(T[j + 1], (T[j + 2] - M.my) / .8) < .45) { k += T[j + 3]; c++; } k = c ? k / c : 1;
-  const mix = (a, b, t) => ({ r: a.r * (1 - t) + b.r * t, g: a.g * (1 - t) + b.g * t, b: a.b * (1 - t) + b.b * t }), lip = mix(skin, { r: .78, g: .32, b: .36 }, o.lipTint || .36), S = linear(Math.min(1, skin.r * k), Math.min(1, skin.g * k), Math.min(1, skin.b * k)), Lp = linear(lip.r, lip.g, lip.b), rim = o.pout ? linear(lip.r * .32, lip.g * .2, lip.b * .2) : o.closed ? linear(lip.r * .55, lip.g * .4, lip.b * .4) : linear(lip.r * .3, lip.g * .17, lip.b * .17), kl = mix(skin, { r: .72, g: .34, b: .4 }, .5), kd = mix(kl, { r: .4, g: .12, b: .14 }, .62), KL = linear(kl.r, kl.g, kl.b), KD = linear(kd.r, kd.g, kd.b), KH = linear(1, .88, .88);
+  const mix = (a, b, t) => ({ r: a.r * (1 - t) + b.r * t, g: a.g * (1 - t) + b.g * t, b: a.b * (1 - t) + b.b * t }), pick = picked.mouth && picked.mouth.toUpperCase() !== PALETTES.mouth[0] ? (n => ({ r: (n >> 16 & 255) / 255, g: (n >> 8 & 255) / 255, b: (n & 255) / 255 }))(parseInt(picked.mouth.slice(1), 16)) : null, lip = pick ? mix(skin, pick, .92) : mix(skin, { r: .78, g: .32, b: .36 }, o.lipTint || .36), S = linear(Math.min(1, skin.r * k), Math.min(1, skin.g * k), Math.min(1, skin.b * k)), Lp = linear(lip.r, lip.g, lip.b), rim = o.pout ? linear(lip.r * .32, lip.g * .2, lip.b * .2) : o.closed ? linear(lip.r * .55, lip.g * .4, lip.b * .4) : linear(lip.r * .3, lip.g * .17, lip.b * .17), kl = pick ? mix(skin, pick, .9) : mix(skin, { r: .72, g: .34, b: .4 }, .5), kd = mix(kl, { r: .4, g: .12, b: .14 }, .62), KL = linear(kl.r, kl.g, kl.b), KD = linear(kd.r, kd.g, kd.b), KH = linear(1, .88, .88);
   for (const g of M.lipT) { const C = g.attributes.color; for (let i = 0; i <= 22; i++) { const a = i / 22, t = a * 1.3 - .3, col = t < .2 ? rim.clone().lerp(Lp, Math.max(0, (t + .3) / .5)) : Lp.clone().lerp(S, Math.min(1, Math.max(0, (t - .55) / .45)) ** 1.3); for (let j = 0; j <= 64; j++) { const sm = v => { v = Math.min(1, Math.max(0, v)); return v * v * (3 - 2 * v); }, au = Math.abs(j / 32 - 1), at = (i * 65 + j) * 4;
         if (o.kiss) { const an = j / 32 * Math.PI, sx = a * Math.cos(an), sy = a * Math.sin(an), seam = sm((.05 - Math.abs(sy)) / .045) * sm((.97 - Math.abs(sx)) / .2), shine = Math.exp(-(((sy + .5) / .22) ** 2 + (sx / .45) ** 2)); KL.clone().lerp(KH, .38 * shine).lerp(KD, Math.max(.8 * seam, .3 * sm((a - .72) / .28))).toArray(C.array, at); C.array[at + 3] = 1 - sm((a - .86) / .14); continue; }
         col.toArray(C.array, at); const pu = o.pout ? Math.exp(-(((j / 32 - 1) * .995 / o.pout.w) ** 2)) : 0; if (pu) { col.clone().lerp(S, pu * sm((t - .02) / .3)).toArray(C.array, at); } C.array[at + 3] = (1 - (o.o ? sm((t - .62) / .38) : sm((t - .4) / .55) * (1 - pu) + sm((t - .78) / .22) * pu)) * (o.hw ? 1 - (o.closed ? sm((au - .5) / .42) : sm((au - .93) / .065)) : 1); } } C.needsUpdate = true; } }
@@ -1978,8 +2098,17 @@ const exists = async u => { try { return (await fetch(u, { method: 'HEAD' })).ok
 // (Bob taken out 01-11-2026 - the user chose to go on without it; haar-bob.json/.jpg are kept, put back
 // ['haar-bob', 'Bob'] after Kort to have it again; Skaldet - no hair - taken out the same day, put back ['', 'Skaldet']
 // first to have it again)
-const HAIRS = [['haar-kort', 'Kort', { snug: .55, ears: true }], ['haar-kroeller', 'Krøller'], ['haar-strit', 'Strit', { ears: true }], ['haar-fletninger', 'Fletninger', { braids: true, ears: true }], ['haar-fletning', 'Fletning', { ears: true }], ['haar-boelger', 'Bølger', { skull: .45, part: .12, hideEars: true, under: true, sweep: .5 }]];
+const HAIRS = [['haar-kort', 'Kort', { snug: .55, ears: true }], ['haar-kroeller', 'Krøller'], ['haar-strit', 'Strit', { ears: true }], ['haar-fletninger', 'Fletninger', { braids: true, ears: true }], ['haar-fletning', 'Fletning', { ears: true }], ['haar-boelger', 'Bølger', { skull: .45, part: .12, hideEars: true, under: true, sweep: .5 }],
+  // (three more - Trine, 23-11-2026: Ebba, 5, wanted more hairstyles. Made at Meshy from drawings on Krøller's busts, lav-haar.ps1)
+  ['haar-hestehale', 'Hestehale', { ears: true, grow: 1.08, under: true, flat: .5 }], ['haar-knold', 'Knold', { ears: true, grow: 1.08, under: true }], ['haar-langt', 'Langt hår', { hideEars: true, under: true, flat: .5, trim: [.62, 2.15] }]];
 let hairNow = 'haar-kort', hairBase = null; const hairMeshes = {};
+// (the head's shape - the user, 24-11-2026: rounder, longer, wider. The head bone made that much narrower or wider [x], taller
+// [y] and deeper [z]; the hair, eyes, ears, hats and glasses held by it follow. Set after the movement each frame - a
+// movement may set the bone's size)
+const HEADS = [['hoved-rund', 'Rund', [1, 1, 1]], ['hoved-aflang', 'Aflang', [.9, 1.1, .95]], ['hoved-bred', 'Bred', [1.11, .92, 1]], ['hoved-lille', 'Lille', [.92, .92, .92]]];
+let headNow = 'hoved-rund';
+function setHead(name) { if (!HEADS.some(h => h[0] === name)) name = 'hoved-rund'; headNow = name; headShape(); renderStyles(); }
+function headShape() { const b = typeof bone === 'function' && glb ? bone('Head') : null; if (!b) return; const [x, y, z] = HEADS.find(h => h[0] === headNow)[2]; b.scale.set(x, y, z); }
 // the figure's eye whites and head bone, measured once as it stands when loaded (in its T-pose, before it moves)
 function measureHead(fbx) {
   // (the eye whites: white in its colour picture, in the head - the figure's top 15 %)
@@ -2333,6 +2462,12 @@ async function loadHair(name, list = hairTexs, colourPart = 'hair', extra = {}) 
     shift[s].set(0, LIFT * apart, Math.min(.3 * apart, needs[s][Math.floor(needs[s].length * .9)])); }
   // (braids: each is turned as one straight piece about where it starts, just under the ear, until it points down and
   // forward to rest on the front of the chest - a straight line, clear of the shoulder)
+  // (trim - the user, 24-11-2026, on Langt hår: the fringe not down over the brows, and the hair only to the top of the
+  // shoulders - lower it lay thin, close in, and stood out sideways over them. brow: in eye distances over the eyes, in
+  // front of the face; low: in eye distances under them, all round. Triangles wholly past either are left out)
+  if (opts.trim) { const [brow, low] = opts.trim, mx = (mine[0].x + mine[1].x) / 2, fz = (mine[0].z + mine[1].z) / 2 - .25 * apart, idx = g.index.array, keep = [];
+    const out = i => { const x = W[i * 3], y = W[i * 3 + 1], z = W[i * 3 + 2]; return y < eyeY - low * apart || (z > fz && Math.abs(x - mx) < 1.35 * apart && y < eyeY + brow * apart && y > eyeY - 1.2 * apart); };
+    for (let t = 0; t < idx.length; t += 3) if (!(out(idx[t]) && out(idx[t + 1]) && out(idx[t + 2]))) keep.push(idx[t], idx[t + 1], idx[t + 2]); g.setIndex(keep); }
   const bend = opts.braids ? braidsForward(W, n, apart, eyeY, (mine[0].z + mine[1].z) / 2) : null;
   const earLines = opts.snug || opts.ears ? hugHead(W, n, opts, apart, eyeY, mine) : []; hairOverEar(g, W, earLines);
   for (let i = 0; i < n; i++) { p.fromArray(W, i * 3); const w = weight[i];
@@ -2353,7 +2488,7 @@ async function loadHair(name, list = hairTexs, colourPart = 'hair', extra = {}) 
   // (cap: no lighter than that over the middle - the glasses' frames had white smears inside, by the glass)
   if (opts.cap) list.at(-1).cap = opts.cap;
   body.parent.add(hair); hair.bind(body.skeleton, body.bindMatrix); scalpCap(hair, g, W, earLines, apart, eyeY); if (opts.under) hairUnder(hair, W, apart, eyeY, mine); if (picked[colourPart]) recolourHair(picked[colourPart], list); return hair; }
-var styleLists = () => ({ hair: [HAIRS, hairNow, setHair], eyes: [EYES, eyesNow, setEyes], brows: [BROWS, browsNow, setBrows], mouth: [MOUTHS, mouthNow, setMouth], pynt: [PYNT, pyntNow.map(k => 'pynt-' + k), setPynt], nose: [NOSES, noseNow, setNose], item: [ITEMS, itemNow, n => { petPick = false; setItem(n); showSwatches(); }, [PETS, petNow, n => { petPick = true; setPet(n); showSwatches(); }, 'dyr', petNow ? PET_TOYS_LIST() : null]], bg: [BGS, bgNow, setBg], ears: [EARS, earsNow, setEars, [EARRINGS, earringsNow, setEarrings, 'oerering']],
+var styleLists = () => ({ head: [HEADS, headNow, setHead], hair: [HAIRS, hairNow, setHair], eyes: [EYES, eyesNow, setEyes], brows: [BROWS, browsNow, setBrows], mouth: [MOUTHS, mouthNow, setMouth], pynt: [PYNT, pyntNow.map(k => 'pynt-' + k), setPynt], nose: [NOSES, noseNow, setNose], item: [ITEMS, itemNow, n => { petPick = false; setItem(n); showSwatches(); }, [PETS, petNow, n => { petPick = true; setPet(n); showSwatches(); }, 'dyr', petNow ? PET_TOYS_LIST() : null]], bg: [BGS, bgNow, setBg], ears: [EARS, earsNow, setEars, [EARRINGS, earringsNow, setEarrings, 'oerering']],
   ...Object.fromEntries(Object.entries(GARMENTS).map(([part, G]) => [part, [G.items, G.now, n => setGarment(part, n)]])),
   // (Udstyr - the user, 11-11-2026: suits and gear in one tab. The suits above, the goggles and snorkel in a row under
   // them - taken out of Briller; what is chosen here is what the figure puts on by itself for the game, see dressFor)
@@ -2371,7 +2506,7 @@ var styleLists = () => ({ hair: [HAIRS, hairNow, setHair], eyes: [EYES, eyesNow,
 const hairLoads = {};
 async function setHair(name) {
   hairNow = name; renderStyles();
-  if (name && !hairMeshes[name]) { hairMeshes[name] = await (hairLoads[name] ??= loadHair(name).catch(() => null)); if (!hairMeshes[name]) { delete hairLoads[name]; toast(NO_NET); } }
+  if (name && !hairMeshes[name]) { busyOn(); try { hairMeshes[name] = await (hairLoads[name] ??= nextPaint().then(() => loadHair(name)).catch(() => null)); } finally { busyOff(); } if (!hairMeshes[name]) { delete hairLoads[name]; toast(NO_NET); } }
   for (const [n, m] of Object.entries(hairMeshes)) if (m) m.visible = n === hairNow; earsUnderHair(); hoodBraids(); hatHair(); regoggle(); }
 // (hair that falls over the ears - Bølger, the user 15-11-2026: the ears hidden on both sides - hides the ears' own
 // shapes: their top rim peeped out through it)
@@ -2542,7 +2677,9 @@ const GARMENTS = {
   // (the folds lower than at first - the user - and the long trousers turned up a little too)
   pants: { items: [['', 'Undershorts'], ['bukser-trusser', 'Trusser', { made: true, hem: .41, brief: .07, under: .012, rise: .012, noBand: true, white: true }], ['bukser-lange', 'Lange bukser', { made: true, hem: .06, loose: .004, cuff: .014 }], ['bukser-shorts', 'Shorts', { made: true, hem: .3, cuff: .018 }],
     ['bukser-cowboy', 'Cowboyshorts', { made: true, hem: .24, cuff: .02, cloth: 'denim' }], ['bukser-fodbold', 'Fodboldbukser', { made: true, hem: .295, loose: .004, loops: false, cloth: 'smooth', game: 'pk', keep: true }]], texs: [], waist: true },
-  dress: { items: [['', 'Ingen kjole'], ['kjole-sommer', 'Sommerkjole'], ['kjole-prinsesse', 'Prinsessekjole', { hang: .5, armsOut: 12 }], ['kjole-havfrue', 'Havfruekjole', { skirt: false, margin: .012, reach: 8, tail: true, snug: .2, waist: .15 }]], texs: [], skirt: true, noArms: true },
+  dress: { items: [['', 'Ingen kjole'], ['kjole-sommer', 'Sommerkjole'], ['kjole-prinsesse', 'Prinsessekjole', { hang: .5, armsOut: 12 }], ['kjole-havfrue', 'Havfruekjole', { skirt: false, margin: .012, reach: 8, tail: true, snug: .2, waist: .15 }],
+    // (skirts - Trine, 23-11-2026: Ebba, 5, asked for skirts. The dresses' skirts, cut off at the waist: worn with a top, instead of trousers)
+    ['nederdel-sommer', 'Nederdel', { file: 'kjole-sommer', waistCut: .065 }], ['nederdel-prinsesse', 'Prinsessenederdel', { file: 'kjole-prinsesse', hang: .5, waistCut: .065 }]], texs: [], skirt: true, noArms: true },
   // (suits, worn instead of a top and trousers - or a dress - as a dress is: the swimsuit and swim trunks for the swim
   // world first; ski, space and motocross suits to come. The user, 11-11-2026. Made from the body, as the tops are)
   suit: { items: [['', 'Ingen dragt'], ['dragt-bade', 'Badedragt', { made: true, swim: true, brief: .065, relief: 'bade', cloth: 'smooth', game: 'sea' }],
@@ -2555,7 +2692,9 @@ const GARMENTS = {
   socks: { items: [['', 'Ingen strømper'], ['stroemper-ankel', 'Ankelstrømper', { made: true, top: .045, cloth: 'knit' }],
     // (ordinary socks, halfway between the ankle socks and the football socks - the user, 11-11-2026)
     ['stroemper-almindelige', 'Almindelige strømper', { made: true, top: .13, cloth: 'knit' }],
-    ['stroemper-fodbold', 'Fodboldstrømper', { made: true, top: .2, stripe: [.012, .026], cloth: 'knit', game: 'pk', keep: true }], ['stroemper-hoeje', 'Knæstrømper', { made: true, top: .24, cloth: 'knit' }]], texs: [] },
+    ['stroemper-fodbold', 'Fodboldstrømper', { made: true, top: .2, stripe: [.012, .026], cloth: 'knit', game: 'pk', keep: true }], ['stroemper-hoeje', 'Knæstrømper', { made: true, top: .24, cloth: 'knit' }],
+    // (tights - Trine, 23-11-2026: Ebba, 5, asked for tights and skirts. The socks made right up to the waist)
+    ['stroemper-strompebukser', 'Strømpebukser', { made: true, top: .56, cloth: 'knit' }]], texs: [] },
   shoe: { items: [['', 'Bare fødder'], ['sko-sneakers', 'Sneakers', { sole: .02 }], ['sko-fodbold', 'Fodboldstøvler', { file: 'sko-sneakers', sole: .02, studs: true, game: 'pk', keep: true }], ['sko-gummi', 'Gummistøvler', { pale: .9, paleTop: .015 }], ['sko-ballet', 'Balletsko', { paleFrom: .06, flat: .35, solid: .03 }],
     // (high heels, for the dresses - the user, 03-11-2026: made from the feet as the socks are, a shiny shell, the heels
     // raised and a thin heel under each - see heelsTick)
@@ -2617,6 +2756,16 @@ function dressAsk(mode) { const m = gearGame(MODES[mode].from ? 'hop' : mode), n
   dressSnap ??= wearSnap(); dressGame = mode; boxOpen = true; partNow = 'gear-' + m; showSwatches(); dressWant = m; renderStyles();
   try { goal = { target: new THREE.Vector3(0, 1.05, 0), camera: new THREE.Vector3(0, 1.25, farZ), far: true }; closeUp = false; document.getElementById('subs').scrollIntoView({ block: 'nearest', inline: 'center' }); } catch (e) {} return true; }
 let dressing = 0; const NO_NET = 'Det kan ikke hentes lige nu 📶';
+// ---- The busy star (the user's daughter Trine, 23-11-2026, testing with Ebba, 5: choosing Snowboard nothing answered for
+// a long time, and changing hairstyle now and then). Clothes the page makes itself and new hairstyles take a moment the
+// first time; now a star turns in a white circle at once, a frame is drawn before the work starts, and it goes when all is on
+const busyEl = Object.assign(document.createElement('div'), { className: 'busy', hidden: true, innerHTML: '<span>⭐</span>' }); document.getElementById('stage').append(busyEl);
+let busyN = 0, busyT = 0;
+function busyOn() { busyN++; clearTimeout(busyT); busyEl.hidden = false; }
+function busyOff() { busyN = Math.max(0, busyN - 1); clearTimeout(busyT); if (!busyN) busyT = setTimeout(() => { if (!busyN) busyEl.hidden = true; }, 150); }
+// (a picture drawn first - the star on the screen - before the page goes on; not waited for longer than a moment when hidden)
+const nextPaint = () => new Promise(ok => { let done = false; const go = () => { if (!done) { done = true; ok(); } }; requestAnimationFrame(() => requestAnimationFrame(go)); setTimeout(go, 150); });
+const isSkirt = n => !!GARMENTS.dress.items.find(i => i[0] === n)?.[2]?.waistCut;
 async function setGarment(part, name) { const G = GARMENTS[part], ask = ++dressing;
   // (a dress is worn instead of a top and trousers, and the other way round; taking the dress off puts back the top and
   // trousers worn before it - the white vest came back instead)
@@ -2624,22 +2773,26 @@ async function setGarment(part, name) { const G = GARMENTS[part], ask = ++dressi
   const S = GARMENTS.suit;
   if (name && part === 'suit') { if (!G.now) G.before = GARMENTS.dress.now ? { dress: GARMENTS.dress.now } : { shirt: GARMENTS.shirt.now, pants: GARMENTS.pants.now }; GARMENTS.shirt.now = GARMENTS.pants.now = GARMENTS.dress.now = ''; }
   if (!name && part === 'suit' && G.now && G.before) { for (const [p, n] of Object.entries(G.before)) GARMENTS[p].now = n; }
-  if (name && part === 'dress') { if (!G.now) G.before = S.now && S.before ? { shirt: S.before.shirt || '', pants: S.before.pants || '' } : { shirt: GARMENTS.shirt.now, pants: GARMENTS.pants.now }; GARMENTS.shirt.now = GARMENTS.pants.now = ''; }
-  if (!name && part === 'dress' && G.now && G.before) { GARMENTS.shirt.now = G.before.shirt; GARMENTS.pants.now = G.before.pants; }
-  if (name && (part === 'shirt' || part === 'pants')) GARMENTS.dress.now = '';
+  // (a skirt takes the trousers' place only - the top stays on; a dress both)
+  if (name && part === 'dress') { if (!G.now) G.before = S.now && S.before ? { shirt: S.before.shirt || '', pants: S.before.pants || '' } : { shirt: GARMENTS.shirt.now, pants: GARMENTS.pants.now }; if (!isSkirt(name)) GARMENTS.shirt.now = ''; else if (!G.now || !isSkirt(G.now)) GARMENTS.shirt.now = G.before.shirt || ''; GARMENTS.pants.now = ''; }
+  if (!name && part === 'dress' && G.now && G.before) { if (!isSkirt(G.now)) GARMENTS.shirt.now = G.before.shirt; GARMENTS.pants.now = G.before.pants; }
+  if (name && (part === 'pants' || part === 'shirt' && !isSkirt(GARMENTS.dress.now))) GARMENTS.dress.now = '';
   if (name && part !== 'suit' && ['shirt', 'pants', 'dress'].includes(part)) { S.now = ''; S.before = null; }
   G.now = name; briefsOn = GARMENTS.pants.now === 'bukser-trusser'; if (part === 'pants') showSwatches(); else renderStyles();
   // (everything changed at once, when all of it is loaded - the underwear went skin coloured and the last dress stayed on
   // while a new one loaded; a choice made meanwhile wins)
+  const slow = Object.values(GARMENTS).some(g => g.now && !g.meshes[g.now] && !g.loading[g.now]); if (slow) { busyOn(); await nextPaint(); }
+  try {
   for (const [p, g] of Object.entries(GARMENTS)) if (g.now && !g.meshes[g.now]) { const n = g.now;
     g.loading[n] ??= g.items.find(i => i[0] === n)?.[2]?.nisse ? makeSantaHat(n) : g.items.find(i => i[0] === n)?.[2]?.gevir ? makeAntlers(n) : g.items.find(i => i[0] === n)?.[2]?.pack ? makePack(n) : g.items.find(i => i[0] === n)?.[2]?.skimask ? makeSkiGoggles(n) : g.items.find(i => i[0] === n)?.[2]?.helmet === 'rum' ? makeSpaceHelmet(n) : g.items.find(i => i[0] === n)?.[2]?.helmet ? makeHelmet(n, g.items.find(i => i[0] === n)[2].helmet === 'ski' ? 'udstyr-skihjelm.glb' : 'udstyr-skaterhjelm.glb') : g.items.find(i => i[0] === n)?.[2]?.pad ? Promise.resolve(makePads(n, g.items.find(i => i[0] === n)[2])) : g.items.find(i => i[0] === n)?.[2]?.goggles ? Promise.resolve(makeGoggles(n, p, g.items.find(i => i[0] === n)[2])) : g.head ? loadHair(n, g.texs, p, g.items.find(i => i[0] === n)?.[2] || {})
       : g.items.find(i => i[0] === n)?.[2]?.made ? Promise.resolve(makeCloth(n, p, g.items.find(i => i[0] === n)[2])) : loadCloth(n, p);
     // (one that cannot come - no internet the first time - holds nothing else up, and is tried again the next time)
     g.meshes[n] = await g.loading[n].catch(() => null); if (!g.meshes[n]) { delete g.loading[n]; if (p === part && ask === dressing) toast(NO_NET); } }
+  } finally { if (slow) busyOff(); }
   if (ask !== dressing) return;
   for (const g of Object.values(GARMENTS)) g.shown = g.now;
   { const sn = !!GARMENTS.glasses.items.find(i => i[0] === GARMENTS.glasses.shown)?.[2]?.snorkel; if (sn !== snorkelOn) { snorkelOn = sn; redrawBody(); } }
-  const shirt = !!(GARMENTS.dress.now || GARMENTS.shirt.now || GARMENTS.suit.now), pants = !!(GARMENTS.dress.now || GARMENTS.pants.now || GARMENTS.suit.now);
+  const shirt = !!(GARMENTS.dress.now && !isSkirt(GARMENTS.dress.now) || GARMENTS.shirt.now || GARMENTS.suit.now), pants = !!(GARMENTS.dress.now || GARMENTS.pants.now || GARMENTS.suit.now);
   if (tex && (!!tex.covered[PARTS.shirt] !== shirt || !!tex.covered[PARTS.pants] !== pants)) { tex.covered = { [PARTS.shirt]: shirt, [PARTS.pants]: pants }; redrawBody(); }
   for (const g of Object.values(GARMENTS)) for (const [n, m] of Object.entries(g.meshes)) if (m) m.visible = n === g.shown;
   wearUnder(); hideBody(); layer(); tuckIn(); hatHair(); chestName(); try { paintAllPatterns(); } catch (e) { console.warn(e); } if (part === 'shirt' || part === 'pants' || part === 'shoe') showPatterns(false); }
@@ -3259,13 +3412,16 @@ function makeCloth(name, part, opts) {
     // hood was let off, a dip under the rim; measured straight from the neck's, it came up over the shoulders in front)
   // (the body's triangles at least partly inside - and each spot's way out the average of the corners there, so the
   // garment does not come apart where the body's colour picture has a seam)
-  const ways = new Map(), spot = j => `${pts[j * 6]},${pts[j * 6 + 1]},${pts[j * 6 + 2]}`, tris = [], P3 = j => [pts[j * 6], pts[j * 6 + 1], pts[j * 6 + 2]];
+  // (each corner's place as a key made once for the figure, and each corner's own record once a garment - the user's daughter,
+  // 23-11-2026: the ski suit took seconds to put on; most of it went on making these again for every triangle)
+  const keys = hairBase.whole.keys ??= Array.from({ length: pts.length / 6 }, (_, j) => `${pts[j * 6]},${pts[j * 6 + 1]},${pts[j * 6 + 2]}`);
+  const ways = new Map(), spot = j => keys[j], tris = [], p3s = hairBase.whole.p3s ??= Array.from({ length: pts.length / 6 }, (_, j) => [pts[j * 6], pts[j * 6 + 1], pts[j * 6 + 2]]), P3 = j => p3s[j];
   for (let c = 0; c < corners; c += 3) { const v = [c, c + 1, c + 2];
     if (edges.some(e => v.every(j => e.f(P3(j)) > 0)) || (pants || socks) && v.some(j => armPt[j]) || v.some(j => armPt[j] && pts[j * 6 + 1] < swimArm)) continue; tris.push(v);
     for (const j of v) { const k = spot(j), n = ways.get(k) || [0, 0, 0]; for (let e = 0; e < 3; e++) n[e] += pts[j * 6 + 3 + e]; ways.set(k, n); } }
   // (a corner: where it is, its way out, and the bones it follows; one of the body's, or one between two on a triangle's
   // side where an edge cuts it - the triangles cut there, so the edges are straight)
-  const own = j => ({ key: spot(j), p: P3(j), n: ways.get(spot(j)), w: [0, 1, 2, 3].reduce((w, c) => { const b = bsi.getComponent(j, c); w[b] = (w[b] || 0) + bsw.getComponent(j, c); return w; }, {}) });
+  const owns = [], own = j => owns[j] ??= ({ key: spot(j), p: P3(j), n: ways.get(spot(j)), w: [0, 1, 2, 3].reduce((w, c) => { const b = bsi.getComponent(j, c); w[b] = (w[b] || 0) + bsw.getComponent(j, c); return w; }, {}) });
   // (where along the side the edge crosses it: halving the side's way till it is found - the neck's edges bend and
   // change, and taken as straight the cut went to and fro, ragged)
   const between = (a, b, fa, fb, id, f) => { let lo = 0, hi = 1, at = p => a.p.map((c, e) => c + (b.p[e] - c) * p);
@@ -3293,7 +3449,7 @@ function makeCloth(name, part, opts) {
   const nbs = nb.map(s => [...s]), tmp = new Float32Array(m * 3);
   list.forEach((c, i) => { n.fromArray(c.n).normalize(); dir.set([n.x, n.y, n.z], i * 3); });
   for (let it = 0; it < 30; it++) { for (let i = 0; i < m; i++) { let x = dir[i * 3], y = dir[i * 3 + 1], z = dir[i * 3 + 2]; for (const j of nbs[i]) { x += dir[j * 3]; y += dir[j * 3 + 1]; z += dir[j * 3 + 2]; }
-      if (list[i].p[1] < level) y = 0; const l = Math.hypot(x, y, z) || 1; tmp.set([x / l, y / l, z / l], i * 3); } dir.set(tmp); }
+      if (list[i].p[1] < level) y = 0; const l = Math.hypot(x, y, z) || 1; tmp[i * 3] = x / l; tmp[i * 3 + 1] = y / l; tmp[i * 3 + 2] = z / l; } dir.set(tmp); }
   // (the turned-up fold only a little further out than the leg - at .012 it stood out, the user)
   list.forEach((c, i) => { const e = edges[c.fold], fold = e ? .005 * (1 - (-e.f(c.p) / e.fold) ** 8) : 0; want[i] = out(c.p) + fold * H;
     w.fromArray(c.p).addScaledVector(n.fromArray(dir, i * 3), want[i]);
@@ -3626,6 +3782,8 @@ async function loadCloth(name, part) {
     const hem = []; for (let i = 0; i < P.count; i++) if (raw[i * 3 + 1] < lo + .25 * (hi - lo) && rim.has(spot(i)) && (G.waist || opts.skirt === false || apart(raw[i * 3], raw[i * 3 + 1], raw[i * 3 + 2]))) hem.push(raw[i * 3 + 1]);
     hem.sort((a, b) => a - b); const hemY = hem[Math.floor(hem.length * (G.waist ? .75 : .25))]; if (hem.length) clipAbove(g, (hemY - off.y) / s, true);
     if (isFinite(cutTop)) clipAbove(g, (cutTop - off.y) / s);
+    // (a skirt: the dress cut off at the waist)
+    if (opts.waistCut) clipAbove(g, (hairBase.hipY + opts.waistCut * hairBase.whole.H - off.y) / s);
     // (trousers drawn up to just under the navel - by the Spine bone - Meshy's sat low on the hips: from just under the
     // crotch upwards stretched to it)
     if (G.waist && isFinite(cutTop)) { const bs = hairBase.body.skeleton.bones, up = bs[Math.max(0, bs.findIndex(b => /Spine$/.test(b.name)))].getWorldPosition(new THREE.Vector3()).y,
@@ -3956,7 +4114,7 @@ function clothColour(part, mesh) { const c = new THREE.Color(); if (!part) retur
 const lightCloth = (part, mesh) => { const c = clothColour(part, mesh); return .2126 * c.r + .7152 * c.g + .0722 * c.b > .223; };
 function chestName() { if (!hairBase) return;
   const name = nameNow.trim().slice(0, 10), badge = (BADGES.find(b => b[0] === badgeNow) || ['', ''])[1];
-  const { H } = hairBase.whole, K = clothMarks(), dress = GARMENTS.dress.meshes[GARMENTS.dress.shown], shirt = GARMENTS.shirt.meshes[GARMENTS.shirt.shown];
+  const { H } = hairBase.whole, K = clothMarks(), dress = isSkirt(GARMENTS.dress.shown) ? null : GARMENTS.dress.meshes[GARMENTS.dress.shown], shirt = GARMENTS.shirt.meshes[GARMENTS.shirt.shown];
   // (on a dress lower down: the dresses have no shoulders, and the badge sat on their top edge)
   const light = lightCloth(dress ? 'dress' : shirt ? 'shirt' : '', dress || shirt);
   // (the picture: the badge over the name - the name alone in the middle, smaller as it gets longer, as in the app)
@@ -4175,7 +4333,7 @@ showBadges();
 // saved out of the page (the camera, behind a grown-up's sum) ----
 // (a figure: its choices - the colours picked, the hair, the face, what it wears, the name)
 const figureNow = () => ({ picked: { ...picked }, hair: hairNow, eyes: eyesNow, brows: browsNow, mouth: mouthNow, nose: noseNow, pynt: [...pyntNow],
-  wear: Object.fromEntries(Object.entries(GARMENTS).map(([p, G]) => [p, G.now])), name: nameNow, badge: badgeNow, item: itemNow, pet: petNow, petToys: [...petToys], ears: earsNow, earrings: earringsNow, bg: bgNow, pattern: { ...patternNow } });
+  wear: Object.fromEntries(Object.entries(GARMENTS).map(([p, G]) => [p, G.now])), name: nameNow, badge: badgeNow, item: itemNow, pet: petNow, petToys: [...petToys], ears: earsNow, earrings: earringsNow, bg: bgNow, pattern: { ...patternNow }, head: headNow });
 // (a part's own colour back: the figure's painted one, the hair's and the garments' as made)
 const unpaint = list => { for (const t of list) { const im = t.ctx.createImageData(t.w, t.h); im.data.set(t.src); t.ctx.putImageData(im, 0, 0); t.texture.needsUpdate = true; } };
 function unpick(part) { delete picked[part]; if (part === 'socks' || part === 'shoe') { paintSocks(); paintHeels(); } if (part === 'item') paintItem(); if (part === 'hair') unpaint(hairTexs); if (GARMENTS[part]) unpaint(GARMENTS[part].texs); if (part === 'suit') unpaint(gearTexs);
@@ -4187,7 +4345,7 @@ async function wearFigure(f) { const ask = ++dressingUp; f = basisFigure(f);
   for (const [part] of CHOICES) if (part !== 'hair') { if (f.picked[part]) { picked[part] = f.picked[part]; recolour(part, f.picked[part]); } else unpick(part); }
   if (f.picked.hair) { picked.hair = f.picked.hair; recolour('hair', f.picked.hair); } else unpick('hair');
   eyesNow = f.eyes; browsNow = f.brows; mouthNow = f.mouth; noseNow = f.nose; pyntNow = [...f.pynt]; nameNow = f.name; badgeNow = f.badge;
-  nameInput.value = nameNow; showRec(); showBadges(); redrawBody(); showSwatches(); setItem(f.item || ''); petToys = [...(f.petToys || [])]; setPet(f.pet || ''); earringsNow = f.earrings || ''; setEars(f.ears || 'oerer-naturlig'); setBg(f.bg || 'bg-sol');
+  nameInput.value = nameNow; showRec(); showBadges(); redrawBody(); showSwatches(); setItem(f.item || ''); petToys = [...(f.petToys || [])]; setPet(f.pet || ''); earringsNow = f.earrings || ''; setEars(f.ears || 'oerer-naturlig'); setHead(f.head || 'hoved-rund'); setBg(f.bg || 'bg-sol');
   if (f.hair !== hairNow) await setHair(f.hair); if (ask !== dressingUp) return;
   // (a dress last: it takes off the top and trousers. No dress: taken off at once - a new MiniMig in just its underwear
   // kept the dress on before, as only a top or trousers put on took it off; the user, 03-11-2026)
@@ -4266,7 +4424,7 @@ document.getElementById('shareAsk').addEventListener('click', e => { const b = e
   share(); });
 // (Mine figurer: kept on this device only, newest first - each figure's choices with a small picture of it, as it was
 // saved: the whole figure or the profile picture. Kept apart from the app's own, whose figures are drawn differently)
-const MAX_SAVED = 30, FIGS_KEY = 'minimig3d.figurer';
+const MAX_SAVED = 60, FIGS_KEY = 'minimig3d.figurer';
 const savedFigs = () => { try { const l = JSON.parse(localStorage.getItem(FIGS_KEY) || '[]'); return Array.isArray(l) ? l : []; } catch (e) { return []; } };
 // (if the device is full, the oldest are let go until the rest fit)
 const storeFigs = l => { if (!l.length) try { localStorage.setItem(FIGS_KEY, '[]'); return true; } catch (e) { return false; } for (let n = Math.min(l.length, MAX_SAVED); n > 0; n--) try { localStorage.setItem(FIGS_KEY, JSON.stringify(l.slice(0, n))); return true; } catch (e) {} return false; };
@@ -4283,29 +4441,37 @@ document.getElementById('keepChoice').addEventListener('click', e => { const c =
 // all-white vest and shorts and nothing else, no name, every colour the figure's own; a boy with short hair or a girl
 // with plaits. The user dropped the app's pink and blue underwear)
 const newFig = kind => ({ picked: {}, hair: kind === 'pige' ? 'haar-fletninger' : 'haar-kort',
-  eyes: 'oejne-naturlige', brows: 'bryn-naturlige', mouth: 'mund-smil', nose: 'naese-naturlig', pynt: [], wear: Object.fromEntries(Object.keys(GARMENTS).map(p => [p, ''])), name: '', badge: 'ingen', item: '', pet: '', petToys: [], ears: 'oerer-naturlig', earrings: '', bg: 'bg-sol' });
+  eyes: 'oejne-naturlige', brows: 'bryn-naturlige', mouth: 'mund-smil', nose: 'naese-naturlig', pynt: [], wear: Object.fromEntries(Object.keys(GARMENTS).map(p => [p, ''])), name: '', badge: 'ingen', item: '', pet: '', petToys: [], ears: 'oerer-naturlig', earrings: '', bg: 'bg-sol', pattern: {}, head: 'hoved-rund' });
 const sameFig = (a, b) => !!a && !!b && JSON.stringify(a) === JSON.stringify(b);
 document.getElementById('newBtn').addEventListener('click', () => { welcomeNow = false; newChoiceWords(); document.getElementById('newChoice').hidden = false; });
 // (the very first time on a device - nothing remembered, no saved figure, no child's MiniMig: a welcome with Dreng and Pige
 // instead of the boy in his vest, so a girl sees at once the game is hers too - the user, 22-11-2026; then the Tøj tab
 // bounces until it is tapped, to show that the figure is to be dressed next)
 let welcomeNow = false;
-function newChoiceWords() { document.getElementById('newChoiceTitle').textContent = welcomeNow ? T('Velkommen! Vælg din MiniMig', 'Welcome! Choose your MiniMig') : tr('Ny MiniMig');
+// (the picture of a new MiniMig as the heading, not words - the user, 24-11-2026; the words stay as its alt text)
+function newChoiceWords() { const h = document.getElementById('newChoiceTitle'), t = welcomeNow ? T('Velkommen! Vælg din MiniMig', 'Welcome! Choose your MiniMig') : tr('Ny MiniMig'); h.innerHTML = `<img class="title-pic" src="ikoner/knap-ny.png" alt="${t}">`;
   const n = document.querySelector('#newChoice .note'); if (n) n.hidden = welcomeNow; }
 function showWelcome() { welcomeNow = true; newChoiceWords(); document.getElementById('newChoice').hidden = false; }
 document.getElementById('newChoice').addEventListener('click', async e => { const b = e.target.closest('[data-new]'); if (!b || !hairBase) return;
   document.getElementById('newChoice').hidden = true; if (game.on) { toast('Stop spillet først'); return; }
+  // (the busy star at once, and a picture drawn, before the figure is changed - the user, 24-11-2026: the tap seemed to do
+  // nothing for seconds, and was tapped three or four times)
+  busyOn(); await nextPaint(); try {
   // (the figure there was first goes into Mine figurer, so it is never lost - not when it is already the newest one
   // there, or a new figure nobody has changed yet)
   const now = figureNow(), l = savedFigs(), first = welcomeNow; welcomeNow = false;
   if (!first && ![l[0]?.fig, newFig('dreng'), newFig('pige')].some(f => sameFig(f, now))) keepFig('hel', figurePicture('hel', .5));
-  await wearFigure(newFig(b.dataset.new)); toast('✨ Ny MiniMig!'); newChoiceWords();
+  await wearFigure(newFig(b.dataset.new)); } finally { busyOff(); } toast('✨ Ny MiniMig!'); newChoiceWords();
   if (first) { const t = document.querySelector('#mains [data-main="wear"]'); if (t) { t.classList.add('todo'); t.addEventListener('click', () => t.classList.remove('todo'), { once: true }); } } });
 function renderGallery() { const l = savedFigs(), el = document.getElementById('gallery'); renderKids();
-  el.innerHTML = l.length ? l.map((s, i) => `<div class="saved"><button class="load" data-load="${i}" aria-label="${T('Brug figur', 'Use figure')} ${i + 1}"><img src="${s.pic}" alt=""></button><button class="del" data-del="${i}" aria-label="${T('Slet figur', 'Delete figure')} ${i + 1}">✕</button></div>`).join('')
-    : T('<p class="empty">Ingen figurer endnu.<br>Tryk på ⭐ for at gemme din figur her.</p>', '<p class="empty">No figures yet.<br>Tap ⭐ to save your figure here.</p>'); }
+  // (first the figure as it is now with ➕, unless it is already here; the one worn now framed)
+  let now = null, pic = ''; try { if (hairBase && !game.on) { now = figureNow(); pic = l.some(s => sameFig(s.fig, now)) ? '' : thumb(figurePicture('hel', .3)); } } catch (e) {}
+  const add = pic ? `<div class="saved add"><button class="load" data-keepnow aria-label="${T('Gem figuren', 'Save the figure')}"><img src="${pic}" alt=""></button><span class="plus">＋</span></div>` : '';
+  el.innerHTML = add + (l.length ? l.map((s, i) => `<div class="saved${now && sameFig(s.fig, now) ? ' now' : ''}"><button class="load" data-load="${i}" aria-label="${T('Brug figur', 'Use figure')} ${i + 1}"><img src="${s.pic}" alt=""></button><button class="del" data-del="${i}" aria-label="${T('Slet figur', 'Delete figure')} ${i + 1}">✕</button></div>`).join('')
+    : add ? '' : T('<p class="empty">Ingen figurer endnu.<br>Tryk på ⭐ for at gemme din figur her.</p>', '<p class="empty">No figures yet.<br>Tap ⭐ to save your figure here.</p>')); }
 document.getElementById('figsBtn').addEventListener('click', () => { document.getElementById('figSheet').hidden = false; renderGallery(); });
 document.getElementById('gallery').addEventListener('click', e => { const load = e.target.closest('[data-load]'), del = e.target.closest('[data-del]'), l = savedFigs();
+  if (e.target.closest('[data-keepnow]')) { if (!hairBase || game.on) return; if (keepFig('hel', figurePicture('hel', .5))) { toast('⭐ Gemt!'); celebrate(); } renderGallery(); return; }
   if (load) { const s = l[+load.dataset.load]; if (!s || !hairBase) return; if (game.on) { toast('Stop spillet først'); return; } document.getElementById('figSheet').hidden = true; wearFigure(s.fig); }
   else if (del) { // (a first tap asks "Slet?", only a second one deletes, so a figure is not lost by a stray tap)
     if (!del.classList.contains('armed')) { del.classList.add('armed'); del.textContent = tr('Slet?'); setTimeout(() => { del.classList.remove('armed'); del.textContent = '✕'; }, 2500); return; }
@@ -4559,7 +4725,9 @@ function setEarrings(name) { earringsNow = EARRINGS.some(e => e[0] === name) ? n
 // pictures; the grey parts there (the balloon, the teddy's heart, the scoop, the petals, the ball, the hoop, the
 // umbrella) take the colour picked, each its own colour until then ----
 const ITEMS = [['', 'Ingen'], ['ting-ballon', 'Ballon'], ['ting-bamse', 'Bamse'], ['ting-tryllestav', 'Tryllestav'], ['ting-is', 'Is'], ['ting-blomst', 'Blomst'],
-  ['ting-bold', 'Bold'], ['ting-fodbold', 'Fodbold'], ['ting-hulahop', 'Hulahopring']]; // (Paraply dropped by the user)
+  ['ting-bold', 'Bold'], ['ting-fodbold', 'Fodbold'], ['ting-hulahop', 'Hulahopring'],
+  // (new toys - Trine, 23-11-2026: more to buy with the coins. Made at Meshy from drawings, carried as the teddy is)
+  ['ting-dino', 'Dinosaur'], ['ting-enhjoerning', 'Enhjørning'], ['ting-dukke', 'Dukke'], ['ting-bil', 'Legetøjsbil']]; // (Paraply dropped by the user)
 let itemNow = '', item = null; const items = {};
 // ---- a pet (the user, 04-11-2026, the first new thing in the star shop): a cat, a dog or a rabbit of simple round shapes
 // that goes with the figure - sits beside it, runs along in the games, swims behind it, hops when it dances or cheers,
@@ -4731,6 +4899,8 @@ function makeItem(kind) {
       add(ball(.009), black, s * .026, .245, .062, 1, 1, .6, b); }
     add(ball(.03), pale, 0, .205, .058, 1.2, .9, .8, b); add(ball(.011), black, 0, .215, .085, 1.2, .9, .8, b);
     add(heart(.075, .02), mat('#E8384F', .3, '#E8384F'), 0, .1, .085, 1, 1, 1, b); propInto(b, 'ting-bamse.glb', .34); }
+  // (the toys from Meshy: hanging from the fist as the teddy does, nothing in their place until they are fetched)
+  if (['dino', 'enhjoerning', 'dukke', 'bil'].includes(kind)) { const b = new THREE.Group(); g.add(b); b.position.set(-.05, kind === 'bil' ? -.2 : -.31, .02); propInto(b, `ting-${kind}.glb`, kind === 'bil' ? .14 : .34); }
   if (kind === 'tryllestav') { add(stick(.008, .26), brown, 0, .06, 0); add(ball(.016), gold, 0, -.075, 0); add(stick(.013, .015), gold, 0, .19, 0);
     add(star(.07, .032, .022), mat('#FFC233', .3, '#FFC233'), 0, .26, 0);
     for (const [x, y, s] of [[.08, .33, .016], [.095, .27, .011]]) add(star(s, s * .4, .004), mat('#FFFFFF', .2), x, y, 0); }
@@ -4769,7 +4939,7 @@ function makeItem(kind) {
     add(ball(.014), brown, 0, .315, 0, 1, 1, 1, top); for (let k = 0; k < 10; k++) { const a = k / 10 * Math.PI * 2; add(ball(.011), brown, Math.cos(a) * .392, .7 * .45 * Math.cos(1.05), Math.sin(a) * .392, 1, 1, 1, top); }
     it.shaft = add(stick(.008, 1, 8), brown); const hook = add(new THREE.TorusGeometry(.03, .008, 8, 16, Math.PI), brown, .03, -.06, 0); hook.rotation.z = Math.PI; it.hook = hook; }
   // (things in the hand bigger - at their own sizes they were small beside the child, smaller than in the app)
-  g.scale.setScalar({ bamse: 1.6, tryllestav: 1.9, is: 1.55, blomst: 1.9, bold: 1.35 }[kind] || 1);
+  g.scale.setScalar({ bamse: 1.6, dino: 1.6, enhjoerning: 1.6, dukke: 1.6, bil: 1.6, tryllestav: 1.9, is: 1.55, blomst: 1.9, bold: 1.35 }[kind] || 1);
   g.visible = false; scene.add(g); return it; }
 // (the left hand closed into a fist, after the movement has set its fingers: each finger bent at its three joints towards
 // the palm - about the line across the hand, worked out from where its bones are now, so it fits every movement - and
@@ -4852,6 +5022,10 @@ function holdItem(t) { if (glb && (!item || item.ground || item.ring)) unfist();
     if (item.lastQ && t !== item.lastT) g.quaternion.copy(item.lastQ.slerp(g.quaternion, .5)); item.lastQ = g.quaternion.clone(); item.lastT = t;
     if (item.kind === 'is') g.position.addScaledVector(iw, .06); return; }
   g.quaternion.copy(iq);
+  // (a soft toy hanging from the hand held out clear of a dress or skirt - the user, 24-11-2026: the unicorn went into the
+  // skirt as the figure stood and swayed. Out from the hips, sideways, as far as the skirt is wide)
+  if (['bamse', 'dino', 'enhjoerning', 'dukke', 'bil'].includes(item.kind) && GARMENTS.dress.shown) { const d = GARMENTS.dress.items.find(i => i[0] === GARMENTS.dress.shown)?.[2] || {}, h = bone('Hips');
+    if (h) { const out = g.position.clone().sub(h.getWorldPosition(iw)); out.y = 0; if (out.lengthSq() > 1e-6) g.position.addScaledVector(out.normalize(), d.skirt === false ? .03 : d.hang ? .25 : .13); } }
   if (item.float) { // (the balloon a little above and out from the head, swaying; the string from the hand to it)
     const top = iw.set(.15 + .08 * Math.sin(t * .9), 0, .05 * Math.cos(t * .7)).applyQuaternion(iq); top.y = 2.05 - iv.y; item.float.position.copy(top.clone().applyQuaternion(iq.clone().invert()));
     const knot = top.clone(); knot.y -= .2; const len = knot.length(); item.string.position.copy(knot).multiplyScalar(.5).applyQuaternion(iq.clone().invert());
@@ -5093,11 +5267,27 @@ function startGame(mode = game.mode) { if (game.on || !glb) return; if (!game.ag
     game.bigPool ??= [goldBall(), goldBall()]; Object.assign(game, { dive: false, sinceBig: 0 });
     const run = levelNow().run; Promise.all([run, GAME.jump, GAME.trip, GAME.cheer, GAME.dive].map(loadMove)).then(() => { if (game.on) runAnim(run); }); }
   hintEl.textContent = tr(onBoard(mode) ? '👈 Tryk i siden for at svinge 👉' : mode === 'island' ? '👆 Tryk hvor du vil gå hen' : mode === 'space' ? '👆 Tryk – så flyver du derhen. To hurtige tryk giver fart 🚀' : mode === 'sea' ? '👆 Tryk eller træk – så svømmer du derhen' : mode === 'hide' ? '🔍 Hvor er jeg? Tryk på busken' : mode === 'skihop' ? '👆 Tryk for at køre – og tryk igen ved kanten for at hoppe!' : mode === 'cypher' ? '🎵 Vælg fire trin til din runde' : mode === 'studio' ? '🎵 Sæt din dans sammen' : mode === 'pk' ? '👆 Tryk i målet, hvor bolden skal hen' : '👆 Tryk for at hoppe');
+  if (hpp.on) hintEl.textContent = T('👆 Tryk, når du når kanten – så hopper du højere!', '👆 Tap as you reach the edge – and jump higher!');
+  // (a hand showing how - Trine, 23-11-2026: Ebba, 5, cannot read, and could not tell how some games were played: tap in the
+  // sides to steer, tap, or drag. Gone at the first tap or after a few seconds)
+  showHand(onBoard(mode) ? (hpp.on ? 'tap' : 'sides') : mode === 'sea' ? 'drag' : ['cypher', 'studio'].includes(mode) ? '' : 'tap');
   hud.hidden = false; hintEl.hidden = mode === 'cypher' || mode === 'studio'; try { showLvl(); showJar(); } catch (e) {} document.querySelector('.top').hidden = true; document.getElementById('stage').classList.add('playing'); showStars(); showRecord();
   if (MODES[mode].from) game.hopWay = mode; // (the way last chosen in Hop over bolden)
   document.querySelectorAll('[data-game]').forEach(b => b.classList.toggle('on', b.dataset.game === mode || b.dataset.game === 'hop' && !!MODES[mode].from)); prepScene(); }
 // (again: only stopped to start once more - at another level or in another way - the figure's own setting not put back)
-function stopGame(again) { if (!game.on) return; game.on = false; game.paused = false; document.getElementById('worldWin').hidden = true; for (const b of [...gamePool(), ...(game.bigPool || [])]) b.group.visible = false; game.dive = false; game.balls = []; confetti.length = 0; unprepScene(); skateStop(); hopWorldStop(); hideStop(); islandStop(); seaStop(); spaceStop(); pkStop(); sjStop(); cyStop(); dsStop();
+const handEl = Object.assign(document.createElement('div'), { className: 'hand', hidden: true, textContent: '👆' }); document.getElementById('stage').append(handEl);
+// (pinch: two fingers going apart and together - zoom; the others one finger)
+let handT = 0; function showHand(kind, ms = 5200) { clearTimeout(handT); handEl.style.left = handEl.style.top = ''; handEl.className = 'hand ' + kind; if (kind === 'pinch') handEl.innerHTML = '<i>👆</i><i>👆</i>'; else handEl.textContent = '👆'; handEl.hidden = !kind; if (kind) handT = setTimeout(() => { handEl.hidden = true; }, ms); }
+document.getElementById('stage').addEventListener('pointerdown', () => { if (game.on && !handEl.hidden) setTimeout(() => { handEl.hidden = true; }, 400); });
+// (the figure too - the user, 24-11-2026: how to turn it round, and zoom in and out. Shown a moment after the figure is
+// there and nothing is open, first one finger dragging sideways (turn), then two fingers apart (zoom) - until the child
+// has turned or zoomed it once on this device)
+const TURNED_KEY = 'minimig3d.drejet';
+function figureHand() { try { if (localStorage.getItem(TURNED_KEY)) return; } catch (e) { return; }
+  if (game.on || !holder.visible || [...document.querySelectorAll('.sheet')].some(s => !s.hidden)) { setTimeout(figureHand, 3000); return; }
+  showHand('rotate', 4200); setTimeout(() => { let t = ''; try { t = localStorage.getItem(TURNED_KEY); } catch (e) {} if (!game.on && !t && handEl.classList.contains('rotate')) showHand('pinch', 4200); }, 4300); }
+controls.addEventListener('start', () => { try { localStorage.setItem(TURNED_KEY, '1'); } catch (e) {} if (!game.on && !handEl.hidden) handEl.hidden = true; });
+function stopGame(again) { if (!game.on) return; handEl.hidden = true; game.on = false; game.paused = false; document.getElementById('worldWin').hidden = true; for (const b of [...gamePool(), ...(game.bigPool || [])]) b.group.visible = false; game.dive = false; game.balls = []; confetti.length = 0; unprepScene(); skateStop(); hopWorldStop(); hideStop(); islandStop(); seaStop(); spaceStop(); pkStop(); sjStop(); cyStop(); dsStop();
   // (the sound shut down when nothing plays: on an iPad an open sound channel could go on sounding after the game)
   if (!again) { skc.want = false; try { game.audio?.suspend(); } catch (e) {} setItem(game.held ?? itemNow); game.held = undefined; }
   if (again) { game.again = true; return; } holder.position.x = 0; wearBack(game.wore); try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) {}
@@ -5126,9 +5316,9 @@ function gameTick(dt) { confettiTick(dt); if (!game.on || !glb) return; const r 
   game.rotY ??= M.face; game.rotY += (faceNow - game.rotY) * Math.min(1, dt * 8); glb.rotation.y = game.rotY;
   // (a wide picture - a phone held upright gives one - from nearer: the figure was small in it)
   const [cx, cy, cz, tx, ty, tz] = M.cam(wideCam()), halfW = Math.tan(camera.fov * Math.PI / 360) * Math.hypot(cx - tx, cz - tz) * camera.aspect;
-  camera.position.set(cx, cy, cz); controls.target.set(tx, ty, tz); camera.lookAt(controls.target);
+  if (!hpp.on) { camera.position.set(cx, cy, cz); controls.target.set(tx, ty, tz); camera.lookAt(controls.target); } // (the halfpipe sets its own, see hpCam)
   if (game.hint > 0 && (game.hint -= dt) <= 0) hintEl.hidden = true; else if (game.hint <= 0) hintEl.hidden = true;
-  if (game.paused) return; // (a world won: everything stands still under the cup)
+  if (game.paused) { if (hpp.on) hpTick(0); return; } // (the halfpipe's figure kept in its pose - a world won: everything stands still under the cup)
   if (onBoard(game.mode)) { skateTick(dt); return; }
   if (game.mode === 'island') { islandTick(dt); return; }
   if (game.mode === 'sea') { seaTick(dt); return; }
@@ -5283,7 +5473,10 @@ function repaintRed(map, hex, blue = false) { const im = map.image, cv = documen
     const t = white ? [l * 255, l * 255, l * 255].map(v => Math.min(255, v * 1.15)) : [to.r, to.g, to.b].map(v => Math.min(255, v * 255 * (.35 + .9 * l)));
     for (let q = 0; q < 3; q++) a[i + q] = a[i + q] * (1 - k) + t[q] * k; }
   c.putImageData(d, 0, 0); const t = new THREE.CanvasTexture(cv); t.flipY = map.flipY; t.colorSpace = map.colorSpace; return t; }
-function skPropsLoad() { sk.propsLoad ??= Promise.all(Object.entries(SK_PROPS).map(async ([kind, [url, height, turn]]) => { try { const { geo, map } = await readProp(url);
+// (only the models of the world played now - and the meadow's, which every world borrows - each fetched once)
+const SK_PROP_WORLD = { by: ['byhus1', 'byhus2', 'bil', 'poelsevogn', 'postkasse'], strand: ['badehus', 'iskiosk', 'livredder', 'parasol', 'strandstol'], snow: ['snegran', 'hytte', 'elg', 'iglo', 'lanterne', 'snemand', 'pingviner'] };
+function skPropsLoad() { const own = Object.values(SK_PROP_WORLD).flat(), want = sk.snow ? SK_PROP_WORLD.snow : SK_PROP_WORLD[sk.look] || [];
+  sk.propsDone ??= new Set(); return Promise.all(Object.entries(SK_PROPS).filter(([kind]) => (!own.includes(kind) || want.includes(kind)) && !sk.propsDone.has(kind) && sk.propsDone.add(kind)).map(async ([kind, [url, height, turn]]) => { try { const { geo, map } = await readProp(url);
     geo.computeBoundingBox(); const b = geo.boundingBox, k = height / (b.max.y - b.min.y); geo.translate(-(b.min.x + b.max.x) / 2, -b.min.y, -(b.min.z + b.max.z) / 2); geo.scale(k, k, k); if (turn) geo.rotateY(turn);
     const mat = new THREE.MeshStandardMaterial({ map, roughness: .8, metalness: 0 }); SK_SIDE[kind] = () => new THREE.Mesh(geo, mat);
     // (the car is red from Meshy: in other colours too, its red painted over in each - not every car in town the same)
@@ -5437,8 +5630,10 @@ function skNight(on) { const h = scene.children.find(o => o.isHemisphereLight); 
   h.intensity = on ? .8 : sk.dayL.h; h.color.setHex(on ? 0xB8C4FF : sk.dayL.hc); key.intensity = on ? 1.1 : sk.dayL.k; key.color.setHex(on ? 0xBCCBFF : sk.dayL.kc); rim.intensity = on ? 1.5 : sk.dayL.r; }
 // (the world's look: the green meadow and the asphalt road - or, for the snowboard run, snow all over and a groomed run:
 // white with a little blue in it, fine lines down the run as the snow machine leaves them)
-function skTheme(snow, look = 'park') { sk.snow = !!snow; skWorldBuild(); skCityBuild(); skBeachBuild(); skIceBuild(); sk.look = snow ? 'snow' : look;
-  sk.snowLook = snow ? (look === 'skov' || look === 'isslot' ? look : 'piste') : null; { const night = sk.snowLook === 'isslot'; sk.ice.visible = night; for (const c of sk.clouds) c.visible = !night; stage.classList.toggle('night', night); skNight(night); }
+// (only the world played now is built - the user's daughter, 23-11-2026: choosing Snowboard, nothing answered for a long time;
+// all of Byen, Strandpromenaden and Isslottet were made at once, and every world's models fetched)
+function skTheme(snow, look = 'park') { sk.snow = !!snow; skWorldBuild(); if (!snow && look === 'by') skCityBuild(); if (!snow && look === 'strand') skBeachBuild(); if (snow && look === 'isslot') skIceBuild(); sk.look = snow ? 'snow' : look;
+  sk.snowLook = snow ? (look === 'skov' || look === 'isslot' ? look : 'piste') : null; { const night = sk.snowLook === 'isslot'; if (sk.ice) sk.ice.visible = night; for (const c of sk.clouds) c.visible = !night; stage.classList.toggle('night', night); skNight(night); }
   if (!sk.road) return;
   // (six lanes on the wide piste - the user, 22-11-2026: six, not five)
   { const N = snow && SNOW_WIDE ? 6 : 3; sk.lanes = N > 3 ? 2 : 1; sk.lo = -Math.floor((N - 1) / 2); sk.hi = sk.lo + N - 1; sk.laneOff = N % 2 ? 0 : -.5; SKW.edge = SKATE.lane * N / 2 + .15; sk.road.scale.x = (SKATE.lane * N + .3) / (SKATE.lane * 3 + .3); }
@@ -5448,7 +5643,7 @@ function skTheme(snow, look = 'park') { sk.snow = !!snow; skWorldBuild(); skCity
       const rw = SKATE.lane * 3 + .3; c.fillStyle = 'rgba(90,140,205,.55)'; for (const q of [-1, 1]) c.fillRect((.5 + q * SKATE.lane / 2 / rw) * 256 - 2, 0, 4, 128); c.fillStyle = '#4F86D9'; c.fillRect(0, 0, 6, 256); c.fillRect(250, 0, 6, 256); }); sk.pisteTex.repeat.set(1, 20);
     sk.pisteWideTex = tex(c => { c.fillStyle = '#E4EFFB'; c.fillRect(0, 0, 256, 256); c.fillStyle = 'rgba(150,185,225,.35)'; for (let x = 4; x < 256; x += 6) c.fillRect(x, 0, 2, 256); c.fillStyle = '#4F86D9'; c.fillRect(0, 0, 4, 256); c.fillRect(252, 0, 4, 256); }); sk.pisteWideTex.repeat.set(1, 20); }
   { const k = snow ? SNOW_SLOPE : 0; sk.ground.matrix.set(1, 0, 0, 0, 0, 1, k, 0, 0, 0, 1, 0, 0, 0, 0, 1); sk.ground.matrixWorldNeedsUpdate = true; sk.hills.position.y = snow ? (sk.snowLook === 'isslot' ? -19 : -11) : 0; }
-  if (sk.look === 'skatepark' && !sk.parkRoadTex) skParkTex(); sk.grass.material.map = snow ? sk.snowTex : sk.look === 'skatepark' ? sk.plazaTex : sk.look === 'by' ? sk.tileTex : sk.look === 'strand' ? sk.sandTex : sk.grassTex; sk.grass.material.needsUpdate = true; sk.hills.visible = sk.look !== 'by' && sk.look !== 'strand'; sk.city.visible = sk.look === 'by'; sk.beach.visible = sk.beachFar.visible = sk.look === 'strand'; sk.road.material.map = snow ? (sk.lanes > 1 ? sk.pisteWideTex : sk.pisteTex) : sk.look === 'skatepark' ? sk.parkRoadTex : sk.look === 'strand' ? sk.boardTex : sk.roadTex; sk.road.material.needsUpdate = true;
+  if (sk.look === 'skatepark' && !sk.parkRoadTex) skParkTex(); sk.grass.material.map = snow ? sk.snowTex : sk.look === 'skatepark' ? sk.plazaTex : sk.look === 'by' ? sk.tileTex : sk.look === 'strand' ? sk.sandTex : sk.grassTex; sk.grass.material.needsUpdate = true; sk.hills.visible = sk.look !== 'by' && sk.look !== 'strand'; if (sk.city) sk.city.visible = sk.look === 'by'; if (sk.beach) sk.beach.visible = sk.beachFar.visible = sk.look === 'strand'; sk.road.material.map = snow ? (sk.lanes > 1 ? sk.pisteWideTex : sk.pisteTex) : sk.look === 'skatepark' ? sk.parkRoadTex : sk.look === 'strand' ? sk.boardTex : sk.roadTex; sk.road.material.needsUpdate = true;
   // (the snowboard in the skateboard's place)
   if (snow && !sk.snowBoard) { sk.snowBoard = new THREE.Group(); sk.snowBoard.position.y = .02; sk.board.add(sk.snowBoard); propInto(sk.snowBoard, 'udstyr-snowboard.glb', 1.3, SNOW_BOARD_TURN, [], 'w'); }
   for (const o of sk.boardParts || []) o.visible = !snow; if (sk.snowBoard) sk.snowBoard.visible = !!snow;
@@ -5468,7 +5663,9 @@ const WORLDS = { skate: [['park', 'Parken', 'the park', '🌳', '#5DBF55'], ['by
 // about 3-4 rides on Let, 1-2 on Svær, the harder levels faster only by more things on the road)
 // (Skateparken - the user, 22-11-2026: a fourth world, always open, not won by a jar)
 if (SKATE_V11) WORLDS.skate.push(['skatepark', 'Skateparken', 'the skate park', '🛹', '#8C93A8']);
-const worldAlways = (mode, i) => SKATE_V11 && mode === 'skate' && WORLDS.skate[i]?.[0] === 'skatepark';
+// (Halfpipe - the user, 23-11-2026: a fifth, always open; behind HALFPIPE, see »Halfpipe« below)
+if (SKATE_V11 && (TEST_SITE || window.MINIMIG_HALFPIPE === true)) WORLDS.skate.push(['halfpipe', 'Halfpipe', 'the halfpipe', '🤸', '#FF8A3D']);
+const worldAlways = (mode, i) => SKATE_V11 && mode === 'skate' && ['skatepark', 'halfpipe'].includes(WORLDS.skate[i]?.[0]);
 const JAR = 250, JAR_GAIN = { 'niveau-meget-let': 1, 'niveau-let': 1, 'niveau-mellem': 1, 'niveau-svaer': 1, 'niveau-meget-svaer': 1 };
 // (each child's own: the world played now, how full each jar is, how many are open, and those won - kept with the stars)
 function worldsOf(mode) { score.worlds ??= {}; const w = score.worlds[mode] ??= { now: 0, jar: [], open: 1, won: [] }; w.jar ??= []; w.won ??= []; return w; }
@@ -5902,16 +6099,17 @@ function skateRow(from = SKATE.from) { const easy = ['niveau-meget-let', 'niveau
   // (the stars never in the lane the figure rides in now - one has to steer to them, not just stand)
   if (Math.random() < (easy ? .9 : .7)) { const free = Array.from({ length: (sk.hi ?? 1) - (sk.lo ?? -1) + 1 }, (_, i) => i + (sk.lo ?? -1)).filter(l => !used.has(l) && l !== sk.lane); if (free.length) { const lane = free[Math.floor(Math.random() * free.length)], n = 1 + Math.floor(Math.random() * 3);
     if (skc.on) skc.possible += n; for (let k = 0; k < n; k++) put(skateThing('stjerne'), laneX(lane), from + (k - (n - 1) / 2) * 1.1); } } }
-function skateStart(snow) { skateBuild(); skTheme(snow, WORLDS[game.mode] ? WORLDS[game.mode][worldNow(game.mode)][0] : 'park'); Object.assign(sk, { lane: 0, x: 0, lean: 0, slow: 0, wobble: 0, next: .3, first: true, curve: 0, curveTo: 0, curveT: 3, jy: 0, jv: 0, spin: 0, rampWait: 0, fork: null, forkT: snow || sk.look === 'skatepark' ? Infinity : 13, lastDir: 0, trav: 0, hPrev: 0, dPrev: 0, grind: null, gl: 0, wallT: 0 }); if (sk.forkG) sk.forkG.visible = false; for (const it of sk.live) it.group.visible = false; sk.live = [];
+function skateStart(snow) { if (!snow && hpOn()) { skateBuild(); hpStart(); return; } skateBuild(); skTheme(snow, WORLDS[game.mode] ? WORLDS[game.mode][worldNow(game.mode)][0] : 'park'); Object.assign(sk, { lane: 0, x: 0, lean: 0, slow: 0, wobble: 0, next: .3, first: true, curve: 0, curveTo: 0, curveT: 3, jy: 0, jv: 0, spin: 0, rampWait: 0, fork: null, forkT: snow || sk.look === 'skatepark' ? Infinity : 13, lastDir: 0, trav: 0, hPrev: 0, dPrev: 0, grind: null, gl: 0, wallT: 0 }); if (sk.forkG) sk.forkG.visible = false; for (const it of sk.live) it.group.visible = false; sk.live = [];
   holder.add(sk.rig); sk.rig.position.set(0, 0, 0); sk.rig.rotation.set(0, 0, 0); sk.rig.add(glb); sk.ground.add(sk.road); skWorldStart();
   // (riding: the standing with the page's own pose, arms out - Mixamo's riding stood with a foot each side of our board,
   // the user said, 03-11-2026; it was made for a board pointing the way the figure faces. Its push off, Skateboarding
   // (4), is made so too: so in a push the figure faces down the road, its left foot on the board, the right pushing,
   // and turns across the board when it rides off - at the start, and after hitting a thing)
-  for (const k of Object.keys(SK_PETS)) skateThing(k); skChalStart(snow);
+  // (the animals crossing - only this world's, and a moment after the start, so the ride is not held up while they come)
+  setTimeout(() => { if (game.on && onBoard(game.mode) && !hpp.on) for (const k of Object.keys(SK_PETS)) if ((k === 'dyr-snehare') === !!sk.snow) skateThing(k); }, 1500); skChalStart(snow);
   sk.push = false; sk.poseW = 1; Promise.all(['staa', SKATE.push].map(loadMove)).then(() => { if (game.on) { runAnim('staa'); startPush(); } }); }
-function startPush() { const a = glbActions[SKATE.push]; if (!a || !game.on || !onBoard(game.mode) || sk.snow) return; sk.push = true; sk.needPush = false; runAnim(SKATE.push, true); }
-function skateStop() { skc.on = false; chalEl.hidden = true; if (!sk.rig?.parent) return; skWorldStop(); if (sk.board) { sk.board.rotation.set(0, 0, 0); sk.board.position.y = 0; } holder.add(glb); holder.remove(sk.rig); sk.road.parent?.remove(sk.road); for (const it of sk.live) it.group.visible = false; sk.live = []; for (const b of sk.bits) b.mesh.visible = false; }
+function startPush() { const a = glbActions[SKATE.push]; if (!a || !game.on || !onBoard(game.mode) || sk.snow || hpp.on) return; sk.push = true; sk.needPush = false; runAnim(SKATE.push, true); }
+function skateStop() { hpStop(); skc.on = false; chalEl.hidden = true; if (!sk.rig?.parent) return; skWorldStop(); if (sk.board) { sk.board.rotation.set(0, 0, 0); sk.board.position.y = 0; } holder.add(glb); holder.remove(sk.rig); sk.road.parent?.remove(sk.road); for (const it of sk.live) it.group.visible = false; sk.live = []; for (const b of sk.bits) b.mesh.visible = false; }
 // ---- Stjerne-challenge and tricks (the user, 22-11-2026: the first part of »Skate Adventure« brought forward to the
 // launch, behind a switch - SKATE_V11 = false puts the skateboard game back as it was). The challenge, chosen in the level
 // box: a ride to the flag 🏁, about 45 seconds at the level's speed, no time pressure and no losing; at the flag the stars
@@ -6039,7 +6237,7 @@ function parkSideRow(u) { sk.rowN = (sk.rowN || 0) + 1; const E = SKW.edge, n = 
     else if (Math.random() < .12) skSidePut('baenk', u, s * (E + 1.2), out);
     if (Math.random() < .55) skSidePut(Math.random() < .5 ? 'trae' : 'gran', u + Math.random(), s * (E + 6 + Math.random() * 8), 0, .9 + Math.random() * .5); } }
 // (not up in the air off a ramp - only once landed again, the user said 10-11-2026)
-function steer(dir) { if (!game.on || !onBoard(game.mode) || (sk.jy > 0 && sk.trick !== 'none')) return; let lane = Math.max(sk.lo ?? -1, Math.min(sk.hi ?? 1, sk.lane + dir));
+function steer(dir) { if (!game.on || !onBoard(game.mode) || hpp.on || (sk.jy > 0 && sk.trick !== 'none')) return; let lane = Math.max(sk.lo ?? -1, Math.min(sk.hi ?? 1, sk.lane + dir));
   // (at a fork there is no middle: before the island the other side is chosen in one go; beside it one stays on one's side)
   if (lane === 0 && skForkShut()) { if (sk.fork.u < 1.2) return; lane = dir; }
   if (lane === sk.lane) return; sk.lane = lane; sk.lastDir = dir; game.hint = 0; sfx('swish'); }
@@ -6062,7 +6260,7 @@ function skateOwnPose(fwd, right, up, w = 1) {
   glb.updateMatrixWorld(true); for (const n of ['LeftLeg', 'RightLeg']) turnBone(n, right, -.85 * w); glb.updateMatrixWorld(true); for (const n of ['LeftFoot', 'RightFoot']) turnBone(n, right, .38 * w);
   for (const [n, s] of [['LeftArm', 1], ['RightArm', -1]]) turnBone(n, fwd, (s * 1.05 + (sk.arm || 0)) * w); glb.updateMatrixWorld(true); for (const [n, s] of [['LeftForeArm', 1], ['RightForeArm', -1]]) turnBone(n, fwd, s * .25 * w);
   turnBone('Spine', right, -.12 * w); turnBone('Spine2', up, .35 * w); glb.updateMatrixWorld(true); turnBone('Neck', up, .4 * w); glb.updateMatrixWorld(true); turnBone('Head', up, .45 * w); glb.updateMatrixWorld(true); }
-function skateTick(dt) { dt = Math.min(dt, .1) * (1 - .3 * (sk.camK || 0)); // (a little slow motion while the camera is out at the side)
+function skateTick(dt) { if (hpp.on) { hpTick(dt); return; } dt = Math.min(dt, .1) * (1 - .3 * (sk.camK || 0)); // (a little slow motion while the camera is out at the side)
   // (never a long jump after a pause: everything by the road was passed at once and it lay bare for a while)
   seaT.value = performance.now() / 1000; const L = skateLevel(); sk.slow = Math.max(0, sk.slow - dt); sk.wobble = Math.max(0, sk.wobble - dt); sk.rampWait = Math.max(0, (sk.rampWait || 0) - dt); sk.wallT = Math.max(0, (sk.wallT || 0) - dt);
   // (the push: through - then riding off, the pose growing in as it turns; after a hit, a push again once the wobble is over)
@@ -6151,6 +6349,145 @@ function skateTick(dt) { dt = Math.min(dt, .1) * (1 - .3 * (sk.camK || 0)); // (
     if (!it.done && !good && it.u < -(it.len / 2 + .3)) { it.done = true; if (it.mine) addStars(1); }
     // (put away just past the figure - a star left in another lane came on up to the camera, big as the picture)
     if (it.u < -(it.len / 2 + 1) || !g.visible) { g.visible = false; sk.live.splice(sk.live.indexOf(it), 1); } } }
+// ---- Halfpipe (the user, 23-11-2026: a fifth bane in Skateboard - kept for the App Store launch in January 2027, behind
+// HALFPIPE: on on the test page; in the app only once the build sets window.MINIMIG_HALFPIPE = true). A big U-shaped ramp
+// seen a little from the side; the figure in its skater's gear rides by itself to and fro between its two walls. Up over
+// the edge a tap makes a trick - tapped at the right moment, as in Skihop, a higher jump and a finer trick (spin, kickflip,
+// shove-it, flip, double spin); no tap or a poor one only a smaller hop: one never falls or loses. The edge glows as the
+// right moment comes. Stars hang over the edges, to take on the way up. A round is eight times to and fro, then the
+// Stjerne-challenge's medal and the child's own record on that level. The pet watches from the deck
+const HALFPIPE = TEST_SITE || window.MINIMIG_HALFPIPE === true;
+// (F: half the flat bottom; R: the walls' curve, as high as the edge; D: how deep the ramp is; the deck behind each edge;
+// base: the hop over the edge with no tap; hops: a round, 8 times to and fro; levels: [the pull down - the speed - and how
+// long round the right moment a tap still counts, in seconds])
+const HP = { F: 1.4, R: 2.2, D: 4, deck: 1.3, base: .32, hops: 16, stars: [.7, 1.4, 2], levels: { 'niveau-meget-let': [5.4, .75], 'niveau-let': [5.9, .6], 'niveau-mellem': [6.5, .47], 'niveau-svaer': [7.1, .36], 'niveau-meget-svaer': [7.7, .27] } };
+const hpp = { on: false, world: null, tilt: null, cope: [], stars: [], pets: {}, petG: null, pet: null, phase: '', s: 0, dir: 1, x: 0, y: 0, th: 0, h: 0, vy: 0, at: 0, side: 1, air: 0, Ed: 0, tapped: false, q: 0, hops: 0, possible: 0, wait: 0, camK: 0, camX: 0, free: false, ending: false, hop: 0 };
+const hpOn = () => HALFPIPE && SKATE_V11 && game.mode === 'skate' && WORLDS.skate[worldNow('skate')]?.[0] === 'halfpipe';
+const hpA = () => HP.R * Math.PI / 2, hpLen = () => 2 * hpA() + 2 * HP.F, hpLip = () => HP.F + HP.R;
+// (the ramp's surface s along it from the left edge: [x, y, its slope])
+function hpAt(s) { const { F, R } = HP, A = hpA(); if (s <= A) { const f = Math.PI / 2 - Math.max(0, s) / R; return [-F - R * Math.sin(f), R - R * Math.cos(f), -f]; }
+  if (s <= A + 2 * F) return [-F + s - A, 0, 0]; const f = Math.min(Math.PI / 2, (s - A - 2 * F) / R); return [F + R * Math.sin(f), R - R * Math.cos(f), f]; }
+function hpBuild() { if (hpp.world) return; skWorldBuild(); if (!sk.plazaTex) skParkTex(); skPropsLoad(); const { F, R, D } = HP, L = F + R, X = L + HP.deck, w = hpp.world = new THREE.Group();
+  // (the plaza's slabs all round)
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(150, 100), new THREE.MeshStandardMaterial({ map: sk.plazaTex, roughness: 1 })); ground.rotation.x = -Math.PI / 2; ground.position.set(0, -.02, -30); ground.receiveShadow = true; w.add(ground);
+  // (the ramp: its U across the picture, the sides painted blue with stars, the riding surface light, white at the edges)
+  const sh = new THREE.Shape(); sh.moveTo(-X, -.02); sh.lineTo(X, -.02); sh.lineTo(X, R); sh.lineTo(L, R);
+  for (let k = 1; k <= 32; k++) { const f = Math.PI / 2 * (1 - k / 32); sh.lineTo(F + R * Math.sin(f), R - R * Math.cos(f)); }
+  sh.lineTo(-F, 0); for (let k = 1; k <= 32; k++) { const f = Math.PI / 2 * k / 32; sh.lineTo(-F - R * Math.sin(f), R - R * Math.cos(f)); } sh.lineTo(-X, R); sh.closePath();
+  const geo = new THREE.ExtrudeGeometry(sh, { depth: D, bevelEnabled: false, curveSegments: 1 }); geo.translate(0, 0, -D / 2);
+  const cv = document.createElement('canvas'); cv.width = 512; cv.height = 160; const c = cv.getContext('2d'), gr = c.createLinearGradient(0, 0, 0, 160); gr.addColorStop(0, '#4F86F0'); gr.addColorStop(1, '#2F5FC8'); c.fillStyle = gr; c.fillRect(0, 0, 512, 160);
+  c.fillStyle = '#FFFFFF'; c.fillRect(0, 0, 512, 7); c.fillStyle = '#FFD23F'; c.fillRect(0, 150, 512, 10);
+  const star = (x, y, r, col) => { c.fillStyle = col; c.beginPath(); for (let k = 0; k < 10; k++) { const rr = k % 2 ? r * .45 : r, a = -Math.PI / 2 + k * Math.PI / 5; c.lineTo(x + rr * Math.cos(a), y + rr * Math.sin(a)); } c.closePath(); c.fill(); };
+  for (const [x, y, r, col] of [[40, 60, 16, '#FFD23F'], [90, 110, 10, '#FFFFFF'], [150, 125, 13, '#FF6FB1'], [256, 135, 15, '#FFD23F'], [362, 125, 13, '#FF6FB1'], [422, 110, 10, '#FFFFFF'], [472, 60, 16, '#FFD23F']]) star(x, y, r, col);
+  const side = new THREE.CanvasTexture(cv); side.colorSpace = THREE.SRGBColorSpace; side.repeat.set(1 / (2 * X), 1 / (R + .02)); side.offset.set(.5, .02 / (R + .02));
+  const ramp = new THREE.Mesh(geo, [new THREE.MeshStandardMaterial({ map: side, roughness: .7 }), new THREE.MeshStandardMaterial({ color: '#C9DCF2', roughness: .8 })]); ramp.castShadow = ramp.receiveShadow = true; w.add(ramp);
+  // (the metal coping along each edge - it glows yellow as the moment to tap comes)
+  hpp.cope = [-1, 1].map(s => { const m = new THREE.Mesh(new THREE.CylinderGeometry(.065, .065, D, 14), new THREE.MeshStandardMaterial({ color: '#E8ECF2', roughness: .25, metalness: .5, emissive: new THREE.Color('#FFC233'), emissiveIntensity: 0 })); m.rotation.x = Math.PI / 2; m.position.set(s * L, R, 0); m.castShadow = true; w.add(m); return m; });
+  // (a painted line where the walls start, and a railing at the back of each deck)
+  for (const s of [-1, 1]) { const ln = new THREE.Mesh(new THREE.BoxGeometry(.06, .004, D), skMat('#FF6FB1', .6)); ln.position.set(s * F, .003, 0); w.add(ln);
+    const rail = new THREE.Mesh(new THREE.BoxGeometry(HP.deck + .1, .05, .05), skMat('#FFD23F', .4)); rail.position.set(s * (L + HP.deck / 2), R + .7, -D / 2 + .08); w.add(rail);
+    for (const k of [0, 1]) { const p = new THREE.Mesh(new THREE.BoxGeometry(.05, .7, .05), skMat('#FFD23F', .4)); p.position.set(s * (L + .1 + k * (HP.deck - .2)), R + .35, -D / 2 + .08); w.add(p); }
+    const stair = new THREE.Mesh(new THREE.BoxGeometry(.8, R, .9), skMat('#9AA1AE', .85)); stair.position.set(s * (X + .4), R / 2, -D / 2 + .6); stair.castShadow = stair.receiveShadow = true; w.add(stair); }
+  // (round about: walls with paint on them, quarter pipes, lamps, trees and firs further out, the mountains far off)
+  const put = (kind, x, z, rot = 0, size = 1) => { const g = SK_SIDE[kind](); g.position.set(x, 0, z); g.rotation.y = rot; g.scale.setScalar(size); g.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } }); w.add(g); return g; };
+  for (const x of [-7.5, -4.8, 4.8, 7.5]) put('mur', x, -6.5, Math.PI / 2);
+  put('qp', -10.5, -2, Math.PI); put('qp', 10.5, -2, 0); put('lygte', -6.2, -3.2, 0); put('lygte', 6.2, -3.2, Math.PI);
+  for (let k = 0; k < 14; k++) { const x = -26 + k * 4 + Math.random() * 2; put(Math.random() < .5 ? 'trae' : 'gran', x, -10 - Math.random() * 6, 0, .9 + Math.random() * .5); }
+  for (const s of [-1, 1]) for (let k = 0; k < 3; k++) put(Math.random() < .5 ? 'trae' : 'busk', s * (13 + k * 3 + Math.random() * 2), -2 + k * 3, 0, 1 + Math.random() * .4);
+  // (the stars over the edges, from Skateboard's own star)
+  const ss = new THREE.Shape(); for (let k = 0; k < 10; k++) { const r = k % 2 ? .085 : .2, a = Math.PI / 2 + k * Math.PI / 5; k ? ss.lineTo(r * Math.cos(a), r * Math.sin(a)) : ss.moveTo(r * Math.cos(a), r * Math.sin(a)); }
+  const sg = new THREE.ExtrudeGeometry(ss, { depth: .05, bevelEnabled: true, bevelThickness: .03, bevelSize: .025, bevelSegments: 3 }); sg.translate(0, 0, -.025); const sm = skMat('#FFC233', .25, '#A36A00');
+  for (let k = 0; k < 6; k++) { const m = new THREE.Mesh(sg, sm); m.scale.setScalar(1.4); m.castShadow = true; m.visible = false; w.add(m); hpp.stars.push(m); }
+  // (the figure's place: moved along the ramp and tipped with it; the skater's own rig inside)
+  hpp.tilt = new THREE.Group(); hpp.petG = new THREE.Group(); w.add(hpp.petG); }
+// (stars over one edge: one, two or three in a row upwards - the top ones only for a good jump)
+function hpHang(side) { const n = 1 + Math.floor(Math.random() * (['niveau-meget-let', 'niveau-let'].includes(game.level) ? 2 : 3)), lx = side * (hpLip() - .12);
+  for (const m of hpp.stars) if (m.visible && m.userData.side === side) m.visible = false;
+  let k = 0; for (const m of hpp.stars) { if (k >= n) break; if (m.visible) continue; m.userData = { side, k }; m.position.set(lx, HP.R + HP.stars[k], 0); m.visible = true; k++; } if (!hpp.free) hpp.possible += n; }
+// (the child's pet - or the dog - looking on from the left deck, turning its head after the figure)
+function hpPet() { const kind = ['dyr-kat', 'dyr-hund', 'dyr-kanin'].includes(petNow) ? petNow : 'dyr-hund'; if (hpp.pet) hpp.pet.group.visible = false; hpp.pet = null;
+  (hpp.pets[kind] ??= loadGlbPet(kind + '.glb', kind + '.jpg', SK_PETS[kind], .11, .022).then(m => { m.collar.visible = false; hpp.petG.add(m.group); return m; })).then(m => { if (!hpp.on) return; for (const p of Object.values(hpp.pets)) p.then?.(o => { if (o !== m) o.group.visible = false; }); m.group.visible = true; hpp.pet = m; }).catch(() => {}); }
+function hpStart() { hpBuild(); Object.assign(sk, { snow: false, look: 'halfpipe', jy: 0, jv: 0, spin: 0, trick: null, extra: null, push: false, needPush: false, wobble: 0, lean: 0, grind: null, gl: 0, camK: 0 }); sk.poseW = 1;
+  hpp.on = true; skc.on = false; skc.tricks = {}; sk.hills.visible = true; scene.add(hpp.world); holder.add(hpp.tilt); hpp.tilt.add(sk.rig); sk.rig.position.set(0, 0, 0); sk.rig.rotation.set(0, -Math.PI / 2, 0); sk.rig.rotation.order = 'YXZ'; sk.rig.add(glb); game.rotY = Math.PI / 2;
+  hpp.world.add(sk.hills); sk.hills.position.set(0, 0, 8); for (const h of sk.hills.children.slice(1)) if (h.userData.green) h.material.color.copy(h.userData.green);
+  scene.fog = new THREE.Fog(0xCDEBFF, 40, 95); floor.visible = false; disc.visible = false; for (const el of [bgNear, bgFar, bgNear2]) el.hidden = true; stage.classList.add('street'); controls.maxDistance = 40;
+  ilShadow(true); Object.assign(key.shadow.camera, { left: -6.5, right: 6.5, top: 6.5, bottom: -3, far: 30 }); key.shadow.camera.updateProjectionMatrix(); key.position.set(3, 10, 7); key.target.position.set(0, 1.5, 0); key.target.updateMatrixWorld();
+  Object.assign(hpp, { guide: 4, guided: false, phase: 'wait', wait: 1.2, s: 0, dir: 1, h: 0, vy: 0, tapped: false, q: 0, hops: 0, possible: 0, camK: 0, camX: 0, free: false, ending: false, hop: 0, x: -hpLip() - .45, y: HP.R, th: 0 });
+  for (const m of hpp.stars) m.visible = false; hpHang(1); hpHang(-1); hpp.petG.position.set(-hpLip() - HP.deck + .35, HP.R, -1.2); hpPet();
+  chalEl.hidden = false; chalEl.style.setProperty('--f', 0); toast(T('🛹 8 ture frem og tilbage!', '🛹 8 times to and fro!'));
+  Promise.all(['staa', SKATE.push].map(loadMove)).then(() => { if (hpp.on) runAnim('staa'); }); }
+function hpStop() { if (!hpp.on) return; hpp.on = false; chalEl.hidden = true; sk.rig.rotation.order = 'XYZ'; sk.rig.rotation.set(0, 0, 0); sk.rig.position.set(0, 0, 0); holder.add(sk.rig); holder.remove(hpp.tilt); scene.remove(hpp.world);
+  sk.world?.add(sk.hills); sk.hills.position.set(0, 0, 0); scene.fog = null; stage.classList.remove('street'); floor.visible = true; ilShadow(false); Object.assign(sk, { jy: 0, spin: 0, trick: null, extra: null }); setBg(bgNow); }
+// (how good a tap is: right at the edge best, a little before or after less, never nothing)
+const hpQ = err => { const win = (HP.levels[game.level] || HP.levels['niveau-let'])[1]; return Math.max(.15, Math.min(1, 1 - Math.abs(err) / win)); };
+function hpTrick(q) { const list = q >= .8 ? ['salto', 'dobbelt', 'salto'] : q >= .5 ? ['kickflip', 'shuvit', 'spin'] : ['spin', 'shuvit']; let k; do k = list[Math.floor(Math.random() * list.length)]; while (k === sk.lastTrick && Math.random() < .7);
+  sk.lastTrick = k; sk.trick = k; sk.extra = null; const n = q >= .8 ? 3 : q >= .5 ? 2 : 1; addStars(n); sfx('swish'); sfx('ding', .08); if (n > 2) sfx('ding', .2);
+  skc.tricks[k] = (skc.tricks[k] || 0) + 1; trickPop((q >= .8 ? T('Perfekt! ', 'Perfect! ') : '') + skTrickName(k) + `  ⭐+${n}`); }
+// (the show-me hand at the edge - the user, 24-11-2026: show when and where to tap. On the first rides up a wall, until the
+// child gets a perfect one, the hand taps right at the edge on the screen at the right moment - as the edge glows)
+const hpGuideV = new THREE.Vector3();
+function hpGuide(side) { hpp.guided = true; const st = document.getElementById('stage'); hpGuideV.set(side * (hpLip() - .1), HP.R + .25, 0).project(camera);
+  handEl.style.left = ((hpGuideV.x + 1) / 2 * st.clientWidth) + 'px'; handEl.style.top = ((1 - hpGuideV.y) / 2 * st.clientHeight) + 'px';
+  clearTimeout(handT); handEl.className = 'hand tap'; handEl.textContent = '👆'; handEl.hidden = false; handT = setTimeout(() => { handEl.hidden = true; }, 1100); }
+function hpTap() { if (!game.audio) try { game.audio = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { game.audio = null; } game.audio?.resume?.();
+  if (!hpp.on || game.paused) return; game.hint = 0; const g = (HP.levels[game.level] || HP.levels['niveau-let'])[0], win = (HP.levels[game.level] || HP.levels['niveau-let'])[1];
+  if (hpp.phase === 'wait') { hpp.wait = 0; return; }
+  if (hpp.tapped) return;
+  // (on the way to an edge: when it would be reached - a tap far too early does nothing, so the right one can still come)
+  if (hpp.phase === 'ride') { const dist = hpp.dir > 0 ? hpLen() - hpp.s : hpp.s, vl = Math.sqrt(2 * g * HP.base), t = dist / Math.max(.5, (hpp.v + vl) / 2); if (t > win * 1.4) return; hpp.tapped = true; hpp.q = hpQ(t - .08); return; }
+  // (just over the edge already: a little late, still a jump - higher than it was going)
+  if (hpp.phase === 'air' && hpp.at < .28 && hpp.vy > 0) { hpp.tapped = true; hpp.q = hpQ(hpp.at + .08); const H = .45 + 1.35 * hpp.q; hpp.vy = Math.sqrt(Math.max(hpp.vy * hpp.vy, 2 * g * Math.max(0, H - hpp.h))); hpp.air = H; hpTrick(hpp.q); } }
+function hpEnd() { hpp.ending = false; hpp.free = true; chalEl.hidden = true; const n = game.stars, ratio = n / Math.max(1, hpp.possible + 3 * HP.hops), medal = ratio >= .55 ? 0 : ratio >= .3 ? 1 : 2;
+  score.hp ??= {}; const was = score.hp[game.level] || 0, rec = n > was; if (rec) { score.hp[game.level] = n; saveScore(); }
+  const top = Object.entries(skc.tricks).sort((a, b) => b[1] - a[1]).slice(0, 2).map(([k, c]) => skTrickName(k) + (c > 1 ? ` ×${c}` : ''));
+  game.paused = true; celebrate(); try { sfx('cheer'); } catch (e) {}
+  document.querySelector('.ww-cup').textContent = ['🥇', '🥈', '🥉'][medal];
+  document.getElementById('wwTitle').textContent = T(['Guld!', 'Sølv!', 'Bronze!'][medal], ['Gold!', 'Silver!', 'Bronze!'][medal]);
+  document.getElementById('wwText').textContent = (n === 1 ? T('⭐ 1 stjerne', '⭐ 1 star') : T(`⭐ ${n} stjerner`, `⭐ ${n} stars`)) + (rec && was ? T(' – ny rekord! 🏆', ' – a new record! 🏆') : was ? T(`  (rekord: ${was})`, `  (record: ${was})`) : '') + (top.length ? '\n' + T('Bedste tricks: ', 'Best tricks: ') + top.join(', ') : '');
+  const go = document.getElementById('wwNext'), stay = document.getElementById('wwStay'), close = () => { document.getElementById('worldWin').hidden = true; game.paused = false; };
+  go.hidden = false; go.textContent = T('🔁 Prøv igen', '🔁 Try again'); stay.textContent = T('🛹 Kør frit', '🛹 Ride freely');
+  go.onclick = () => { close(); stopGame(true); startGame('skate'); }; stay.onclick = close;
+  document.getElementById('worldWin').hidden = false; }
+function hpTick(dt) { dt = Math.min(dt, .05) * (1 - .25 * hpp.camK); const [g, win] = HP.levels[game.level] || HP.levels['niveau-let'], A = hpA(), Lt = hpLen(), lip = hpLip(), now = performance.now() / 1000;
+  let glow = [0, 0];
+  if (hpp.phase === 'wait') { hpp.wait -= dt; hpp.x = -lip - .45; hpp.y = HP.R; hpp.th = 0; if (hpp.wait <= 0) { hpp.phase = 'ride'; hpp.s = .01; hpp.dir = 1; hpp.Ed = HP.R + .25; hpp.v = 1; sfx('swish'); } }
+  else if (hpp.phase === 'ride') {
+    // (down from an edge as fast as the jump was high; up to the next as for the plain hop - eased into over the flat)
+    const [, y0] = hpAt(hpp.s), fs = (hpp.dir > 0 ? hpp.s - A : Lt - A - hpp.s) / (2 * HP.F), b = Math.max(0, Math.min(1, fs)), e = b * b * (3 - 2 * b), E = hpp.Ed + (HP.R + HP.base - hpp.Ed) * e;
+    hpp.v = Math.max(.9, Math.sqrt(Math.max(0, 2 * g * (E - y0)))); const was = hpp.s; hpp.s += hpp.dir * hpp.v * dt;
+    if (hpp.ending && (was - Lt / 2) * (hpp.s - Lt / 2) <= 0) { hpEnd(); }
+    if (hpp.s >= Lt || hpp.s <= 0) { const side = hpp.dir; hpp.s = side > 0 ? Lt : 0; Object.assign(hpp, { phase: 'air', side, at: 0, h: 0 }); hpp.x = side * (lip - .12); hpp.y = HP.R; hpp.th = side * Math.PI / 2;
+      hpp.air = hpp.tapped ? .45 + 1.35 * hpp.q : HP.base; hpp.vy = Math.sqrt(2 * g * hpp.air); sfx('boing'); if (hpp.tapped) hpTrick(hpp.q);
+      if (hpp.guided) { hpp.guided = false; hpp.guide--; } if (hpp.tapped && hpp.q >= .8) hpp.guide = 0; }
+    else { const [x, y, th] = hpAt(hpp.s); hpp.x = x; hpp.y = y; hpp.th = th;
+      // (the edge ahead glows as the moment to tap comes near)
+      if (!hpp.tapped && !hpp.ending) { const dist = hpp.dir > 0 ? Lt - hpp.s : hpp.s, vl = Math.sqrt(2 * g * HP.base), t = dist / Math.max(.5, (hpp.v + vl) / 2); glow[hpp.dir > 0 ? 1 : 0] = Math.max(0, 1 - Math.abs(t - .08) / win); if (hpp.guide > 0 && !hpp.guided && t < .4) hpGuide(hpp.dir); } } }
+  else if (hpp.phase === 'air') { hpp.at += dt; hpp.vy -= g * dt; hpp.h += hpp.vy * dt;
+    const rem = (hpp.vy + Math.sqrt(Math.max(0, hpp.vy * hpp.vy + 2 * g * Math.max(0, hpp.h)))) / g, prog = Math.min(1, hpp.at / Math.max(.01, hpp.at + rem));
+    hpp.x = hpp.side * (lip - .12); hpp.y = HP.R + Math.max(0, hpp.h); hpp.th = hpp.side * Math.PI / 2 * (1 - Math.pow(Math.sin(Math.PI * prog), .8));
+    sk.jy = Math.max(.001, hpp.h); sk.spin = sk.trick ? prog * Math.PI * 2 : 0;
+    if (hpp.at < .28 && !hpp.tapped) glow[hpp.side > 0 ? 1 : 0] = .5;
+    // (the stars on the way up and down: by the figure's middle)
+    const cx = hpp.x - hpp.side * .55 * Math.sin(Math.abs(hpp.th)), cy = hpp.y + .55 * Math.cos(hpp.th);
+    for (const m of hpp.stars) if (m.visible && m.userData.side === hpp.side && Math.hypot(m.position.x - cx, m.position.y - cy) < .45) { m.visible = false; addStars(1); sfx('ding'); hpp.hop = .5; }
+    if (hpp.h <= 0 && hpp.vy < 0) { hpp.phase = 'ride'; hpp.dir = -hpp.side; hpp.s = hpp.side > 0 ? Lt - .001 : .001; hpp.Ed = HP.R + hpp.air; hpp.v = Math.sqrt(2 * g * hpp.air); Object.assign(sk, { trick: null, jy: 0, spin: 0, extra: null }); hpp.tapped = false; hpp.q = 0;
+      if (!hpp.free) { hpp.hops++; chalEl.style.setProperty('--f', Math.min(1, hpp.hops / HP.hops).toFixed(3)); if (hpp.hops >= HP.hops) hpp.ending = true; } hpHang(hpp.side); } }
+  for (let i = 0; i < 2; i++) { const m = hpp.cope[i].material; m.emissiveIntensity += (glow[i] * (.9 + .3 * Math.sin(now * 14)) - m.emissiveIntensity) * Math.min(1, dt * 12); }
+  for (const m of hpp.stars) if (m.visible) { m.rotation.y = now * 2.5 + m.userData.k; m.position.y = HP.R + HP.stars[m.userData.k] + .05 * Math.sin(now * 3 + m.userData.k); }
+  // (the figure: on the ramp's surface, square to it; the board and the riding pose as on the road, the tricks the same)
+  let d = hpp.th - hpp.tilt.rotation.z; hpp.tilt.rotation.z += d * Math.min(1, dt * 20); hpp.tilt.position.set(hpp.x, hpp.y, 0);
+  sk.rig.position.set(0, 0, 0); sk.rig.rotation.set(0, -Math.PI / 2 + (sk.trick === 'spin' ? sk.spin : sk.trick === 'dobbelt' ? 2 * sk.spin : 0), 0);
+  { const q = 1 - Math.min(1, Math.abs(hpp.th) / 1.6); sk.arm = .07 * Math.sin(now * 1.9) + (hpp.phase === 'air' ? .35 * Math.sin(now * 6) : .15 * q * Math.sin(now * 2.6)); }
+  sk.lean = 0; hpp.tilt.updateMatrixWorld(true); skatePose(); skTrickPose(); { const pz = sk.rig.position.z; sk.rig.position.z = 0; sk.rig.position.x = -pz; }
+  // (the pet: looking after the figure, a happy hop when a star is taken)
+  if (hpp.pet) { const pg = hpp.pet.group, p = hpp.petG.position; pg.rotation.y = Math.atan2(hpp.x - p.x, -p.z) * .8; hpp.hop = Math.max(0, hpp.hop - dt); pg.position.y = hpp.hop > 0 ? .12 * Math.abs(Math.sin(hpp.hop * Math.PI * 4)) : 0; }
+  hpCam(dt); }
+// (the camera: the whole ramp in the picture, following the figure a little; up in the air with a trick it glides nearer -
+// the skate park's soft camera, SKATE_CAM - and back out on landing)
+function hpCam(dt) { const fovT = Math.tan(camera.fov * Math.PI / 360), a = camera.aspect, need = hpLip() + 1.2, d0 = Math.min(24, Math.max(need / (fovT * a), 3.1 / fovT)), seen = d0 * fovT * a;
+  const want = SKATE_CAM && hpp.phase === 'air' && sk.trick ? 1 : 0; hpp.camK += (want - hpp.camK) * Math.min(1, dt * (want ? 2.2 : 1.3)); if (hpp.camK < .002) hpp.camK = 0;
+  const c = hpp.camK, k = c * c * (3 - 2 * c), follow = Math.min(.85, Math.max(.2, 1.2 - seen / need)) + .35 * k; hpp.camX += (hpp.x * follow - hpp.camX) * Math.min(1, dt * 2.5);
+  const ty = 2.1 + (hpp.y + .7 - 2.1) * .85 * k, tx = hpp.camX + (hpp.x - hpp.side * .3 - hpp.camX) * .7 * k, d = d0 * (1 - .18 * k); controls.target.set(tx, ty, 0); camera.position.set(tx + d * .1, ty + d * .17 * (1 - .4 * k), d); camera.lookAt(controls.target); }
 // (stars to the corner; every fifth the confetti - the skater rides on)
 function addStars(n) { const before = game.stars; game.stars += n; showStars(true); scoreGain(n); if (Math.floor(game.stars / 5) > Math.floor(before / 5)) celebrate(); }
 // ---- the stars kept (the user, 03-11-2026): on this device only, the child's - one store for every figure, not each its
@@ -7274,7 +7611,7 @@ function showStarSheet(id = starShown || players.now) { starShown = id; const p 
   // (the shop: every special thing, ✓ when this child owns it, the lock and the price when not - tapping one buys it)
   const shop = document.getElementById('shopList'); shop.innerHTML = '';
   for (const [n, price] of Object.entries(SHOP)) { if (!free(n)) continue; const b = iconButton(`ikoner/valg-${n}.png`, shopThing(n).label), own = s.owned?.includes(n);
-    b.classList.toggle('locked', !own); b.append(Object.assign(document.createElement('span'), { className: 'price' + (own ? ' own' : ''), textContent: own ? '✓' : `🔒 ${krTxt(price)}` }));
+    b.classList.toggle('locked', !own); b.append(Object.assign(document.createElement('span'), { className: 'price' + (own ? ' own' : ''), textContent: own ? '✓' : '🔒' }));
     b.onclick = () => { if (!own) askBuy(n, p.id); }; shop.append(b); }
   // (what this child has bought, the newest first - a picture to go by, the name, the day and the price)
   document.getElementById('buyLog').innerHTML = (s.history || []).map(h => `<div class="buy-row"><img src="ikoner/valg-${h.n}.png" alt=""><span>${esc(tr(shopThing(h.n).label))}<small>${new Date(h.at).toLocaleDateString(T('da-DK', 'en-US'))}</small></span><b>${krTxt(h.kr)}</b></div>`).join('');
@@ -7376,13 +7713,13 @@ document.getElementById('kidList').addEventListener('click', e => { const b = e.
 showPlayer();
 function showRecord() { const el = document.getElementById('record'); el.textContent = '🏆 ' + bestNow(); el.classList.toggle('beaten', !!game.record); document.getElementById('hudKr').textContent = `💰 ${krOf(score)}`; }
 document.getElementById('stage').addEventListener('pointerdown', e => { if (!game.on || e.target.closest('button')) return; e.preventDefault();
-  if (onBoard(game.mode)) { if (sk.jy > 0 && skAirTap()) return; const r = e.currentTarget.getBoundingClientRect(); steer(e.clientX < r.left + r.width / 2 ? -1 : 1); } else if (game.mode === 'island') islandTap(e); else if (game.mode === 'sea') { sea.held = true; seaTap(e); } else if (game.mode === 'space') { sp.held = true; spaceTap(e, true); } else if (game.mode === 'hide') hideTap(e); else if (game.mode === 'pk') pkTap(e); else if (game.mode === 'skihop') sjTap(); else if (game.mode === 'cypher' || game.mode === 'studio') {} else jump(); });
+  if (onBoard(game.mode)) { if (hpp.on) { hpTap(); return; } if (sk.jy > 0 && skAirTap()) return; const r = e.currentTarget.getBoundingClientRect(); steer(e.clientX < r.left + r.width / 2 ? -1 : 1); } else if (game.mode === 'island') islandTap(e); else if (game.mode === 'sea') { sea.held = true; seaTap(e); } else if (game.mode === 'space') { sp.held = true; spaceTap(e, true); } else if (game.mode === 'hide') hideTap(e); else if (game.mode === 'pk') pkTap(e); else if (game.mode === 'skihop') sjTap(); else if (game.mode === 'cypher' || game.mode === 'studio') {} else jump(); });
 // (under the sea a finger held down and moved leads the figure along)
 document.getElementById('stage').addEventListener('pointermove', e => { if (game.on && game.mode === 'sea' && sea.held) seaTap(e); if (game.on && game.mode === 'space' && sp.held) spaceTap(e); });
 for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) document.getElementById('stage').addEventListener(ev, () => { sea.held = false; sp.held = false; });
 addEventListener('keydown', e => { if (!game.on || /INPUT/.test(e.target.tagName)) return;
   if (onBoard(game.mode) && (e.code === 'ArrowLeft' || e.code === 'ArrowRight')) { e.preventDefault(); steer(e.code === 'ArrowLeft' ? -1 : 1); }
-  else if (onBoard(game.mode) && (e.code === 'Space' || e.code === 'ArrowUp')) { e.preventDefault(); skAirTap(); }
+  else if (onBoard(game.mode) && (e.code === 'Space' || e.code === 'ArrowUp')) { e.preventDefault(); if (hpp.on) hpTap(); else skAirTap(); }
   else if (MODES[game.mode].from && e.code === 'Space') { e.preventDefault(); jump(); } });
 document.getElementById('gameExit').onclick = () => stopGame();
 // (the level button in the game: the level played now on it; tapped, the five levels under it - and the three ways of Hop
@@ -7392,13 +7729,16 @@ function showLvl(open = false) { lvlBtn.firstElementChild.src = `ikoner/valg-${g
   const row = (items, now, set) => { const d = document.createElement('div'); for (const [id, label] of items) { const b = document.createElement('button'), i = new Image(); i.src = `ikoner/valg-${id}.png`; i.alt = ''; b.append(i); b.setAttribute('aria-label', tr(label)); b.classList.toggle('on', id === now);
       b.onclick = () => { lvlPop.hidden = true; if (id !== now) set(id); showLvl(); }; d.append(b); } lvlPop.append(d); };
   { const wr = worldRow(); if (wr) lvlPop.append(wr); }
-  if (SKATE_V11 && game.mode === 'skate') { const c = document.createElement('button'); c.className = 'lvl-chal'; c.classList.toggle('on', skc.want); c.textContent = skc.want ? T('🛹 Kør frit', '🛹 Ride freely') : T('🏁 Stjerne-challenge', '🏁 Star challenge');
+  if (SKATE_V11 && game.mode === 'skate' && !hpp.on) { const c = document.createElement('button'); c.className = 'lvl-chal'; c.classList.toggle('on', skc.want); c.textContent = skc.want ? T('🛹 Kør frit', '🛹 Ride freely') : T('🏁 Stjerne-challenge', '🏁 Star challenge');
     c.onclick = () => { lvlPop.hidden = true; skc.want = !skc.want; stopGame(true); startGame('skate'); showLvl(); }; lvlPop.append(c); }
   row(LEVELS, game.level, setLevel); if (MODES[game.mode]?.from) row(HOP_WAYS, game.mode, setHopWay); }
 lvlBtn.onclick = () => showLvl(lvlPop.hidden);
 // (no menu from a long press anywhere but in the name box)
 document.querySelector('.main').addEventListener('contextmenu', e => { if (e.target.tagName !== 'INPUT') e.preventDefault(); });
 // (the game's tab starts it and shows its levels in the box, as a movement's tab shows its kinds)
+// (the games' names kept for screen readers and as a tip on a computer, now they are not shown - every icon button the same)
+document.querySelectorAll('.tabgroup button').forEach(b => { if (b.getAttribute('aria-label')) return; const t = b.querySelector('span:not(.price):not(.lock-badge)')?.textContent.replace(/­/g, '').trim(); if (t) { b.setAttribute('aria-label', tr(t)); b.title = tr(t); } });
+document.querySelectorAll('#games [data-game]').forEach(b => { const t = b.querySelector('span')?.textContent.replace(/­/g, ''); if (t) { b.setAttribute('aria-label', tr(t)); b.title = tr(t); } });
 document.querySelectorAll('[data-game]').forEach(b => b.onclick = () => { soundOut()?.resume(); askWho(() => { boxOpen = true; stopGame(true); startGame(b.dataset.game === 'hop' ? game.hopWay || 'side' : b.dataset.game); if (!dressWant) { partNow = 'game-hop'; showSwatches(); } }); });
 // (Hop over bolden: under the levels the three ways to see it, each with its picture)
 const HOP_WAYS = [['side', 'Fra siden'], ['back', 'Bagfra'], ['front', 'Forfra']];
@@ -7563,7 +7903,7 @@ musicBtn.onclick = () => { musicOn = !musicOn; try { localStorage.setItem('minim
 // (once the figure is in, the hint goes into the i in the corner - on a touch screen and on a computer alike)
 const infoBtn = document.getElementById('infoBtn'), infoPop = document.getElementById('infoPop'); let infoTimer = 0;
 // (the globe: the page loaded anew in the other language, with the figure on the screen - not in a game)
-{ const b = document.getElementById('langBtn'), [ic, nm] = b.children; nm.textContent = T('Skift sprog', 'Language'); // (not the other language's name: more may come - the user 09-11-2026)
+{ const b = document.getElementById('langBtn'), [ic, nm] = b.children; nm.textContent = T('Skift sprog', 'Language'); b.setAttribute('aria-label', nm.textContent); b.title = nm.textContent; // (not the other language's name: more may come - the user 09-11-2026)
   ic.innerHTML = '<img src="ikoner/knap-sprog.png" alt="">';
   // (behind the grown-up's sum, as the other lilac buttons - the language is for grown-ups, the user 09-11-2026)
   b.onclick = () => { if (game.on) { toast('Stop spillet først'); return; } askGrownUp(() => { try { localStorage.setItem('minimig3d.sprog', T('en', 'da')); } catch (e) {} keepLast(); location.reload(); }); }; }
@@ -7575,9 +7915,9 @@ const infoBtn = document.getElementById('infoBtn'), infoPop = document.getElemen
   last = e.timeStamp; }, { passive: false });
   document.addEventListener('dblclick', e => e.preventDefault(), { passive: false }); }
 // (on the test page only: a button with kroner, to try the shop without playing for them - the user, 04-11-2026)
-if (location.pathname.includes('/test/')) { const b = document.createElement('button'); b.textContent = '+100 💰'; b.style.cssText = 'position:fixed;top:28px;left:calc(50% - 50px);transform:translateX(-50%);z-index:999;background:#FFC233;color:#5A3A00;border:0;border-radius:10px;padding:5px 12px;font:700 13px system-ui,sans-serif;cursor:pointer'; b.onclick = () => { krOf(score); score.kr += 100; saveScore(); showRecord(); toast(`💰 ${score.kr}`); if (!document.getElementById('starSheet').hidden) showStarSheet(); }; document.body.append(b); 
+if (location.pathname.includes('/test/')) { const b = document.createElement('button'); b.textContent = '+100 💰'; b.style.cssText = 'position:fixed;top:26px;right:6px;z-index:999;background:#FFC233;color:#5A3A00;border:0;border-radius:9px;padding:3px 8px;font:700 11px system-ui,sans-serif;cursor:pointer;opacity:.85'; /* (test site only: up in the right corner, under the TEST mark - the user, 24-11-2026: in the middle they hid the four buttons at the top) */ b.onclick = () => { krOf(score); score.kr += 100; saveScore(); showRecord(); toast(`💰 ${score.kr}`); if (!document.getElementById('starSheet').hidden) showStarSheet(); }; document.body.append(b); 
   // (and one with stars for the star jar of the world being played, to get on to the next world without riding it full - the user, 19-11-2026)
-  const st = b.cloneNode(); st.textContent = '+100 ⭐'; st.style.left = 'calc(50% + 50px)'; st.onclick = () => { if (!game.on || !WORLDS[game.mode]) { toast('⭐ Start et spil med verdener først'); return; }
+  const st = b.cloneNode(); st.textContent = '+100 ⭐'; st.style.top = '50px'; st.onclick = () => { if (!game.on || !WORLDS[game.mode]) { toast('⭐ Start et spil med verdener først'); return; }
     const w = worldsOf(game.mode), i = worldNow(game.mode); jarGain(100); saveScore(); toast(`⭐ ${w.jar[i] || 0} / ${JAR}`); }; document.body.append(st); }
 // (the Advent parcel - the user, 21-11-2026: on a gift's Sunday, when the figure is there and no game runs, a parcel
 // with a bow bounces in the middle; tapped, it opens with confetti and a ta-da, and the gift goes on the figure. Several
@@ -7601,7 +7941,7 @@ function adventCheck() { if (adventOpenNow || game.on || !glb || !hairBase?.whol
   document.body.append(box); }
 setInterval(adventCheck, 2000);
 // (on the test site: move the date on to the next Advent Sunday, to see each gift come - the user, 21-11-2026)
-if (TEST_SITE) { const b = document.createElement('button'); b.textContent = '🎁 Næste søndag'; b.style.cssText = 'position:fixed;top:58px;left:50%;transform:translateX(-50%);z-index:999;background:#2FB872;color:#fff;border:0;border-radius:10px;padding:5px 12px;font:700 13px system-ui,sans-serif;cursor:pointer';
+if (TEST_SITE) { const b = document.createElement('button'); b.textContent = '🎁 Næste søndag'; b.style.cssText = 'position:fixed;top:74px;right:6px;z-index:999;background:#2FB872;color:#fff;border:0;border-radius:9px;padding:3px 8px;font:700 11px system-ui,sans-serif;cursor:pointer;opacity:.85';
   b.onclick = () => { const now = adventToday(), next = ADVENT_DAYS.find(x => x > now); if (!next) { try { localStorage.removeItem(ADVENT_SKIP); localStorage.removeItem(ADVENT_KEY); } catch (e) { } toast('🎁 Forfra: rigtig dato, ingen gaver åbnet'); renderStyles(); return; }
     let skip = 0; try { skip = +localStorage.getItem(ADVENT_SKIP) || 0; } catch (e) { } const [y, m, d] = now.split('-').map(Number), [y2, m2, d2] = next.split('-').map(Number);
     skip += Math.round((Date.UTC(y2, m2 - 1, d2) - Date.UTC(y, m - 1, d)) / 864e5); try { localStorage.setItem(ADVENT_SKIP, String(skip)); } catch (e) { } toast(`🎁 Nu er det ${next}`); renderStyles(); adventCheck(); };
@@ -7611,22 +7951,38 @@ const infoSave = document.createElement('span'); infoSave.innerHTML = T('<br>�
 const infoVersion = document.createElement('small'); infoVersion.style.cssText = 'display:block;margin-top:6px;opacity:.65;font-weight:600'; infoVersion.textContent = 'Version ' + document.querySelector('meta[name="minimig-version"]').content;
 // (and the trademark under it - the user, 18-11-2026: ™ until a formal registration, never ®)
 const infoTm = document.createElement('small'); infoTm.style.cssText = 'display:block;margin-top:2px;opacity:.55;font-weight:600;font-size:.72em'; infoTm.textContent = T('MiniMig™ er et varemærke tilhørende LehCo ApS.', 'MiniMig™ is a trademark of LehCo ApS.');
-infoBtn.onclick = () => { const p = playerNow(); infoSave.remove(); infoVersion.remove(); infoTm.remove(); if (!p.name || !p.fig) infoPop.append(infoSave); infoPop.append(infoVersion, infoTm); infoPop.hidden = !infoPop.hidden; infoBtn.setAttribute('aria-expanded', String(!infoPop.hidden)); clearTimeout(infoTimer); if (!infoPop.hidden) infoTimer = setTimeout(() => { infoPop.hidden = true; infoBtn.setAttribute('aria-expanded', 'false'); }, 16000); };
+// (Plan C - LehCo, 23-11-2026: the app is tested through TestFlight over Christmas, everything open and free. The TestFlight
+// build says so on the start screen and under ⓘ; scripts/build.mjs on the app branch sets MINIMIG_TESTFLIGHT for those
+// builds only - an App Store build leaves it out, and nothing shows)
+const TESTFLIGHT = window.MINIMIG_TESTFLIGHT === true, TF_TEXT = () => T('Testudgave – alt er gratis i testperioden', 'Test version – everything is free during the test period');
+const infoTest = document.createElement('small'); infoTest.style.cssText = 'display:block;margin-top:6px;font-weight:800;color:#2FB872';
+if (TESTFLIGHT) { const pill = document.createElement('div'); pill.className = 'tf-pill'; pill.textContent = '🧪 ' + TF_TEXT(); document.getElementById('stage').append(pill); }
+infoBtn.onclick = () => { if (!game.on && infoPop.hidden) { showHand('rotate', 4200); setTimeout(() => { if (handEl.classList.contains('rotate')) showHand('pinch', 4200); }, 4300); } const p = playerNow(); infoSave.remove(); infoVersion.remove(); infoTm.remove(); infoTest.remove(); if (!p.name || !p.fig) infoPop.append(infoSave); infoPop.append(infoVersion, infoTm); if (TESTFLIGHT) { infoTest.textContent = TF_TEXT(); infoPop.append(infoTest); } infoPop.hidden = !infoPop.hidden; infoBtn.setAttribute('aria-expanded', String(!infoPop.hidden)); clearTimeout(infoTimer); if (!infoPop.hidden) infoTimer = setTimeout(() => { infoPop.hidden = true; infoBtn.setAttribute('aria-expanded', 'false'); }, 16000); };
 // (the figure on the screen remembered on this device, and put on again when the game opens - the pages promised it, and
 // a new version comes in by itself when the game is put away; never while it is being put on, nor in a game. A child with
 // a MiniMig of their own and nothing remembered yet gets that)
-const LAST_KEY = 'minimig3d.seneste'; let lastOn = false, lastSaved = '';
-function keepLast() { if (!lastOn || game.on) return; try { const f = JSON.stringify(figureNow()); if (f !== lastSaved) { localStorage.setItem(LAST_KEY, f); lastSaved = f; } } catch (e) {} }
+const LAST_KEY = 'minimig3d.seneste', LAST_PIC = 'minimig3d.senestebillede'; let lastOn = false, lastSaved = '', lastPic = '';
+// (and a small picture of it - Trine, 23-11-2026: the figure took a while to come. Next time that picture is shown at once,
+// until the real one is there; taken once the figure has stood still dressed a moment, never in a game)
+function keepLast() { if (!lastOn || game.on) return; try { const f = JSON.stringify(figureNow()); if (f !== lastSaved) { localStorage.setItem(LAST_KEY, f); lastSaved = f; }
+  if (f !== lastPic && hairBase && holder.visible && !Object.values(GARMENTS).some(g => g.shown !== g.now)) { localStorage.setItem(LAST_PIC, figurePicture('hel', .3).toDataURL('image/jpeg', .8)); lastPic = f; } } catch (e) {} }
+const ghost = (() => { try { const src = localStorage.getItem(LAST_PIC); if (!src) return null; const im = Object.assign(new Image(), { className: 'fig-ghost', alt: '', src }); document.getElementById('stage').append(im); return im; } catch (e) { return null; } })();
+const ghostOff = () => { if (!ghost) return; ghost.style.opacity = '0'; setTimeout(() => ghost.remove(), 600); };
 setInterval(keepLast, 3000); addEventListener('pagehide', keepLast); document.addEventListener('visibilitychange', () => { if (document.hidden) keepLast(); });
 async function wearLast() { let f = null; try { f = JSON.parse(localStorage.getItem(LAST_KEY)); } catch (e) {} f ||= playerNow().fig; if (!f) return; lastSaved = JSON.stringify(f);
   // (out of sight until it is dressed, but not for long if something can't be fetched)
   holder.visible = false; try { await Promise.race([wearFigure(f), new Promise(ok => setTimeout(ok, 8000))]); } catch (e) {} holder.visible = true; }
-loadFbx().then(async ok => { const tag = document.getElementById('tag'); if (!ok) { tag.textContent = tr('Figuren kunne ikke hentes'); return; }
+// (the busy star while the figure is fetched the first time - the user, 24-11-2026: no »Henter figuren«, the star says it)
+busyOn();
+loadFbx().then(async ok => { const tag = document.getElementById('tag'); if (!ok) { busyOff(); ghostOff(); tag.textContent = tr('Figuren kunne ikke hentes'); return; }
   // (on a computer too, since 03-11-2026 - the user wanted it the same everywhere - in words for the mouse)
-  if (matchMedia('(hover: hover) and (pointer: fine)').matches) infoPop.innerHTML = T('🖱️ Træk for at dreje figuren<br>🔍 Rul med musen for at zoome<br>👕 Klik på navnet på trøjen, så siger figuren det – med din egen indtalte stemme, hvis du har indtalt en', '🖱️ Drag to turn the figure<br>🔍 Scroll with the mouse to zoom<br>👕 Click the name on the top and the figure says it – in your own recorded voice, if you have recorded one');
+  // (turning and zooming shown by the hand now, not in words - the user, 24-11-2026; ⓘ shows the hand again)
+  if (matchMedia('(hover: hover) and (pointer: fine)').matches) infoPop.innerHTML = T('👕 Klik på navnet på trøjen, så siger figuren det – med din egen indtalte stemme, hvis du har indtalt en', '👕 Click the name on the top and the figure says it – in your own recorded voice, if you have recorded one');
   let first = false; try { first = !localStorage.getItem(LAST_KEY) && !playerNow().fig && !savedFigs().length; } catch (e) { }
-  await wearLast(); lastOn = true; if (first && !game.on) showWelcome();
-  tag.textContent = ''; infoBtn.hidden = false; }).catch(() => { document.getElementById('tag').textContent = tr('Figuren kunne ikke hentes'); }); // (a dropped connection said "Henter figuren" for ever)
+  // (the figure's first drawing works out much once - the vest's smoothing, the mouth's parts: a new child got all of it on
+  // the tap on Dreng or Pige, seconds of nothing. Done here instead, under the busy star)
+  await wearLast(); if (first) try { redrawBody(); } catch (e) {} ghostOff(); busyOff(); lastOn = true; if (first && !game.on) showWelcome(); setTimeout(figureHand, 2500);
+  tag.textContent = ''; infoBtn.hidden = false; }).catch(() => { busyOff(); document.getElementById('tag').textContent = tr('Figuren kunne ikke hentes'); }); // (a dropped connection said "Henter figuren" for ever)
 
 // ---- render loop ----
 const clock = new THREE.Clock();
@@ -7644,6 +8000,29 @@ function glide() { if (!goal) return; controls.target.lerp(goal.target, .12); ca
 const stage = document.getElementById('stage');
 function resize() { const w = stage.clientWidth, h = stage.clientHeight; renderer.setSize(w, h, false); camera.aspect = w / h;
   farZ = w < h * .8 ? 6.6 : 7; if (!closeUp) camera.position.z = farZ; camera.updateProjectionMatrix(); bgShown = ''; }
+// ---- The scroll hand (the user, 24-11-2026): when a menu opens and pushes other icons out of sight - most of all on an
+// iPhone held sideways - a hand sweeps up (more below) or to the left (more to the side) over the part that can be
+// scrolled, until the child has scrolled it once. Every scrolling part: the panel of icons, the row of tabs on a phone,
+// the open windows (sheets) and the dance choices
+const scrollHand = Object.assign(document.createElement('div'), { className: 'scroll-hand', hidden: true, textContent: '👆' }); document.body.append(scrollHand);
+var scrollSeen = new WeakSet(), scrollT = 0, scrollOff = 0, userAt = 0; // (var: scrollHint may be called before this line runs)
+for (const ev of ['wheel', 'touchmove', 'keydown']) addEventListener(ev, () => { userAt = Date.now(); }, { passive: true, capture: true });
+function scrollHint() { clearTimeout(scrollT); scrollT = setTimeout(() => { if (typeof game !== 'undefined' && game.on) return;
+  // (a window open: only it - not the panel behind it)
+  const open = [...document.querySelectorAll('.sheet:not([hidden]) .sheet-card')], list = (open.length ? open : [...document.querySelectorAll('.panel, .parts, .ds-opts')]).filter(el => el.offsetParent && !scrollSeen.has(el));
+  if (!open.length && document.querySelector('.sheet:not([hidden])')) { scrollHand.hidden = true; return; }
+  for (const el of list) { const cs = getComputedStyle(el), r = el.getBoundingClientRect(); if (r.width < 60 || r.height < 60) continue;
+    const vert = /auto|scroll/.test(cs.overflowY), down = vert && el.scrollHeight - el.clientHeight - el.scrollTop > 40, above = vert && el.scrollTop > 40, side = /auto|scroll/.test(cs.overflowX) && el.scrollWidth - el.clientWidth - el.scrollLeft > 40;
+    if (!down && !above && !side) continue;
+    const bottom = Math.min(r.bottom, innerHeight), right = Math.min(r.right, innerWidth);
+    // (more below: the hand sweeps up; only more above - the menu scrolled itself down to what opened - it sweeps down)
+    const v = down || above; scrollHand.className = 'scroll-hand ' + (down ? 'up' : above ? 'down' : 'left'); scrollHand.style.left = (v ? r.left + r.width / 2 - 30 : right - 80) + 'px'; scrollHand.style.top = (down ? bottom - 110 : above ? Math.max(r.top, 0) + 20 : r.top + Math.min(r.height, 120) / 2 - 20) + 'px'; scrollHand.hidden = false;
+    // (only the child's own scrolling counts - the page scrolls by itself to a menu opened)
+    const stop = () => { if (Date.now() - userAt > 1500) return; scrollSeen.add(el); scrollHand.hidden = true; el.removeEventListener('scroll', stop); }; el.addEventListener('scroll', stop); clearTimeout(scrollOff); scrollOff = setTimeout(() => { scrollHand.hidden = true; }, 3800); return; }
+  scrollHand.hidden = true; }, 700); }
+// (a window opened or shut: look again)
+new MutationObserver(m => { if (m.some(r => r.target.classList?.contains('sheet'))) scrollHint(); }).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['hidden'] });
+addEventListener('resize', () => scrollHint());
 addEventListener('resize', resize); resize(); new ResizeObserver(resize).observe(stage);
 // (and the page laid out afresh when the device is turned - an iPhone turned upright again kept the tabs' sideways
 // height until something was tapped, the user 22-11-2026)
@@ -7653,7 +8032,7 @@ addEventListener('resize', resize); resize(); new ResizeObserver(resize).observe
 // the next frame only after this one, so one error froze the figure for good)
 renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElapsedTime();
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
-  if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
+  if (mixer) mixer.update(dt); headShape(); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { gearTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
 </body>
 </html>

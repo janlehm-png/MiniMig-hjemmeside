@@ -13,9 +13,18 @@ panel.innerHTML = en ? `<button type="button" class="pwa-help">For grown-ups</bu
 <dialog class="pwa-dialog" aria-labelledby="pwa-title">
 <h2 id="pwa-title" tabindex="-1" autofocus>For grown-ups</h2>
 <p>No account and no ads.</p>
-<h3>A good screen for playing</h3>
-<p>Right now MiniMig works best on a tablet, an iPad or a computer, with plenty of room for both the figure and the choices. A computer screen is even bigger – just open minimig.dk in the browser.</p>
-<p>On an iPhone, try turning the phone sideways if the screen feels cramped. It depends on the size of the screen – choose the direction that works best for you.</p>
+<p>The buttons are pictograms in the simple style children know from kindergarten, so MiniMig works before a child can read – at home and in daycare. Small learning elements are built into the play: your child counts coins, practises rhythm and order in the dance and writes their own name.</p>
+<h3>MiniMig keeps getting better</h3>
+<p>MiniMig is new, and we keep fixing and improving the game. Every so often we gather the improvements into a new version. It comes to minimig.dk first and to TestFlight a little later, because Apple has to approve each version.</p>
+<p>If you have an iPad or iPhone, you can get MiniMig as an app through TestFlight:</p>
+<ol>
+<li>Get the <strong>TestFlight</strong> app from the App Store. It is free and made by Apple.</li>
+<li>Open the link <a href="https://testflight.apple.com/join/SUvxdtq2" target="_blank" rel="noopener">testflight.apple.com/join/SUvxdtq2</a> on the iPad or iPhone, and tap <strong>Accept</strong> and <strong>Install</strong>.</li>
+<li>Open MiniMig from the home screen.</li>
+</ol>
+<p>Already have MiniMig from TestFlight? Then there is nothing more to do. When a new version comes out, tap <strong>Update</strong> in the TestFlight app.</p>
+<h3>Playing in the browser</h3>
+<p>On a computer or an Android tablet, just play here on minimig.dk. The game is best on a big screen such as a tablet or a computer.</p>
 <h3>Add MiniMig to your home screen</h3>
 <p>Then you can open the game directly from the MiniMig icon.</p>
 <p class="pwa-installed" hidden><strong>✓ MiniMig is already on the home screen of this device.</strong> The instructions below can be used on your other devices.</p>
@@ -31,30 +40,35 @@ panel.innerHTML = en ? `<button type="button" class="pwa-help">For grown-ups</bu
 <p>Tap <strong>Install MiniMig</strong> if the button appears. Otherwise open the browser’s menu in Chrome and choose <strong>Install app</strong> or <strong>Add to Home screen</strong>. Confirm that you want to add it.</p>
 </div>
 <h3>Playing without internet</h3>
-<p>MiniMig keeps everything on this device, about 135 MB in all. First the figure, all the moves and the games (about 40 MB), so you can play without internet. After that, clothes, hair, hats and pets download by themselves in the background while there is internet. Please use Wi-Fi the first time.</p>
-<p>The first time, it takes a little while to download the game. After that it can be used without internet.</p>
+<p>MiniMig can keep the whole game on this device, about 135 MB, so you can play without internet. Please use Wi-Fi the first time.</p>
 <div class="pwa-message" role="status" aria-live="polite" aria-atomic="true" hidden><strong>Message</strong>
 <p class="pwa-status">The game is downloading. Please wait, and stay connected to the internet.</p></div>
-<p>The browser may later clear the saved files if the device is short of space. If so, open MiniMig with internet again, and the files can download again.</p>
 <h3>Pictures out of the game</h3>
-<p>With the camera, your child can save a picture of the figure or a profile picture and share it. Before the picture leaves the game, a grown-up has to solve a small math problem.</p>
-<p>After that you can choose to let your child share without asking for 1 hour, for the rest of the day or until you turn it off again (the last one needs a harder math problem). The camera then shows a small green padlock, and you can always turn it off with the <strong>Turn off again</strong> button when you tap the camera. The choice only applies to the device where it was turned on. A name on the top will be in the picture.</p>
-<h3>Your figure and privacy</h3>
-<p>The figures, names, stars and any recorded voice are kept in this browser only. The microphone is only used when your child taps 🎤 to record their name, and only once you have said yes. When MiniMig is added to the home screen, it may get its own separate storage, so the figure may not come along.</p>
+<p>Before a picture of the figure leaves the game, a grown-up has to solve a small math problem. After that you can choose to let your child share without asking for 1 hour, for the rest of the day or until you turn it off again.</p>
 <h3>Brothers, sisters and sound</h3>
-<p>Under <strong>My figures → Children and players – for grown-ups</strong> each child gets their own MiniMig and their own stars. Under <strong>🔊 Sound</strong> you choose which sounds the game may make. Both are behind a small math problem.</p>
-<p>MiniMig uses no analytics tools or tracking.</p>
+<p>Under the <strong>Children and players</strong> button in the grown-ups’ row, each child gets their own MiniMig and their own stars. Under <strong>Sound</strong> you choose which sounds the game may make. Both are behind a small math problem.</p>
+<h3>Privacy</h3>
+<p>The figures, names and stars are kept on this device only. The microphone is only used when your child records their name, and only once you have said yes. MiniMig uses no analytics tools or tracking.</p>
 <h3>Praise, complaints and good ideas</h3>
-<p>MiniMig is new, and we would love to hear from you – what your children like, what isn’t working and what you are missing. Write to <a href="mailto:supportogfeedback@minimig.dk">supportogfeedback@minimig.dk</a>.</p>
+<p>Write to <a href="mailto:supportogfeedback@minimig.dk">supportogfeedback@minimig.dk</a>. If you test in TestFlight, you can also take a screenshot and send it as feedback straight from TestFlight.</p>
 <p><a class="pwa-support" target="_blank" rel="noopener">Help and support</a> · <a class="pwa-privacy" target="_blank" rel="noopener">Read about privacy</a></p>
 <p class="pwa-tm">MiniMig™ is a trademark of LehCo ApS.</p>
 <form method="dialog"><button>Close</button></form></dialog>` : `<button type="button" class="pwa-help">Til voksne</button>
 <dialog class="pwa-dialog" aria-labelledby="pwa-title">
 <h2 id="pwa-title" tabindex="-1" autofocus>Til voksne</h2>
 <p>Uden konto og uden reklamer.</p>
-<h3>En god skærm til legen</h3>
-<p>MiniMig er lige nu bedst egnet til en tablet, en iPad eller en computer, hvor der er god plads til både figuren og valgene. På en computer er skærmen endnu større – åbn blot minimig.dk i browseren.</p>
-<p>På iPhone kan I prøve at vende telefonen vandret, hvis skærmen føles trang. Det afhænger af skærmstørrelsen – vælg den retning, der fungerer bedst for jer.</p>
+<p>Knapperne er piktogrammer i den enkle stil, børn kender fra børnehaven, så MiniMig kan bruges, før barnet kan læse – både derhjemme og i institutionen. I legen er der små læringselementer: barnet tæller med mønterne, øver rytme og rækkefølge i dansen og skriver sit eget navn.</p>
+<h3>MiniMig bliver bedre hele tiden</h3>
+<p>MiniMig er ny, og vi retter og udvikler spillet løbende. Med jævne mellemrum samler vi forbedringerne i en ny udgave. Den kommer først her på minimig.dk og lidt senere i TestFlight, fordi Apple skal godkende hver udgave.</p>
+<p>Har I en iPad eller iPhone, kan I få MiniMig som app gennem TestFlight:</p>
+<ol>
+<li>Hent appen <strong>TestFlight</strong> i App Store. Den er gratis og kommer fra Apple.</li>
+<li>Åbn linket <a href="https://testflight.apple.com/join/SUvxdtq2" target="_blank" rel="noopener">testflight.apple.com/join/SUvxdtq2</a> på iPad’en eller iPhonen, og tryk <strong>Acceptér</strong> og <strong>Installér</strong>.</li>
+<li>Åbn MiniMig fra hjemmeskærmen.</li>
+</ol>
+<p>Har I allerede MiniMig fra TestFlight? Så skal I ikke gøre mere. Når der kommer en ny udgave, trykker I <strong>Opdatér</strong> i TestFlight-appen.</p>
+<h3>Spil i browseren</h3>
+<p>På en computer eller en Android-tablet spiller I bare her på minimig.dk. Spillet er bedst på en stor skærm som en tablet eller en computer.</p>
 <h3>Føj MiniMig til hjemmeskærmen</h3>
 <p>Så kan I åbne spillet direkte fra MiniMig-ikonet.</p>
 <p class="pwa-installed" hidden><strong>✓ MiniMig ligger allerede på hjemmeskærmen på denne enhed.</strong> Vejledningen nedenfor kan bruges på jeres andre enheder.</p>
@@ -70,21 +84,17 @@ panel.innerHTML = en ? `<button type="button" class="pwa-help">For grown-ups</bu
 <p>Tryk på <strong>Installér MiniMig</strong>, hvis knappen vises. Ellers åbner du browserens menu i Chrome og vælger <strong>Installér app</strong> eller <strong>Føj til startskærm</strong>. Bekræft tilføjelsen.</p>
 </div>
 <h3>Spil uden internet</h3>
-<p>MiniMig gemmer det hele på denne enhed, omkring 135 MB i alt. Først figuren, alle bevægelser og spillene (omkring 40 MB), så I kan spille uden internet. Bagefter hentes tøj, hår, hatte og kæledyr af sig selv i baggrunden, mens der er internet. Brug gerne wifi første gang.</p>
-<p>Første gang tager det lidt tid at hente spillet. Derefter kan det bruges uden internet.</p>
+<p>MiniMig kan gemme hele spillet på denne enhed, omkring 135 MB, så I kan spille uden internet. Brug gerne wifi første gang.</p>
 <div class="pwa-message" role="status" aria-live="polite" aria-atomic="true" hidden><strong>Besked</strong>
 <p class="pwa-status">Spillet hentes. Vent lidt, og behold internetforbindelsen.</p></div>
-<p>Browseren kan senere rydde de gemte filer, hvis enheden mangler plads. Åbn i så fald MiniMig med internetforbindelse igen, så filerne kan hentes på ny.</p>
 <h3>Billeder ud af spillet</h3>
-<p>Med kameraet kan barnet gemme et billede af figuren eller et profilbillede og dele det. Før billedet forlader spillet, skal en voksen løse et lille regnestykke.</p>
-<p>Bagefter kan I vælge, at barnet må dele uden at spørge i 1 time, resten af dagen eller indtil I slår det fra igen (det sidste kræver et sværere regnestykke). Så viser kameraet en lille grøn hængelås, og I kan altid slå det fra igen med knappen <strong>Slå fra igen</strong>, når I trykker på kameraet. Valget gælder kun på den enhed, hvor det er slået til. Et navn på trøjen kommer med på billedet.</p>
-<h3>Jeres figur og privatliv</h3>
-<p>Figurerne, navnene, stjernerne og en eventuel indtalt stemme gemmes kun i denne browser. Mikrofonen bruges kun, når barnet trykker 🎤 for at indtale sit navn, og først når I har sagt ja. Når MiniMig føjes til hjemmeskærmen, kan det få sin egen separate lagring, så figuren ikke nødvendigvis følger med.</p>
+<p>Før et billede af figuren forlader spillet, skal en voksen løse et lille regnestykke. Bagefter kan I vælge, at barnet må dele uden at spørge i 1 time, resten af dagen eller indtil I slår det fra igen.</p>
 <h3>Søskende og lyd</h3>
-<p>Under <strong>Mine figurer → Børn og spillere – for voksne</strong> får hvert barn sin egen MiniMig og sine egne stjerner. Under <strong>🔊 Lyd</strong> vælger I, hvilke lyde spillet må lave. Begge dele ligger bag et lille regnestykke.</p>
-<p>MiniMig bruger ingen analyseværktøjer eller sporing.</p>
+<p>Under knappen <strong>Børn og spillere</strong> i de voksnes række får hvert barn sin egen MiniMig og sine egne stjerner. Under <strong>Lyd</strong> vælger I, hvilke lyde spillet må lave. Begge dele ligger bag et lille regnestykke.</p>
+<h3>Privatliv</h3>
+<p>Figurerne, navnene og stjernerne gemmes kun på denne enhed. Mikrofonen bruges kun, når barnet indtaler sit navn, og først når I har sagt ja. MiniMig bruger ingen analyseværktøjer eller sporing.</p>
 <h3>Ros, ris og gode idéer</h3>
-<p>MiniMig er nyt, og vi vil meget gerne høre fra jer – hvad jeres børn kan lide, hvad der driller, og hvad I savner. Skriv til <a href="mailto:supportogfeedback@minimig.dk">supportogfeedback@minimig.dk</a>.</p>
+<p>Skriv til <a href="mailto:supportogfeedback@minimig.dk">supportogfeedback@minimig.dk</a>. Tester I i TestFlight, kan I også tage et skærmbillede og sende det som feedback direkte fra TestFlight.</p>
 <p><a class="pwa-support" target="_blank" rel="noopener">Hjælp og support</a> · <a class="pwa-privacy" target="_blank" rel="noopener">Læs om privatliv</a></p>
 <p class="pwa-tm">MiniMig™ er et varemærke tilhørende LehCo ApS.</p>
 <form method="dialog"><button>Luk</button></form></dialog>`;
