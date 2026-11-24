@@ -469,7 +469,7 @@
     display: grid; gap: 6px; justify-items: center; font: 600 1rem/1.1 system-ui, sans-serif; min-width: 0; }
   .pic-opt canvas, .pic-opt img { width: 100%; height: auto; border-radius: 12px; }
   /* (Dreng and Pige need no words - the pictures say it; the user, 24-11-2026) */
-  #newChoice .pic-opt span { display: none; } .title-pic { width: 56px; height: 56px; display: block; }
+  #newChoice .pic-opt span, .no-pic-words .pic-opt span { display: none; } .title-pic { width: 56px; height: 56px; display: block; }
   .note { margin: 0; font-size: .9rem; color: #6B6191; text-align: center; }
   .gate-q { margin: 0; font: 700 1.5rem/1.2 system-ui, sans-serif; text-align: center; }
   .gate-a { min-height: 2.2rem; font: 700 1.8rem/1.2 system-ui, sans-serif; text-align: center; color: var(--accent); }
@@ -762,12 +762,12 @@
   </div>
 </div>
 <!-- the star: save the whole figure or its profile picture in Mine figurer (stays on the device, so no grown-up needed) -->
-<div class="sheet" id="keepChoice" hidden>
+<div class="sheet no-pic-words" id="keepChoice" hidden>
   <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="keepChoiceTitle">
-    <div class="sheet-head"><h2 id="keepChoiceTitle">Gem i Mine figurer</h2><button class="sheet-x" data-close aria-label="Luk">✕</button></div>
+    <div class="sheet-head"><h2 id="keepChoiceTitle"><img class="title-pic" src="ikoner/knap-gem.png" alt="Gem i Mine figurer"></h2><button class="sheet-x" data-close aria-label="Luk">✕</button></div>
     <div class="pic-opts">
-      <button class="pic-opt" data-pic="hel"><canvas width="200" height="300"></canvas><span>Hele figuren</span></button>
-      <button class="pic-opt" data-pic="profil"><canvas width="300" height="300"></canvas><span>Profilbillede</span></button>
+      <button class="pic-opt" data-pic="hel" aria-label="Hele figuren"><canvas width="200" height="300"></canvas><span>Hele figuren</span></button>
+      <button class="pic-opt" data-pic="profil" aria-label="Profilbillede"><canvas width="300" height="300"></canvas><span>Profilbillede</span></button>
     </div>
   </div>
 </div>
@@ -8021,6 +8021,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); headShape(); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { gearTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;right:6px;z-index:999;background:#E8384F;color:#fff;font:700 11px system-ui,sans-serif;padding:2px 8px;border-radius:9px;pointer-events:none;opacity:.85">TEST 0.18.0 (2e64c90)</div>
+<div style="position:fixed;top:4px;right:6px;z-index:999;background:#E8384F;color:#fff;font:700 11px system-ui,sans-serif;padding:2px 8px;border-radius:9px;pointer-events:none;opacity:.85">TEST 0.18.0 (13435cd)</div>
 </body>
 </html>
