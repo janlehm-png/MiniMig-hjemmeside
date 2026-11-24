@@ -186,9 +186,9 @@
   .chal b { position: relative; display: block; width: 84px; height: 10px; border-radius: 6px; background: #E9E3FF; overflow: hidden; }
   .chal i { position: absolute; left: 0; top: 0; bottom: 0; width: calc(var(--f, 0) * 100%); background: linear-gradient(90deg, #7C5CFF, #FF6FB1); border-radius: 6px; }
   /* (the busy star: shown at once when something takes a while to make - it turns on the GPU, so it keeps turning while the page works) */
-  .busy { position: absolute; left: 50%; top: 50%; z-index: 8; width: 92px; height: 92px; margin: -46px 0 0 -46px; border-radius: 50%; background: rgba(255,255,255,.92); box-shadow: 0 6px 24px rgba(58,46,92,.25); display: grid; place-items: center; pointer-events: none; }
+  .busy { position: absolute; left: 50%; top: 50%; z-index: 8; width: 64px; height: 64px; margin: -32px 0 0 -32px; border-radius: 50%; background: rgba(255,255,255,.92); box-shadow: 0 6px 24px rgba(58,46,92,.25); display: grid; place-items: center; pointer-events: none; }
   .busy[hidden] { display: none; }
-  .busy span { font-size: 54px; line-height: 1; animation: busy-spin 1s linear infinite; will-change: transform; }
+  .busy span { font-size: 36px; line-height: 1; animation: busy-spin 1s linear infinite; will-change: transform; }
   @keyframes busy-spin { to { transform: rotate(360deg); } }
   /* (the show-me hand at a game's start: how it is played, without words) */
   .hand { position: absolute; left: 50%; top: 60%; z-index: 6; font-size: 68px; line-height: 1; pointer-events: none; transform: translate(-50%, 0); filter: drop-shadow(0 4px 6px rgba(0,0,0,.3)); }
@@ -198,6 +198,15 @@
   .hand.sides { animation: hand-sides 2.6s ease-in-out infinite; }
   @keyframes hand-sides { 0%, 100% { left: 22%; transform: translate(-50%, 0); } 15% { left: 22%; transform: translate(-50%, 14px) scale(.82); } 30% { left: 22%; transform: translate(-50%, 0); } 50% { left: 78%; transform: translate(-50%, 0); } 65% { left: 78%; transform: translate(-50%, 14px) scale(.82); } 80% { left: 78%; transform: translate(-50%, 0); } }
   .hand.drag { animation: hand-drag 2.8s ease-in-out infinite; }
+  .hand.rotate { top: 46%; animation: hand-rot 2.1s ease-in-out infinite; }
+  @keyframes hand-rot { 0%, 100% { left: 34%; } 50% { left: 66%; } }
+  .hand.pinch { top: 44%; display: flex; gap: 0; }
+  .hand.pinch i { font-style: normal; display: inline-block; animation: hand-pinch-l 1.8s ease-in-out infinite; }
+  .hand.pinch i + i { animation-name: hand-pinch-r; }
+  @keyframes hand-pinch-l { 0%, 100% { transform: translateX(10px) rotate(-20deg); } 50% { transform: translateX(-34px) rotate(-20deg); } }
+  @keyframes hand-pinch-r { 0%, 100% { transform: translateX(-10px) rotate(20deg); } 50% { transform: translateX(34px) rotate(20deg); } }
+  /* (every button pressed in at a touch - the user, 24-11-2026: a fixed rule, so a tap is always seen) */
+  button:not(:disabled):not(.coin):active { transform: scale(.94); transition: transform .05s; }
   @keyframes hand-drag { 0%, 100% { left: 30%; top: 65%; } 25% { left: 60%; top: 45%; } 50% { left: 72%; top: 62%; } 75% { left: 45%; top: 40%; } }
   /* (a picture of the figure from last time, while the real one is fetched) */
   .fig-ghost { position: absolute; left: 50%; bottom: 4%; height: 84%; transform: translateX(-50%); pointer-events: none; transition: opacity .5s; -webkit-mask-image: radial-gradient(ellipse 46% 50% at 50% 50%, #000 62%, transparent 100%); mask-image: radial-gradient(ellipse 46% 50% at 50% 50%, #000 62%, transparent 100%); }
@@ -484,10 +493,10 @@
 <div class="stage" id="stage">
 <div id="bgFar" hidden></div><div id="bgNear" hidden></div><div id="bgNear2" hidden></div>
 <canvas id="scene"></canvas>
-<div class="top"><span class="tag" id="tag">Henter figuren …</span></div>
+<div class="top"><span class="tag" id="tag"></span></div>
 <!-- (on an iPad or a phone the hint as a small i in the top right corner, opened with a tap - the user, 03-11-2026) -->
 <button class="info-btn" id="infoBtn" aria-label="Sådan gør du" aria-expanded="false" hidden>i</button>
-<div class="info-pop" id="infoPop" hidden>👆 Træk for at dreje figuren<br>🤏 Knib for at zoome<br>👕 Tryk på navnet på trøjen, så siger figuren det – med din egen indtalte stemme, hvis du har indtalt en</div>
+<div class="info-pop" id="infoPop" hidden>👕 Tryk på navnet på trøjen, så siger figuren det – med din egen indtalte stemme, hvis du har indtalt en</div>
 <!-- Hop over bolden: the stars won, and the cross that ends the game; a hint at the start -->
 <div class="hud" id="hud" hidden><span class="hud-left"><span class="hud-face" id="hudFace" hidden></span><span class="stars" id="stars">⭐ 0</span><span class="record" id="record" title="Din rekord">🏆 0</span><span class="record" id="hudKr" title="Dine mønter">💰 0</span><span class="jar" id="hudJar" hidden title="Stjernekrukken"><svg viewBox="0 0 30 38" aria-hidden="true"><defs><clipPath id="jarIn"><path d="M8 11h14v2c3 1 5 3.5 5 7v11a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5V20c0-3.5 2-6 5-7z"/></clipPath><linearGradient id="jarGold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFE27A"/><stop offset="1" stop-color="#FFA81F"/></linearGradient></defs><path d="M8 11h14v2c3 1 5 3.5 5 7v11a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5V20c0-3.5 2-6 5-7z" fill="#DDF0FF"/><g clip-path="url(#jarIn)"><rect class="jar-gold" x="0" y="11" width="30" height="27" fill="url(#jarGold)"/></g><path d="M15 19.5l1.6 3.3 3.6.5-2.6 2.5.6 3.6-3.2-1.7-3.2 1.7.6-3.6-2.6-2.5 3.6-.5z" fill="#FFFFFF" stroke="#E89A10" stroke-width="1" stroke-linejoin="round"/><path d="M8 11h14v2c3 1 5 3.5 5 7v11a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5V20c0-3.5 2-6 5-7z" fill="none" stroke="#5FA8E0" stroke-width="2" stroke-linejoin="round"/><path d="M6.5 20c0-2 1-3.4 2.4-4.2M6.5 23v6" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity=".9"/><rect x="6" y="3" width="18" height="8" rx="3" fill="#E8384F"/><rect x="6" y="7.5" width="18" height="2" fill="#B8243A" opacity=".6"/><rect x="8" y="4.3" width="6" height="1.6" rx=".8" fill="#FFFFFF" opacity=".55"/></svg></span></span><span class="hud-right"><button class="game-x game-lvl" id="gameLvl" aria-label="Sværhedsgrad" aria-expanded="false"><img alt=""></button><button class="game-x" id="gameExit" aria-label="Stop spillet">✕</button></span></div>
 <!-- (the levels - and in Hop over bolden the three ways to play - chosen without leaving the game: the user, 11-11-2026) -->
@@ -1488,7 +1497,7 @@ function drawMouth(o) {
   // (a lip colour picked: the lips that colour, a little of the skin's in it; the first in the row is the lips' own)
   const lipPick = picked.mouth && picked.mouth.toUpperCase() !== PALETTES.mouth[0] ? (n => ({ r: (n >> 16 & 255) / 255, g: (n >> 8 & 255) / 255, b: (n & 255) / 255 }))(parseInt(picked.mouth.slice(1), 16)) : null;
   const kissLip = lipPick ? mix(skin, lipPick, .92) : mix(skin, { r: .74, g: .29, b: .34 }, .5), lipC = lipPick ? mix(skin, lipPick, .9) : mix(mix(skin, { r: .62, g: .3, b: .27 }, .3), skin, .15), seamC = { r: .36, g: .12, b: .12 }, insideC = { r: .48, g: .13, b: .13 },
-    teethC = { r: .98, g: .97, b: .94 }, tongueC = { r: .9, g: .42, b: .44 }, kissC = mix(skin, { r: .78, g: .3, b: .36 }, .8);
+    teethC = { r: .98, g: .97, b: .94 }, tongueC = { r: .9, g: .42, b: .44 }, kissC = lipPick ? mix(skin, lipPick, .92) : mix(skin, { r: .78, g: .3, b: .36 }, .8); // (the kiss in the lip colour picked too - the user, 24-11-2026)
   const cov = d => Math.max(0, Math.min(1, d / edge + .5)), cl = v => Math.max(0, Math.min(1, v)), put = (i, c, k, a) => { if (a <= 0) return;
     o[i] = o[i] * (1 - a) + Math.min(255, c.r * 255 * k) * a; o[i + 1] = o[i + 1] * (1 - a) + Math.min(255, c.g * 255 * k) * a; o[i + 2] = o[i + 2] * (1 - a) + Math.min(255, c.b * 255 * k) * a; };
   // (a lip between its inner edge and its outer: fullest in its middle, a little darker at its rim; the lower one with a
@@ -1869,7 +1878,7 @@ function buildSolid(M, o) { M.solid = M.solid || []; const fz = faceHeight(M), a
     holdByHead(M, g, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: o.o ? .9 : .5, side: THREE.DoubleSide, transparent: true })).castShadow = false; } }
 // (the lips' colour from the skin's: the skin's own at the outer edge, so they melt into the face; deeper, warmer in the middle)
 function colourLips(M, o) { const skin = tex.colours[PARTS.skin] || tex.skin, T = M.texels; let k = 0, c = 0; for (let j = 0; j < T.length; j += 4) if (Math.hypot(T[j + 1], (T[j + 2] - M.my) / .8) < .45) { k += T[j + 3]; c++; } k = c ? k / c : 1;
-  const mix = (a, b, t) => ({ r: a.r * (1 - t) + b.r * t, g: a.g * (1 - t) + b.g * t, b: a.b * (1 - t) + b.b * t }), pick = picked.mouth && picked.mouth.toUpperCase() !== PALETTES.mouth[0] ? (n => ({ r: (n >> 16 & 255) / 255, g: (n >> 8 & 255) / 255, b: (n & 255) / 255 }))(parseInt(picked.mouth.slice(1), 16)) : null, lip = pick ? mix(skin, pick, .92) : mix(skin, { r: .78, g: .32, b: .36 }, o.lipTint || .36), S = linear(Math.min(1, skin.r * k), Math.min(1, skin.g * k), Math.min(1, skin.b * k)), Lp = linear(lip.r, lip.g, lip.b), rim = o.pout ? linear(lip.r * .32, lip.g * .2, lip.b * .2) : o.closed ? linear(lip.r * .55, lip.g * .4, lip.b * .4) : linear(lip.r * .3, lip.g * .17, lip.b * .17), kl = mix(skin, { r: .72, g: .34, b: .4 }, .5), kd = mix(kl, { r: .4, g: .12, b: .14 }, .62), KL = linear(kl.r, kl.g, kl.b), KD = linear(kd.r, kd.g, kd.b), KH = linear(1, .88, .88);
+  const mix = (a, b, t) => ({ r: a.r * (1 - t) + b.r * t, g: a.g * (1 - t) + b.g * t, b: a.b * (1 - t) + b.b * t }), pick = picked.mouth && picked.mouth.toUpperCase() !== PALETTES.mouth[0] ? (n => ({ r: (n >> 16 & 255) / 255, g: (n >> 8 & 255) / 255, b: (n & 255) / 255 }))(parseInt(picked.mouth.slice(1), 16)) : null, lip = pick ? mix(skin, pick, .92) : mix(skin, { r: .78, g: .32, b: .36 }, o.lipTint || .36), S = linear(Math.min(1, skin.r * k), Math.min(1, skin.g * k), Math.min(1, skin.b * k)), Lp = linear(lip.r, lip.g, lip.b), rim = o.pout ? linear(lip.r * .32, lip.g * .2, lip.b * .2) : o.closed ? linear(lip.r * .55, lip.g * .4, lip.b * .4) : linear(lip.r * .3, lip.g * .17, lip.b * .17), kl = pick ? mix(skin, pick, .9) : mix(skin, { r: .72, g: .34, b: .4 }, .5), kd = mix(kl, { r: .4, g: .12, b: .14 }, .62), KL = linear(kl.r, kl.g, kl.b), KD = linear(kd.r, kd.g, kd.b), KH = linear(1, .88, .88);
   for (const g of M.lipT) { const C = g.attributes.color; for (let i = 0; i <= 22; i++) { const a = i / 22, t = a * 1.3 - .3, col = t < .2 ? rim.clone().lerp(Lp, Math.max(0, (t + .3) / .5)) : Lp.clone().lerp(S, Math.min(1, Math.max(0, (t - .55) / .45)) ** 1.3); for (let j = 0; j <= 64; j++) { const sm = v => { v = Math.min(1, Math.max(0, v)); return v * v * (3 - 2 * v); }, au = Math.abs(j / 32 - 1), at = (i * 65 + j) * 4;
         if (o.kiss) { const an = j / 32 * Math.PI, sx = a * Math.cos(an), sy = a * Math.sin(an), seam = sm((.05 - Math.abs(sy)) / .045) * sm((.97 - Math.abs(sx)) / .2), shine = Math.exp(-(((sy + .5) / .22) ** 2 + (sx / .45) ** 2)); KL.clone().lerp(KH, .38 * shine).lerp(KD, Math.max(.8 * seam, .3 * sm((a - .72) / .28))).toArray(C.array, at); C.array[at + 3] = 1 - sm((a - .86) / .14); continue; }
         col.toArray(C.array, at); const pu = o.pout ? Math.exp(-(((j / 32 - 1) * .995 / o.pout.w) ** 2)) : 0; if (pu) { col.clone().lerp(S, pu * sm((t - .02) / .3)).toArray(C.array, at); } C.array[at + 3] = (1 - (o.o ? sm((t - .62) / .38) : sm((t - .4) / .55) * (1 - pu) + sm((t - .78) / .22) * pu)) * (o.hw ? 1 - (o.closed ? sm((au - .5) / .42) : sm((au - .93) / .065)) : 1); } } C.needsUpdate = true; } }
@@ -2034,7 +2043,7 @@ const exists = async u => { try { return (await fetch(u, { method: 'HEAD' })).ok
 // first to have it again)
 const HAIRS = [['haar-kort', 'Kort', { snug: .55, ears: true }], ['haar-kroeller', 'Krøller'], ['haar-strit', 'Strit', { ears: true }], ['haar-fletninger', 'Fletninger', { braids: true, ears: true }], ['haar-fletning', 'Fletning', { ears: true }], ['haar-boelger', 'Bølger', { skull: .45, part: .12, hideEars: true, under: true, sweep: .5 }],
   // (three more - Trine, 23-11-2026: Ebba, 5, wanted more hairstyles. Made at Meshy from drawings on Krøller's busts, lav-haar.ps1)
-  ['haar-hestehale', 'Hestehale', { ears: true, grow: 1.08, under: true }], ['haar-knold', 'Knold', { ears: true, grow: 1.08, under: true }], ['haar-langt', 'Langt hår', { hideEars: true, under: true }]];
+  ['haar-hestehale', 'Hestehale', { ears: true, grow: 1.08, under: true, flat: .5 }], ['haar-knold', 'Knold', { ears: true, grow: 1.08, under: true }], ['haar-langt', 'Langt hår', { hideEars: true, under: true, flat: .5, trim: [.62, 2.15] }]];
 let hairNow = 'haar-kort', hairBase = null; const hairMeshes = {};
 // the figure's eye whites and head bone, measured once as it stands when loaded (in its T-pose, before it moves)
 function measureHead(fbx) {
@@ -2389,6 +2398,12 @@ async function loadHair(name, list = hairTexs, colourPart = 'hair', extra = {}) 
     shift[s].set(0, LIFT * apart, Math.min(.3 * apart, needs[s][Math.floor(needs[s].length * .9)])); }
   // (braids: each is turned as one straight piece about where it starts, just under the ear, until it points down and
   // forward to rest on the front of the chest - a straight line, clear of the shoulder)
+  // (trim - the user, 24-11-2026, on Langt hår: the fringe not down over the brows, and the hair only to the top of the
+  // shoulders - lower it lay thin, close in, and stood out sideways over them. brow: in eye distances over the eyes, in
+  // front of the face; low: in eye distances under them, all round. Triangles wholly past either are left out)
+  if (opts.trim) { const [brow, low] = opts.trim, mx = (mine[0].x + mine[1].x) / 2, fz = (mine[0].z + mine[1].z) / 2 - .25 * apart, idx = g.index.array, keep = [];
+    const out = i => { const x = W[i * 3], y = W[i * 3 + 1], z = W[i * 3 + 2]; return y < eyeY - low * apart || (z > fz && Math.abs(x - mx) < 1.35 * apart && y < eyeY + brow * apart && y > eyeY - 1.2 * apart); };
+    for (let t = 0; t < idx.length; t += 3) if (!(out(idx[t]) && out(idx[t + 1]) && out(idx[t + 2]))) keep.push(idx[t], idx[t + 1], idx[t + 2]); g.setIndex(keep); }
   const bend = opts.braids ? braidsForward(W, n, apart, eyeY, (mine[0].z + mine[1].z) / 2) : null;
   const earLines = opts.snug || opts.ears ? hugHead(W, n, opts, apart, eyeY, mine) : []; hairOverEar(g, W, earLines);
   for (let i = 0; i < n; i++) { p.fromArray(W, i * 3); const w = weight[i];
@@ -2682,7 +2697,7 @@ let dressing = 0; const NO_NET = 'Det kan ikke hentes lige nu 📶';
 // first time; now a star turns in a white circle at once, a frame is drawn before the work starts, and it goes when all is on
 const busyEl = Object.assign(document.createElement('div'), { className: 'busy', hidden: true, innerHTML: '<span>⭐</span>' }); document.getElementById('stage').append(busyEl);
 let busyN = 0, busyT = 0;
-function busyOn() { busyN++; clearTimeout(busyT); busyEl.hidden = !!document.querySelector('.fig-ghost'); } // (not over the picture shown while the figure first comes)
+function busyOn() { busyN++; clearTimeout(busyT); busyEl.hidden = false; }
 function busyOff() { busyN = Math.max(0, busyN - 1); clearTimeout(busyT); if (!busyN) busyT = setTimeout(() => { if (!busyN) busyEl.hidden = true; }, 150); }
 // (a picture drawn first - the star on the screen - before the page goes on; not waited for longer than a moment when hidden)
 const nextPaint = () => new Promise(ok => { let done = false; const go = () => { if (!done) { done = true; ok(); } }; requestAnimationFrame(() => requestAnimationFrame(go)); setTimeout(go, 150); });
@@ -4374,11 +4389,14 @@ function newChoiceWords() { document.getElementById('newChoiceTitle').textConten
 function showWelcome() { welcomeNow = true; newChoiceWords(); document.getElementById('newChoice').hidden = false; }
 document.getElementById('newChoice').addEventListener('click', async e => { const b = e.target.closest('[data-new]'); if (!b || !hairBase) return;
   document.getElementById('newChoice').hidden = true; if (game.on) { toast('Stop spillet først'); return; }
+  // (the busy star at once, and a picture drawn, before the figure is changed - the user, 24-11-2026: the tap seemed to do
+  // nothing for seconds, and was tapped three or four times)
+  busyOn(); await nextPaint(); try {
   // (the figure there was first goes into Mine figurer, so it is never lost - not when it is already the newest one
   // there, or a new figure nobody has changed yet)
   const now = figureNow(), l = savedFigs(), first = welcomeNow; welcomeNow = false;
   if (!first && ![l[0]?.fig, newFig('dreng'), newFig('pige')].some(f => sameFig(f, now))) keepFig('hel', figurePicture('hel', .5));
-  await wearFigure(newFig(b.dataset.new)); toast('✨ Ny MiniMig!'); newChoiceWords();
+  await wearFigure(newFig(b.dataset.new)); } finally { busyOff(); } toast('✨ Ny MiniMig!'); newChoiceWords();
   if (first) { const t = document.querySelector('#mains [data-main="wear"]'); if (t) { t.classList.add('todo'); t.addEventListener('click', () => t.classList.remove('todo'), { once: true }); } } });
 function renderGallery() { const l = savedFigs(), el = document.getElementById('gallery'); renderKids();
   // (first the figure as it is now with ➕, unless it is already here; the one worn now framed)
@@ -5189,8 +5207,17 @@ function startGame(mode = game.mode) { if (game.on || !glb) return; if (!game.ag
   document.querySelectorAll('[data-game]').forEach(b => b.classList.toggle('on', b.dataset.game === mode || b.dataset.game === 'hop' && !!MODES[mode].from)); prepScene(); }
 // (again: only stopped to start once more - at another level or in another way - the figure's own setting not put back)
 const handEl = Object.assign(document.createElement('div'), { className: 'hand', hidden: true, textContent: '👆' }); document.getElementById('stage').append(handEl);
-let handT = 0; function showHand(kind) { clearTimeout(handT); handEl.className = 'hand ' + kind; handEl.hidden = !kind; if (kind) handT = setTimeout(() => { handEl.hidden = true; }, 5200); }
+// (pinch: two fingers going apart and together - zoom; the others one finger)
+let handT = 0; function showHand(kind, ms = 5200) { clearTimeout(handT); handEl.className = 'hand ' + kind; if (kind === 'pinch') handEl.innerHTML = '<i>👆</i><i>👆</i>'; else handEl.textContent = '👆'; handEl.hidden = !kind; if (kind) handT = setTimeout(() => { handEl.hidden = true; }, ms); }
 document.getElementById('stage').addEventListener('pointerdown', () => { if (game.on && !handEl.hidden) setTimeout(() => { handEl.hidden = true; }, 400); });
+// (the figure too - the user, 24-11-2026: how to turn it round, and zoom in and out. Shown a moment after the figure is
+// there and nothing is open, first one finger dragging sideways (turn), then two fingers apart (zoom) - until the child
+// has turned or zoomed it once on this device)
+const TURNED_KEY = 'minimig-test.drejet';
+function figureHand() { try { if (localStorage.getItem(TURNED_KEY)) return; } catch (e) { return; }
+  if (game.on || !holder.visible || [...document.querySelectorAll('.sheet')].some(s => !s.hidden)) { setTimeout(figureHand, 3000); return; }
+  showHand('rotate', 4200); setTimeout(() => { let t = ''; try { t = localStorage.getItem(TURNED_KEY); } catch (e) {} if (!game.on && !t && handEl.classList.contains('rotate')) showHand('pinch', 4200); }, 4300); }
+controls.addEventListener('start', () => { try { localStorage.setItem(TURNED_KEY, '1'); } catch (e) {} if (!game.on && !handEl.hidden) handEl.hidden = true; });
 function stopGame(again) { if (!game.on) return; handEl.hidden = true; game.on = false; game.paused = false; document.getElementById('worldWin').hidden = true; for (const b of [...gamePool(), ...(game.bigPool || [])]) b.group.visible = false; game.dive = false; game.balls = []; confetti.length = 0; unprepScene(); skateStop(); hopWorldStop(); hideStop(); islandStop(); seaStop(); spaceStop(); pkStop(); sjStop(); cyStop(); dsStop();
   // (the sound shut down when nothing plays: on an iPad an open sound channel could go on sounding after the game)
   if (!again) { skc.want = false; try { game.audio?.suspend(); } catch (e) {} setItem(game.held ?? itemNow); game.held = undefined; }
@@ -7851,7 +7878,7 @@ const infoTm = document.createElement('small'); infoTm.style.cssText = 'display:
 const TESTFLIGHT = window.MINIMIG_TESTFLIGHT === true, TF_TEXT = () => T('Testudgave – alt er gratis i testperioden', 'Test version – everything is free during the test period');
 const infoTest = document.createElement('small'); infoTest.style.cssText = 'display:block;margin-top:6px;font-weight:800;color:#2FB872';
 if (TESTFLIGHT) { const pill = document.createElement('div'); pill.className = 'tf-pill'; pill.textContent = '🧪 ' + TF_TEXT(); document.getElementById('stage').append(pill); }
-infoBtn.onclick = () => { const p = playerNow(); infoSave.remove(); infoVersion.remove(); infoTm.remove(); infoTest.remove(); if (!p.name || !p.fig) infoPop.append(infoSave); infoPop.append(infoVersion, infoTm); if (TESTFLIGHT) { infoTest.textContent = TF_TEXT(); infoPop.append(infoTest); } infoPop.hidden = !infoPop.hidden; infoBtn.setAttribute('aria-expanded', String(!infoPop.hidden)); clearTimeout(infoTimer); if (!infoPop.hidden) infoTimer = setTimeout(() => { infoPop.hidden = true; infoBtn.setAttribute('aria-expanded', 'false'); }, 16000); };
+infoBtn.onclick = () => { if (!game.on && infoPop.hidden) { showHand('rotate', 4200); setTimeout(() => { if (handEl.classList.contains('rotate')) showHand('pinch', 4200); }, 4300); } const p = playerNow(); infoSave.remove(); infoVersion.remove(); infoTm.remove(); infoTest.remove(); if (!p.name || !p.fig) infoPop.append(infoSave); infoPop.append(infoVersion, infoTm); if (TESTFLIGHT) { infoTest.textContent = TF_TEXT(); infoPop.append(infoTest); } infoPop.hidden = !infoPop.hidden; infoBtn.setAttribute('aria-expanded', String(!infoPop.hidden)); clearTimeout(infoTimer); if (!infoPop.hidden) infoTimer = setTimeout(() => { infoPop.hidden = true; infoBtn.setAttribute('aria-expanded', 'false'); }, 16000); };
 // (the figure on the screen remembered on this device, and put on again when the game opens - the pages promised it, and
 // a new version comes in by itself when the game is put away; never while it is being put on, nor in a game. A child with
 // a MiniMig of their own and nothing remembered yet gets that)
@@ -7866,12 +7893,17 @@ setInterval(keepLast, 3000); addEventListener('pagehide', keepLast); document.ad
 async function wearLast() { let f = null; try { f = JSON.parse(localStorage.getItem(LAST_KEY)); } catch (e) {} f ||= playerNow().fig; if (!f) return; lastSaved = JSON.stringify(f);
   // (out of sight until it is dressed, but not for long if something can't be fetched)
   holder.visible = false; try { await Promise.race([wearFigure(f), new Promise(ok => setTimeout(ok, 8000))]); } catch (e) {} holder.visible = true; }
-loadFbx().then(async ok => { const tag = document.getElementById('tag'); if (!ok) { ghostOff(); tag.textContent = tr('Figuren kunne ikke hentes'); return; }
+// (the busy star while the figure is fetched the first time - the user, 24-11-2026: no »Henter figuren«, the star says it)
+busyOn();
+loadFbx().then(async ok => { const tag = document.getElementById('tag'); if (!ok) { busyOff(); ghostOff(); tag.textContent = tr('Figuren kunne ikke hentes'); return; }
   // (on a computer too, since 03-11-2026 - the user wanted it the same everywhere - in words for the mouse)
-  if (matchMedia('(hover: hover) and (pointer: fine)').matches) infoPop.innerHTML = T('🖱️ Træk for at dreje figuren<br>🔍 Rul med musen for at zoome<br>👕 Klik på navnet på trøjen, så siger figuren det – med din egen indtalte stemme, hvis du har indtalt en', '🖱️ Drag to turn the figure<br>🔍 Scroll with the mouse to zoom<br>👕 Click the name on the top and the figure says it – in your own recorded voice, if you have recorded one');
+  // (turning and zooming shown by the hand now, not in words - the user, 24-11-2026; ⓘ shows the hand again)
+  if (matchMedia('(hover: hover) and (pointer: fine)').matches) infoPop.innerHTML = T('👕 Klik på navnet på trøjen, så siger figuren det – med din egen indtalte stemme, hvis du har indtalt en', '👕 Click the name on the top and the figure says it – in your own recorded voice, if you have recorded one');
   let first = false; try { first = !localStorage.getItem(LAST_KEY) && !playerNow().fig && !savedFigs().length; } catch (e) { }
-  await wearLast(); ghostOff(); lastOn = true; if (first && !game.on) showWelcome();
-  tag.textContent = ''; infoBtn.hidden = false; }).catch(() => { document.getElementById('tag').textContent = tr('Figuren kunne ikke hentes'); }); // (a dropped connection said "Henter figuren" for ever)
+  // (the figure's first drawing works out much once - the vest's smoothing, the mouth's parts: a new child got all of it on
+  // the tap on Dreng or Pige, seconds of nothing. Done here instead, under the busy star)
+  await wearLast(); if (first) try { redrawBody(); } catch (e) {} ghostOff(); busyOff(); lastOn = true; if (first && !game.on) showWelcome(); setTimeout(figureHand, 2500);
+  tag.textContent = ''; infoBtn.hidden = false; }).catch(() => { busyOff(); document.getElementById('tag').textContent = tr('Figuren kunne ikke hentes'); }); // (a dropped connection said "Henter figuren" for ever)
 
 // ---- render loop ----
 const clock = new THREE.Clock();
@@ -7900,6 +7932,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { gearTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.18.0 (47efeac)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.18.0 (e268004)</div>
 </body>
 </html>
