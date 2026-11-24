@@ -5321,7 +5321,7 @@ function startGame(mode = game.mode) { if (game.on || !glb) return; if (!game.ag
   showHand(onBoard(mode) ? (hpp.on ? 'tap' : 'sides') : ['island', 'sea', 'space'].includes(mode) ? 'drag' : ['cypher', 'studio'].includes(mode) ? '' : mode === 'pk' ? 'goal' : 'tap');
   // (in Rumrejse, after the drag: two quick taps give the rocket's boost - shown the same way, the user 24-11-2026)
   if (mode === 'space') setTimeout(() => { if (game.on && game.mode === 'space') showHand('double', 4800); }, 5400);
-  hud.hidden = false; hintEl.hidden = !KID_WORDS || mode === 'cypher' || mode === 'studio'; // (without words: no 'Tryk for at hoppe' under the hand - the hand shows it, Jan's A55-test 24-11-2026) try { showLvl(); showJar(); } catch (e) {} document.querySelector('.top').hidden = true; document.getElementById('stage').classList.add('playing'); showStars(); showRecord();
+  hud.hidden = false; hintEl.hidden = !KID_WORDS || mode === 'cypher' || mode === 'studio'; /* (without words: no 'Tryk for at hoppe' under the hand - the hand shows it, Jan's A55-test 24-11-2026) */ try { showLvl(); showJar(); } catch (e) {} document.querySelector('.top').hidden = true; document.getElementById('stage').classList.add('playing'); showStars(); showRecord();
   if (MODES[mode].from) game.hopWay = mode; // (the way last chosen in Hop over bolden)
   document.querySelectorAll('[data-game]').forEach(b => b.classList.toggle('on', b.dataset.game === mode || b.dataset.game === 'hop' && !!MODES[mode].from)); prepScene(); }
 // (again: only stopped to start once more - at another level or in another way - the figure's own setting not put back)
@@ -8108,6 +8108,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); headShape(); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { gearTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;right:6px;z-index:999;background:#E8384F;color:#fff;font:700 11px system-ui,sans-serif;padding:2px 8px;border-radius:9px;pointer-events:none;opacity:.85">TEST 0.20.0 (23bcf72)</div>
+<div style="position:fixed;top:4px;right:6px;z-index:999;background:#E8384F;color:#fff;font:700 11px system-ui,sans-serif;padding:2px 8px;border-radius:9px;pointer-events:none;opacity:.85">TEST 0.20.0 (3225d56)</div>
 </body>
 </html>
