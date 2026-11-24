@@ -503,7 +503,7 @@
   .share-choices small { display: block; font-weight: 600; font-size: .8rem; color: #6B6191; }
   .toast { position: fixed; left: 50%; top: max(24px, env(safe-area-inset-top, 0px)); transform: translateX(-50%); z-index: 60; pointer-events: none;
     background: var(--tile); color: var(--ink); border-radius: 999px; padding: 10px 20px; box-shadow: 0 6px 20px rgba(58, 46, 92, .25); font: 700 1.2rem/1.2 system-ui, sans-serif; }
-  .fig-card { width: min(640px, 100%); }
+  .fig-card { width: min(960px, 100%); }
   .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 12px; padding: 8px 8px 0 0; align-items: start; }
   .saved { position: relative; min-width: 0; }
   .saved .load { width: 100%; padding: 4px; border: 2px solid var(--line); background: #FFF8E1; border-radius: 14px; cursor: pointer; display: block; }
@@ -566,6 +566,8 @@
     <button id="starBtn"><img src="ikoner/knap-stjerner.png" alt=""><span>Stjerner og mønter</span></button>
     <!-- (the language: a globe and the other language's name - no flag, English being spoken under many - the user, 04-11-2026) -->
     <!-- (Hele MiniMig, for grown-ups: in the app and on the test site only - on the website all of it is free) -->
+    <!-- (the children and players, for grown-ups behind the sum: moved here from Mine figurer - the user, 24-11-2026) -->
+    <button id="playersBtn" class="grown"><img src="ikoner/knap-spillere.png" alt=""><span>Børn og spillere</span></button>
     <button id="fullBtn" class="grown" hidden><img src="ikoner/knap-hele.png" alt=""><span>Hele MiniMig</span></button>
     <button id="langBtn" class="grown"><span class="emo" aria-hidden="true"></span><span></span></button>
     <!-- (on minimig.dk only: the website's "Til voksne" - home screen, offline, privacy - from its pwa.js) -->
@@ -790,7 +792,6 @@
          grown-ups' players belonged here with the figures, not under the stars) -->
     <div class="kids" id="figKids"><h3>Børn</h3><div class="who who-small" id="kidList"></div><h3>🖼️ Gemte figurer</h3></div>
     <div class="gallery" id="gallery"></div>
-    <button class="share-off players-btn grown" id="playersBtn">Børn og spillere – for voksne</button>
   </div>
 </div>
 <div class="sheet" id="picSheet" hidden>
@@ -4411,7 +4412,7 @@ document.getElementById('shareAsk').addEventListener('click', e => { const b = e
   share(); });
 // (Mine figurer: kept on this device only, newest first - each figure's choices with a small picture of it, as it was
 // saved: the whole figure or the profile picture. Kept apart from the app's own, whose figures are drawn differently)
-const MAX_SAVED = 30, FIGS_KEY = 'minimig-test.figurer';
+const MAX_SAVED = 60, FIGS_KEY = 'minimig-test.figurer';
 const savedFigs = () => { try { const l = JSON.parse(localStorage.getItem(FIGS_KEY) || '[]'); return Array.isArray(l) ? l : []; } catch (e) { return []; } };
 // (if the device is full, the oldest are let go until the rest fit)
 const storeFigs = l => { if (!l.length) try { localStorage.setItem(FIGS_KEY, '[]'); return true; } catch (e) { return false; } for (let n = Math.min(l.length, MAX_SAVED); n > 0; n--) try { localStorage.setItem(FIGS_KEY, JSON.stringify(l.slice(0, n))); return true; } catch (e) {} return false; };
@@ -8021,6 +8022,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); headShape(); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { gearTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;right:6px;z-index:999;background:#E8384F;color:#fff;font:700 11px system-ui,sans-serif;padding:2px 8px;border-radius:9px;pointer-events:none;opacity:.85">TEST 0.18.0 (13435cd)</div>
+<div style="position:fixed;top:4px;right:6px;z-index:999;background:#E8384F;color:#fff;font:700 11px system-ui,sans-serif;padding:2px 8px;border-radius:9px;pointer-events:none;opacity:.85">TEST 0.18.0 (c5e38e1)</div>
 </body>
 </html>
