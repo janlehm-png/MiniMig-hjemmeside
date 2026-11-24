@@ -5006,6 +5006,10 @@ function holdItem(t) { if (glb && (!item || item.ground || item.ring)) unfist();
     if (item.lastQ && t !== item.lastT) g.quaternion.copy(item.lastQ.slerp(g.quaternion, .5)); item.lastQ = g.quaternion.clone(); item.lastT = t;
     if (item.kind === 'is') g.position.addScaledVector(iw, .06); return; }
   g.quaternion.copy(iq);
+  // (a soft toy hanging from the hand held out clear of a dress or skirt - the user, 24-11-2026: the unicorn went into the
+  // skirt as the figure stood and swayed. Out from the hips, sideways, as far as the skirt is wide)
+  if (['bamse', 'dino', 'enhjoerning', 'dukke', 'bil'].includes(item.kind) && GARMENTS.dress.shown) { const d = GARMENTS.dress.items.find(i => i[0] === GARMENTS.dress.shown)?.[2] || {}, h = bone('Hips');
+    if (h) { const out = g.position.clone().sub(h.getWorldPosition(iw)); out.y = 0; if (out.lengthSq() > 1e-6) g.position.addScaledVector(out.normalize(), d.skirt === false ? .03 : d.hang ? .25 : .13); } }
   if (item.float) { // (the balloon a little above and out from the head, swaying; the string from the hand to it)
     const top = iw.set(.15 + .08 * Math.sin(t * .9), 0, .05 * Math.cos(t * .7)).applyQuaternion(iq); top.y = 2.05 - iv.y; item.float.position.copy(top.clone().applyQuaternion(iq.clone().invert()));
     const knot = top.clone(); knot.y -= .2; const len = knot.length(); item.string.position.copy(knot).multiplyScalar(.5).applyQuaternion(iq.clone().invert());
@@ -8014,6 +8018,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); headShape(); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { gearTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;right:6px;z-index:999;background:#E8384F;color:#fff;font:700 11px system-ui,sans-serif;padding:2px 8px;border-radius:9px;pointer-events:none;opacity:.85">TEST 0.18.0 (bb01623)</div>
+<div style="position:fixed;top:4px;right:6px;z-index:999;background:#E8384F;color:#fff;font:700 11px system-ui,sans-serif;padding:2px 8px;border-radius:9px;pointer-events:none;opacity:.85">TEST 0.18.0 (cce39d8)</div>
 </body>
 </html>
