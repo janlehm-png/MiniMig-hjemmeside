@@ -791,7 +791,7 @@ const LANG = (() => { let l = new URLSearchParams(location.search).get('lang'); 
 const T = (da, en) => LANG === 'en' ? en : da, krTxt = n => T(n == 1 ? '1 mønt' : `${n} mønter`, n == 1 ? '1 coin' : `${n} coins`);
 const EN = {
   // (the tabs)
-  'Hud': 'Skin', 'Hår': 'Hair', 'Øjne': 'Eyes', 'Bryn': 'Brows', 'Næse': 'Nose', 'Mund': 'Mouth', 'Ører': 'Ears', 'Pynt': 'Face art', 'Trøje': 'Top', 'Bukser': 'Pants', 'Kjole': 'Dress', 'Udstyr': 'Gear', 'Strømper': 'Socks', 'Sko': 'Shoes', 'Hat': 'Hat', 'Briller': 'Glasses', 'Ting': 'Things', 'Navn': 'Name', 'Baggrund': 'Back­ground',
+  'Hud': 'Skin', 'Hoved': 'Head', 'Rund': 'Round', 'Aflang': 'Long', 'Bred': 'Wide', 'Lille': 'Small', 'Hår': 'Hair', 'Øjne': 'Eyes', 'Bryn': 'Brows', 'Næse': 'Nose', 'Mund': 'Mouth', 'Ører': 'Ears', 'Pynt': 'Face art', 'Trøje': 'Top', 'Bukser': 'Pants', 'Kjole': 'Dress', 'Udstyr': 'Gear', 'Strømper': 'Socks', 'Sko': 'Shoes', 'Hat': 'Hat', 'Briller': 'Glasses', 'Ting': 'Things', 'Navn': 'Name', 'Baggrund': 'Back­ground',
   'Gem': 'Save', 'Mine figurer': 'My figures', 'Ny figur': 'New figure', 'Send foto': 'Send photo', 'Lyd': 'Sound', 'Stjerner og mønter': 'Stars and coins', 'Til voksne': 'For grown-ups',
   'Stå': 'Stand', 'Vink': 'Wave', 'Hop': 'Jump', 'Dans': 'Dance', 'Løb': 'Run', 'Jubel': 'Cheer', 'Kolbøtte': 'Roll', 'Spark': 'Kick', 'Drej rundt': 'Spin', 'Min dans': 'My dance',
   'Hop over bolden': 'Jump the ball', 'Skateboard': 'Skate­board', 'Skattejagt': 'Treasure hunt', 'Svømmeverden': 'Swim world', 'Gemmeleg': 'Hide and seek', 'Straffespark': 'Penalty kick',
@@ -878,7 +878,7 @@ disc.rotation.x = -Math.PI / 2; disc.position.y = .001; scene.add(disc);
 
 // ---- colours: the figure's painted texture, recoloured (below) ----
 // (the parts, each with the app's icon for its tab, in ikoner/; the fixed colours are gone - the sliders alone)
-const CHOICES = [['skin', 'Hud', 'hud'], ['hair', 'Hår', 'haar'], ['eyes', 'Øjne', 'oejne'], ['brows', 'Bryn', 'bryn'], ['nose', 'Næse', 'naese'], ['mouth', 'Mund', 'mund'], ['ears', 'Ører', 'oerer'], ['pynt', 'Pynt', 'kinder'], ['shirt', 'Trøje', 'troeje'], ['pants', 'Bukser', 'bukser'], ['dress', 'Kjole', 'kjoler'], ['gear-skate', 'Skateboard', 'fane-skate'], ['gear-sea', 'Svømning', 'fane-svoem'], ['gear-space', 'Rumrejse', 'fane-rum'], ['gear-pk', 'Straffespark', 'fane-straffe'], ['gear-snow', 'Sne', 'fane-snow'],
+const CHOICES = [['skin', 'Hud', 'hud'], ['head', 'Hoved', 'hoved'], ['hair', 'Hår', 'haar'], ['eyes', 'Øjne', 'oejne'], ['brows', 'Bryn', 'bryn'], ['nose', 'Næse', 'naese'], ['mouth', 'Mund', 'mund'], ['ears', 'Ører', 'oerer'], ['pynt', 'Pynt', 'kinder'], ['shirt', 'Trøje', 'troeje'], ['pants', 'Bukser', 'bukser'], ['dress', 'Kjole', 'kjoler'], ['gear-skate', 'Skateboard', 'fane-skate'], ['gear-sea', 'Svømning', 'fane-svoem'], ['gear-space', 'Rumrejse', 'fane-rum'], ['gear-pk', 'Straffespark', 'fane-straffe'], ['gear-snow', 'Sne', 'fane-snow'],
   ['socks', 'Strømper', 'stroemper'], ['shoe', 'Sko', 'sko'], ['hat', 'Hat', 'hat'], ['glasses', 'Briller', 'briller'], ['item', 'Ting', 'ting'], ['name', 'Navn', 'navn'], ['bg', 'Baggrund', 'baggrund']];
 const picked = {}, START = { skin: '#EDB98A', hair: '#4A2C1D', eyes: '#7A4220', brows: '#4A2C1D', mouth: '#C0505A', pynt: '#FF5A6E', nose: '#EDB98A', shirt: '#FF7A2F', pants: '#2C3E8C', dress: '#3D8BFF', suit: '#3D8BFF', socks: '#3D8BFF', item: '#E8384F', shoe: '#3D8BFF', hat: '#3D8BFF', glasses: '#3D8BFF' }; let partNow = 'shirt';
 const apply = (part, c) => { picked[part] = c; recolour(part, c); if (part === 'shirt' || part === 'dress') chestName(); if (typeof paintPatterns === 'function') { paintPatterns(part); showPatterns(false); } };
@@ -898,7 +898,7 @@ var petPick = false; // (a pet tapped last under Ting: its colours can't be chan
 // a tap on one shows its own tabs in a row under it - the one last used there opened - and under them the choices.
 // Udstyr has a tab for each game with gear: all that game's things together, with the gear's colour, and a green
 // button that starts the game once all of it is on)
-const MAIN = [['face', 'Ansigt', 'gruppe-ansigt', ['skin', 'hair', 'eyes', 'brows', 'nose', 'mouth', 'ears', 'glasses', 'pynt']], ['wear', 'Tøj', 'gruppe-toej', ['shirt', 'pants', 'dress', 'socks', 'shoe', 'hat']],
+const MAIN = [['face', 'Ansigt', 'gruppe-ansigt', ['skin', 'head', 'hair', 'eyes', 'brows', 'nose', 'mouth', 'ears', 'glasses', 'pynt']], ['wear', 'Tøj', 'gruppe-toej', ['shirt', 'pants', 'dress', 'socks', 'shoe', 'hat']],
   ['gear', 'Udstyr', 'gruppe-udstyr', ['gear-skate', 'gear-snow', 'gear-sea', 'gear-space', 'gear-pk']], ['more', 'Mere', 'gruppe-mere', ['item', 'name', 'bg']]], mainOf = part => MAIN.find(m => m[3].includes(part))?.[0] || '', lastSub = {};
 var mainNow = '', dressSnap = null, dressWant = '', foldNow = '';
 const FOLDS = [['moves', 'Bevægelser', 'gruppe-bevaegelse'], ['dance', 'Dans', 'gruppe-dans']];
@@ -911,7 +911,7 @@ function tapMain(id) { foldNow = ''; showFold(); if (mainNow === id) { mainNow =
 function showSwatches() { const move = /^(move|game)-/.test(partNow); if (!move) slidersFrom(picked[colourPart()] || START[colourPart()]);
   { const mo = mainOf(partNow); if (mo && boxOpen) { mainNow = mo; lastSub[mo] = partNow; } else if (move && boxOpen) mainNow = ''; if (!partNow.startsWith('gear-')) { dressWant = ''; dressSnap = null; }
     const subs = document.getElementById('subs'); if (subs) { subs.hidden = !mainNow; for (const b of subs.children) b.hidden = mainOf(b.dataset.part) !== mainNow || !free(b.dataset.part); for (const b of document.querySelectorAll('#mains [data-main]')) b.classList.toggle('on', b.dataset.main === mainNow); } }
-  const noColour = move || ['nose', 'pynt', 'name', 'ears', 'bg'].includes(partNow) || partNow === 'pants' && briefsOn || partNow === 'item' && petPick;
+  const noColour = move || ['head', 'nose', 'pynt', 'name', 'ears', 'bg'].includes(partNow) || partNow === 'pants' && briefsOn || partNow === 'item' && petPick;
   document.getElementById('sliders').style.display = noColour || !moreCol.classList.contains('on') ? 'none' : ''; moreCol.style.display = noColour ? 'none' : '';
   // (the fixed colours of the app over the sliders: skin, hair - the brows too - eyes, and the clothes' colours for the rest)
   const sw = document.getElementById('swatches'), list = noColour ? [] : PALETTES[colourPart()] || PALETTES.cloth; sw.hidden = !list.length; sw.innerHTML = '';
@@ -2045,6 +2045,13 @@ const HAIRS = [['haar-kort', 'Kort', { snug: .55, ears: true }], ['haar-kroeller
   // (three more - Trine, 23-11-2026: Ebba, 5, wanted more hairstyles. Made at Meshy from drawings on Krøller's busts, lav-haar.ps1)
   ['haar-hestehale', 'Hestehale', { ears: true, grow: 1.08, under: true, flat: .5 }], ['haar-knold', 'Knold', { ears: true, grow: 1.08, under: true }], ['haar-langt', 'Langt hår', { hideEars: true, under: true, flat: .5, trim: [.62, 2.15] }]];
 let hairNow = 'haar-kort', hairBase = null; const hairMeshes = {};
+// (the head's shape - the user, 24-11-2026: rounder, longer, wider. The head bone made that much narrower or wider [x], taller
+// [y] and deeper [z]; the hair, eyes, ears, hats and glasses held by it follow. Set after the movement each frame - a
+// movement may set the bone's size)
+const HEADS = [['hoved-rund', 'Rund', [1, 1, 1]], ['hoved-aflang', 'Aflang', [.9, 1.1, .95]], ['hoved-bred', 'Bred', [1.11, .92, 1]], ['hoved-lille', 'Lille', [.92, .92, .92]]];
+let headNow = 'hoved-rund';
+function setHead(name) { if (!HEADS.some(h => h[0] === name)) name = 'hoved-rund'; headNow = name; headShape(); renderStyles(); }
+function headShape() { const b = typeof bone === 'function' && glb ? bone('Head') : null; if (!b) return; const [x, y, z] = HEADS.find(h => h[0] === headNow)[2]; b.scale.set(x, y, z); }
 // the figure's eye whites and head bone, measured once as it stands when loaded (in its T-pose, before it moves)
 function measureHead(fbx) {
   // (the eye whites: white in its colour picture, in the head - the figure's top 15 %)
@@ -2424,7 +2431,7 @@ async function loadHair(name, list = hairTexs, colourPart = 'hair', extra = {}) 
   // (cap: no lighter than that over the middle - the glasses' frames had white smears inside, by the glass)
   if (opts.cap) list.at(-1).cap = opts.cap;
   body.parent.add(hair); hair.bind(body.skeleton, body.bindMatrix); scalpCap(hair, g, W, earLines, apart, eyeY); if (opts.under) hairUnder(hair, W, apart, eyeY, mine); if (picked[colourPart]) recolourHair(picked[colourPart], list); return hair; }
-var styleLists = () => ({ hair: [HAIRS, hairNow, setHair], eyes: [EYES, eyesNow, setEyes], brows: [BROWS, browsNow, setBrows], mouth: [MOUTHS, mouthNow, setMouth], pynt: [PYNT, pyntNow.map(k => 'pynt-' + k), setPynt], nose: [NOSES, noseNow, setNose], item: [ITEMS, itemNow, n => { petPick = false; setItem(n); showSwatches(); }, [PETS, petNow, n => { petPick = true; setPet(n); showSwatches(); }, 'dyr', petNow ? PET_TOYS_LIST() : null]], bg: [BGS, bgNow, setBg], ears: [EARS, earsNow, setEars, [EARRINGS, earringsNow, setEarrings, 'oerering']],
+var styleLists = () => ({ head: [HEADS, headNow, setHead], hair: [HAIRS, hairNow, setHair], eyes: [EYES, eyesNow, setEyes], brows: [BROWS, browsNow, setBrows], mouth: [MOUTHS, mouthNow, setMouth], pynt: [PYNT, pyntNow.map(k => 'pynt-' + k), setPynt], nose: [NOSES, noseNow, setNose], item: [ITEMS, itemNow, n => { petPick = false; setItem(n); showSwatches(); }, [PETS, petNow, n => { petPick = true; setPet(n); showSwatches(); }, 'dyr', petNow ? PET_TOYS_LIST() : null]], bg: [BGS, bgNow, setBg], ears: [EARS, earsNow, setEars, [EARRINGS, earringsNow, setEarrings, 'oerering']],
   ...Object.fromEntries(Object.entries(GARMENTS).map(([part, G]) => [part, [G.items, G.now, n => setGarment(part, n)]])),
   // (Udstyr - the user, 11-11-2026: suits and gear in one tab. The suits above, the goggles and snorkel in a row under
   // them - taken out of Briller; what is chosen here is what the figure puts on by itself for the game, see dressFor)
@@ -4269,7 +4276,7 @@ showBadges();
 // saved out of the page (the camera, behind a grown-up's sum) ----
 // (a figure: its choices - the colours picked, the hair, the face, what it wears, the name)
 const figureNow = () => ({ picked: { ...picked }, hair: hairNow, eyes: eyesNow, brows: browsNow, mouth: mouthNow, nose: noseNow, pynt: [...pyntNow],
-  wear: Object.fromEntries(Object.entries(GARMENTS).map(([p, G]) => [p, G.now])), name: nameNow, badge: badgeNow, item: itemNow, pet: petNow, petToys: [...petToys], ears: earsNow, earrings: earringsNow, bg: bgNow, pattern: { ...patternNow } });
+  wear: Object.fromEntries(Object.entries(GARMENTS).map(([p, G]) => [p, G.now])), name: nameNow, badge: badgeNow, item: itemNow, pet: petNow, petToys: [...petToys], ears: earsNow, earrings: earringsNow, bg: bgNow, pattern: { ...patternNow }, head: headNow });
 // (a part's own colour back: the figure's painted one, the hair's and the garments' as made)
 const unpaint = list => { for (const t of list) { const im = t.ctx.createImageData(t.w, t.h); im.data.set(t.src); t.ctx.putImageData(im, 0, 0); t.texture.needsUpdate = true; } };
 function unpick(part) { delete picked[part]; if (part === 'socks' || part === 'shoe') { paintSocks(); paintHeels(); } if (part === 'item') paintItem(); if (part === 'hair') unpaint(hairTexs); if (GARMENTS[part]) unpaint(GARMENTS[part].texs); if (part === 'suit') unpaint(gearTexs);
@@ -4281,7 +4288,7 @@ async function wearFigure(f) { const ask = ++dressingUp; f = basisFigure(f);
   for (const [part] of CHOICES) if (part !== 'hair') { if (f.picked[part]) { picked[part] = f.picked[part]; recolour(part, f.picked[part]); } else unpick(part); }
   if (f.picked.hair) { picked.hair = f.picked.hair; recolour('hair', f.picked.hair); } else unpick('hair');
   eyesNow = f.eyes; browsNow = f.brows; mouthNow = f.mouth; noseNow = f.nose; pyntNow = [...f.pynt]; nameNow = f.name; badgeNow = f.badge;
-  nameInput.value = nameNow; showRec(); showBadges(); redrawBody(); showSwatches(); setItem(f.item || ''); petToys = [...(f.petToys || [])]; setPet(f.pet || ''); earringsNow = f.earrings || ''; setEars(f.ears || 'oerer-naturlig'); setBg(f.bg || 'bg-sol');
+  nameInput.value = nameNow; showRec(); showBadges(); redrawBody(); showSwatches(); setItem(f.item || ''); petToys = [...(f.petToys || [])]; setPet(f.pet || ''); earringsNow = f.earrings || ''; setEars(f.ears || 'oerer-naturlig'); setHead(f.head || 'hoved-rund'); setBg(f.bg || 'bg-sol');
   if (f.hair !== hairNow) await setHair(f.hair); if (ask !== dressingUp) return;
   // (a dress last: it takes off the top and trousers. No dress: taken off at once - a new MiniMig in just its underwear
   // kept the dress on before, as only a top or trousers put on took it off; the user, 03-11-2026)
@@ -4377,7 +4384,7 @@ document.getElementById('keepChoice').addEventListener('click', e => { const c =
 // all-white vest and shorts and nothing else, no name, every colour the figure's own; a boy with short hair or a girl
 // with plaits. The user dropped the app's pink and blue underwear)
 const newFig = kind => ({ picked: {}, hair: kind === 'pige' ? 'haar-fletninger' : 'haar-kort',
-  eyes: 'oejne-naturlige', brows: 'bryn-naturlige', mouth: 'mund-smil', nose: 'naese-naturlig', pynt: [], wear: Object.fromEntries(Object.keys(GARMENTS).map(p => [p, ''])), name: '', badge: 'ingen', item: '', pet: '', petToys: [], ears: 'oerer-naturlig', earrings: '', bg: 'bg-sol' });
+  eyes: 'oejne-naturlige', brows: 'bryn-naturlige', mouth: 'mund-smil', nose: 'naese-naturlig', pynt: [], wear: Object.fromEntries(Object.keys(GARMENTS).map(p => [p, ''])), name: '', badge: 'ingen', item: '', pet: '', petToys: [], ears: 'oerer-naturlig', earrings: '', bg: 'bg-sol', pattern: {}, head: 'hoved-rund' });
 const sameFig = (a, b) => !!a && !!b && JSON.stringify(a) === JSON.stringify(b);
 document.getElementById('newBtn').addEventListener('click', () => { welcomeNow = false; newChoiceWords(); document.getElementById('newChoice').hidden = false; });
 // (the very first time on a device - nothing remembered, no saved figure, no child's MiniMig: a welcome with Dreng and Pige
@@ -7930,8 +7937,8 @@ addEventListener('resize', resize); resize(); new ResizeObserver(resize).observe
 // the next frame only after this one, so one error froze the figure for good)
 renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElapsedTime();
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
-  if (mixer) mixer.update(dt); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
+  if (mixer) mixer.update(dt); headShape(); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { gearTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.18.0 (e268004)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.18.0 (40d0d67)</div>
 </body>
 </html>
