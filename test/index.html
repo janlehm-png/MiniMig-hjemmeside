@@ -5318,7 +5318,7 @@ function startGame(mode = game.mode) { if (game.on || !glb) return; if (!game.ag
   // sides to steer, tap, or drag. Gone at the first tap or after a few seconds)
   // (the same way in the three games where the figure is led about - Skattejagt, Svømmeverden, Rumrejse: tap where it is to go,
   // or hold the finger down and drag it along - Trine, 23-11-2026: Ebba dragged in one game and tapped in another)
-  showHand(onBoard(mode) ? (hpp.on ? 'tap' : 'sides') : ['island', 'sea', 'space'].includes(mode) ? 'drag' : ['cypher', 'studio'].includes(mode) ? '' : 'tap');
+  showHand(onBoard(mode) ? (hpp.on ? 'tap' : 'sides') : ['island', 'sea', 'space'].includes(mode) ? 'drag' : ['cypher', 'studio'].includes(mode) ? '' : mode === 'pk' ? 'goal' : 'tap');
   // (in Rumrejse, after the drag: two quick taps give the rocket's boost - shown the same way, the user 24-11-2026)
   if (mode === 'space') setTimeout(() => { if (game.on && game.mode === 'space') showHand('double', 4800); }, 5400);
   hud.hidden = false; hintEl.hidden = !KID_WORDS || mode === 'cypher' || mode === 'studio'; // (without words: no 'Tryk for at hoppe' under the hand - the hand shows it, Jan's A55-test 24-11-2026) try { showLvl(); showJar(); } catch (e) {} document.querySelector('.top').hidden = true; document.getElementById('stage').classList.add('playing'); showStars(); showRecord();
@@ -5327,7 +5327,13 @@ function startGame(mode = game.mode) { if (game.on || !glb) return; if (!game.ag
 // (again: only stopped to start once more - at another level or in another way - the figure's own setting not put back)
 const handEl = Object.assign(document.createElement('div'), { className: 'hand', hidden: true, textContent: '👆' }); document.getElementById('stage').append(handEl);
 // (pinch: two fingers going apart and together - zoom; the others one finger)
-let handT = 0; function showHand(kind, ms = 5200) { clearTimeout(handT); handEl.style.left = handEl.style.top = ''; handEl.className = 'hand ' + kind; if (kind === 'pinch') handEl.innerHTML = '<i>👆</i><i>👆</i>'; else if (kind === 'double') handEl.innerHTML = '👆<b>🚀</b>'; else handEl.textContent = '👆'; handEl.hidden = !kind; if (kind) handT = setTimeout(() => { handEl.hidden = true; }, ms); }
+let handT = 0; function showHand(kind, ms = 5200) { clearTimeout(handT); handEl.style.left = handEl.style.top = ''; handEl.className = 'hand ' + kind + (kind === 'goal' ? ' tap' : ''); if (kind === 'pinch') handEl.innerHTML = '<i>👆</i><i>👆</i>'; else if (kind === 'double') handEl.innerHTML = '👆<b>🚀</b>'; else handEl.textContent = '👆'; handEl.hidden = !kind; if (kind === 'goal') { goalHand(); setTimeout(goalHand, 120); setTimeout(goalHand, 600); } if (kind) handT = setTimeout(() => { handEl.hidden = true; }, ms); }
+// (Straffespark: the hand goes up into the goal's top corner and taps there - the user, 24-11-2026: you point where in the
+// goal the ball is to go, not at the ball. The corner is found on the screen from the goal itself, once the camera is there)
+const pkCorner = new THREE.Vector3();
+function goalHand() { if (handEl.hidden || !handEl.classList.contains('goal')) return; const st = document.getElementById('stage').getBoundingClientRect(), r = renderer.domElement.getBoundingClientRect();
+  pkCorner.set(PK.halfW - .55, PK.top - .5, PK.goalZ).project(camera);
+  handEl.style.left = `${r.left - st.left + (pkCorner.x + 1) / 2 * r.width}px`; handEl.style.top = `${r.top - st.top + (1 - pkCorner.y) / 2 * r.height}px`; }
 document.getElementById('stage').addEventListener('pointerdown', () => { if (game.on && !handEl.hidden) setTimeout(() => { handEl.hidden = true; }, 400); });
 // (the figure too - the user, 24-11-2026: how to turn it round, and zoom in and out. Shown a moment after the figure is
 // there and nothing is open, first one finger dragging sideways (turn), then two fingers apart (zoom) - until the child
@@ -8102,6 +8108,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); headShape(); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { gearTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;right:6px;z-index:999;background:#E8384F;color:#fff;font:700 11px system-ui,sans-serif;padding:2px 8px;border-radius:9px;pointer-events:none;opacity:.85">TEST 0.20.0 (a0803db)</div>
+<div style="position:fixed;top:4px;right:6px;z-index:999;background:#E8384F;color:#fff;font:700 11px system-ui,sans-serif;padding:2px 8px;border-radius:9px;pointer-events:none;opacity:.85">TEST 0.20.0 (23bcf72)</div>
 </body>
 </html>
