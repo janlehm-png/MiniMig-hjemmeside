@@ -319,8 +319,10 @@
   /* the star shop (the user, 03-11-2026): a special thing shows a lock and its price in stars until the child buys it */
   .choices button.locked { position: relative; }
   .choices button.locked img { filter: saturate(.35) brightness(.92); }
-  .choices .price { position: absolute; top: 2px; right: 2px; padding: 2px 6px; border-radius: 10px; background: #FFC233; color: #3A2E5C;
-    font: 800 .72rem/1.2 system-ui, sans-serif; box-shadow: 0 1px 4px rgba(58, 46, 92, .25); }
+  /* (just a small yellow padlock in the corner - the user, 24-11-2026: the price and »mønter« over the picture took too much room;
+     the price is shown when it is tapped, in the shop) */
+  .choices .price { position: absolute; top: 3px; right: 3px; width: 22px; height: 22px; padding: 0; border-radius: 50%; background: #FFC233; color: #3A2E5C; display: grid; place-items: center;
+    font: 800 12px/1 system-ui, sans-serif; box-shadow: 0 1px 4px rgba(58, 46, 92, .3); pointer-events: none; }
   .choices .price.own { background: #2FB872; color: #fff; }
   .shop button { position: relative; }
   .buy-pic { display: grid; place-items: center; }
@@ -965,7 +967,7 @@ function renderStyles() { const all = typeof styleLists === 'undefined' ? null :
   // takes it off, a lollipop or a hat - in every row, as the gear and Pynt did already)
   const off = items.find(([n]) => n === '' || n.endsWith('-ingen'))?.[0];
   for (const [n, label] of items) { if (!free(n) || n === off) continue; const b = iconButton(`ikoner/valg-${n || 'ingen-' + none}.png`, label), locked = !owns(n);
-    if (locked) { b.classList.add('locked'); b.append(Object.assign(document.createElement('span'), { className: 'price', textContent: `🔒 ${krTxt(SHOP[n])}` })); }
+    if (locked) { b.classList.add('locked'); b.append(Object.assign(document.createElement('span'), { className: 'price', textContent: '🔒' })); }
     b.classList.toggle('on', Array.isArray(now) ? (n.endsWith('-ingen') ? !now.length : now.includes(n)) : n === now); b.onclick = () => locked ? askBuy(n) : b.classList.contains('on') && off !== undefined && !Array.isArray(now) ? set(off) : set(n); b.dataset.n = n; box.append(b); } }
   // (a game's gear: what is still to be put on moves a little once the game was asked for, and last in the row the green
   // start button, which works when all of it is on - swim goggles and snorkel are free to leave off)
@@ -7567,7 +7569,7 @@ function showStarSheet(id = starShown || players.now) { starShown = id; const p 
   // (the shop: every special thing, ✓ when this child owns it, the lock and the price when not - tapping one buys it)
   const shop = document.getElementById('shopList'); shop.innerHTML = '';
   for (const [n, price] of Object.entries(SHOP)) { if (!free(n)) continue; const b = iconButton(`ikoner/valg-${n}.png`, shopThing(n).label), own = s.owned?.includes(n);
-    b.classList.toggle('locked', !own); b.append(Object.assign(document.createElement('span'), { className: 'price' + (own ? ' own' : ''), textContent: own ? '✓' : `🔒 ${krTxt(price)}` }));
+    b.classList.toggle('locked', !own); b.append(Object.assign(document.createElement('span'), { className: 'price' + (own ? ' own' : ''), textContent: own ? '✓' : '🔒' }));
     b.onclick = () => { if (!own) askBuy(n, p.id); }; shop.append(b); }
   // (what this child has bought, the newest first - a picture to go by, the name, the day and the price)
   document.getElementById('buyLog').innerHTML = (s.history || []).map(h => `<div class="buy-row"><img src="ikoner/valg-${h.n}.png" alt=""><span>${esc(tr(shopThing(h.n).label))}<small>${new Date(h.at).toLocaleDateString(T('da-DK', 'en-US'))}</small></span><b>${krTxt(h.kr)}</b></div>`).join('');
@@ -7988,6 +7990,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); headShape(); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { gearTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.18.0 (5366b7c)</div>
+<div style="position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;background:#E8384F;color:#fff;font:700 12px system-ui,sans-serif;padding:2px 10px;border-radius:9px;pointer-events:none">TEST 0.18.0 (fb89be3)</div>
 </body>
 </html>
