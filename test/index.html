@@ -572,7 +572,7 @@
     <button id="langBtn" class="grown"><span class="emo" aria-hidden="true"></span><span></span></button>
     <!-- (on minimig.dk only: the website's "Til voksne" - home screen, offline, privacy - from its pwa.js) -->
     <!-- (drawn here: an iPad shows the family emoji as a grey outline - the user, 04-11-2026) -->
-    <button id="adultBtn" hidden><img src="ikoner/knap-voksne.png" alt=""><span>Til voksne</span></button>
+    <button id="adultBtn" class="grown" hidden><img src="ikoner/knap-voksne.png" alt=""><span>Til voksne</span></button>
   </div>
   <!-- (the movements' group, put after the other three groups by the page) -->
   <div class="tabgroup" id="moves">
@@ -8022,6 +8022,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); headShape(); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { gearTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;right:6px;z-index:999;background:#E8384F;color:#fff;font:700 11px system-ui,sans-serif;padding:2px 8px;border-radius:9px;pointer-events:none;opacity:.85">TEST 0.18.0 (c5e38e1)</div>
+<div style="position:fixed;top:4px;right:6px;z-index:999;background:#E8384F;color:#fff;font:700 11px system-ui,sans-serif;padding:2px 8px;border-radius:9px;pointer-events:none;opacity:.85">TEST 0.18.0 (a6dacd8)</div>
 </body>
 </html>
