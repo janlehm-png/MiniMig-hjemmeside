@@ -62,6 +62,13 @@
   /* (the buy window without the thing's name over it - the picture says what it is, the user 24-11-2026: »der behøver ikke
      at stå hund«. Kept for screen readers, only not shown) */
   .no-words #buyTitle { visibility: hidden; }
+  /* (Dine mønter without words: no explanations, the headings and the titles just their emoji, the games their pictograms - the words kept for screen readers) */
+  .no-words #starTitle { visibility: hidden; }
+  .no-words #starSheet p.note { display: none; }
+  .no-words #starSheet h3 { font-size: 1.7rem; margin-bottom: 4px; }
+  .no-words .w { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .gico { width: 30px; height: 30px; vertical-align: middle; margin-right: 6px; border-radius: 8px; }
+  .no-words .gico { margin-right: 0; }
   #games button { width: 80px; padding: 6px 4px; } #games button img { width: var(--ico-game); height: var(--ico-game); } #games button span { display: none; }
   /* the choices and colours for the tab chosen, in a white box under the tabs */
   .box[hidden] { display: none; }
@@ -929,6 +936,8 @@ const iconButton = (src, label) => { const b = document.createElement('button'),
 // (the icons without words - the user, 24-11-2026: a test of the pictures alone, the children's and then the grown-ups'
 // buttons too. KID_WORDS = true: the words back under every icon. The names stay for screen readers and as a tip on a computer)
 const KID_WORDS = false; if (!KID_WORDS) document.documentElement.classList.add('no-words');
+// (the headings in Dine mønter: the emoji shown, the words behind it for screen readers - and back when KID_WORDS)
+for (const h of document.querySelectorAll('#starSheet h3')) { const [e, ...w] = h.textContent.trim().split(' '); h.innerHTML = `${e}<span class="w"> ${w.join(' ')}</span>`; }
 // (the app's colours, as in version 2.5D)
 const PALETTES = { skin: ['#F6D0AE', '#EDB98A', '#D9965F', '#B5713F', '#8D5530', '#5A3520'], hair: ['#2A1C17', '#4A2C1D', '#7A4428', '#A8582E', '#D9A55C', '#F0D9A0', '#FF7EBB', '#5AA9FF'],
   eyes: ['#9C5A1E', '#6B3A1A', '#4A2814', '#2E1A10', '#1A110C', '#3B7BD4', '#3E9A5C', '#A0763A', '#7D8A99', '#8A5CE6'],
@@ -7637,11 +7646,14 @@ function trophySvg(won, col) { const g = won ? ['#FFE27A', '#FFB020', '#D98A00']
     + `<rect x="28" y="41" width="8" height="12" fill="${g[1]}" stroke="${g[2]}" stroke-width="2"/><rect x="18" y="52" width="28" height="9" rx="3" fill="url(#cg${won ? 1 : 0})" stroke="${g[2]}" stroke-width="2"/>`
     + `<rect x="12" y="60" width="40" height="12" rx="4" fill="${won ? col : '#E4DEF0'}"/>`
     + (won ? `<path d="M32 13l3 6.2 6.8.9-5 4.7 1.3 6.7-6.1-3.3-6.1 3.3 1.3-6.7-5-4.7 6.8-.9z" fill="#FFFFFF" opacity=".9"/><path d="M19 10v9" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" opacity=".6"/>` : `<text x="32" y="30" text-anchor="middle" font-size="16" font-weight="800" fill="#C4BBD8">?</text>`) + '</svg>'; }
+// (a number of coins: without words the number and a coin, the words kept for screen readers)
+const krHtml = n => KID_WORDS ? krTxt(n) : `<span aria-hidden="true">${n} <i class="coin-sym"></i></span><span class="w">${krTxt(n)}</span>`;
+const gameIco = g => { const src = document.querySelector(`[data-game="${g}"] img`)?.getAttribute('src'); return src ? `<img class="gico" src="${src}" alt="">` : ''; };
 function showShelf(s) { const shelf = document.getElementById('trophyShelf'), games = GAME_NAMES.filter(([g]) => WORLDS[g] && free('game-' + g));
   document.getElementById('trophyBox').hidden = !games.length;
   shelf.innerHTML = games.map(([g, name]) => { const w = s.worlds?.[g] || {}, won = w.won || [], jar = w.jar || [];
-    return `<div class="shelf-row"><h4>${tr(name)}</h4><div class="shelf-cups">` + WORLDS[g].map(([id, da, en, sign, col], i) => { if (!worldOk(g, i)) return ''; const ok = won.includes(i);
-      return `<div class="cup${ok ? ' won' : ''}">${trophySvg(ok, col)}<span class="cup-name">${sign} ${T(da, en.replace(/^the (.)/, (m, c) => c.toUpperCase()))}</span><span class="cup-bar"><i style="width:${Math.round(100 * Math.min(1, (jar[i] || 0) / JAR))}%"></i></span></div>`; }).join('')
+    return `<div class="shelf-row"><h4>${gameIco(g)}<span class="w">${tr(name)}</span></h4><div class="shelf-cups">` + WORLDS[g].map(([id, da, en, sign, col], i) => { if (!worldOk(g, i)) return ''; const ok = won.includes(i);
+      return `<div class="cup${ok ? ' won' : ''}">${trophySvg(ok, col)}<span class="cup-name">${sign} <span class="w">${T(da, en.replace(/^the (.)/, (m, c) => c.toUpperCase()))}</span></span><span class="cup-bar"><i style="width:${Math.round(100 * Math.min(1, (jar[i] || 0) / JAR))}%"></i></span></div>`; }).join('')
       + '</div><div class="shelf-plank"></div></div>'; }).join(''); }
 // (with two players or more: their pictures on top, the one shown marked - tapping another shows that child's stars)
 let starShown = null;
@@ -7649,19 +7661,19 @@ function showStarSheet(id = starShown || players.now) { starShown = id; const p 
   const who = document.getElementById('starWho'); who.hidden = !many;
   who.innerHTML = many ? players.list.map(q => `<button data-who="${q.id}" class="${q.id === p.id ? 'on' : ''}">${playerFace(q)}<span>${esc(q.name) || '&nbsp;'}</span></button>`).join('') : '';
   document.getElementById('starTitle').textContent = p.name ? T(`${p.name}s mønter`, `${p.name}’s coins`) : tr('Dine mønter');
-  document.getElementById('starTotal').textContent = `💰 ${krTxt(have)}`;
+  document.getElementById('starTotal').innerHTML = `💰 ${krHtml(have)}`;
   document.getElementById('starNote').textContent = s.games ? T(`⭐ ${s.total} stjerner samlet i ${s.games} spil på denne enhed.`, `⭐ ${s.total} stars collected in ${s.games} games on this device.`) : tr('Spil et af spillene for at samle stjerner.');
   showShelf(s);
-  document.getElementById('starTable').innerHTML = `<tr><th></th>${LEVELS.map(([id, name]) => `<th><img src="ikoner/valg-${id}.png" alt="${tr(name)}"></th>`).join('')}</tr><tr><td>${tr('⭐ giver')}</td>${LEVELS.map(([id]) => `<td>${krTxt(starWorth(id))}</td>`).join('')}</tr>` +
+  document.getElementById('starTable').innerHTML = `<tr><th></th>${LEVELS.map(([id, name]) => `<th><img src="ikoner/valg-${id}.png" alt="${tr(name)}"></th>`).join('')}</tr><tr><td>⭐<span class="w"> ${T('giver', 'gives')}</span></td>${LEVELS.map(([id]) => `<td>${krHtml(starWorth(id))}</td>`).join('')}</tr>` +
     // (Hop over bolden: its best of the three ways to see it)
-    GAME_NAMES.filter(([g]) => free('game-' + g)).map(([g, name]) => `<tr><td>${tr(name)}</td>${LEVELS.map(([id]) => { const b = g === 'hop' ? Math.max(...HOP_WAYS.map(w => s.best[w[0]]?.[id] || 0)) : s.best[g]?.[id]; return b ? `<td>🏆 ${b}</td>` : '<td class="none">–</td>'; }).join('')}</tr>`).join('');
+    GAME_NAMES.filter(([g]) => free('game-' + g)).map(([g, name]) => `<tr><td>${gameIco(g)}<span class="w">${tr(name)}</span></td>${LEVELS.map(([id]) => { const b = g === 'hop' ? Math.max(...HOP_WAYS.map(w => s.best[w[0]]?.[id] || 0)) : s.best[g]?.[id]; return b ? `<td>🏆 ${b}</td>` : '<td class="none">–</td>'; }).join('')}</tr>`).join('');
   // (the shop: every special thing, ✓ when this child owns it, the lock and the price when not - tapping one buys it)
   const shop = document.getElementById('shopList'); shop.innerHTML = '';
   for (const [n, price] of Object.entries(SHOP)) { if (!free(n)) continue; const b = iconButton(`ikoner/valg-${n}.png`, shopThing(n).label), own = s.owned?.includes(n);
     b.classList.toggle('locked', !own); b.append(Object.assign(document.createElement('span'), { className: 'price' + (own ? ' own' : ''), textContent: own ? '✓' : '🔒' }));
     b.onclick = () => { if (!own) askBuy(n, p.id); }; shop.append(b); }
   // (what this child has bought, the newest first - a picture to go by, the name, the day and the price)
-  document.getElementById('buyLog').innerHTML = (s.history || []).map(h => `<div class="buy-row"><img src="ikoner/valg-${h.n}.png" alt=""><span>${esc(tr(shopThing(h.n).label))}<small>${new Date(h.at).toLocaleDateString(T('da-DK', 'en-US'))}</small></span><b>${krTxt(h.kr)}</b></div>`).join('');
+  document.getElementById('buyLog').innerHTML = (s.history || []).map(h => `<div class="buy-row"><img src="ikoner/valg-${h.n}.png" alt=""><span><span class="w">${esc(tr(shopThing(h.n).label))}</span><small>${new Date(h.at).toLocaleDateString(T('da-DK', 'en-US'))}</small></span><b>${krHtml(h.kr)}</b></div>`).join('');
   document.getElementById('starSheet').hidden = false; }
 const esc = t => String(t || '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 document.getElementById('starBtn').onclick = () => { starShown = null; showStarSheet(); };
@@ -8090,6 +8102,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); headShape(); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { gearTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;right:6px;z-index:999;background:#E8384F;color:#fff;font:700 11px system-ui,sans-serif;padding:2px 8px;border-radius:9px;pointer-events:none;opacity:.85">TEST 0.19.0 (e5d718d)</div>
+<div style="position:fixed;top:4px;right:6px;z-index:999;background:#E8384F;color:#fff;font:700 11px system-ui,sans-serif;padding:2px 8px;border-radius:9px;pointer-events:none;opacity:.85">TEST 0.19.0 (9461723)</div>
 </body>
 </html>
