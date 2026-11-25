@@ -3291,7 +3291,8 @@ function matchThighs(o) { const S = hairBase?.slim; if (!S?.on || !tex.covered[P
   for (const [p, k] of S.band) for (let c = 0; c < 3; c++) o[p * 4 + c] += (A[c] - o[p * 4 + c]) * k; }
 // (a top over trousers: its lower part let out over them, wherever they come further out - drawn up by the navel the
 // trousers came out through the T-shirt's hem. Each time from the top's own shape, kept in orig)
-function layer() { const top = GARMENTS.shirt.meshes[GARMENTS.shirt.shown], under = GARMENTS.pants.meshes[GARMENTS.pants.shown]; if (!top) return;
+// (a skirt counts as trousers here - the owner, 25-11-2026: the T-shirt's hem came out through the skirt's waist)
+function layer() { const D = GARMENTS.dress, top = GARMENTS.shirt.meshes[GARMENTS.shirt.shown], under = GARMENTS.pants.meshes[GARMENTS.pants.shown] || (D.shown && isSkirt(D.shown) ? D.meshes[D.shown] : null); if (!top) return;
   // (both made from the body, the top already lies outside the trousers - pushed out by them it went in ruffles)
   // (a top that goes in the trousers tucked in only when there are trousers to go in)
   const P = top.geometry.attributes.position; P.array.set(top.userData.tucked && under?.userData.made ? top.userData.tucked : top.userData.orig); P.needsUpdate = true; if (!under || top.userData.made && under.userData.made) return;
@@ -8206,6 +8207,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); headShape(); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { gearTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;right:6px;z-index:999;background:#E8384F;color:#fff;font:700 11px system-ui,sans-serif;padding:2px 8px;border-radius:9px;pointer-events:none;opacity:.85">TEST 0.20.1 (13a2b03)</div>
+<div style="position:fixed;top:4px;right:6px;z-index:999;background:#E8384F;color:#fff;font:700 11px system-ui,sans-serif;padding:2px 8px;border-radius:9px;pointer-events:none;opacity:.85">TEST 0.20.1 (15101dd)</div>
 </body>
 </html>
