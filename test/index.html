@@ -1288,7 +1288,7 @@ function setupBrows(body) {
   // drawn from: their colour is the picture's margin, which made white flecks in a bigger eye's iris. Nor the outermost
   // two texels of each piece: blended with that margin, they made a white streak)
   const raster = new Set(place.keys()), inside = new Set();
-  for (const p of raster) if ([1, -1, w, -w, 2, -2, 2 * w, -2 * w].every(o => raster.has(p + o))) inside.add(p);
+  for (const p of raster) if (raster.has(p + 1) && raster.has(p - 1) && raster.has(p + w) && raster.has(p - w) && raster.has(p + 2) && raster.has(p - 2) && raster.has(p + 2 * w) && raster.has(p - 2 * w)) inside.add(p);
   // (each ring from the one added last only: the texels before it have all their neighbours already - the same ring, in the
   // same order, Jan's A55 25-11-2026)
   for (let r = 0, ring = [...place.keys()]; r < 3; r++) { const add = [];
@@ -1318,11 +1318,16 @@ function setupBrows(body) {
     const r = .34 * apart, cell = new Map(), ck = (a, b, c) => ((a + 65536) * 131072 + b + 65536) * 131072 + c + 65536, key = (x, y, z) => ck(Math.floor(x / r), Math.floor(y / r), Math.floor(z / r));
     for (const i of near) { const k = key(P[i * 3], P[i * 3 + 1], P[i * 3 + 2]); let g = cell.get(k); if (!g) cell.set(k, g = []); g.push(i); }
     Mo.smooth = new Float32Array(list.length / 2 * 3);
-    for (let j = 0; j < list.length; j += 2) { const i = list[j], x = P[i * 3], y = P[i * 3 + 1], z = P[i * 3 + 2], v = [0, 0, 0], gx = Math.floor(x / r), gy = Math.floor(y / r), gz = Math.floor(z / r);
-      for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) for (let c = -1; c <= 1; c++) for (const q of cell.get(ck(gx + a, gy + b, gz + c)) || []) {
-        const d2 = ((P[q * 3] - x) ** 2 + (P[q * 3 + 1] - y) ** 2 + (P[q * 3 + 2] - z) ** 2) / (r * r); if (d2 > 1) continue; const wq = 1 - d2;
-        for (let m = 0; m < 3; m++) v[m] += N[q * 3 + m] * wq; }
-      const l = Math.hypot(...v) || 1; Mo.smooth.set(v.map(c => c / l), j / 2 * 3); }
+    // (each cell's points packed side by side, place and normal, in the order they came: the same sums, read faster -
+    // Jan's A55, 25-11-2026)
+    const pack = new Map(), packed = k => { let A = pack.get(k); if (A !== undefined) return A; const g = cell.get(k); A = null;
+      if (g) { A = new Float32Array(g.length * 6); for (let u = 0; u < g.length; u++) { const q = g[u]; for (let m = 0; m < 3; m++) { A[u * 6 + m] = P[q * 3 + m]; A[u * 6 + 3 + m] = N[q * 3 + m]; } } }
+      pack.set(k, A); return A; };
+    for (let j = 0; j < list.length; j += 2) { const i = list[j], x = P[i * 3], y = P[i * 3 + 1], z = P[i * 3 + 2], gx = Math.floor(x / r), gy = Math.floor(y / r), gz = Math.floor(z / r); let v0 = 0, v1 = 0, v2 = 0;
+      for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) for (let c = -1; c <= 1; c++) { const A = packed(ck(gx + a, gy + b, gz + c)); if (A) for (let o = 0; o < A.length; o += 6) {
+        const d2 = ((A[o] - x) ** 2 + (A[o + 1] - y) ** 2 + (A[o + 2] - z) ** 2) / (r * r); if (d2 > 1) continue; const wq = 1 - d2;
+        v0 += A[o + 3] * wq; v1 += A[o + 4] * wq; v2 += A[o + 5] * wq; } }
+      const v = [v0, v1, v2], l = Math.hypot(...v) || 1; Mo.smooth.set(v.map(c => c / l), j / 2 * 3); }
     Mo.verts = new Float32Array(list); Mo.normals = Float32Array.from(list.filter((_, j) => j % 2 === 0).flatMap(i => [N[i * 3], N[i * 3 + 1], N[i * 3 + 2]]));
     Mo.pos = Float32Array.from(list.filter((_, j) => j % 2 === 0).flatMap(i => [P[i * 3], P[i * 3 + 1], P[i * 3 + 2]])); Object.assign(Mo, { cx, cy, apart, body }); body.material.alphaTest = .5; body.frustumCulled = false; }
   // (the old brows: the hair's brown above the eyes - from now on a part of their own - and how they lie, side by side
@@ -1413,9 +1418,10 @@ function setupEyeShapes(place, inside) {
   for (const [p, [X, Y]] of place) for (let e = 0; e < 2; e++) { const E = eyes[e]; if (Math.hypot((X - E.cx) / E.ew, (Y - E.cy) / E.eh) < 1.75) zone.set(p, [X, Y, e]); }
   // (and the unused margin round the eye's pieces, 12 deep: the old eye there, blended in from afar, showed as brown flecks
   // on a shut eye)
-  for (let r = 0; r < 12; r++) { const add = [];
-    for (const [p, v] of zone) for (const o of [1, -1, w, -w]) if (p + o >= 0 && p + o < w * h && !zone.has(p + o) && !place.has(p + o)) add.push([p + o, v]);
-    for (const [p, v] of add) if (!zone.has(p)) zone.set(p, v); }
+  // (each ring from the one added last only - the texels before it have none left to add: the same rings, Jan's A55 25-11-2026)
+  for (let r = 0, ring = [...zone]; r < 12; r++) { const add = [];
+    for (const [p, v] of ring) for (const o of [1, -1, w, -w]) if (p + o >= 0 && p + o < w * h && !zone.has(p + o) && !place.has(p + o)) add.push([p + o, v]);
+    ring = []; for (const [p, v] of add) if (!zone.has(p)) { zone.set(p, v); ring.push([p, v]); } }
   const out = [];
   for (const [p, [X, Y, e]] of zone) { const E = eyes[e], d = Math.hypot(X - E.ix, Y - E.iy) / E.r;
     // (inside the iris and its dark rim everything - the pupil's light has soft edges, neither white nor dark; the upper
@@ -1545,9 +1551,10 @@ function setupMouth(place) {
   if (ys.length < 20) return; const my = ys.reduce((a, b) => a + b) / ys.length, rx = mw * 1.5, ry = .34; // (deep enough for the tongue's tip)
   const zone = new Map(); for (const [p, [X, Y]] of place) if (Math.hypot(X / rx, (Y - my) / ry) < 1) zone.set(p, [X, Y]);
   // (and the unused margin round its pieces, as for the eyes)
-  for (let r = 0; r < 12; r++) { const add = [];
-    for (const [p, v] of zone) for (const o of [1, -1, w, -w]) if (p + o >= 0 && p + o < w * h && !zone.has(p + o) && !place.has(p + o)) add.push([p + o, v]);
-    for (const [p, v] of add) if (!zone.has(p)) zone.set(p, v); }
+  // (each ring from the one added last only - the texels before it have none left to add: the same rings, Jan's A55 25-11-2026)
+  for (let r = 0, ring = [...zone]; r < 12; r++) { const add = [];
+    for (const [p, v] of ring) for (const o of [1, -1, w, -w]) if (p + o >= 0 && p + o < w * h && !zone.has(p + o) && !place.has(p + o)) add.push([p + o, v]);
+    ring = []; for (const [p, v] of add) if (!zone.has(p)) { zone.set(p, v); ring.push([p, v]); } }
   const out = [];
   for (const [p, [X, Y]] of zone) { let ks = 0, c = 0; const x = p % w, y = (p - x) / w;
     for (let dy = -14; dy <= 14; dy += 2) for (let dx = -14; dx <= 14; dx += 2) { const X2 = x + dx, Y2 = y + dy; if (X2 < 0 || Y2 < 0 || X2 >= w || Y2 >= h) continue; const q = Y2 * w + X2;
@@ -1678,9 +1685,9 @@ function setPynt(name) { const k = name.slice(5);
   redrawBody(); renderStyles(); }
 function setupPynt(place) { const w = tex.w, h = tex.h, face = new Map();
   for (const [p, [X, Y]] of place) if (Math.abs(X) < 1.3 && Y > -1 && Y < 1.15) face.set(p, [X, Y]); // (the forehead too)
-  for (let r = 0; r < 6; r++) { const add = [];
-    for (const [p, v] of face) for (const o of [1, -1, w, -w]) if (p + o >= 0 && p + o < w * h && !face.has(p + o) && !place.has(p + o)) add.push([p + o, v]);
-    for (const [p, v] of add) if (!face.has(p)) face.set(p, v); }
+  for (let r = 0, ring = [...face]; r < 6; r++) { const add = [];
+    for (const [p, v] of ring) for (const o of [1, -1, w, -w]) if (p + o >= 0 && p + o < w * h && !face.has(p + o) && !place.has(p + o)) add.push([p + o, v]);
+    ring = []; for (const [p, v] of add) if (!face.has(p)) { face.set(p, v); ring.push([p, v]); } }
   const out = new Float32Array(face.size * 3); let j = 0; for (const [p, [X, Y]] of face) { out[j++] = p; out[j++] = X; out[j++] = Y; }
   tex.pynt = { texels: out }; }
 // (the app's drawing, in its pixels: list the chosen things, skin the skin's colour 0..255)
@@ -2220,9 +2227,9 @@ function measureHead(fbx) {
   hairBase.surface = { grid, box, face, fine };
   // (the whole body as it stands, for clothes: each point with the way out of the body there, in little boxes)
   // (each spot once in the boxes: the figure's triangles each have their own corners, about six at every spot)
-  const H = all.max.y - all.min.y, cell = .04 * H, pts = new Float32Array(P.count * 6), wgrid = new Map(), spots = new Set();
+  const H = all.max.y - all.min.y, cell = .04 * H, pts = new Float32Array(P.count * 6), wgrid = new Map(), spots = new Map(); // (spots: by x, then y, then z)
   for (let i = 0; i < P.count; i++) { body.getVertexPosition(i, q).applyMatrix4(body.matrixWorld); nn.fromBufferAttribute(N, i).applyMatrix3(turn).normalize();
-    pts.set([q.x, q.y, q.z, nn.x, nn.y, nn.z], i * 6); const at = `${P.getX(i)},${P.getY(i)},${P.getZ(i)}`; if (spots.has(at)) continue; spots.add(at); const key = `${Math.floor(q.x / cell)},${Math.floor(q.y / cell)},${Math.floor(q.z / cell)}`;
+    pts.set([q.x, q.y, q.z, nn.x, nn.y, nn.z], i * 6); const ax = P.getX(i), ay = P.getY(i), az = P.getZ(i); let sx = spots.get(ax); if (!sx) spots.set(ax, sx = new Map()); let sy = sx.get(ay); if (!sy) sx.set(ay, sy = new Set()); if (sy.has(az)) continue; sy.add(az); const key = `${Math.floor(q.x / cell)},${Math.floor(q.y / cell)},${Math.floor(q.z / cell)}`;
     if (!wgrid.has(key)) wgrid.set(key, []); wgrid.get(key).push(i); }
   hairBase.whole = { pts, cell, grid: wgrid, inv: body.matrixWorld.clone().invert(), H }; hairBase.box = all.clone(); }
 // how far a point lies inside the figure's surface (more than a small margin), and the way out: by the nearest point of it
@@ -4660,7 +4667,14 @@ function earCurve(R, closed) { const out = [], n = R.length, at = k => closed ? 
     for (let i = 0; i < 10; i++) { const t = i / 10, t2 = t * t, t3 = t2 * t; out.push([...p1.map((_, m) => .5 * (2 * p1[m] + (p2[m] - p0[m]) * t + (2 * p0[m] - 5 * p1[m] + 4 * p2[m] - p3[m]) * t2 + (3 * p1[m] - p0[m] - 3 * p2[m] + p3[m]) * t3)), (k + t) / (n - 1)]); } }
   out.push([...(closed ? R[0] : R[n - 1]), 1]); return out; }
 // (the nearest spot on such a line: how far off, and its width, height and how far along it lies)
-function earNear(C, X, Y) { let m = Infinity, w = 1, l = 0, f = 0; for (let k = 0; k + 1 < C.length; k++) { const a = C[k], b = C[k + 1], dx = b[0] - a[0], dy = b[1] - a[1], t = Math.min(1, Math.max(0, ((X - a[0]) * dx + (Y - a[1]) * dy) / (dx * dx + dy * dy))), d = Math.hypot(X - a[0] - t * dx, Y - a[1] - t * dy);
+// (first, cheaply, how far the nearest of its points is - no piece whose box lies further off than that can be the nearest
+// piece, so only the others are measured; the same piece found, the same numbers: Jan's A55, 25-11-2026)
+const earBoxes = new Map();
+function earNear(C, X, Y) { let B = earBoxes.get(C);
+  if (!B) { B = new Float64Array((C.length - 1) * 4); for (let k = 0; k + 1 < C.length; k++) B.set([Math.min(C[k][0], C[k + 1][0]), Math.max(C[k][0], C[k + 1][0]), Math.min(C[k][1], C[k + 1][1]), Math.max(C[k][1], C[k + 1][1])], k * 4); earBoxes.set(C, B); }
+  let ub = Infinity; for (let k = 0; k < C.length; k++) { const ex = X - C[k][0], ey = Y - C[k][1]; ub = Math.min(ub, ex * ex + ey * ey); } ub = ub * (1 + 1e-9) + 1e-12;
+  let m = Infinity, w = 1, l = 0, f = 0; for (let k = 0; k + 1 < C.length; k++) { const ex = Math.max(B[k * 4] - X, 0, X - B[k * 4 + 1]), ey = Math.max(B[k * 4 + 2] - Y, 0, Y - B[k * 4 + 3]); if (ex * ex + ey * ey > ub) continue;
+    const a = C[k], b = C[k + 1], dx = b[0] - a[0], dy = b[1] - a[1], t = Math.min(1, Math.max(0, ((X - a[0]) * dx + (Y - a[1]) * dy) / (dx * dx + dy * dy))), d = Math.hypot(X - a[0] - t * dx, Y - a[1] - t * dy);
   if (d < m) { m = d; w = a[2] + (b[2] - a[2]) * t; l = a[3] + (b[3] - a[3]) * t; f = a[a.length - 1] + (b[b.length - 1] - a[a.length - 1]) * t; } } return [m, w, l, f]; }
 // (the ridge round the bowl: up round its back and forward over it, narrowing - each point x, y, width, height)
 const EAR_RIDGE = earCurve([[470, 692, 40, -.02], [380, 656, 44, -.008], [326, 588, 46, -.004], [302, 500, 46, -.004], [306, 428, 42, -.006], [326, 382, 36, -.008], [360, 350, 30, -.01], [420, 330, 27, -.012], [490, 316, 24, -.016], [555, 304, 20, -.022]]);
@@ -8143,6 +8157,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); headShape(); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { gearTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;right:6px;z-index:999;background:#E8384F;color:#fff;font:700 11px system-ui,sans-serif;padding:2px 8px;border-radius:9px;pointer-events:none;opacity:.85">TEST 0.20.0 (b6e12e9)</div>
+<div style="position:fixed;top:4px;right:6px;z-index:999;background:#E8384F;color:#fff;font:700 11px system-ui,sans-serif;padding:2px 8px;border-radius:9px;pointer-events:none;opacity:.85">TEST 0.20.0 (62ad9ca)</div>
 </body>
 </html>
