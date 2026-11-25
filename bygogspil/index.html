@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>MiniMig&trade; &ndash; byg og spil i 3D</title>
-<meta name="minimig-version" content="0.20.0">
+<meta name="minimig-version" content="0.20.1">
 <!-- (the number of this version, shown under the i - see VERSIONER.md - raised for each package and each fix put out) -->
 <!-- (the same icon as version 1 on a home screen, under the name MiniMig 2 - the icons lie in the website's billeder/;
      the user, 03-11-2026, sharing version 2 with testers) -->
@@ -253,7 +253,7 @@
   .lvl-pop .lvl-chal { display: block; width: 100%; height: auto; border: 0; border-radius: 16px; padding: 10px 14px; font: 800 1.05rem system-ui, sans-serif; background: linear-gradient(90deg, #FFD23F, #FF9F1C); color: #2B2153; cursor: pointer; }
   .lvl-pop .lvl-chal.on { background: #F4F0FF; }
   /* (the TestFlight build's note - Plan C, 23-11-2026: only in builds made for TestFlight, never in the App Store's) */
-  .tf-pill { position: absolute; top: max(10px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); z-index: 3; pointer-events: none; white-space: nowrap;
+  .tf-pill { position: absolute; top: max(10px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); z-index: 3; pointer-events: none; width: max-content; max-width: calc(100% - 24px); text-align: center; /* (two lines on a narrow phone rather than wider than the figure - Jan's A55, 24-11-2026) */
     background: rgba(255, 255, 255, .92); color: #2B2153; border-radius: 999px; padding: 5px 12px; font: 700 .8rem/1.2 system-ui, sans-serif; box-shadow: 0 2px 10px rgba(58, 46, 92, .18); }
   .stage.playing .tf-pill { display: none; }
   .ww-go { display: flex; flex-direction: column; gap: 8px; }
@@ -1181,9 +1181,13 @@ function setupTexture(map) {
 // (a white vest and shorts, as on the bald base figure, can't be told from the eye whites by their colour: each white
 // pixel is sorted by where it sits on the body instead - head and neck stay as they are, the vest down to the waist,
 // the shorts below it. Each triangle of the figure, in its T-pose, is painted at its place in the picture)
-function whitesByPlace(fbx) {
+// (the map of places is the same every time for the same figure: drawn once and kept as figur-steder<FIGUR_V>.png, read
+// here in a moment - drawing the triangles took seconds on a phone, Jan's A55 25-11-2026. Not there, or another size:
+// drawn as before. A new figure: open the game with ?bag-steder, and save figur-steder.png with the new number)
+function whitesByPlace(fbx, baked) {
   if (!tex) return; const c = document.createElement('canvas'); c.width = tex.w; c.height = tex.h;
   const g = c.getContext('2d'); g.lineJoin = 'round';
+  if (baked && baked.width === tex.w && baked.height === tex.h && !location.search.includes('bag-steder')) g.drawImage(baked, 0, 0); else
   // (twice: first with wide edges, so the picture's margins round each piece - which the screen blends in at seams and
   // from afar - get the piece's part too, then exactly)
   for (const wide of [12, 1]) { g.lineWidth = wide; fbx.traverse(o => { if (!o.isMesh || !o.geometry.attributes.uv) return;
@@ -1195,6 +1199,9 @@ function whitesByPlace(fbx) {
       v.forEach((i, j) => { const x = uv.getX(i) * tex.w, y = (1 - uv.getY(i)) * tex.h; j ? g.lineTo(x, y) : g.moveTo(x, y); });
       g.closePath(); g.fill(); g.stroke(); } }); }
   const place = g.getImageData(0, 0, tex.w, tex.h).data, s = tex.src, sums = [0, 0, 0, 0, 0, 0], counts = [0, 0, 0, 0, 0, 0];
+  if (location.search.includes('bag-steder')) { const o = new ImageData(new Uint8ClampedArray(place), tex.w, tex.h); for (let i = 3; i < o.data.length; i += 4) o.data[i] = 255;
+    const k = document.createElement('canvas'); k.width = tex.w; k.height = tex.h; k.getContext('2d').putImageData(o, 0, 0);
+    k.toBlob(b => { window.bagteSteder = b; const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `figur-steder${FIGUR_V.replace(/\D/g, '')}.png`; a.click(); }, 'image/png'); }
   irisesByPlace(place);
   for (let p = 0, i = 0; p < tex.w * tex.h; p++, i += 4) { const mx = Math.max(s[i], s[i + 1], s[i + 2]), mn = Math.min(s[i], s[i + 1], s[i + 2]);
     if (mx > 75 && mx - mn < .16 * mx) tex.label[p] = place[i] > 128 ? PARTS.shirt : place[i + 1] > 128 ? PARTS.pants : tex.label[p];
@@ -1209,7 +1216,13 @@ function whitesByPlace(fbx) {
   // (how far from the underwear, along the rows and then the columns - the larger of the two, a square round it)
   for (let y = 0; y < h; y++) { for (let x = 0, run = -1e9; x < w; x++) { if (under[y * w + x]) run = x; row[y * w + x] = Math.min(R + 1, x - run); }
     for (let x = w - 1, run = 1e9; x >= 0; x--) { if (under[y * w + x]) run = x; row[y * w + x] = Math.min(row[y * w + x], run - x); } }
-  for (let p = 0; p < w * h; p++) { const y = Math.floor(p / w); for (let k = -Math.min(R, y); k <= R && y + k < h; k++) far[p] = Math.min(far[p], Math.max(Math.abs(k), row[p + k * w])); }
+  // (only where the underwear is within R rows up or down: elsewhere every step gives more than R - Jan's A55, 25-11-2026)
+  const up = new Int32Array(w * h); for (let x = 0; x < w; x++) { for (let y = 0, run = -1e9; y < h; y++) { const p = y * w + x; if (row[p] <= R) run = y; up[p] = y - run; }
+    for (let y = h - 1, run = 1e9; y >= 0; y--) { const p = y * w + x; if (row[p] <= R) run = y; up[p] = Math.min(up[p], run - y); } }
+  // (and from the row itself outwards: a step k away gives at least k, so once k reaches the best found, none is nearer)
+  for (let p = 0; p < w * h; p++) { if (up[p] > R) continue; const y = Math.floor(p / w); let f = far[p];
+    for (let k = 0; k <= R && k < f; k++) { if (y + k < h) f = Math.min(f, Math.max(k, row[p + k * w])); if (k && k <= y) f = Math.min(f, Math.max(k, row[p - k * w])); }
+    far[p] = f; }
   // (only on the body: pieces of the face lie near the vest's in the picture, and the eyes were painted over)
   for (let p = 0; p < w * h; p++) if ((place[p * 4] > 128 || place[p * 4 + 1] > 128) && (!tex.label[p] && far[p] <= R || tex.label[p] === PARTS.skin && far[p] <= 10)) tex.seam[p] = place[p * 4 + 1] > 128 ? PARTS.pants : PARTS.shirt;
   // (and painted as light as the skin round it: the skin's brightness, against its middle, averaged over a square 129
@@ -1287,10 +1300,12 @@ function setupBrows(body) {
   // drawn from: their colour is the picture's margin, which made white flecks in a bigger eye's iris. Nor the outermost
   // two texels of each piece: blended with that margin, they made a white streak)
   const raster = new Set(place.keys()), inside = new Set();
-  for (const p of raster) if ([1, -1, w, -w, 2, -2, 2 * w, -2 * w].every(o => raster.has(p + o))) inside.add(p);
-  for (let r = 0; r < 3; r++) { const add = [];
-    for (const p of place.keys()) for (const o of [1, -1, w, -w]) if (p + o >= 0 && p + o < w * h && !place.has(p + o)) add.push([p + o, place.get(p)]);
-    for (const [p, v] of add) if (!place.has(p)) place.set(p, v); }
+  for (const p of raster) if (raster.has(p + 1) && raster.has(p - 1) && raster.has(p + w) && raster.has(p - w) && raster.has(p + 2) && raster.has(p - 2) && raster.has(p + 2 * w) && raster.has(p - 2 * w)) inside.add(p);
+  // (each ring from the one added last only: the texels before it have all their neighbours already - the same ring, in the
+  // same order, Jan's A55 25-11-2026)
+  for (let r = 0, ring = [...place.keys()]; r < 3; r++) { const add = [];
+    for (const p of ring) for (const o of [1, -1, w, -w]) if (p + o >= 0 && p + o < w * h && !place.has(p + o)) add.push([p + o, place.get(p)]);
+    ring = []; for (const [p, v] of add) if (!place.has(p)) { place.set(p, v); ring.push(p); } }
   setupEyeShapes(place, inside); setupMouth(place); setupPynt(place); setupNose(body, P, n, cx, cy, cz, apart);
   // (the eye sits in a hollow, whose shade showed through a shut eye: there the points are lit as if the face went
   // smoothly across - their way out turned towards the average of the ring round the eye, the more the further in)
@@ -1312,14 +1327,19 @@ function setupBrows(body) {
     for (let i = 0; i < n; i++) { const X = (P[i * 3] - cx) / apart, Y = (P[i * 3 + 1] - cy) / apart; if (P[i * 3 + 2] < cz - .4 * apart) continue;
       const rr = Math.hypot(X / Mo.rx, (Y - Mo.my) / Mo.ry); if (rr < 1) list.push(i, rr); if (rr < 1.8) near.push(i); }
     // (a third of the eyes' distance: over a fifth, the old smile's crease still showed as a shadow round Åh, Kys, Trist)
-    const r = .34 * apart, cell = new Map(), key = (x, y, z) => `${Math.floor(x / r)},${Math.floor(y / r)},${Math.floor(z / r)}`;
-    for (const i of near) { const k = key(P[i * 3], P[i * 3 + 1], P[i * 3 + 2]); if (!cell.has(k)) cell.set(k, []); cell.get(k).push(i); }
+    const r = .34 * apart, cell = new Map(), ck = (a, b, c) => ((a + 65536) * 131072 + b + 65536) * 131072 + c + 65536, key = (x, y, z) => ck(Math.floor(x / r), Math.floor(y / r), Math.floor(z / r));
+    for (const i of near) { const k = key(P[i * 3], P[i * 3 + 1], P[i * 3 + 2]); let g = cell.get(k); if (!g) cell.set(k, g = []); g.push(i); }
     Mo.smooth = new Float32Array(list.length / 2 * 3);
-    for (let j = 0; j < list.length; j += 2) { const i = list[j], x = P[i * 3], y = P[i * 3 + 1], z = P[i * 3 + 2], v = [0, 0, 0], gx = Math.floor(x / r), gy = Math.floor(y / r), gz = Math.floor(z / r);
-      for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) for (let c = -1; c <= 1; c++) for (const q of cell.get(`${gx + a},${gy + b},${gz + c}`) || []) {
-        const d2 = ((P[q * 3] - x) ** 2 + (P[q * 3 + 1] - y) ** 2 + (P[q * 3 + 2] - z) ** 2) / (r * r); if (d2 > 1) continue; const wq = 1 - d2;
-        for (let m = 0; m < 3; m++) v[m] += N[q * 3 + m] * wq; }
-      const l = Math.hypot(...v) || 1; Mo.smooth.set(v.map(c => c / l), j / 2 * 3); }
+    // (each cell's points packed side by side, place and normal, in the order they came: the same sums, read faster -
+    // Jan's A55, 25-11-2026)
+    const pack = new Map(), packed = k => { let A = pack.get(k); if (A !== undefined) return A; const g = cell.get(k); A = null;
+      if (g) { A = new Float32Array(g.length * 6); for (let u = 0; u < g.length; u++) { const q = g[u]; for (let m = 0; m < 3; m++) { A[u * 6 + m] = P[q * 3 + m]; A[u * 6 + 3 + m] = N[q * 3 + m]; } } }
+      pack.set(k, A); return A; };
+    for (let j = 0; j < list.length; j += 2) { const i = list[j], x = P[i * 3], y = P[i * 3 + 1], z = P[i * 3 + 2], gx = Math.floor(x / r), gy = Math.floor(y / r), gz = Math.floor(z / r); let v0 = 0, v1 = 0, v2 = 0;
+      for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) for (let c = -1; c <= 1; c++) { const A = packed(ck(gx + a, gy + b, gz + c)); if (A) for (let o = 0; o < A.length; o += 6) {
+        const d2 = ((A[o] - x) ** 2 + (A[o + 1] - y) ** 2 + (A[o + 2] - z) ** 2) / (r * r); if (d2 > 1) continue; const wq = 1 - d2;
+        v0 += A[o + 3] * wq; v1 += A[o + 4] * wq; v2 += A[o + 5] * wq; } }
+      const v = [v0, v1, v2], l = Math.hypot(...v) || 1; Mo.smooth.set(v.map(c => c / l), j / 2 * 3); }
     Mo.verts = new Float32Array(list); Mo.normals = Float32Array.from(list.filter((_, j) => j % 2 === 0).flatMap(i => [N[i * 3], N[i * 3 + 1], N[i * 3 + 2]]));
     Mo.pos = Float32Array.from(list.filter((_, j) => j % 2 === 0).flatMap(i => [P[i * 3], P[i * 3 + 1], P[i * 3 + 2]])); Object.assign(Mo, { cx, cy, apart, body }); body.material.alphaTest = .5; body.frustumCulled = false; }
   // (the old brows: the hair's brown above the eyes - from now on a part of their own - and how they lie, side by side
@@ -1332,8 +1352,6 @@ function setupBrows(body) {
     for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++) zone.add(p + dy * w + dx); }
   if (!cnt) return; tex.mid[PARTS.brows] = sum / cnt;
   const bins = [...Array(N).keys()].filter(b => top[b] > low[b]), x0 = bins[0] / N * 1.7, x1 = (bins.at(-1) + 1) / N * 1.7;
-  const mid = b => (top[b] + low[b]) / 2, thick = b => top[b] - low[b], along = (f, ax) => { const t = Math.max(0, Math.min(N - 1, ax / 1.7 * N - .5)), a = Math.floor(t), b = Math.min(N - 1, a + 1);
-    const fa = top[a] > low[a] ? f(a) : f(bins.reduce((m, c) => Math.abs(c - a) < Math.abs(m - a) ? c : m)), fb = top[b] > low[b] ? f(b) : fa; return fa + (fb - fa) * (t - a); };
   // (the skin's light at each painted-over texel: the skin round it, its brightness against the skin's middle)
   const keep = [];
   for (const [p, [X, Y]] of place) { if (Y < .1 || Math.abs(X) > 1.7) continue; let k = 0;
@@ -1342,7 +1360,12 @@ function setupBrows(body) {
         if (tex.label[q] === PARTS.skin && !zone.has(q)) { const i = q * 4; ks += (.3 * s[i] + .59 * s[i + 1] + .11 * s[i + 2]) / tex.mid[PARTS.skin]; c++; } }
       k = c ? ks / c : 1; }
     keep.push(p, X, Y, k); }
-  tex.brows = { texels: new Float32Array(keep), x0, x1, colour: { r: rgb[0] / cnt, g: rgb[1] / cnt, b: rgb[2] / cnt }, mid: ax => along(mid, ax), thick: ax => along(thick, ax) }; }
+  tex.brows = browLine({ texels: new Float32Array(keep), x0, x1, colour: { r: rgb[0] / cnt, g: rgb[1] / cnt, b: rgb[2] / cnt }, top, low, bins }); }
+// (the old brows' middle and thickness along them, from their strips - made again from the numbers when kept on the device)
+function browLine(B) { const { top, low, bins } = B, N = top.length;
+  const mid = b => (top[b] + low[b]) / 2, thick = b => top[b] - low[b], along = (f, ax) => { const t = Math.max(0, Math.min(N - 1, ax / 1.7 * N - .5)), a = Math.floor(t), b = Math.min(N - 1, a + 1);
+    const fa = top[a] > low[a] ? f(a) : f(bins.reduce((m, c) => Math.abs(c - a) < Math.abs(m - a) ? c : m)), fb = top[b] > low[b] ? f(b) : fa; return fa + (fb - fa) * (t - a); };
+  B.mid = ax => along(mid, ax); B.thick = ax => along(thick, ax); return B; }
 // (the chosen brows, drawn into the body's colour picture as it is redrawn: o its pixels)
 function drawBrows(o) {
   const B = tex.brows, opts = (BROWS.find(b => b[0] === browsNow) || [])[2]; if (!B || !opts) return;
@@ -1410,9 +1433,10 @@ function setupEyeShapes(place, inside) {
   for (const [p, [X, Y]] of place) for (let e = 0; e < 2; e++) { const E = eyes[e]; if (Math.hypot((X - E.cx) / E.ew, (Y - E.cy) / E.eh) < 1.75) zone.set(p, [X, Y, e]); }
   // (and the unused margin round the eye's pieces, 12 deep: the old eye there, blended in from afar, showed as brown flecks
   // on a shut eye)
-  for (let r = 0; r < 12; r++) { const add = [];
-    for (const [p, v] of zone) for (const o of [1, -1, w, -w]) if (p + o >= 0 && p + o < w * h && !zone.has(p + o) && !place.has(p + o)) add.push([p + o, v]);
-    for (const [p, v] of add) if (!zone.has(p)) zone.set(p, v); }
+  // (each ring from the one added last only - the texels before it have none left to add: the same rings, Jan's A55 25-11-2026)
+  for (let r = 0, ring = [...zone]; r < 12; r++) { const add = [];
+    for (const [p, v] of ring) for (const o of [1, -1, w, -w]) if (p + o >= 0 && p + o < w * h && !zone.has(p + o) && !place.has(p + o)) add.push([p + o, v]);
+    ring = []; for (const [p, v] of add) if (!zone.has(p)) { zone.set(p, v); ring.push([p, v]); } }
   const out = [];
   for (const [p, [X, Y, e]] of zone) { const E = eyes[e], d = Math.hypot(X - E.ix, Y - E.iy) / E.r;
     // (inside the iris and its dark rim everything - the pupil's light has soft edges, neither white nor dark; the upper
@@ -1542,9 +1566,10 @@ function setupMouth(place) {
   if (ys.length < 20) return; const my = ys.reduce((a, b) => a + b) / ys.length, rx = mw * 1.5, ry = .34; // (deep enough for the tongue's tip)
   const zone = new Map(); for (const [p, [X, Y]] of place) if (Math.hypot(X / rx, (Y - my) / ry) < 1) zone.set(p, [X, Y]);
   // (and the unused margin round its pieces, as for the eyes)
-  for (let r = 0; r < 12; r++) { const add = [];
-    for (const [p, v] of zone) for (const o of [1, -1, w, -w]) if (p + o >= 0 && p + o < w * h && !zone.has(p + o) && !place.has(p + o)) add.push([p + o, v]);
-    for (const [p, v] of add) if (!zone.has(p)) zone.set(p, v); }
+  // (each ring from the one added last only - the texels before it have none left to add: the same rings, Jan's A55 25-11-2026)
+  for (let r = 0, ring = [...zone]; r < 12; r++) { const add = [];
+    for (const [p, v] of ring) for (const o of [1, -1, w, -w]) if (p + o >= 0 && p + o < w * h && !zone.has(p + o) && !place.has(p + o)) add.push([p + o, v]);
+    ring = []; for (const [p, v] of add) if (!zone.has(p)) { zone.set(p, v); ring.push([p, v]); } }
   const out = [];
   for (const [p, [X, Y]] of zone) { let ks = 0, c = 0; const x = p % w, y = (p - x) / w;
     for (let dy = -14; dy <= 14; dy += 2) for (let dx = -14; dx <= 14; dx += 2) { const X2 = x + dx, Y2 = y + dy; if (X2 < 0 || Y2 < 0 || X2 >= w || Y2 >= h) continue; const q = Y2 * w + X2;
@@ -1675,9 +1700,9 @@ function setPynt(name) { const k = name.slice(5);
   redrawBody(); renderStyles(); }
 function setupPynt(place) { const w = tex.w, h = tex.h, face = new Map();
   for (const [p, [X, Y]] of place) if (Math.abs(X) < 1.3 && Y > -1 && Y < 1.15) face.set(p, [X, Y]); // (the forehead too)
-  for (let r = 0; r < 6; r++) { const add = [];
-    for (const [p, v] of face) for (const o of [1, -1, w, -w]) if (p + o >= 0 && p + o < w * h && !face.has(p + o) && !place.has(p + o)) add.push([p + o, v]);
-    for (const [p, v] of add) if (!face.has(p)) face.set(p, v); }
+  for (let r = 0, ring = [...face]; r < 6; r++) { const add = [];
+    for (const [p, v] of ring) for (const o of [1, -1, w, -w]) if (p + o >= 0 && p + o < w * h && !face.has(p + o) && !place.has(p + o)) add.push([p + o, v]);
+    ring = []; for (const [p, v] of add) if (!face.has(p)) { face.set(p, v); ring.push([p, v]); } }
   const out = new Float32Array(face.size * 3); let j = 0; for (const [p, [X, Y]] of face) { out[j++] = p; out[j++] = X; out[j++] = Y; }
   tex.pynt = { texels: out }; }
 // (the app's drawing, in its pixels: list the chosen things, skin the skin's colour 0..255)
@@ -1866,13 +1891,20 @@ function solidMouth() { const M = tex && tex.mouth; if (!M || !M.pos || !hairBas
   // (each mouth's parts kept once built: changing back and forth shows only that mouth's)
   M.solidBy = M.solidBy || {}; if (!M.solidBy[mouthLook()]) { const from = M.solid ? M.solid.length : 0; buildSolid(M, opts); M.solidBy[mouthLook()] = { parts: M.solid.slice(from), lipT: M.lipT }; }
   const S = M.solidBy[mouthLook()]; M.lipT = S.lipT; colourLips(M, opts); for (const m of S.parts) m.visible = true; }
-function faceHeight(M) { if (M.fz) return M.fz; const P = M.body.geometry.attributes.position.array, ap = M.apart, tris = [];
+// (the face's front found once, not again for every triangle; and each lookup tries only the triangles in its square of
+// a grid laid over them - the same triangles that can hold the point, the same height: Jan's A55, 25-11-2026)
+function faceHeight(M) { if (M.fz) return M.fz; const P = M.body.geometry.attributes.position.array, ap = M.apart, tris = [], front = M.pos.reduce((a, v, j) => j % 3 === 2 ? Math.max(a, v) : a, -Infinity);
   for (let k = 0; k < P.length; k += 9) { const q = [0, 3, 6].map(o => [(P[k + o] - M.cx) / ap, (P[k + o + 1] - M.cy) / ap, (P[k + o + 2])]);
     if (Math.max(...q.map(v => Math.abs(v[0]))) > .8 || Math.min(...q.map(v => v[1])) > M.my + .6 || Math.max(...q.map(v => v[1])) < M.my - .6) continue;
-    if ((q[0][2] + q[1][2] + q[2][2]) / 3 < M.pos.reduce((a, v, j) => j % 3 === 2 ? Math.max(a, v) : a, -Infinity) - .8 * ap) continue;
+    if ((q[0][2] + q[1][2] + q[2][2]) / 3 < front - .8 * ap) continue;
     tris.push(q); }
-  return M.fz = (X, Y) => { let best = -Infinity;
-    for (const [a, b, c] of tris) { const d = (b[1] - c[1]) * (a[0] - c[0]) + (c[0] - b[0]) * (a[1] - c[1]); if (!d) continue;
+  // (each triangle's box made a little wider - a point may lie a thousandth outside it and still count)
+  const G = 48, box = tris.map(t => { const xs = t.map(v => v[0]), ys = t.map(v => v[1]), x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys), m = .01 * Math.max(x1 - x0, y1 - y0) + 1e-6; return [x0 - m, y0 - m, x1 + m, y1 + m]; });
+  const gx0 = Math.min(...box.map(b => b[0])), gy0 = Math.min(...box.map(b => b[1])), gw = (Math.max(...box.map(b => b[2])) - gx0) / G || 1, gh = (Math.max(...box.map(b => b[3])) - gy0) / G || 1;
+  const cx = x => Math.min(G - 1, Math.floor((x - gx0) / gw)), cy = y => Math.min(G - 1, Math.floor((y - gy0) / gh)), cells = Array.from({ length: G * G }, () => []);
+  box.forEach((b, t) => { for (let j = cy(b[1]); j <= cy(b[3]); j++) for (let i = cx(b[0]); i <= cx(b[2]); i++) cells[j * G + i].push(tris[t]); });
+  return M.fz = (X, Y) => { let best = -Infinity; const i = Math.floor((X - gx0) / gw), j = Math.floor((Y - gy0) / gh); if (!(i >= 0 && j >= 0 && i <= G && j <= G)) return best;
+    for (const [a, b, c] of cells[Math.min(G - 1, j) * G + Math.min(G - 1, i)]) { const d = (b[1] - c[1]) * (a[0] - c[0]) + (c[0] - b[0]) * (a[1] - c[1]); if (!d) continue;
       const l0 = ((b[1] - c[1]) * (X - c[0]) + (c[0] - b[0]) * (Y - c[1])) / d, l1 = ((c[1] - a[1]) * (X - c[0]) + (a[0] - c[0]) * (Y - c[1])) / d, l2 = 1 - l0 - l1;
       if (l0 < -.001 || l1 < -.001 || l2 < -.001) continue; best = Math.max(best, l0 * a[2] + l1 * b[2] + l2 * c[2]); }
     return best; }; }
@@ -2038,22 +2070,41 @@ function bulgeLips() { const M = tex && tex.mouth; if (!M || !M.pos) return; con
 function smoothUnder() {
   if (!hairBase || !tex) return; const geo = hairBase.body.geometry, N = geo.attributes.normal;
   if (!hairBase.smooth) { const P = geo.attributes.position, uv = geo.attributes.uv, n = P.count, H = hairBase.whole.H / hairBase.body.matrixWorld.getMaxScaleOnAxis();
-    const r = .015 * H, grid = new Map(), key = (x, y, z) => `${Math.floor(x / r)},${Math.floor(y / r)},${Math.floor(z / r)}`, mark = [];
+    // (the cells of the grid by a number, not a text - the same cells, many times faster on a phone: Jan's A55, 25-11-2026)
+    const r = .015 * H, grid = new Map(), cell = (a, b, c) => ((a + 65536) * 131072 + b + 65536) * 131072 + c + 65536, mark = [];
+    const X = new Float64Array(n), Y = new Float64Array(n), Z = new Float64Array(n); for (let i = 0; i < n; i++) { X[i] = P.getX(i); Y[i] = P.getY(i); Z[i] = P.getZ(i); }
+    const key = (x, y, z) => cell(Math.floor(x / r), Math.floor(y / r), Math.floor(z / r));
     for (let i = 0; i < n; i++) { const p = Math.min(tex.h - 1, Math.max(0, Math.floor((1 - uv.getY(i)) * tex.h))) * tex.w + Math.min(tex.w - 1, Math.max(0, Math.floor(uv.getX(i) * tex.w))), l = tex.label[p];
-      if (l === PARTS.shirt || l === PARTS.pants || tex.seam[p]) mark.push(i, l === PARTS.shirt || l === PARTS.pants ? l : tex.seam[p]);
-      const k = key(P.getX(i), P.getY(i), P.getZ(i)); if (!grid.has(k)) grid.set(k, []); grid.get(k).push(i); }
+      if (l === PARTS.shirt || l === PARTS.pants || tex.seam[p]) mark.push(i, l === PARTS.shirt || l === PARTS.pants ? l : tex.seam[p]); }
+    // (kept on the device from an earlier start: used when the normals and underwear it was worked out from are the same)
+    const glatKey = `${keep.key}:${n}:${r}:${keepHash(new Uint8Array(N.array.buffer, N.array.byteOffset, N.array.byteLength))}:${keepHash(Int32Array.from(mark))}`, G = keep.glat;
+    if (G && G.key === glatKey) { const was = N.array.slice(), now = N.array.slice(), near = new Uint8Array(n);
+      for (let j = 0; j < G.idx.length; j++) { const i = G.idx[j]; near[i] = G.bit[j]; now[i * 3] = G.val[j * 3]; now[i * 3 + 1] = G.val[j * 3 + 1]; now[i * 3 + 2] = G.val[j * 3 + 2]; }
+      hairBase.smooth = { was, now, near }; } else {
+    for (let i = 0; i < n; i++) { const k = key(X[i], Y[i], Z[i]); let g = grid.get(k); if (!g) grid.set(k, g = []); g.push(i); }
     // (the underwear's points and every point near them - which piece: a bit each)
-    const near = new Uint8Array(n);
-    for (let m = 0; m < mark.length; m += 2) { const i = mark[m], bit = 1 << mark[m + 1], kx = Math.floor(P.getX(i) / r), ky = Math.floor(P.getY(i) / r), kz = Math.floor(P.getZ(i) / r);
-      for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) for (let dz = -1; dz <= 1; dz++) for (const j of grid.get(`${kx + dx},${ky + dy},${kz + dz}`) || []) near[j] |= bit; }
-    const was = N.array.slice(), now = N.array.slice(), done = new Map(), v = new THREE.Vector3();
-    for (let i = 0; i < n; i++) { if (!near[i]) continue; const x = P.getX(i), y = P.getY(i), z = P.getZ(i), at = `${x},${y},${z}`;
-      if (!done.has(at)) { v.set(0, 0, 0); const kx = Math.floor(x / r), ky = Math.floor(y / r), kz = Math.floor(z / r);
-        for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) for (let dz = -1; dz <= 1; dz++) for (const j of grid.get(`${kx + dx},${ky + dy},${kz + dz}`) || []) {
-          if ((P.getX(j) - x) ** 2 + (P.getY(j) - y) ** 2 + (P.getZ(j) - z) ** 2 < r * r) v.x += was[j * 3], v.y += was[j * 3 + 1], v.z += was[j * 3 + 2]; }
-        done.set(at, v.normalize().toArray()); }
-      now.set(done.get(at), i * 3); }
-    hairBase.smooth = { was, now, near }; }
+    // (each cell's pieces gathered first - many marked points share a cell, and the cells round it need marking once)
+    const near = new Uint8Array(n), bits = new Map();
+    for (let m = 0; m < mark.length; m += 2) { const i = mark[m], k = cell(Math.floor(X[i] / r), Math.floor(Y[i] / r), Math.floor(Z[i] / r)); bits.set(k, (bits.get(k) || 0) | 1 << mark[m + 1]); }
+    for (const [k, bit] of bits) { const kz = k % 131072 - 65536, ky = Math.floor(k / 131072) % 131072 - 65536, kx = Math.floor(k / 17179869184) - 65536;
+      for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) for (let dz = -1; dz <= 1; dz++) { const g = grid.get(cell(kx + dx, ky + dy, kz + dz)); if (g) for (const j of g) near[j] |= bit; } }
+    const was = N.array.slice(), now = N.array.slice(), done = new Map(), v = new THREE.Vector3(), rr = r * r;
+    // (each cell's points packed side by side - place and normal - in the order they came: the same sums, read faster)
+    // (32-bit, as the figure's own numbers are: nothing lost; and only the cells asked for)
+    const pack = new Map(), packed = k => { let a = pack.get(k); if (a !== undefined) return a; const g = grid.get(k); a = null;
+      if (g) { a = new Float32Array(g.length * 6); for (let q = 0; q < g.length; q++) { const j = g[q], o = q * 6; a[o] = X[j]; a[o + 1] = Y[j]; a[o + 2] = Z[j]; a[o + 3] = was[j * 3]; a[o + 4] = was[j * 3 + 1]; a[o + 5] = was[j * 3 + 2]; } }
+      pack.set(k, a); return a; };
+    // (a point at the same place as one done already takes its normal: found by its x, then y, then z)
+    for (let i = 0; i < n; i++) { if (!near[i]) continue; const x = X[i], y = Y[i], z = Z[i];
+      let dX = done.get(x); if (!dX) done.set(x, dX = new Map()); let dY = dX.get(y); if (!dY) dX.set(y, dY = new Map()); let got = dY.get(z);
+      if (!got) { v.set(0, 0, 0); const kx = Math.floor(x / r), ky = Math.floor(y / r), kz = Math.floor(z / r);
+        for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) for (let dz = -1; dz <= 1; dz++) { const a = packed(cell(kx + dx, ky + dy, kz + dz)); if (a) for (let q = 0; q < a.length; q += 6) {
+          if ((a[q] - x) ** 2 + (a[q + 1] - y) ** 2 + (a[q + 2] - z) ** 2 < rr) v.x += a[q + 3], v.y += a[q + 4], v.z += a[q + 5]; } }
+        dY.set(z, got = v.normalize().toArray()); }
+      now.set(got, i * 3); }
+    hairBase.smooth = { was, now, near };
+    if (keep.on && keep.key) { const idx = []; for (let i = 0; i < n; i++) if (near[i]) idx.push(i); const val = new Float32Array(idx.length * 3), bit = new Uint8Array(idx.length);
+      idx.forEach((i, j) => { val[j * 3] = now[i * 3]; val[j * 3 + 1] = now[i * 3 + 1]; val[j * 3 + 2] = now[i * 3 + 2]; bit[j] = near[i]; }); keepWrite('glat', { key: glatKey, idx: Uint32Array.from(idx), val, bit }); } } }
   const { was, now, near } = hairBase.smooth, on = (tex.covered[PARTS.shirt] ? 1 << PARTS.shirt : 0) | (tex.covered[PARTS.pants] ? 1 << PARTS.pants : 0);
   // (only its own points: the face's - a shut eye, a new mouth - are lit smooth by theirs)
   for (let i = 0; i < near.length; i++) { if (!near[i]) continue; const from = near[i] & on ? now : was; N.array[i * 3] = from[i * 3]; N.array[i * 3 + 1] = from[i * 3 + 1]; N.array[i * 3 + 2] = from[i * 3 + 2]; }
@@ -2198,9 +2249,9 @@ function measureHead(fbx) {
   hairBase.surface = { grid, box, face, fine };
   // (the whole body as it stands, for clothes: each point with the way out of the body there, in little boxes)
   // (each spot once in the boxes: the figure's triangles each have their own corners, about six at every spot)
-  const H = all.max.y - all.min.y, cell = .04 * H, pts = new Float32Array(P.count * 6), wgrid = new Map(), spots = new Set();
+  const H = all.max.y - all.min.y, cell = .04 * H, pts = new Float32Array(P.count * 6), wgrid = new Map(), spots = new Map(); // (spots: by x, then y, then z)
   for (let i = 0; i < P.count; i++) { body.getVertexPosition(i, q).applyMatrix4(body.matrixWorld); nn.fromBufferAttribute(N, i).applyMatrix3(turn).normalize();
-    pts.set([q.x, q.y, q.z, nn.x, nn.y, nn.z], i * 6); const at = `${P.getX(i)},${P.getY(i)},${P.getZ(i)}`; if (spots.has(at)) continue; spots.add(at); const key = `${Math.floor(q.x / cell)},${Math.floor(q.y / cell)},${Math.floor(q.z / cell)}`;
+    pts.set([q.x, q.y, q.z, nn.x, nn.y, nn.z], i * 6); const ax = P.getX(i), ay = P.getY(i), az = P.getZ(i); let sx = spots.get(ax); if (!sx) spots.set(ax, sx = new Map()); let sy = sx.get(ay); if (!sy) sx.set(ay, sy = new Set()); if (sy.has(az)) continue; sy.add(az); const key = `${Math.floor(q.x / cell)},${Math.floor(q.y / cell)},${Math.floor(q.z / cell)}`;
     if (!wgrid.has(key)) wgrid.set(key, []); wgrid.get(key).push(i); }
   hairBase.whole = { pts, cell, grid: wgrid, inv: body.matrixWorld.clone().invert(), H }; hairBase.box = all.clone(); }
 // how far a point lies inside the figure's surface (more than a small margin), and the way out: by the nearest point of it
@@ -2479,11 +2530,23 @@ function hairOverEar(g, W, outlines) { if (!outlines.length) return; const idx =
     const spots = []; for (let u = 0; u <= m; u++) for (let v = 0; u + v <= m; v++) spots.push([[i, u / m], [j, v / m], [k, (m - u - v) / m]]);
     if (!spots.some(w => outlines.some(f => f(at(w, 0), at(w, 1), at(w, 2))))) keep.push(i, j, k); }
   g.setIndex(keep); }
+// ---- A hairstyle's or garment's two files - its shape and its picture - fetched once, and all of a figure's at once
+// (Jan, 25-11-2026, the pauses in the dressing: at the start each piece was asked for only when the one before it was
+// on - the hair, then the top, the trousers, the socks, the shoes, the cap - a phone waiting seconds on the net between
+// them. Now wearFigure asks for all of them first, and they are put on one by one as before, in the same order. Not
+// there: null, as when it was asked whether it was there first; anything failing is asked for again the next time) ----
+const figFiles = new Map();
+function fetchFig(file) { let p = figFiles.get(file); if (p) return p;
+  p = fetch(`${file}.json${FIGUR_V}`).then(r => r.ok ? Promise.all([r.json(),
+    new Promise((ok, bad) => { const i = new Image(); i.onload = () => ok(i); i.onerror = bad; i.src = `${file}.jpg${FIGUR_V}`; })]) : null);
+  figFiles.set(file, p); p.then(v => { if (!v) figFiles.delete(file); }, () => figFiles.delete(file)); return p; }
+// (the files a figure will be dressed in: its hair and every garment worn that is loaded rather than made by the page)
+function fetchFigure(f) { try { if (f.hair && !hairMeshes[f.hair]) fetchFig(f.hair).catch(() => {});
+  for (const [p, n] of Object.entries(f.wear || {})) { const G = GARMENTS[p], o = n && G?.items.find(i => i[0] === n)?.[2] || {};
+    if (!n || !G || G.meshes[n] || G.loading[n] || o.nisse || o.gevir || o.pack || o.skimask || o.helmet || o.made) continue; fetchFig(o.file || n).catch(() => {}); } } catch (e) {} }
 async function loadHair(name, list = hairTexs, colourPart = 'hair', extra = {}) {
   const opts = HAIRS.find(h => h[0] === name)?.[2] || extra;
-  if (!hairBase || !(await exists(`${name}.json${FIGUR_V}`))) return null;
-  const [d, img] = await Promise.all([fetch(`${name}.json${FIGUR_V}`).then(r => r.json()),
-    new Promise((ok, bad) => { const i = new Image(); i.onload = () => ok(i); i.onerror = bad; i.src = `${name}.jpg${FIGUR_V}`; })]);
+  if (!hairBase) return null; const got = await fetchFig(name); if (!got) return null; const [d, img] = got;
   const mine = hairBase.eyes, theirs = d.eyes.map(e => new THREE.Vector3(...e)), scale = mine[0].distanceTo(mine[1]) / theirs[0].distanceTo(theirs[1]) * (opts.grow || 1);
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(d.position, 3));
   g.setAttribute('normal', new THREE.Float32BufferAttribute(d.normal, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(d.uv, 2)); g.setIndex(d.index);
@@ -3743,9 +3806,7 @@ function neckBand(cloth, list, wp, dir, neck, K, H, inv, shade) {
   cloth.add(band); band.bind(cloth.skeleton, cloth.bindMatrix); }
 async function loadCloth(name, part) {
   const G = GARMENTS[part], file = G.items.find(it => it[0] === name)?.[2]?.file || name; // (file: made from another one's files)
-  if (!hairBase || !(await exists(`${file}.json${FIGUR_V}`))) return null;
-  const [d, img] = await Promise.all([fetch(`${file}.json${FIGUR_V}`).then(r => r.json()),
-    new Promise((ok, bad) => { const i = new Image(); i.onload = () => ok(i); i.onerror = bad; i.src = `${file}.jpg${FIGUR_V}`; })]);
+  if (!hairBase) return null; const got = await fetchFig(file); if (!got) return null; const [d, img] = got;
   const B = hairBase.box, [x0, y0, z0, x1, y1, z1] = d.box, s = (B.max.y - B.min.y) / (y1 - y0);
   const off = new THREE.Vector3((B.min.x + B.max.x) / 2 - s * (x0 + x1) / 2, B.min.y - s * y0, (B.min.z + B.max.z) / 2 - s * (z0 + z1) / 2);
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(d.position, 3));
@@ -4397,7 +4458,7 @@ const unpaint = list => { for (const t of list) { const im = t.ctx.createImageDa
 function unpick(part) { delete picked[part]; if (part === 'socks' || part === 'shoe') { paintSocks(); paintHeels(); } if (part === 'item') paintItem(); if (part === 'hair') unpaint(hairTexs); if (GARMENTS[part]) unpaint(GARMENTS[part].texs); if (part === 'suit') unpaint(gearTexs);
   if (tex && PARTS[part]) { delete tex.colours[PARTS[part]]; if (part === 'hair' && !picked.brows) delete tex.colours[PARTS.brows]; if (part === 'brows' && picked.hair) tex.colours[PARTS.brows] = tex.colours[PARTS.hair]; } }
 let dressingUp = 0;
-async function wearFigure(f) { const ask = ++dressingUp; f = basisFigure(f);
+async function wearFigure(f) { const ask = ++dressingUp; f = basisFigure(f); fetchFigure(f);
   if (patternNow) { for (const k of Object.keys(patternNow)) delete patternNow[k]; Object.assign(patternNow, f.pattern || {}); }
   // (the colours: the brows before the hair, which they follow when they have none of their own)
   for (const [part] of CHOICES) if (part !== 'hair') { if (f.picked[part]) { picked[part] = f.picked[part]; recolour(part, f.picked[part]); } else unpick(part); }
@@ -4638,7 +4699,14 @@ function earCurve(R, closed) { const out = [], n = R.length, at = k => closed ? 
     for (let i = 0; i < 10; i++) { const t = i / 10, t2 = t * t, t3 = t2 * t; out.push([...p1.map((_, m) => .5 * (2 * p1[m] + (p2[m] - p0[m]) * t + (2 * p0[m] - 5 * p1[m] + 4 * p2[m] - p3[m]) * t2 + (3 * p1[m] - p0[m] - 3 * p2[m] + p3[m]) * t3)), (k + t) / (n - 1)]); } }
   out.push([...(closed ? R[0] : R[n - 1]), 1]); return out; }
 // (the nearest spot on such a line: how far off, and its width, height and how far along it lies)
-function earNear(C, X, Y) { let m = Infinity, w = 1, l = 0, f = 0; for (let k = 0; k + 1 < C.length; k++) { const a = C[k], b = C[k + 1], dx = b[0] - a[0], dy = b[1] - a[1], t = Math.min(1, Math.max(0, ((X - a[0]) * dx + (Y - a[1]) * dy) / (dx * dx + dy * dy))), d = Math.hypot(X - a[0] - t * dx, Y - a[1] - t * dy);
+// (first, cheaply, how far the nearest of its points is - no piece whose box lies further off than that can be the nearest
+// piece, so only the others are measured; the same piece found, the same numbers: Jan's A55, 25-11-2026)
+const earBoxes = new Map();
+function earNear(C, X, Y) { let B = earBoxes.get(C);
+  if (!B) { B = new Float64Array((C.length - 1) * 4); for (let k = 0; k + 1 < C.length; k++) B.set([Math.min(C[k][0], C[k + 1][0]), Math.max(C[k][0], C[k + 1][0]), Math.min(C[k][1], C[k + 1][1]), Math.max(C[k][1], C[k + 1][1])], k * 4); earBoxes.set(C, B); }
+  let ub = Infinity; for (let k = 0; k < C.length; k++) { const ex = X - C[k][0], ey = Y - C[k][1]; ub = Math.min(ub, ex * ex + ey * ey); } ub = ub * (1 + 1e-9) + 1e-12;
+  let m = Infinity, w = 1, l = 0, f = 0; for (let k = 0; k + 1 < C.length; k++) { const ex = Math.max(B[k * 4] - X, 0, X - B[k * 4 + 1]), ey = Math.max(B[k * 4 + 2] - Y, 0, Y - B[k * 4 + 3]); if (ex * ex + ey * ey > ub) continue;
+    const a = C[k], b = C[k + 1], dx = b[0] - a[0], dy = b[1] - a[1], t = Math.min(1, Math.max(0, ((X - a[0]) * dx + (Y - a[1]) * dy) / (dx * dx + dy * dy))), d = Math.hypot(X - a[0] - t * dx, Y - a[1] - t * dy);
   if (d < m) { m = d; w = a[2] + (b[2] - a[2]) * t; l = a[3] + (b[3] - a[3]) * t; f = a[a.length - 1] + (b[b.length - 1] - a[a.length - 1]) * t; } } return [m, w, l, f]; }
 // (the ridge round the bowl: up round its back and forward over it, narrowing - each point x, y, width, height)
 const EAR_RIDGE = earCurve([[470, 692, 40, -.02], [380, 656, 44, -.008], [326, 588, 46, -.004], [302, 500, 46, -.004], [306, 428, 42, -.006], [326, 382, 36, -.008], [360, 350, 30, -.01], [420, 330, 27, -.012], [490, 316, 24, -.016], [555, 304, 20, -.022]]);
@@ -5099,17 +5167,46 @@ function hideBody() { if (!hairBase) return; const geo = hairBase.body.geometry,
 // (FIGUR_V goes up with each new figure: a browser that remembers the last figure's files fetches them again - an iPad
 // once put the old figure's colour picture on the new figure)
 const FIGUR_V = '?v=10';
+// ---- Kept on the device (Jan, 25-11-2026: only the first start may be slow): what the figure's face, underwear and
+// light are worked out to at the first start - seconds on a phone - is kept in the browser's own store, IndexedDB, and
+// read back at the next start. Kept under a key from the figure's version, this page's whole code and the colour
+// picture as this device read it: a new figure, any change to the game or another picture, and it is worked out again.
+// Not there, or anything wrong: worked out as before. ?ingen-gem: never read nor kept (for testing) ----
+const keep = { on: !location.search.includes('ingen-gem'), key: '', glat: null, name: location.pathname + ':' };
+const keepHash = (u, x = 2166136261) => { for (let i = 0; i < u.length; i++) x = Math.imul(x ^ u[i], 16777619); return x >>> 0; };
+const keepCode = (() => { try { const t = new TextEncoder().encode([...document.scripts].map(e => e.textContent).join('|')); return keepHash(t); } catch (e) { return 0; } })();
+function keepDb() { return new Promise(ok => { try { const r = indexedDB.open('minimig-udregning', 1); r.onupgradeneeded = () => r.result.createObjectStore('figur'); r.onsuccess = () => ok(r.result); r.onerror = r.onblocked = () => ok(null); } catch (e) { ok(null); } }); }
+function keepRead() { if (!keep.on) return Promise.resolve([]); return keepDb().then(db => new Promise(ok => { if (!db) return ok([]); try { const st = db.transaction('figur').objectStore('figur'), a = st.get(keep.name + 'figur'), b = st.get(keep.name + 'glat');
+  b.onsuccess = () => ok([a.result, b.result]); b.onerror = a.onerror = () => ok([]); } catch (e) { ok([]); } })); }
+function keepWrite(id, rec) { if (!keep.on) return; keepDb().then(db => { try { db?.transaction('figur', 'readwrite').objectStore('figur').put(rec, keep.name + id); } catch (e) {} }); }
+// (what whitesByPlace and setupBrows leave in tex: the parts of each pixel, the underwear's seam and light, and the eyes',
+// mouth's, ornaments', nose's and brows' measures. The body itself is put back by hand, the brows' lines made again.
+// Copied at once, before anything changes them)
+function keepFigur(body) { if (!keep.on || !keep.key) return; try { const flatI = [], flatV = [];
+  for (let p = 0; p < tex.flat.length; p++) if (tex.flat[p] !== 1) { flatI.push(p); flatV.push(tex.flat[p]); }
+  const noBody = o => o && Object.fromEntries(Object.entries(o).filter(([k, v]) => k !== 'body' && typeof v !== 'function'));
+  const rec = structuredClone({ key: keep.key, label: tex.label, mid: tex.mid, seam: tex.seam, flatI: Int32Array.from(flatI), flatV: Float32Array.from(flatV), eyeShapes: tex.eyeShapes, mouth: noBody(tex.mouth), pynt: tex.pynt, nose: noBody(tex.nose), brows: noBody(tex.brows), body: !!body });
+  keepWrite('figur', rec); } catch (e) {} }
+function keepBack(R, body) { tex.label = R.label; tex.mid = R.mid; tex.seam = R.seam; tex.flat = new Float32Array(tex.w * tex.h).fill(1); for (let j = 0; j < R.flatI.length; j++) tex.flat[R.flatI[j]] = R.flatV[j];
+  for (const k of ['eyeShapes', 'pynt']) if (R[k]) tex[k] = R[k];
+  if (R.mouth) { tex.mouth = R.mouth; if ('cx' in R.mouth) { R.mouth.body = body; body.material.alphaTest = .5; body.frustumCulled = false; } }
+  if (R.nose) tex.nose = Object.assign(R.nose, { body }); if (R.brows) tex.brows = browLine(R.brows); }
 async function loadFbx() { if (!(await exists('figur.fbx' + FIGUR_V))) return false;
+  const kept = keepRead();
+  const places = new Promise(ok => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => ok(null); i.src = `figur-steder${FIGUR_V.replace(/\D/g, '')}.png`; });
   const loader = new FBXLoader(), load = u => new Promise((ok, bad) => loader.load(u + FIGUR_V, ok, undefined, bad));
   const fbx = await load('figur.fbx'), map = await new Promise((ok, bad) => new THREE.TextureLoader().load('figur-farve.jpg' + FIGUR_V, ok, undefined, bad));
   map.colorSpace = THREE.SRGBColorSpace; const coloured = setupTexture(map);
   // (both sides drawn: through the ear's small opening one saw right through the head - the hair on the far side as a
   // dark spike in the ear)
   fbx.traverse(o => { if (!o.isMesh) return; o.castShadow = true; o.material = new THREE.MeshStandardMaterial({ map: coloured, roughness: .75, metalness: 0, side: THREE.DoubleSide }); });
-  whitesByPlace(fbx);
+  // (the key: the figure's version, the code, the picture's size and every 61st byte of it as this device read it)
+  const [kf, kg] = await kept; keep.key = [FIGUR_V, keepCode, tex.w, tex.h, keepHash(Uint8Array.from({ length: Math.ceil(tex.src.length / 61) }, (_, j) => tex.src[j * 61]))].join(':');
+  const figKept = kf && kf.key === keep.key && kf.body ? kf : null; keep.glat = kg && typeof kg.key === 'string' && kg.key.startsWith(keep.key + ':') ? kg : null;
+  if (!figKept) whitesByPlace(fbx, await places);
   const box = new THREE.Box3().setFromObject(fbx), size = box.getSize(new THREE.Vector3()), k = 2.15 / size.y;
   fbx.scale.setScalar(k); fbx.position.y = -box.min.y * k; holder.add(fbx); glb = fbx;
-  measureHead(fbx); if (hairBase) setupBrows(hairBase.body); setupEars(); await setHair(hairNow); chestName();
+  measureHead(fbx); if (hairBase) { if (figKept) keepBack(figKept, hairBase.body); else { setupBrows(hairBase.body); keepFigur(hairBase.body); } } else if (figKept) keepBack(figKept, null); setupEars(); await setHair(hairNow); chestName();
   mixer = new THREE.AnimationMixer(fbx);
   // (set on the floor as it stands - Mixamo moves the hips in its own units, the T-pose's box says little)
   if (await loadMove('staa')) { sample('staa', 0); fbx.position.y -= new THREE.Box3().setFromObject(fbx, true).min.y; fbx.updateMatrixWorld(true); }
@@ -5330,16 +5427,22 @@ function startGame(mode = game.mode) { if (game.on || !glb) return; if (!game.ag
   // sides to steer, tap, or drag. Gone at the first tap or after a few seconds)
   // (the same way in the three games where the figure is led about - Skattejagt, Svømmeverden, Rumrejse: tap where it is to go,
   // or hold the finger down and drag it along - Trine, 23-11-2026: Ebba dragged in one game and tapped in another)
-  showHand(onBoard(mode) ? (hpp.on ? 'tap' : 'sides') : ['island', 'sea', 'space'].includes(mode) ? 'drag' : ['cypher', 'studio'].includes(mode) ? '' : 'tap');
+  showHand(onBoard(mode) ? (hpp.on ? 'tap' : 'sides') : ['island', 'sea', 'space'].includes(mode) ? 'drag' : ['cypher', 'studio'].includes(mode) ? '' : mode === 'pk' ? 'goal' : 'tap');
   // (in Rumrejse, after the drag: two quick taps give the rocket's boost - shown the same way, the user 24-11-2026)
   if (mode === 'space') setTimeout(() => { if (game.on && game.mode === 'space') showHand('double', 4800); }, 5400);
-  hud.hidden = false; hintEl.hidden = mode === 'cypher' || mode === 'studio'; try { showLvl(); showJar(); } catch (e) {} document.querySelector('.top').hidden = true; document.getElementById('stage').classList.add('playing'); showStars(); showRecord();
+  hud.hidden = false; hintEl.hidden = !KID_WORDS || mode === 'cypher' || mode === 'studio'; /* (without words: no 'Tryk for at hoppe' under the hand - the hand shows it, Jan's A55-test 24-11-2026) */ try { showLvl(); showJar(); } catch (e) {} document.querySelector('.top').hidden = true; document.getElementById('stage').classList.add('playing'); showStars(); showRecord();
   if (MODES[mode].from) game.hopWay = mode; // (the way last chosen in Hop over bolden)
   document.querySelectorAll('[data-game]').forEach(b => b.classList.toggle('on', b.dataset.game === mode || b.dataset.game === 'hop' && !!MODES[mode].from)); prepScene(); }
 // (again: only stopped to start once more - at another level or in another way - the figure's own setting not put back)
 const handEl = Object.assign(document.createElement('div'), { className: 'hand', hidden: true, textContent: '👆' }); document.getElementById('stage').append(handEl);
 // (pinch: two fingers going apart and together - zoom; the others one finger)
-let handT = 0; function showHand(kind, ms = 5200) { clearTimeout(handT); handEl.style.left = handEl.style.top = ''; handEl.className = 'hand ' + kind; if (kind === 'pinch') handEl.innerHTML = '<i>👆</i><i>👆</i>'; else if (kind === 'double') handEl.innerHTML = '👆<b>🚀</b>'; else handEl.textContent = '👆'; handEl.hidden = !kind; if (kind) handT = setTimeout(() => { handEl.hidden = true; }, ms); }
+let handT = 0; function showHand(kind, ms = 5200) { clearTimeout(handT); handEl.style.left = handEl.style.top = ''; handEl.className = 'hand ' + kind + (kind === 'goal' ? ' tap' : ''); if (kind === 'pinch') handEl.innerHTML = '<i>👆</i><i>👆</i>'; else if (kind === 'double') handEl.innerHTML = '👆<b>🚀</b>'; else handEl.textContent = '👆'; handEl.hidden = !kind; if (kind === 'goal') { goalHand(); setTimeout(goalHand, 120); setTimeout(goalHand, 600); } if (kind) handT = setTimeout(() => { handEl.hidden = true; }, ms); }
+// (Straffespark: the hand goes up into the goal's top corner and taps there - the user, 24-11-2026: you point where in the
+// goal the ball is to go, not at the ball. The corner is found on the screen from the goal itself, once the camera is there)
+const pkCorner = new THREE.Vector3();
+function goalHand() { if (handEl.hidden || !handEl.classList.contains('goal')) return; const st = document.getElementById('stage').getBoundingClientRect(), r = renderer.domElement.getBoundingClientRect();
+  pkCorner.set(PK.halfW - .55, PK.top - .5, PK.goalZ).project(camera);
+  handEl.style.left = `${r.left - st.left + (pkCorner.x + 1) / 2 * r.width}px`; handEl.style.top = `${r.top - st.top + (1 - pkCorner.y) / 2 * r.height}px`; }
 document.getElementById('stage').addEventListener('pointerdown', () => { if (game.on && !handEl.hidden) setTimeout(() => { handEl.hidden = true; }, 400); });
 // (the figure too - the user, 24-11-2026: how to turn it round, and zoom in and out. Shown a moment after the figure is
 // there and nothing is open, first one finger dragging sideways (turn), then two fingers apart (zoom) - until the child
@@ -7358,7 +7461,7 @@ function sjBuild() { if (sj.world) return; const w = sj.world = new THREE.Group(
   sj.ski = [0, 1].map(() => { const k = new THREE.Group(); k.rotation.order = 'ZYX'; const inner = new THREE.Group(); inner.scale.set(SJ_SKI_LONG / 1.75, .75, SJ_SKI_NARROW); k.add(inner); propInto(inner, 'udstyr-ski.glb', 1.75, SJ_SKI_TURN, [], 'w'); w.add(k); return k; });
   sj.rig = new THREE.Group(); }
 const SJ_TURN = { hytte: 0, start: Math.PI / 2, taarn: 0, mand: 0 }, SJ_SKI_TURN = Math.PI, SJ_SKI_LONG = 2.5, SJ_SKI_NARROW = .5;
-function sjReset() { sj.camX = undefined; sj.turn = 0; sj.sideA = 0; Object.assign(sj, { phase: 'ready', x: SJ.x0, y: sjHill(SJ.x0), v: 0, vx: 0, vy: 0, tap: null, t: 0, q: 0, stopT: 0, push: 0 }); if (glbActions.staa) runAnim('staa'); hintEl.textContent = tr('👆 Tryk for at køre – og tryk igen ved kanten for at hoppe!'); hintEl.hidden = false; game.hint = 5; }
+function sjReset() { sj.camX = undefined; sj.turn = 0; sj.sideA = 0; Object.assign(sj, { phase: 'ready', x: SJ.x0, y: sjHill(SJ.x0), v: 0, vx: 0, vy: 0, tap: null, t: 0, q: 0, stopT: 0, push: 0 }); if (glbActions.staa) runAnim('staa'); hintEl.textContent = tr('👆 Tryk for at køre – og tryk igen ved kanten for at hoppe!'); hintEl.hidden = !KID_WORDS; game.hint = 5; }
 function sjStart() { sjBuild(); skWorldBuild(); sj.world.add(sk.hills); sk.hills.position.set(20, -14, 34); for (const h of sk.hills.children.slice(1)) { h.userData.green ??= h.material.color.clone(); h.material.color.set('#EEF4FC'); } scene.add(sj.world); holder.add(sj.rig); sj.rig.add(glb); sj.rig.rotation.set(0, 0, 0); game.rotY = Math.PI / 2;
   floor.visible = false; disc.visible = false; for (const el of [bgNear, bgFar, bgNear2]) el.hidden = true; stage.classList.add('street'); Object.assign(sj, { tuck: 0, fly: 0, run: 0, gateA: 0, landW: 0, arm: 0, sit: 0, vee: 0, skiRot: 0 }); sjReset(); Promise.all(['staa', 'jubel'].map(loadMove)).then(() => { if (game.on && game.mode === 'skihop' && sj.phase === 'ready') runAnim('staa'); }); }
 function sjStop() { if (!sj.world?.parent) return; scene.remove(sj.world); sk.world.add(sk.hills); sk.hills.position.set(0, 0, 0); for (const h of sk.hills.children.slice(1)) if (h.userData.green) h.material.color.copy(h.userData.green); holder.add(glb); holder.remove(sj.rig); stage.classList.remove('street'); floor.visible = true; sj.phase = ''; setBg(bgNow); }
