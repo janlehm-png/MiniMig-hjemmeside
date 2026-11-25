@@ -2518,11 +2518,23 @@ function hairOverEar(g, W, outlines) { if (!outlines.length) return; const idx =
     const spots = []; for (let u = 0; u <= m; u++) for (let v = 0; u + v <= m; v++) spots.push([[i, u / m], [j, v / m], [k, (m - u - v) / m]]);
     if (!spots.some(w => outlines.some(f => f(at(w, 0), at(w, 1), at(w, 2))))) keep.push(i, j, k); }
   g.setIndex(keep); }
+// ---- A hairstyle's or garment's two files - its shape and its picture - fetched once, and all of a figure's at once
+// (Jan, 25-11-2026, the pauses in the dressing: at the start each piece was asked for only when the one before it was
+// on - the hair, then the top, the trousers, the socks, the shoes, the cap - a phone waiting seconds on the net between
+// them. Now wearFigure asks for all of them first, and they are put on one by one as before, in the same order. Not
+// there: null, as when it was asked whether it was there first; anything failing is asked for again the next time) ----
+const figFiles = new Map();
+function fetchFig(file) { let p = figFiles.get(file); if (p) return p;
+  p = fetch(`${file}.json${FIGUR_V}`).then(r => r.ok ? Promise.all([r.json(),
+    new Promise((ok, bad) => { const i = new Image(); i.onload = () => ok(i); i.onerror = bad; i.src = `${file}.jpg${FIGUR_V}`; })]) : null);
+  figFiles.set(file, p); p.then(v => { if (!v) figFiles.delete(file); }, () => figFiles.delete(file)); return p; }
+// (the files a figure will be dressed in: its hair and every garment worn that is loaded rather than made by the page)
+function fetchFigure(f) { try { if (f.hair && !hairMeshes[f.hair]) fetchFig(f.hair).catch(() => {});
+  for (const [p, n] of Object.entries(f.wear || {})) { const G = GARMENTS[p], o = n && G?.items.find(i => i[0] === n)?.[2] || {};
+    if (!n || !G || G.meshes[n] || G.loading[n] || o.nisse || o.gevir || o.pack || o.skimask || o.helmet || o.made) continue; fetchFig(o.file || n).catch(() => {}); } } catch (e) {} }
 async function loadHair(name, list = hairTexs, colourPart = 'hair', extra = {}) {
   const opts = HAIRS.find(h => h[0] === name)?.[2] || extra;
-  if (!hairBase || !(await exists(`${name}.json${FIGUR_V}`))) return null;
-  const [d, img] = await Promise.all([fetch(`${name}.json${FIGUR_V}`).then(r => r.json()),
-    new Promise((ok, bad) => { const i = new Image(); i.onload = () => ok(i); i.onerror = bad; i.src = `${name}.jpg${FIGUR_V}`; })]);
+  if (!hairBase) return null; const got = await fetchFig(name); if (!got) return null; const [d, img] = got;
   const mine = hairBase.eyes, theirs = d.eyes.map(e => new THREE.Vector3(...e)), scale = mine[0].distanceTo(mine[1]) / theirs[0].distanceTo(theirs[1]) * (opts.grow || 1);
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(d.position, 3));
   g.setAttribute('normal', new THREE.Float32BufferAttribute(d.normal, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(d.uv, 2)); g.setIndex(d.index);
@@ -3782,9 +3794,7 @@ function neckBand(cloth, list, wp, dir, neck, K, H, inv, shade) {
   cloth.add(band); band.bind(cloth.skeleton, cloth.bindMatrix); }
 async function loadCloth(name, part) {
   const G = GARMENTS[part], file = G.items.find(it => it[0] === name)?.[2]?.file || name; // (file: made from another one's files)
-  if (!hairBase || !(await exists(`${file}.json${FIGUR_V}`))) return null;
-  const [d, img] = await Promise.all([fetch(`${file}.json${FIGUR_V}`).then(r => r.json()),
-    new Promise((ok, bad) => { const i = new Image(); i.onload = () => ok(i); i.onerror = bad; i.src = `${file}.jpg${FIGUR_V}`; })]);
+  if (!hairBase) return null; const got = await fetchFig(file); if (!got) return null; const [d, img] = got;
   const B = hairBase.box, [x0, y0, z0, x1, y1, z1] = d.box, s = (B.max.y - B.min.y) / (y1 - y0);
   const off = new THREE.Vector3((B.min.x + B.max.x) / 2 - s * (x0 + x1) / 2, B.min.y - s * y0, (B.min.z + B.max.z) / 2 - s * (z0 + z1) / 2);
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(d.position, 3));
@@ -4436,7 +4446,7 @@ const unpaint = list => { for (const t of list) { const im = t.ctx.createImageDa
 function unpick(part) { delete picked[part]; if (part === 'socks' || part === 'shoe') { paintSocks(); paintHeels(); } if (part === 'item') paintItem(); if (part === 'hair') unpaint(hairTexs); if (GARMENTS[part]) unpaint(GARMENTS[part].texs); if (part === 'suit') unpaint(gearTexs);
   if (tex && PARTS[part]) { delete tex.colours[PARTS[part]]; if (part === 'hair' && !picked.brows) delete tex.colours[PARTS.brows]; if (part === 'brows' && picked.hair) tex.colours[PARTS.brows] = tex.colours[PARTS.hair]; } }
 let dressingUp = 0;
-async function wearFigure(f) { const ask = ++dressingUp; f = basisFigure(f);
+async function wearFigure(f) { const ask = ++dressingUp; f = basisFigure(f); fetchFigure(f);
   if (patternNow) { for (const k of Object.keys(patternNow)) delete patternNow[k]; Object.assign(patternNow, f.pattern || {}); }
   // (the colours: the brows before the hair, which they follow when they have none of their own)
   for (const [part] of CHOICES) if (part !== 'hair') { if (f.picked[part]) { picked[part] = f.picked[part]; recolour(part, f.picked[part]); } else unpick(part); }
@@ -8195,6 +8205,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); headShape(); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { gearTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;right:6px;z-index:999;background:#E8384F;color:#fff;font:700 11px system-ui,sans-serif;padding:2px 8px;border-radius:9px;pointer-events:none;opacity:.85">TEST 0.20.0 (86abff4)</div>
+<div style="position:fixed;top:4px;right:6px;z-index:999;background:#E8384F;color:#fff;font:700 11px system-ui,sans-serif;padding:2px 8px;border-radius:9px;pointer-events:none;opacity:.85">TEST 0.20.0 (5f38cf0)</div>
 </body>
 </html>
