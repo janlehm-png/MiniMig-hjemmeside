@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>MiniMig™ version 2</title>
-<meta name="minimig-version" content="0.20.0">
+<meta name="minimig-version" content="0.20.1">
 <!-- (the number of this version, shown under the i - see VERSIONER.md - raised for each package and each fix put out) -->
 <!-- (the same icon as version 1 on a home screen, under the name MiniMig 2 - the icons lie in the website's billeder/;
      the user, 03-11-2026, sharing version 2 with testers) -->
@@ -5141,7 +5141,8 @@ function holdItem(t) { if (glb && (!item || item.ground || item.ring)) unfist();
   if (['bamse', 'dino', 'enhjoerning', 'dukke', 'bil'].includes(item.kind) && GARMENTS.dress.shown) { const d = GARMENTS.dress.items.find(i => i[0] === GARMENTS.dress.shown)?.[2] || {}, h = bone('Hips');
     if (h) { const out = g.position.clone().sub(h.getWorldPosition(iw)); out.y = 0; if (out.lengthSq() > 1e-6) g.position.addScaledVector(out.normalize(), d.skirt === false ? .03 : d.hang ? .25 : .13); } }
   if (item.float) { // (the balloon a little above and out from the head, swaying; the string from the hand to it)
-    const top = iw.set(.15 + .08 * Math.sin(t * .9), 0, .05 * Math.cos(t * .7)).applyQuaternion(iq); top.y = 2.05 - iv.y; item.float.position.copy(top.clone().applyQuaternion(iq.clone().invert()));
+    // (never lower than a little over the hand - the user, 25-11-2026: cheering, the hand went up into the balloon)
+    const top = iw.set(.15 + .08 * Math.sin(t * .9), 0, .05 * Math.cos(t * .7)).applyQuaternion(iq); top.y = Math.max(2.05 - iv.y, .45); item.float.position.copy(top.clone().applyQuaternion(iq.clone().invert()));
     const knot = top.clone(); knot.y -= .2; const len = knot.length(); item.string.position.copy(knot).multiplyScalar(.5).applyQuaternion(iq.clone().invert());
     item.string.scale.set(1, len, 1); item.string.quaternion.setFromUnitVectors(iUp, knot.clone().normalize().applyQuaternion(iq.clone().invert())); }
   if (item.canopy) { // (the canopy over the head, the shaft from the hand up to it)
@@ -8205,6 +8206,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); headShape(); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { gearTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;right:6px;z-index:999;background:#E8384F;color:#fff;font:700 11px system-ui,sans-serif;padding:2px 8px;border-radius:9px;pointer-events:none;opacity:.85">TEST 0.20.0 (5f38cf0)</div>
+<div style="position:fixed;top:4px;right:6px;z-index:999;background:#E8384F;color:#fff;font:700 11px system-ui,sans-serif;padding:2px 8px;border-radius:9px;pointer-events:none;opacity:.85">TEST 0.20.1 (13a2b03)</div>
 </body>
 </html>
