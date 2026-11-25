@@ -1340,8 +1340,6 @@ function setupBrows(body) {
     for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++) zone.add(p + dy * w + dx); }
   if (!cnt) return; tex.mid[PARTS.brows] = sum / cnt;
   const bins = [...Array(N).keys()].filter(b => top[b] > low[b]), x0 = bins[0] / N * 1.7, x1 = (bins.at(-1) + 1) / N * 1.7;
-  const mid = b => (top[b] + low[b]) / 2, thick = b => top[b] - low[b], along = (f, ax) => { const t = Math.max(0, Math.min(N - 1, ax / 1.7 * N - .5)), a = Math.floor(t), b = Math.min(N - 1, a + 1);
-    const fa = top[a] > low[a] ? f(a) : f(bins.reduce((m, c) => Math.abs(c - a) < Math.abs(m - a) ? c : m)), fb = top[b] > low[b] ? f(b) : fa; return fa + (fb - fa) * (t - a); };
   // (the skin's light at each painted-over texel: the skin round it, its brightness against the skin's middle)
   const keep = [];
   for (const [p, [X, Y]] of place) { if (Y < .1 || Math.abs(X) > 1.7) continue; let k = 0;
@@ -1350,7 +1348,12 @@ function setupBrows(body) {
         if (tex.label[q] === PARTS.skin && !zone.has(q)) { const i = q * 4; ks += (.3 * s[i] + .59 * s[i + 1] + .11 * s[i + 2]) / tex.mid[PARTS.skin]; c++; } }
       k = c ? ks / c : 1; }
     keep.push(p, X, Y, k); }
-  tex.brows = { texels: new Float32Array(keep), x0, x1, colour: { r: rgb[0] / cnt, g: rgb[1] / cnt, b: rgb[2] / cnt }, mid: ax => along(mid, ax), thick: ax => along(thick, ax) }; }
+  tex.brows = browLine({ texels: new Float32Array(keep), x0, x1, colour: { r: rgb[0] / cnt, g: rgb[1] / cnt, b: rgb[2] / cnt }, top, low, bins }); }
+// (the old brows' middle and thickness along them, from their strips - made again from the numbers when kept on the device)
+function browLine(B) { const { top, low, bins } = B, N = top.length;
+  const mid = b => (top[b] + low[b]) / 2, thick = b => top[b] - low[b], along = (f, ax) => { const t = Math.max(0, Math.min(N - 1, ax / 1.7 * N - .5)), a = Math.floor(t), b = Math.min(N - 1, a + 1);
+    const fa = top[a] > low[a] ? f(a) : f(bins.reduce((m, c) => Math.abs(c - a) < Math.abs(m - a) ? c : m)), fb = top[b] > low[b] ? f(b) : fa; return fa + (fb - fa) * (t - a); };
+  B.mid = ax => along(mid, ax); B.thick = ax => along(thick, ax); return B; }
 // (the chosen brows, drawn into the body's colour picture as it is redrawn: o its pixels)
 function drawBrows(o) {
   const B = tex.brows, opts = (BROWS.find(b => b[0] === browsNow) || [])[2]; if (!B || !opts) return;
@@ -2061,6 +2064,11 @@ function smoothUnder() {
     const key = (x, y, z) => cell(Math.floor(x / r), Math.floor(y / r), Math.floor(z / r));
     for (let i = 0; i < n; i++) { const p = Math.min(tex.h - 1, Math.max(0, Math.floor((1 - uv.getY(i)) * tex.h))) * tex.w + Math.min(tex.w - 1, Math.max(0, Math.floor(uv.getX(i) * tex.w))), l = tex.label[p];
       if (l === PARTS.shirt || l === PARTS.pants || tex.seam[p]) mark.push(i, l === PARTS.shirt || l === PARTS.pants ? l : tex.seam[p]); }
+    // (kept on the device from an earlier start: used when the normals and underwear it was worked out from are the same)
+    const glatKey = `${keep.key}:${n}:${r}:${keepHash(new Uint8Array(N.array.buffer, N.array.byteOffset, N.array.byteLength))}:${keepHash(Int32Array.from(mark))}`, G = keep.glat;
+    if (G && G.key === glatKey) { const was = N.array.slice(), now = N.array.slice(), near = new Uint8Array(n);
+      for (let j = 0; j < G.idx.length; j++) { const i = G.idx[j]; near[i] = G.bit[j]; now[i * 3] = G.val[j * 3]; now[i * 3 + 1] = G.val[j * 3 + 1]; now[i * 3 + 2] = G.val[j * 3 + 2]; }
+      hairBase.smooth = { was, now, near }; } else {
     for (let i = 0; i < n; i++) { const k = key(X[i], Y[i], Z[i]); let g = grid.get(k); if (!g) grid.set(k, g = []); g.push(i); }
     // (the underwear's points and every point near them - which piece: a bit each)
     // (each cell's pieces gathered first - many marked points share a cell, and the cells round it need marking once)
@@ -2082,7 +2090,9 @@ function smoothUnder() {
           if ((a[q] - x) ** 2 + (a[q + 1] - y) ** 2 + (a[q + 2] - z) ** 2 < rr) v.x += a[q + 3], v.y += a[q + 4], v.z += a[q + 5]; } }
         dY.set(z, got = v.normalize().toArray()); }
       now.set(got, i * 3); }
-    hairBase.smooth = { was, now, near }; }
+    hairBase.smooth = { was, now, near };
+    if (keep.on && keep.key) { const idx = []; for (let i = 0; i < n; i++) if (near[i]) idx.push(i); const val = new Float32Array(idx.length * 3), bit = new Uint8Array(idx.length);
+      idx.forEach((i, j) => { val[j * 3] = now[i * 3]; val[j * 3 + 1] = now[i * 3 + 1]; val[j * 3 + 2] = now[i * 3 + 2]; bit[j] = near[i]; }); keepWrite('glat', { key: glatKey, idx: Uint32Array.from(idx), val, bit }); } } }
   const { was, now, near } = hairBase.smooth, on = (tex.covered[PARTS.shirt] ? 1 << PARTS.shirt : 0) | (tex.covered[PARTS.pants] ? 1 << PARTS.pants : 0);
   // (only its own points: the face's - a shut eye, a new mouth - are lit smooth by theirs)
   for (let i = 0; i < near.length; i++) { if (!near[i]) continue; const from = near[i] & on ? now : was; N.array[i * 3] = from[i * 3]; N.array[i * 3 + 1] = from[i * 3 + 1]; N.array[i * 3 + 2] = from[i * 3 + 2]; }
@@ -5135,7 +5145,32 @@ function hideBody() { if (!hairBase) return; const geo = hairBase.body.geometry,
 // (FIGUR_V goes up with each new figure: a browser that remembers the last figure's files fetches them again - an iPad
 // once put the old figure's colour picture on the new figure)
 const FIGUR_V = '?v=10';
+// ---- Kept on the device (Jan, 25-11-2026: only the first start may be slow): what the figure's face, underwear and
+// light are worked out to at the first start - seconds on a phone - is kept in the browser's own store, IndexedDB, and
+// read back at the next start. Kept under a key from the figure's version, this page's whole code and the colour
+// picture as this device read it: a new figure, any change to the game or another picture, and it is worked out again.
+// Not there, or anything wrong: worked out as before. ?ingen-gem: never read nor kept (for testing) ----
+const keep = { on: !location.search.includes('ingen-gem'), key: '', glat: null, name: location.pathname + ':' };
+const keepHash = (u, x = 2166136261) => { for (let i = 0; i < u.length; i++) x = Math.imul(x ^ u[i], 16777619); return x >>> 0; };
+const keepCode = (() => { try { const t = new TextEncoder().encode([...document.scripts].map(e => e.textContent).join('|')); return keepHash(t); } catch (e) { return 0; } })();
+function keepDb() { return new Promise(ok => { try { const r = indexedDB.open('minimig-udregning', 1); r.onupgradeneeded = () => r.result.createObjectStore('figur'); r.onsuccess = () => ok(r.result); r.onerror = r.onblocked = () => ok(null); } catch (e) { ok(null); } }); }
+function keepRead() { if (!keep.on) return Promise.resolve([]); return keepDb().then(db => new Promise(ok => { if (!db) return ok([]); try { const st = db.transaction('figur').objectStore('figur'), a = st.get(keep.name + 'figur'), b = st.get(keep.name + 'glat');
+  b.onsuccess = () => ok([a.result, b.result]); b.onerror = a.onerror = () => ok([]); } catch (e) { ok([]); } })); }
+function keepWrite(id, rec) { if (!keep.on) return; keepDb().then(db => { try { db?.transaction('figur', 'readwrite').objectStore('figur').put(rec, keep.name + id); } catch (e) {} }); }
+// (what whitesByPlace and setupBrows leave in tex: the parts of each pixel, the underwear's seam and light, and the eyes',
+// mouth's, ornaments', nose's and brows' measures. The body itself is put back by hand, the brows' lines made again.
+// Copied at once, before anything changes them)
+function keepFigur(body) { if (!keep.on || !keep.key) return; try { const flatI = [], flatV = [];
+  for (let p = 0; p < tex.flat.length; p++) if (tex.flat[p] !== 1) { flatI.push(p); flatV.push(tex.flat[p]); }
+  const noBody = o => o && Object.fromEntries(Object.entries(o).filter(([k, v]) => k !== 'body' && typeof v !== 'function'));
+  const rec = structuredClone({ key: keep.key, label: tex.label, mid: tex.mid, seam: tex.seam, flatI: Int32Array.from(flatI), flatV: Float32Array.from(flatV), eyeShapes: tex.eyeShapes, mouth: noBody(tex.mouth), pynt: tex.pynt, nose: noBody(tex.nose), brows: noBody(tex.brows), body: !!body });
+  keepWrite('figur', rec); } catch (e) {} }
+function keepBack(R, body) { tex.label = R.label; tex.mid = R.mid; tex.seam = R.seam; tex.flat = new Float32Array(tex.w * tex.h).fill(1); for (let j = 0; j < R.flatI.length; j++) tex.flat[R.flatI[j]] = R.flatV[j];
+  for (const k of ['eyeShapes', 'pynt']) if (R[k]) tex[k] = R[k];
+  if (R.mouth) { tex.mouth = R.mouth; if ('cx' in R.mouth) { R.mouth.body = body; body.material.alphaTest = .5; body.frustumCulled = false; } }
+  if (R.nose) tex.nose = Object.assign(R.nose, { body }); if (R.brows) tex.brows = browLine(R.brows); }
 async function loadFbx() { if (!(await exists('figur.fbx' + FIGUR_V))) return false;
+  const kept = keepRead();
   const places = new Promise(ok => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => ok(null); i.src = `figur-steder${FIGUR_V.replace(/\D/g, '')}.png`; });
   const loader = new FBXLoader(), load = u => new Promise((ok, bad) => loader.load(u + FIGUR_V, ok, undefined, bad));
   const fbx = await load('figur.fbx'), map = await new Promise((ok, bad) => new THREE.TextureLoader().load('figur-farve.jpg' + FIGUR_V, ok, undefined, bad));
@@ -5143,10 +5178,13 @@ async function loadFbx() { if (!(await exists('figur.fbx' + FIGUR_V))) return fa
   // (both sides drawn: through the ear's small opening one saw right through the head - the hair on the far side as a
   // dark spike in the ear)
   fbx.traverse(o => { if (!o.isMesh) return; o.castShadow = true; o.material = new THREE.MeshStandardMaterial({ map: coloured, roughness: .75, metalness: 0, side: THREE.DoubleSide }); });
-  whitesByPlace(fbx, await places);
+  // (the key: the figure's version, the code, the picture's size and every 61st byte of it as this device read it)
+  const [kf, kg] = await kept; keep.key = [FIGUR_V, keepCode, tex.w, tex.h, keepHash(Uint8Array.from({ length: Math.ceil(tex.src.length / 61) }, (_, j) => tex.src[j * 61]))].join(':');
+  const figKept = kf && kf.key === keep.key && kf.body ? kf : null; keep.glat = kg && typeof kg.key === 'string' && kg.key.startsWith(keep.key + ':') ? kg : null;
+  if (!figKept) whitesByPlace(fbx, await places);
   const box = new THREE.Box3().setFromObject(fbx), size = box.getSize(new THREE.Vector3()), k = 2.15 / size.y;
   fbx.scale.setScalar(k); fbx.position.y = -box.min.y * k; holder.add(fbx); glb = fbx;
-  measureHead(fbx); if (hairBase) setupBrows(hairBase.body); setupEars(); await setHair(hairNow); chestName();
+  measureHead(fbx); if (hairBase) { if (figKept) keepBack(figKept, hairBase.body); else { setupBrows(hairBase.body); keepFigur(hairBase.body); } } else if (figKept) keepBack(figKept, null); setupEars(); await setHair(hairNow); chestName();
   mixer = new THREE.AnimationMixer(fbx);
   // (set on the floor as it stands - Mixamo moves the hips in its own units, the T-pose's box says little)
   if (await loadMove('staa')) { sample('staa', 0); fbx.position.y -= new THREE.Box3().setFromObject(fbx, true).min.y; fbx.updateMatrixWorld(true); }
@@ -8157,6 +8195,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); headShape(); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { gearTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;right:6px;z-index:999;background:#E8384F;color:#fff;font:700 11px system-ui,sans-serif;padding:2px 8px;border-radius:9px;pointer-events:none;opacity:.85">TEST 0.20.0 (62ad9ca)</div>
+<div style="position:fixed;top:4px;right:6px;z-index:999;background:#E8384F;color:#fff;font:700 11px system-ui,sans-serif;padding:2px 8px;border-radius:9px;pointer-events:none;opacity:.85">TEST 0.20.0 (86abff4)</div>
 </body>
 </html>
