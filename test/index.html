@@ -1289,9 +1289,11 @@ function setupBrows(body) {
   // two texels of each piece: blended with that margin, they made a white streak)
   const raster = new Set(place.keys()), inside = new Set();
   for (const p of raster) if ([1, -1, w, -w, 2, -2, 2 * w, -2 * w].every(o => raster.has(p + o))) inside.add(p);
-  for (let r = 0; r < 3; r++) { const add = [];
-    for (const p of place.keys()) for (const o of [1, -1, w, -w]) if (p + o >= 0 && p + o < w * h && !place.has(p + o)) add.push([p + o, place.get(p)]);
-    for (const [p, v] of add) if (!place.has(p)) place.set(p, v); }
+  // (each ring from the one added last only: the texels before it have all their neighbours already - the same ring, in the
+  // same order, Jan's A55 25-11-2026)
+  for (let r = 0, ring = [...place.keys()]; r < 3; r++) { const add = [];
+    for (const p of ring) for (const o of [1, -1, w, -w]) if (p + o >= 0 && p + o < w * h && !place.has(p + o)) add.push([p + o, place.get(p)]);
+    ring = []; for (const [p, v] of add) if (!place.has(p)) { place.set(p, v); ring.push(p); } }
   setupEyeShapes(place, inside); setupMouth(place); setupPynt(place); setupNose(body, P, n, cx, cy, cz, apart);
   // (the eye sits in a hollow, whose shade showed through a shut eye: there the points are lit as if the face went
   // smoothly across - their way out turned towards the average of the ring round the eye, the more the further in)
@@ -2051,21 +2053,26 @@ function smoothUnder() {
     const X = new Float64Array(n), Y = new Float64Array(n), Z = new Float64Array(n); for (let i = 0; i < n; i++) { X[i] = P.getX(i); Y[i] = P.getY(i); Z[i] = P.getZ(i); }
     const key = (x, y, z) => cell(Math.floor(x / r), Math.floor(y / r), Math.floor(z / r));
     for (let i = 0; i < n; i++) { const p = Math.min(tex.h - 1, Math.max(0, Math.floor((1 - uv.getY(i)) * tex.h))) * tex.w + Math.min(tex.w - 1, Math.max(0, Math.floor(uv.getX(i) * tex.w))), l = tex.label[p];
-      if (l === PARTS.shirt || l === PARTS.pants || tex.seam[p]) mark.push(i, l === PARTS.shirt || l === PARTS.pants ? l : tex.seam[p]);
-      const k = key(X[i], Y[i], Z[i]); let g = grid.get(k); if (!g) grid.set(k, g = []); g.push(i); }
+      if (l === PARTS.shirt || l === PARTS.pants || tex.seam[p]) mark.push(i, l === PARTS.shirt || l === PARTS.pants ? l : tex.seam[p]); }
+    for (let i = 0; i < n; i++) { const k = key(X[i], Y[i], Z[i]); let g = grid.get(k); if (!g) grid.set(k, g = []); g.push(i); }
     // (the underwear's points and every point near them - which piece: a bit each)
     // (each cell's pieces gathered first - many marked points share a cell, and the cells round it need marking once)
     const near = new Uint8Array(n), bits = new Map();
     for (let m = 0; m < mark.length; m += 2) { const i = mark[m], k = cell(Math.floor(X[i] / r), Math.floor(Y[i] / r), Math.floor(Z[i] / r)); bits.set(k, (bits.get(k) || 0) | 1 << mark[m + 1]); }
     for (const [k, bit] of bits) { const kz = k % 131072 - 65536, ky = Math.floor(k / 131072) % 131072 - 65536, kx = Math.floor(k / 17179869184) - 65536;
       for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) for (let dz = -1; dz <= 1; dz++) { const g = grid.get(cell(kx + dx, ky + dy, kz + dz)); if (g) for (const j of g) near[j] |= bit; } }
-    const was = N.array.slice(), now = N.array.slice(), done = new Map(), v = new THREE.Vector3();
+    const was = N.array.slice(), now = N.array.slice(), done = new Map(), v = new THREE.Vector3(), rr = r * r;
+    // (each cell's points packed side by side - place and normal - in the order they came: the same sums, read faster)
+    // (32-bit, as the figure's own numbers are: nothing lost; and only the cells asked for)
+    const pack = new Map(), packed = k => { let a = pack.get(k); if (a !== undefined) return a; const g = grid.get(k); a = null;
+      if (g) { a = new Float32Array(g.length * 6); for (let q = 0; q < g.length; q++) { const j = g[q], o = q * 6; a[o] = X[j]; a[o + 1] = Y[j]; a[o + 2] = Z[j]; a[o + 3] = was[j * 3]; a[o + 4] = was[j * 3 + 1]; a[o + 5] = was[j * 3 + 2]; } }
+      pack.set(k, a); return a; };
     // (a point at the same place as one done already takes its normal: found by its x, then y, then z)
     for (let i = 0; i < n; i++) { if (!near[i]) continue; const x = X[i], y = Y[i], z = Z[i];
       let dX = done.get(x); if (!dX) done.set(x, dX = new Map()); let dY = dX.get(y); if (!dY) dX.set(y, dY = new Map()); let got = dY.get(z);
       if (!got) { v.set(0, 0, 0); const kx = Math.floor(x / r), ky = Math.floor(y / r), kz = Math.floor(z / r);
-        for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) for (let dz = -1; dz <= 1; dz++) { const g = grid.get(cell(kx + dx, ky + dy, kz + dz)); if (g) for (const j of g) {
-          if ((X[j] - x) ** 2 + (Y[j] - y) ** 2 + (Z[j] - z) ** 2 < r * r) v.x += was[j * 3], v.y += was[j * 3 + 1], v.z += was[j * 3 + 2]; } }
+        for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) for (let dz = -1; dz <= 1; dz++) { const a = packed(cell(kx + dx, ky + dy, kz + dz)); if (a) for (let q = 0; q < a.length; q += 6) {
+          if ((a[q] - x) ** 2 + (a[q + 1] - y) ** 2 + (a[q + 2] - z) ** 2 < rr) v.x += a[q + 3], v.y += a[q + 4], v.z += a[q + 5]; } }
         dY.set(z, got = v.normalize().toArray()); }
       now.set(got, i * 3); }
     hairBase.smooth = { was, now, near }; }
@@ -8136,6 +8143,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); headShape(); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { gearTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;right:6px;z-index:999;background:#E8384F;color:#fff;font:700 11px system-ui,sans-serif;padding:2px 8px;border-radius:9px;pointer-events:none;opacity:.85">TEST 0.20.0 (11b86fb)</div>
+<div style="position:fixed;top:4px;right:6px;z-index:999;background:#E8384F;color:#fff;font:700 11px system-ui,sans-serif;padding:2px 8px;border-radius:9px;pointer-events:none;opacity:.85">TEST 0.20.0 (b6e12e9)</div>
 </body>
 </html>
