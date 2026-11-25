@@ -1169,9 +1169,13 @@ function setupTexture(map) {
 // (a white vest and shorts, as on the bald base figure, can't be told from the eye whites by their colour: each white
 // pixel is sorted by where it sits on the body instead - head and neck stay as they are, the vest down to the waist,
 // the shorts below it. Each triangle of the figure, in its T-pose, is painted at its place in the picture)
-function whitesByPlace(fbx) {
+// (the map of places is the same every time for the same figure: drawn once and kept as figur-steder<FIGUR_V>.png, read
+// here in a moment - drawing the triangles took seconds on a phone, Jan's A55 25-11-2026. Not there, or another size:
+// drawn as before. A new figure: open the game with ?bag-steder, and save figur-steder.png with the new number)
+function whitesByPlace(fbx, baked) {
   if (!tex) return; const c = document.createElement('canvas'); c.width = tex.w; c.height = tex.h;
   const g = c.getContext('2d'); g.lineJoin = 'round';
+  if (baked && baked.width === tex.w && baked.height === tex.h && !location.search.includes('bag-steder')) g.drawImage(baked, 0, 0); else
   // (twice: first with wide edges, so the picture's margins round each piece - which the screen blends in at seams and
   // from afar - get the piece's part too, then exactly)
   for (const wide of [12, 1]) { g.lineWidth = wide; fbx.traverse(o => { if (!o.isMesh || !o.geometry.attributes.uv) return;
@@ -1183,6 +1187,9 @@ function whitesByPlace(fbx) {
       v.forEach((i, j) => { const x = uv.getX(i) * tex.w, y = (1 - uv.getY(i)) * tex.h; j ? g.lineTo(x, y) : g.moveTo(x, y); });
       g.closePath(); g.fill(); g.stroke(); } }); }
   const place = g.getImageData(0, 0, tex.w, tex.h).data, s = tex.src, sums = [0, 0, 0, 0, 0, 0], counts = [0, 0, 0, 0, 0, 0];
+  if (location.search.includes('bag-steder')) { const o = new ImageData(new Uint8ClampedArray(place), tex.w, tex.h); for (let i = 3; i < o.data.length; i += 4) o.data[i] = 255;
+    const k = document.createElement('canvas'); k.width = tex.w; k.height = tex.h; k.getContext('2d').putImageData(o, 0, 0);
+    k.toBlob(b => { window.bagteSteder = b; const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `figur-steder${FIGUR_V.replace(/\D/g, '')}.png`; a.click(); }, 'image/png'); }
   irisesByPlace(place);
   for (let p = 0, i = 0; p < tex.w * tex.h; p++, i += 4) { const mx = Math.max(s[i], s[i + 1], s[i + 2]), mn = Math.min(s[i], s[i + 1], s[i + 2]);
     if (mx > 75 && mx - mn < .16 * mx) tex.label[p] = place[i] > 128 ? PARTS.shirt : place[i + 1] > 128 ? PARTS.pants : tex.label[p];
@@ -1197,7 +1204,13 @@ function whitesByPlace(fbx) {
   // (how far from the underwear, along the rows and then the columns - the larger of the two, a square round it)
   for (let y = 0; y < h; y++) { for (let x = 0, run = -1e9; x < w; x++) { if (under[y * w + x]) run = x; row[y * w + x] = Math.min(R + 1, x - run); }
     for (let x = w - 1, run = 1e9; x >= 0; x--) { if (under[y * w + x]) run = x; row[y * w + x] = Math.min(row[y * w + x], run - x); } }
-  for (let p = 0; p < w * h; p++) { const y = Math.floor(p / w); for (let k = -Math.min(R, y); k <= R && y + k < h; k++) far[p] = Math.min(far[p], Math.max(Math.abs(k), row[p + k * w])); }
+  // (only where the underwear is within R rows up or down: elsewhere every step gives more than R - Jan's A55, 25-11-2026)
+  const up = new Int32Array(w * h); for (let x = 0; x < w; x++) { for (let y = 0, run = -1e9; y < h; y++) { const p = y * w + x; if (row[p] <= R) run = y; up[p] = y - run; }
+    for (let y = h - 1, run = 1e9; y >= 0; y--) { const p = y * w + x; if (row[p] <= R) run = y; up[p] = Math.min(up[p], run - y); } }
+  // (and from the row itself outwards: a step k away gives at least k, so once k reaches the best found, none is nearer)
+  for (let p = 0; p < w * h; p++) { if (up[p] > R) continue; const y = Math.floor(p / w); let f = far[p];
+    for (let k = 0; k <= R && k < f; k++) { if (y + k < h) f = Math.min(f, Math.max(k, row[p + k * w])); if (k && k <= y) f = Math.min(f, Math.max(k, row[p - k * w])); }
+    far[p] = f; }
   // (only on the body: pieces of the face lie near the vest's in the picture, and the eyes were painted over)
   for (let p = 0; p < w * h; p++) if ((place[p * 4] > 128 || place[p * 4 + 1] > 128) && (!tex.label[p] && far[p] <= R || tex.label[p] === PARTS.skin && far[p] <= 10)) tex.seam[p] = place[p * 4 + 1] > 128 ? PARTS.pants : PARTS.shirt;
   // (and painted as light as the skin round it: the skin's brightness, against its middle, averaged over a square 129
@@ -1300,11 +1313,11 @@ function setupBrows(body) {
     for (let i = 0; i < n; i++) { const X = (P[i * 3] - cx) / apart, Y = (P[i * 3 + 1] - cy) / apart; if (P[i * 3 + 2] < cz - .4 * apart) continue;
       const rr = Math.hypot(X / Mo.rx, (Y - Mo.my) / Mo.ry); if (rr < 1) list.push(i, rr); if (rr < 1.8) near.push(i); }
     // (a third of the eyes' distance: over a fifth, the old smile's crease still showed as a shadow round Åh, Kys, Trist)
-    const r = .34 * apart, cell = new Map(), key = (x, y, z) => `${Math.floor(x / r)},${Math.floor(y / r)},${Math.floor(z / r)}`;
-    for (const i of near) { const k = key(P[i * 3], P[i * 3 + 1], P[i * 3 + 2]); if (!cell.has(k)) cell.set(k, []); cell.get(k).push(i); }
+    const r = .34 * apart, cell = new Map(), ck = (a, b, c) => ((a + 65536) * 131072 + b + 65536) * 131072 + c + 65536, key = (x, y, z) => ck(Math.floor(x / r), Math.floor(y / r), Math.floor(z / r));
+    for (const i of near) { const k = key(P[i * 3], P[i * 3 + 1], P[i * 3 + 2]); let g = cell.get(k); if (!g) cell.set(k, g = []); g.push(i); }
     Mo.smooth = new Float32Array(list.length / 2 * 3);
     for (let j = 0; j < list.length; j += 2) { const i = list[j], x = P[i * 3], y = P[i * 3 + 1], z = P[i * 3 + 2], v = [0, 0, 0], gx = Math.floor(x / r), gy = Math.floor(y / r), gz = Math.floor(z / r);
-      for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) for (let c = -1; c <= 1; c++) for (const q of cell.get(`${gx + a},${gy + b},${gz + c}`) || []) {
+      for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) for (let c = -1; c <= 1; c++) for (const q of cell.get(ck(gx + a, gy + b, gz + c)) || []) {
         const d2 = ((P[q * 3] - x) ** 2 + (P[q * 3 + 1] - y) ** 2 + (P[q * 3 + 2] - z) ** 2) / (r * r); if (d2 > 1) continue; const wq = 1 - d2;
         for (let m = 0; m < 3; m++) v[m] += N[q * 3 + m] * wq; }
       const l = Math.hypot(...v) || 1; Mo.smooth.set(v.map(c => c / l), j / 2 * 3); }
@@ -1854,13 +1867,20 @@ function solidMouth() { const M = tex && tex.mouth; if (!M || !M.pos || !hairBas
   // (each mouth's parts kept once built: changing back and forth shows only that mouth's)
   M.solidBy = M.solidBy || {}; if (!M.solidBy[mouthLook()]) { const from = M.solid ? M.solid.length : 0; buildSolid(M, opts); M.solidBy[mouthLook()] = { parts: M.solid.slice(from), lipT: M.lipT }; }
   const S = M.solidBy[mouthLook()]; M.lipT = S.lipT; colourLips(M, opts); for (const m of S.parts) m.visible = true; }
-function faceHeight(M) { if (M.fz) return M.fz; const P = M.body.geometry.attributes.position.array, ap = M.apart, tris = [];
+// (the face's front found once, not again for every triangle; and each lookup tries only the triangles in its square of
+// a grid laid over them - the same triangles that can hold the point, the same height: Jan's A55, 25-11-2026)
+function faceHeight(M) { if (M.fz) return M.fz; const P = M.body.geometry.attributes.position.array, ap = M.apart, tris = [], front = M.pos.reduce((a, v, j) => j % 3 === 2 ? Math.max(a, v) : a, -Infinity);
   for (let k = 0; k < P.length; k += 9) { const q = [0, 3, 6].map(o => [(P[k + o] - M.cx) / ap, (P[k + o + 1] - M.cy) / ap, (P[k + o + 2])]);
     if (Math.max(...q.map(v => Math.abs(v[0]))) > .8 || Math.min(...q.map(v => v[1])) > M.my + .6 || Math.max(...q.map(v => v[1])) < M.my - .6) continue;
-    if ((q[0][2] + q[1][2] + q[2][2]) / 3 < M.pos.reduce((a, v, j) => j % 3 === 2 ? Math.max(a, v) : a, -Infinity) - .8 * ap) continue;
+    if ((q[0][2] + q[1][2] + q[2][2]) / 3 < front - .8 * ap) continue;
     tris.push(q); }
-  return M.fz = (X, Y) => { let best = -Infinity;
-    for (const [a, b, c] of tris) { const d = (b[1] - c[1]) * (a[0] - c[0]) + (c[0] - b[0]) * (a[1] - c[1]); if (!d) continue;
+  // (each triangle's box made a little wider - a point may lie a thousandth outside it and still count)
+  const G = 48, box = tris.map(t => { const xs = t.map(v => v[0]), ys = t.map(v => v[1]), x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys), m = .01 * Math.max(x1 - x0, y1 - y0) + 1e-6; return [x0 - m, y0 - m, x1 + m, y1 + m]; });
+  const gx0 = Math.min(...box.map(b => b[0])), gy0 = Math.min(...box.map(b => b[1])), gw = (Math.max(...box.map(b => b[2])) - gx0) / G || 1, gh = (Math.max(...box.map(b => b[3])) - gy0) / G || 1;
+  const cx = x => Math.min(G - 1, Math.floor((x - gx0) / gw)), cy = y => Math.min(G - 1, Math.floor((y - gy0) / gh)), cells = Array.from({ length: G * G }, () => []);
+  box.forEach((b, t) => { for (let j = cy(b[1]); j <= cy(b[3]); j++) for (let i = cx(b[0]); i <= cx(b[2]); i++) cells[j * G + i].push(tris[t]); });
+  return M.fz = (X, Y) => { let best = -Infinity; const i = Math.floor((X - gx0) / gw), j = Math.floor((Y - gy0) / gh); if (!(i >= 0 && j >= 0 && i <= G && j <= G)) return best;
+    for (const [a, b, c] of cells[Math.min(G - 1, j) * G + Math.min(G - 1, i)]) { const d = (b[1] - c[1]) * (a[0] - c[0]) + (c[0] - b[0]) * (a[1] - c[1]); if (!d) continue;
       const l0 = ((b[1] - c[1]) * (X - c[0]) + (c[0] - b[0]) * (Y - c[1])) / d, l1 = ((c[1] - a[1]) * (X - c[0]) + (a[0] - c[0]) * (Y - c[1])) / d, l2 = 1 - l0 - l1;
       if (l0 < -.001 || l1 < -.001 || l2 < -.001) continue; best = Math.max(best, l0 * a[2] + l1 * b[2] + l2 * c[2]); }
     return best; }; }
@@ -2026,21 +2046,28 @@ function bulgeLips() { const M = tex && tex.mouth; if (!M || !M.pos) return; con
 function smoothUnder() {
   if (!hairBase || !tex) return; const geo = hairBase.body.geometry, N = geo.attributes.normal;
   if (!hairBase.smooth) { const P = geo.attributes.position, uv = geo.attributes.uv, n = P.count, H = hairBase.whole.H / hairBase.body.matrixWorld.getMaxScaleOnAxis();
-    const r = .015 * H, grid = new Map(), key = (x, y, z) => `${Math.floor(x / r)},${Math.floor(y / r)},${Math.floor(z / r)}`, mark = [];
+    // (the cells of the grid by a number, not a text - the same cells, many times faster on a phone: Jan's A55, 25-11-2026)
+    const r = .015 * H, grid = new Map(), cell = (a, b, c) => ((a + 65536) * 131072 + b + 65536) * 131072 + c + 65536, mark = [];
+    const X = new Float64Array(n), Y = new Float64Array(n), Z = new Float64Array(n); for (let i = 0; i < n; i++) { X[i] = P.getX(i); Y[i] = P.getY(i); Z[i] = P.getZ(i); }
+    const key = (x, y, z) => cell(Math.floor(x / r), Math.floor(y / r), Math.floor(z / r));
     for (let i = 0; i < n; i++) { const p = Math.min(tex.h - 1, Math.max(0, Math.floor((1 - uv.getY(i)) * tex.h))) * tex.w + Math.min(tex.w - 1, Math.max(0, Math.floor(uv.getX(i) * tex.w))), l = tex.label[p];
       if (l === PARTS.shirt || l === PARTS.pants || tex.seam[p]) mark.push(i, l === PARTS.shirt || l === PARTS.pants ? l : tex.seam[p]);
-      const k = key(P.getX(i), P.getY(i), P.getZ(i)); if (!grid.has(k)) grid.set(k, []); grid.get(k).push(i); }
+      const k = key(X[i], Y[i], Z[i]); let g = grid.get(k); if (!g) grid.set(k, g = []); g.push(i); }
     // (the underwear's points and every point near them - which piece: a bit each)
-    const near = new Uint8Array(n);
-    for (let m = 0; m < mark.length; m += 2) { const i = mark[m], bit = 1 << mark[m + 1], kx = Math.floor(P.getX(i) / r), ky = Math.floor(P.getY(i) / r), kz = Math.floor(P.getZ(i) / r);
-      for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) for (let dz = -1; dz <= 1; dz++) for (const j of grid.get(`${kx + dx},${ky + dy},${kz + dz}`) || []) near[j] |= bit; }
+    // (each cell's pieces gathered first - many marked points share a cell, and the cells round it need marking once)
+    const near = new Uint8Array(n), bits = new Map();
+    for (let m = 0; m < mark.length; m += 2) { const i = mark[m], k = cell(Math.floor(X[i] / r), Math.floor(Y[i] / r), Math.floor(Z[i] / r)); bits.set(k, (bits.get(k) || 0) | 1 << mark[m + 1]); }
+    for (const [k, bit] of bits) { const kz = k % 131072 - 65536, ky = Math.floor(k / 131072) % 131072 - 65536, kx = Math.floor(k / 17179869184) - 65536;
+      for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) for (let dz = -1; dz <= 1; dz++) { const g = grid.get(cell(kx + dx, ky + dy, kz + dz)); if (g) for (const j of g) near[j] |= bit; } }
     const was = N.array.slice(), now = N.array.slice(), done = new Map(), v = new THREE.Vector3();
-    for (let i = 0; i < n; i++) { if (!near[i]) continue; const x = P.getX(i), y = P.getY(i), z = P.getZ(i), at = `${x},${y},${z}`;
-      if (!done.has(at)) { v.set(0, 0, 0); const kx = Math.floor(x / r), ky = Math.floor(y / r), kz = Math.floor(z / r);
-        for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) for (let dz = -1; dz <= 1; dz++) for (const j of grid.get(`${kx + dx},${ky + dy},${kz + dz}`) || []) {
-          if ((P.getX(j) - x) ** 2 + (P.getY(j) - y) ** 2 + (P.getZ(j) - z) ** 2 < r * r) v.x += was[j * 3], v.y += was[j * 3 + 1], v.z += was[j * 3 + 2]; }
-        done.set(at, v.normalize().toArray()); }
-      now.set(done.get(at), i * 3); }
+    // (a point at the same place as one done already takes its normal: found by its x, then y, then z)
+    for (let i = 0; i < n; i++) { if (!near[i]) continue; const x = X[i], y = Y[i], z = Z[i];
+      let dX = done.get(x); if (!dX) done.set(x, dX = new Map()); let dY = dX.get(y); if (!dY) dX.set(y, dY = new Map()); let got = dY.get(z);
+      if (!got) { v.set(0, 0, 0); const kx = Math.floor(x / r), ky = Math.floor(y / r), kz = Math.floor(z / r);
+        for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) for (let dz = -1; dz <= 1; dz++) { const g = grid.get(cell(kx + dx, ky + dy, kz + dz)); if (g) for (const j of g) {
+          if ((X[j] - x) ** 2 + (Y[j] - y) ** 2 + (Z[j] - z) ** 2 < r * r) v.x += was[j * 3], v.y += was[j * 3 + 1], v.z += was[j * 3 + 2]; } }
+        dY.set(z, got = v.normalize().toArray()); }
+      now.set(got, i * 3); }
     hairBase.smooth = { was, now, near }; }
   const { was, now, near } = hairBase.smooth, on = (tex.covered[PARTS.shirt] ? 1 << PARTS.shirt : 0) | (tex.covered[PARTS.pants] ? 1 << PARTS.pants : 0);
   // (only its own points: the face's - a shut eye, a new mouth - are lit smooth by theirs)
@@ -5088,13 +5115,14 @@ function hideBody() { if (!hairBase) return; const geo = hairBase.body.geometry,
 // once put the old figure's colour picture on the new figure)
 const FIGUR_V = '?v=10';
 async function loadFbx() { if (!(await exists('figur.fbx' + FIGUR_V))) return false;
+  const places = new Promise(ok => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => ok(null); i.src = `figur-steder${FIGUR_V.replace(/\D/g, '')}.png`; });
   const loader = new FBXLoader(), load = u => new Promise((ok, bad) => loader.load(u + FIGUR_V, ok, undefined, bad));
   const fbx = await load('figur.fbx'), map = await new Promise((ok, bad) => new THREE.TextureLoader().load('figur-farve.jpg' + FIGUR_V, ok, undefined, bad));
   map.colorSpace = THREE.SRGBColorSpace; const coloured = setupTexture(map);
   // (both sides drawn: through the ear's small opening one saw right through the head - the hair on the far side as a
   // dark spike in the ear)
   fbx.traverse(o => { if (!o.isMesh) return; o.castShadow = true; o.material = new THREE.MeshStandardMaterial({ map: coloured, roughness: .75, metalness: 0, side: THREE.DoubleSide }); });
-  whitesByPlace(fbx);
+  whitesByPlace(fbx, await places);
   const box = new THREE.Box3().setFromObject(fbx), size = box.getSize(new THREE.Vector3()), k = 2.15 / size.y;
   fbx.scale.setScalar(k); fbx.position.y = -box.min.y * k; holder.add(fbx); glb = fbx;
   measureHead(fbx); if (hairBase) setupBrows(hairBase.body); setupEars(); await setHair(hairNow); chestName();
@@ -8108,6 +8136,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); headShape(); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { gearTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;right:6px;z-index:999;background:#E8384F;color:#fff;font:700 11px system-ui,sans-serif;padding:2px 8px;border-radius:9px;pointer-events:none;opacity:.85">TEST 0.20.0 (3225d56)</div>
+<div style="position:fixed;top:4px;right:6px;z-index:999;background:#E8384F;color:#fff;font:700 11px system-ui,sans-serif;padding:2px 8px;border-radius:9px;pointer-events:none;opacity:.85">TEST 0.20.0 (11b86fb)</div>
 </body>
 </html>
