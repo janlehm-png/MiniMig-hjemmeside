@@ -238,8 +238,9 @@
   .hand.pinch { top: 44%; display: flex; gap: 0; }
   .hand.pinch i { font-style: normal; display: inline-block; animation: hand-pinch-l 1.8s ease-in-out infinite; }
   .hand.pinch i + i { animation-name: hand-pinch-r; }
-  @keyframes hand-pinch-l { 0%, 100% { transform: translateX(10px) rotate(-20deg); } 50% { transform: translateX(-34px) rotate(-20deg); } }
-  @keyframes hand-pinch-r { 0%, 100% { transform: translateX(-10px) rotate(20deg); } 50% { transform: translateX(34px) rotate(20deg); } }
+  /* (the two forefingers turned in towards each other, still drawn apart - the owner, 26-11-2026) */
+  @keyframes hand-pinch-l { 0%, 100% { transform: translateX(10px) rotate(30deg); } 50% { transform: translateX(-34px) rotate(30deg); } }
+  @keyframes hand-pinch-r { 0%, 100% { transform: translateX(-10px) rotate(-30deg); } 50% { transform: translateX(34px) rotate(-30deg); } }
   /* (every button pressed in at a touch - the user, 24-11-2026: a fixed rule, so a tap is always seen) */
   button:not(:disabled):not(.coin):active { transform: scale(.94); transition: transform .05s; }
   @keyframes hand-drag { 0%, 100% { left: 30%; top: 65%; } 25% { left: 60%; top: 45%; } 50% { left: 72%; top: 62%; } 75% { left: 45%; top: 40%; } }
@@ -8226,6 +8227,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); headShape(); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { gearTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;right:6px;z-index:999;background:#E8384F;color:#fff;font:700 11px system-ui,sans-serif;padding:2px 8px;border-radius:9px;pointer-events:none;opacity:.85">TEST 0.20.1 (9e11d39)</div>
+<div style="position:fixed;top:4px;right:6px;z-index:999;background:#E8384F;color:#fff;font:700 11px system-ui,sans-serif;padding:2px 8px;border-radius:9px;pointer-events:none;opacity:.85">TEST 0.20.1 (c88eb22)</div>
 </body>
 </html>
