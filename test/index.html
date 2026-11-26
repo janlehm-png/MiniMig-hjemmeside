@@ -6293,7 +6293,9 @@ function skTrickPose() { const b = sk.board; if (!SKATE_V11 || !b) return; const
   b.rotation.z = flip * Math.PI * 2; b.rotation.y = shove * Math.PI * 2; b.position.y = SKATE.deck * (1 - Math.cos(b.rotation.z));
   glb.position.y += .17 * Math.sin(Math.PI * flip) + .07 * Math.sin(Math.PI * shove);
   // (the flip: the figure and its board head over heels, round its middle - not round its feet)
-  const th = Math.PI * 2 * part('salto'), c = .7; sk.rig.rotation.x += -th; sk.rig.position.y += c * (1 - Math.cos(th)); sk.rig.position.z = -c * Math.sin(th); }
+  // (the owner, 26-11-2026: it did not turn round itself - the shift that keeps the middle still went the wrong way, so the
+  // figure swung round a point far off. In the halfpipe the turn is round the lip's line instead, see hpTick)
+  const th = Math.PI * 2 * part('salto'), c = .7; sk.saltoTh = th; if (hpp.on) return; sk.rig.rotation.x += -th; sk.rig.position.y += c * (1 - Math.cos(th)); sk.rig.position.z = c * Math.sin(th); }
 function skChalStart(snow) { Object.assign(skc, { on: SKATE_V11 && skc.want && !snow, dist: 0, possible: 0, tricks: {}, goal: skateLevel().speed * 45 }); chalEl.hidden = !skc.on; chalEl.style.setProperty('--f', 0);
   if (skc.on) toast(T('🏁 Kør til flaget!', '🏁 Ride to the flag!')); }
 function skChalTick(dt, v) { if (!skc.on) return; skc.dist += v * dt; chalEl.style.setProperty('--f', Math.min(1, skc.dist / skc.goal).toFixed(3));
@@ -6580,7 +6582,7 @@ function hpTrick(q) { const list = q >= .8 ? ['salto', 'dobbelt', 'salto'] : q >
   skc.tricks[k] = (skc.tricks[k] || 0) + 1; trickPop((q >= .8 ? T('Perfekt! ', 'Perfect! ') : '') + skTrickName(k) + `  ⭐+${n}`); }
 // (the show-me hand at the edge - the user, 24-11-2026: show when and where to tap. On the first rides up a wall, until the
 // child gets a perfect one, the hand taps right at the edge on the screen at the right moment - as the edge glows)
-const hpGuideV = new THREE.Vector3();
+const hpGuideV = new THREE.Vector3(); const hpSalto = new THREE.Quaternion(), hpZ = new THREE.Vector3(0, 0, 1);
 function hpGuide(side) { hpp.guided = true; const st = document.getElementById('stage'); hpGuideV.set(side * (hpLip() - .1), HP.R + .25, 0).project(camera);
   handEl.style.left = ((hpGuideV.x + 1) / 2 * st.clientWidth) + 'px'; handEl.style.top = ((1 - hpGuideV.y) / 2 * st.clientHeight) + 'px';
   clearTimeout(handT); handEl.className = 'hand tap'; handEl.textContent = '👆'; handEl.hidden = false; handT = setTimeout(() => { handEl.hidden = true; }, 1100); }
@@ -6634,6 +6636,9 @@ function hpTick(dt) { dt = Math.min(dt, .05) * (1 - .25 * hpp.camK); const [g, w
   sk.rig.position.set(0, 0, 0); sk.rig.rotation.set(0, -Math.PI / 2 + (sk.trick === 'spin' ? sk.spin : sk.trick === 'dobbelt' ? 2 * sk.spin : 0), 0);
   { const q = 1 - Math.min(1, Math.abs(hpp.th) / 1.6); sk.arm = .07 * Math.sin(now * 1.9) + (hpp.phase === 'air' ? .35 * Math.sin(now * 6) : .15 * q * Math.sin(now * 2.6)); }
   sk.lean = 0; hpp.tilt.updateMatrixWorld(true); skatePose(); skTrickPose(); { const pz = sk.rig.position.z; sk.rig.position.z = 0; sk.rig.position.x = -pz; }
+  // (the flip in the halfpipe: head over heels backwards round the line of the lip - seen from the side, as a real one - and
+  // round the figure's own middle, c over its feet, so it stays where it is in the air)
+  if (sk.saltoTh) { const a = sk.saltoTh * hpp.side, c = .7; sk.rig.quaternion.premultiply(hpSalto.setFromAxisAngle(hpZ, a)); sk.rig.position.x += c * Math.sin(a); sk.rig.position.y += c * (1 - Math.cos(a)); }
   // (the pet: looking after the figure, a happy hop when a star is taken)
   if (hpp.pet) { const pg = hpp.pet.group, p = hpp.petG.position; pg.rotation.y = Math.atan2(hpp.x - p.x, -p.z) * .8; hpp.hop = Math.max(0, hpp.hop - dt); pg.position.y = hpp.hop > 0 ? .12 * Math.abs(Math.sin(hpp.hop * Math.PI * 4)) : 0; }
   hpCam(dt); }
@@ -8207,6 +8212,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); headShape(); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { gearTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;right:6px;z-index:999;background:#E8384F;color:#fff;font:700 11px system-ui,sans-serif;padding:2px 8px;border-radius:9px;pointer-events:none;opacity:.85">TEST 0.20.1 (15101dd)</div>
+<div style="position:fixed;top:4px;right:6px;z-index:999;background:#E8384F;color:#fff;font:700 11px system-ui,sans-serif;padding:2px 8px;border-radius:9px;pointer-events:none;opacity:.85">TEST 0.20.1 (6be4562)</div>
 </body>
 </html>
