@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>MiniMig™ version 2</title>
+<title>MiniMig™ – byg og spil i 3D</title>
 <meta name="minimig-version" content="0.20.1">
 <!-- (the number of this version, shown under the i - see VERSIONER.md - raised for each package and each fix put out) -->
 <!-- (the same icon as version 1 on a home screen, under the name MiniMig 2 - the icons lie in the website's billeder/;
      the user, 03-11-2026, sharing version 2 with testers) -->
 <link rel="icon" href="../billeder/ikon-180.png">
 <link rel="apple-touch-icon" href="../billeder/ikon-180.png">
-<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#FFD54A"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="MiniMig 2">
+<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#FFD54A"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="MiniMig">
 <meta name="robots" content="noindex, nofollow"><!-- (a hidden try-out page: kept out of search engines) -->
 <!-- MiniMig version 2 (begyndt som 3D-forsøget, omdøbt 03-11-2026; på minimig.dk/version2): MiniMigs grundfigur (Meshy, skelet og bevægelser fra Mixamo), der kan drejes, vinke, hoppe og danse,
      skifte frisure og farves om. -->
@@ -8212,6 +8212,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); headShape(); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { gearTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;right:6px;z-index:999;background:#E8384F;color:#fff;font:700 11px system-ui,sans-serif;padding:2px 8px;border-radius:9px;pointer-events:none;opacity:.85">TEST 0.20.1 (6be4562)</div>
+<div style="position:fixed;top:4px;right:6px;z-index:999;background:#E8384F;color:#fff;font:700 11px system-ui,sans-serif;padding:2px 8px;border-radius:9px;pointer-events:none;opacity:.85">TEST 0.20.1 (1d80bf7)</div>
 </body>
 </html>
