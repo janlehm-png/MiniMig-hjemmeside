@@ -6340,8 +6340,10 @@ function skHump(u, x = 0) { if (!skBumpy()) return 0; const t = u + (sk.trav || 
 function skEdge(x) { const t = Math.max(0, Math.min(1, (1.28 - Math.abs(x)) / (sk.snow ? .2 : .33))); return t * t * (3 - 2 * t); }
 // (along the track; over a bump's top a little hop - higher the faster - no trick of its own, steering still allowed)
 function skParkRide(dt, v) { if (!skBumpy()) return; sk.trav = (sk.trav || 0) + v * dt; const h = skHump(0, sk.x), d = h - (sk.hPrev || 0);
-  if ((sk.dPrev || 0) > 0 && d <= 0 && h > .1 && !(sk.jy > 0) && !sk.gl) { const big = sk.snow && h > .4, H = big ? .5 + .05 * v : .06 + .025 * v, g = 9.8 * .8; sk.jv = Math.sqrt(2 * g * H); sk.jg = g; sk.jt = 2 * sk.jv / g; sk.jy = .001; sk.spin = 0; sk.extra = null;
-    sk.trick = big ? skSnowTrick() : 'none'; if (big) { addStars(2); sfx('boing'); skTrickDone(sk.trick); } }
+  if ((sk.dPrev || 0) > 0 && d <= 0 && h > .1 && !(sk.jy > 0) && !sk.gl) { const bi = Math.floor((sk.trav || 0) / PARK.per), big = sk.snow ? h > .4 : skMix(bi, 99) < .35, H = big ? .5 + .05 * v : .06 + .025 * v, g = 9.8 * .8; sk.jv = Math.sqrt(2 * g * H); sk.jg = g; sk.jt = 2 * sk.jv / g; sk.jy = .001; sk.spin = 0; sk.extra = null;
+    // (Skateparken: about every third roller a big hop with a trick, and the camera out to the side as off a ramp - the owner,
+    // 26-11-2026: the same as on the other courses when one jumps; the little hops between keep the view from behind)
+    sk.trick = big ? (sk.snow ? skSnowTrick() : skTrickPick(H)) : 'none'; if (big) { addStars(2); sfx('boing'); skTrickDone(sk.trick); } }
   sk.hPrev = h; sk.dPrev = d; }
 // (on a grind rail: up on it, sliding along, sparks; off at its end)
 // (a high mogul's trick on the snowboard: the spin, a flip, a double spin on the harder levels - no kickflip on a snowboard)
@@ -8212,6 +8214,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); headShape(); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { gearTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;right:6px;z-index:999;background:#E8384F;color:#fff;font:700 11px system-ui,sans-serif;padding:2px 8px;border-radius:9px;pointer-events:none;opacity:.85">TEST 0.20.1 (1d80bf7)</div>
+<div style="position:fixed;top:4px;right:6px;z-index:999;background:#E8384F;color:#fff;font:700 11px system-ui,sans-serif;padding:2px 8px;border-radius:9px;pointer-events:none;opacity:.85">TEST 0.20.1 (fc809be)</div>
 </body>
 </html>
