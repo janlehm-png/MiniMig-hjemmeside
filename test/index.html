@@ -8127,7 +8127,7 @@ if (TEST_SITE) addEventListener('load', () => setTimeout(() => { const mark = nu
   open.onclick = e => { e.stopPropagation(); box.hidden = !box.hidden; box.style.display = box.hidden ? 'none' : 'flex'; }; box.style.display = 'none';
   dock.append(open, box); document.body.append(dock);
   // (the TEST mark with the version may come a little later: its words taken over by the button when it is there)
-  const grab = () => { const m = [...document.querySelectorAll('body > div')].find(d => d !== dock && /^TEST/.test(d.textContent.trim()) && d.style.position === 'fixed'); if (!m) return false; open.textContent = m.textContent.trim(); m.remove(); return true; };
+  const grab = () => { const m = [...document.querySelectorAll('body > div')].find(d => d !== dock && d.textContent.trim().startsWith('TEST ') && d.style.position === 'fixed'); if (!m) return false; open.textContent = m.textContent.trim(); m.remove(); return true; };
   if (!grab()) { const t = setInterval(() => { if (grab()) clearInterval(t); }, 400); setTimeout(() => clearInterval(t), 20000); } }, 300));
 // (one more line while the child isn't saved with a name yet - the user, 04-11-2026: how to keep one's own player)
 const infoSave = document.createElement('span'); infoSave.innerHTML = T('<br>🙂 Gem dig selv som spiller: Byg din figur, og tryk på billedet nederst i højre hjørne. Vælg »Børn og spillere – for voksne«, og få en voksen til at løse regnestykket. Skriv navnet, og tryk 📷', '<br>🙂 Save yourself as a player: Build your figure and tap the picture in the bottom right corner. Choose “Children and players – for grown-ups” and get a grown-up to solve the math problem. Write the name and tap 📷');
@@ -8226,6 +8226,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); headShape(); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { gearTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;right:6px;z-index:999;background:#E8384F;color:#fff;font:700 11px system-ui,sans-serif;padding:2px 8px;border-radius:9px;pointer-events:none;opacity:.85">TEST 0.20.1 (d896bb5)</div>
+<div style="position:fixed;top:4px;right:6px;z-index:999;background:#E8384F;color:#fff;font:700 11px system-ui,sans-serif;padding:2px 8px;border-radius:9px;pointer-events:none;opacity:.85">TEST 0.20.1 (9e11d39)</div>
 </body>
 </html>
