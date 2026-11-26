@@ -173,7 +173,7 @@
   .hud-right { display: flex; align-items: center; gap: 8px; }
   /* (the test site's own buttons and its TEST mark, up in the right corner: in a game they go down under the level button and
      the big red cross - they lay over them, the user 24-11-2026) */
-  html:has(#stage.playing) .test-w, html:has(#stage.playing) body > div[style*="#E8384F"] { margin-top: 74px; }
+  /* (the test site's buttons now in one TEST button down in the left corner, see testDock) */
   .game-lvl { padding: 0; display: grid; place-items: center; } .game-lvl img { width: 44px; height: 44px; object-fit: contain; pointer-events: none; }
   .lvl-pop { position: absolute; z-index: 4; top: calc(max(12px, env(safe-area-inset-top)) + 64px); right: max(12px, env(safe-area-inset-right)); display: flex; flex-direction: column; gap: 6px; padding: 8px; border-radius: 20px; background: var(--tile); box-shadow: 0 6px 22px rgba(58, 46, 92, .28); }
   .lvl-pop[hidden] { display: none; }
@@ -8117,6 +8117,15 @@ if (TEST_SITE) { const b = document.createElement('button'); b.className = 'test
     let skip = 0; try { skip = +localStorage.getItem(ADVENT_SKIP) || 0; } catch (e) { } const [y, m, d] = now.split('-').map(Number), [y2, m2, d2] = next.split('-').map(Number);
     skip += Math.round((Date.UTC(y2, m2 - 1, d2) - Date.UTC(y, m - 1, d)) / 864e5); try { localStorage.setItem(ADVENT_SKIP, String(skip)); } catch (e) { } toast(`🎁 Nu er det ${next}`); renderStyles(); adventCheck(); };
   document.body.append(b); }
+// (the test site's own buttons together in one small TEST button down in the left corner - the owner, 26-11-2026: up in
+// the right corner they lay over the worlds' buttons, Skateparken could not be chosen. A tap opens the buttons above it)
+if (TEST_SITE) addEventListener('load', () => setTimeout(() => { const mark = [...document.querySelectorAll('body > div')].find(d => /^TEST/.test(d.textContent.trim()) && d.style.position === 'fixed');
+  const dock = document.createElement('div'); dock.id = 'testDock'; dock.style.cssText = 'position:fixed;left:6px;bottom:calc(6px + env(safe-area-inset-bottom));z-index:999;display:flex;flex-direction:column-reverse;align-items:flex-start;gap:4px;font:700 11px system-ui,sans-serif';
+  const open = document.createElement('button'); open.textContent = mark ? mark.textContent.trim() : 'TEST'; open.style.cssText = 'background:#E8384F;color:#fff;border:0;border-radius:9px;padding:3px 8px;font:inherit;cursor:pointer;opacity:.8';
+  const box = document.createElement('div'); box.hidden = true; box.style.cssText = 'display:flex;flex-direction:column;align-items:flex-start;gap:4px';
+  for (const b of document.querySelectorAll('.test-w')) { b.style.position = 'static'; b.style.top = b.style.right = ''; b.style.margin = '0'; box.append(b); }
+  open.onclick = e => { e.stopPropagation(); box.hidden = !box.hidden; box.style.display = box.hidden ? 'none' : 'flex'; }; box.style.display = 'none';
+  dock.append(open, box); document.body.append(dock); mark?.remove(); }, 300));
 // (one more line while the child isn't saved with a name yet - the user, 04-11-2026: how to keep one's own player)
 const infoSave = document.createElement('span'); infoSave.innerHTML = T('<br>🙂 Gem dig selv som spiller: Byg din figur, og tryk på billedet nederst i højre hjørne. Vælg »Børn og spillere – for voksne«, og få en voksen til at løse regnestykket. Skriv navnet, og tryk 📷', '<br>🙂 Save yourself as a player: Build your figure and tap the picture in the bottom right corner. Choose “Children and players – for grown-ups” and get a grown-up to solve the math problem. Write the name and tap 📷');
 const infoVersion = document.createElement('small'); infoVersion.style.cssText = 'display:block;margin-top:6px;opacity:.65;font-weight:600'; infoVersion.textContent = 'Version ' + document.querySelector('meta[name="minimig-version"]').content;
@@ -8214,6 +8223,6 @@ renderer.setAnimationLoop(() => { const dt = clock.getDelta(), t = clock.getElap
   if (spin) spinAngle += dt * 1.2; glb && (glb.rotation.y = spinAngle);
   if (mixer) mixer.update(dt); headShape(); if (glb) glb.position.y = kick.baseY + bootLift() + (lifts[anim] && glbActions[anim] ? lifts[anim](glbActions[anim].time) : 0);
   try { gameTick(dt); hopWorldTick(dt); } catch (e) { console.error(e); } try { gearTick(dt); } catch (e) { console.error(e); } try { kickBall(dt); } catch (e) { console.error(e); } try { runScene(dt); } catch (e) { console.error(e); } try { myDanceTick(dt); } catch (e) { console.error(e); } try { musicTick(); } catch (e) { console.error(e); } try { balanceTick(); } catch (e) { console.error(e); } try { skirtTick(); } catch (e) { console.error(e); } try { petTick(dt); } catch (e) { console.error(e); } armsOut(); try { handsOnHips(dt); } catch (e) { console.error(e); } try { heelsTick(); } catch (e) { console.error(e); } holdItem(t); bgZoom(); glide(); try { sjLate(); dsLate(); } catch (e) { console.error(e); } controls.update(); renderer.render(scene, camera); takeOffOverlays(); });</script>
-<div style="position:fixed;top:4px;right:6px;z-index:999;background:#E8384F;color:#fff;font:700 11px system-ui,sans-serif;padding:2px 8px;border-radius:9px;pointer-events:none;opacity:.85">TEST 0.20.1 (fc809be)</div>
+<div style="position:fixed;top:4px;right:6px;z-index:999;background:#E8384F;color:#fff;font:700 11px system-ui,sans-serif;padding:2px 8px;border-radius:9px;pointer-events:none;opacity:.85">TEST 0.20.1 (39f566c)</div>
 </body>
 </html>
